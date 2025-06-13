@@ -42,7 +42,7 @@ class _EventProgressScreenState extends State<EventProgressScreen> {
 
     setState(() {
       _phases = phases;
-      _currentPhase = progress['currentPhase'];
+      _currentPhase = progress['currentPhase'] ?? 1;
     });
   }
 

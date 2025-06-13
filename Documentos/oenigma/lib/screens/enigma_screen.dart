@@ -4,7 +4,6 @@ import 'package:cloud_functions/cloud_functions.dart';
 import '../models/enigma_model.dart';
 import '../models/event_model.dart';
 import '../models/phase_model.dart';
-import '../services/auth_service.dart';
 import '../services/firebase_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/success_dialog.dart';
@@ -16,7 +15,11 @@ class EnigmaScreen extends StatefulWidget {
   final VoidCallback onEnigmaSolved;
 
   const EnigmaScreen({
-    super.key, required this.event, required this.phase, required this.enigma, required this.onEnigmaSolved,
+    super.key,
+    required this.event,
+    required this.phase,
+    required this.enigma,
+    required this.onEnigmaSolved,
   });
 
   @override
@@ -26,7 +29,7 @@ class EnigmaScreen extends StatefulWidget {
 class _EnigmaScreenState extends State<EnigmaScreen> {
   final TextEditingController _codeController = TextEditingController();
   final FirebaseService _firebaseService = FirebaseService();
-  
+
   late Future<Map<String, dynamic>> _stateFuture;
   bool _isLoading = false;
   Timer? _cooldownTimer;
@@ -74,18 +77,21 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
         timer.cancel();
         _refreshState();
       } else {
-        setState(() => _cooldownTimeLeft = '${difference.inMinutes.toString().padLeft(2, '0')}:${(difference.inSeconds % 60).toString().padLeft(2, '0')}');
+        setState(
+          () => _cooldownTimeLeft =
+              '${difference.inMinutes.toString().padLeft(2, '0')}:${(difference.inSeconds % 60).toString().padLeft(2, '0')}',
+        );
       }
     });
   }
-  
+
   void _refreshState() {
-      if(mounted) {
-        setState(() {
-            _cooldownTimeLeft = '';
-            _stateFuture = _fetchEnigmaStatus();
-        });
-      }
+    if (mounted) {
+      setState(() {
+        _cooldownTimeLeft = '';
+        _stateFuture = _fetchEnigmaStatus();
+      });
+    }
   }
 
   Future<void> _handleAction(String action, {String? code}) async {
@@ -103,38 +109,56 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
       final success = data['success'] ?? false;
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: success ? Colors.green : Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: success ? Colors.green : Colors.red,
+        ),
+      );
 
       if (success && action == 'validateCode') {
         final nextStep = data['nextStep'] as Map<String, dynamic>?;
 
         if (nextStep != null && nextStep['type'] == 'next_enigma') {
-          final nextEnigma = EnigmaModel.fromMap(nextStep['enigmaData'] as Map<String, dynamic>);
+          final nextEnigma = EnigmaModel.fromMap(
+            nextStep['enigmaData'] as Map<String, dynamic>,
+          );
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => EnigmaScreen(
-              event: widget.event,
-              phase: widget.phase,
-              enigma: nextEnigma,
-              onEnigmaSolved: widget.onEnigmaSolved,
-            )),
+            MaterialPageRoute(
+              builder: (context) => EnigmaScreen(
+                event: widget.event,
+                phase: widget.phase,
+                enigma: nextEnigma,
+                onEnigmaSolved: widget.onEnigmaSolved,
+              ),
+            ),
           );
-        } else { // 'phase_complete'
-          showSuccessDialog(context, onOkPressed: () {
-              Navigator.of(context).pop(); 
+        } else {
+          // 'phase_complete'
+          showSuccessDialog(
+            context,
+            onOkPressed: () {
+              Navigator.of(context).pop();
               Navigator.of(context).pop();
               widget.onEnigmaSolved();
-          });
+            },
+          );
         }
       } else if (success && action == 'purchaseHint') {
         _refreshState();
-      } else if (!success && action == 'validateCode'){
-          _refreshState(); 
+      } else if (!success && action == 'validateCode') {
+        _refreshState();
       }
     } on FirebaseFunctionsException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message ?? 'Ocorreu um erro.'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message ?? 'Ocorreu um erro.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
-      if(mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
