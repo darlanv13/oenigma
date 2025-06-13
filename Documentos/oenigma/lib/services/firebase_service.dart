@@ -1,93 +1,128 @@
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../models/enigma_model.dart';
 import '../models/event_model.dart';
 import '../models/phase_model.dart';
 import '../models/ranking_player_model.dart';
 
+/// A classe `FirebaseService` centraliza toda a comunicação com os
+/// serviços do Firebase (Firestore e Cloud Functions) para a aplicação.
 class FirebaseService {
+  /// Instância do Firestore para acesso ao banco de dados NoSQL.
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(region: 'southamerica-east1');
 
-  // --- Funções Auxiliares para Conversão Segura de Tipos ---
-  
-  // Converte recursivamente um mapa genérico para Map<String, dynamic>
-  Map<String, dynamic> _deepCastMap(Map<dynamic, dynamic> map) {
-    return map.map((key, value) {
-      final String stringKey = key.toString();
-      if (value is Map) {
-        return MapEntry(stringKey, _deepCastMap(value));
-      }
-      if (value is List) {
-        return MapEntry(stringKey, _deepCastList(value));
-      }
-      return MapEntry(stringKey, value);
-    });
-  }
+  /// Instância do Cloud Functions, configurada para a região da América do Sul.
+  final FirebaseFunctions _functions =
+      FirebaseFunctions.instanceFor(region: 'southamerica-east1');
 
-  // Converte recursivamente uma lista genérica
-  List<dynamic> _deepCastList(List<dynamic> list) {
-    return list.map((item) {
-      if (item is Map) {
-        return _deepCastMap(item);
-      }
-      if (item is List) {
-        return _deepCastList(item);
-      }
-      return item;
-    }).toList();
-  }
-
-
-  Future<HttpsCallableResult> _callFunction(String functionName, [Map<String, dynamic>? payload]) async {
+  /// Função auxiliar para chamar uma Cloud Function de forma padronizada e segura.
+  ///
+  /// [functionName] é o nome da função a ser chamada.
+  /// [payload] são os dados a serem enviados para a função.
+  Future<HttpsCallableResult> _callFunction(String functionName,
+      [Map<String, dynamic>? payload]) async {
     final callable = _functions.httpsCallable(functionName);
-    return await callable.call<dynamic>(payload);
+    try {
+      return await callable.call<dynamic>(payload);
+    } on FirebaseFunctionsException catch (e) {
+      // Log do erro para facilitar a depuração no console.
+      print(
+          "FirebaseFunctionsException em ${functionName}: ${e.code} - ${e.message}");
+      // Relança a exceção para que a interface do usuário possa lidar com ela.
+      rethrow;
+    } catch (e) {
+      print("Exceção genérica em ${functionName}: $e");
+      rethrow;
+    }
   }
 
-  // --- Métodos de API Atualizados ---
-
+  /// Busca a lista de todos os eventos disponíveis.
   Future<List<EventModel>> getEvents() async {
     final result = await _callFunction('getEventData');
-    if (result.data == null) return [];
-    final List<dynamic> eventsData = _deepCastList(result.data);
-    return eventsData.map((data) => EventModel.fromMap(data)).toList();
+    final List<dynamic> eventsData = result.data ?? [];
+    return eventsData
+        .map((data) => EventModel.fromMap(Map<String, dynamic>.from(data)))
+        .toList();
   }
 
+  /// Busca as fases de um evento específico.
+  ///
+  /// Esta versão foi corrigida para processar os dados diretamente,
+  /// evitando erros de conversão.
   Future<List<PhaseModel>> getPhasesForEvent(String eventId) async {
     final result = await _callFunction('getEventData', {'eventId': eventId});
-    if (result.data == null) return [];
-    
-    final Map<String, dynamic> eventData = _deepCastMap(result.data);
+    final eventData = result.data as Map<String, dynamic>?;
+
+    if (eventData == null) {
+      return [];
+    }
+
     final List<dynamic> phasesData = eventData['phases'] ?? [];
-    return phasesData.map((data) => PhaseModel.fromMap(data)).toList();
+    return phasesData
+        .map((data) => PhaseModel.fromMap(data as Map<String, dynamic>))
+        .toList();
   }
-  
+
+  /// Retorna a contagem de fases (desafios) para um determinado evento.
   Future<int> getChallengeCountForEvent(String eventId) async {
     final result = await _callFunction('getEventData', {'eventId': eventId});
     if (result.data == null) return 0;
-    final eventData = _deepCastMap(result.data);
-    return (eventData['phases'] as List?)?.length ?? 0;
+
+    final eventData = Map<String, dynamic>.from(result.data);
+    final phases = eventData['phases'] as List?;
+    return phases?.length ?? 0;
   }
-  
+
+  /// Busca o ranking completo dos jogadores para um evento específico.
   Future<List<RankingPlayerModel>> getRankingForEvent(String eventId) async {
     final result = await _callFunction('getEventRanking', {'eventId': eventId});
-     if (result.data == null) return [];
-    final List<dynamic> rankingData = _deepCastList(result.data);
-    return rankingData.map((data) => RankingPlayerModel.fromMap(data)).toList();
+    final List<dynamic> rankingData = result.data ?? [];
+    return rankingData
+        .map((data) => RankingPlayerModel.fromMap(Map<String, dynamic>.from(data)))
+        .toList();
   }
 
-  Future<HttpsCallableResult> callEnigmaFunction(String action, Map<String, dynamic> payload) {
-      final fullPayload = {'action': action, ...payload};
-      return _callFunction('handleEnigmaAction', fullPayload);
+  /// Centraliza as chamadas para a Cloud Function que gerencia as ações do enigma.
+  ///
+  /// [action] especifica a ação a ser executada (ex: 'validateCode', 'purchaseHint').
+  /// [payload] contém os dados necessários para a ação.
+  Future<HttpsCallableResult> callEnigmaFunction(
+      String action, Map<String, dynamic> payload) {
+    final fullPayload = {'action': action, ...payload};
+    return _callFunction('handleEnigmaAction', fullPayload);
   }
 
+  /// Busca os detalhes do perfil de um jogador a partir do seu ID de usuário.
   Future<Map<String, dynamic>?> getPlayerDetails(String userId) async {
     final doc = await _firestore.collection('players').doc(userId).get();
     return doc.data();
   }
 
-  Future<Map<String, dynamic>> getPlayerProgress(String playerId, String eventId) async {
+  /// Busca o progresso de um jogador em um evento específico.
+  ///
+  /// Retorna um mapa com o progresso atual. Se nenhum progresso for encontrado,
+  /// retorna um estado padrão inicial.
+  Future<Map<String, dynamic>> getPlayerProgress(
+      String playerId, String eventId) async {
     final playerDoc = await _firestore.collection('players').doc(playerId).get();
-    return playerDoc.data()?['events']?[eventId] ?? {'currentPhase': 1, 'hintsPurchased': []};
+
+    if (playerDoc.exists && playerDoc.data() != null) {
+      final playerData = playerDoc.data()!;
+      final eventProgress = playerData['events']?[eventId];
+      
+      if (eventProgress is Map<String, dynamic>) {
+        // Retorna o progresso existente, garantindo valores padrão se
+        // alguma chave estiver faltando.
+        return {
+          'currentPhase': eventProgress['currentPhase'] ?? 1,
+          'hintsPurchased': eventProgress['hintsPurchased'] ?? [],
+        };
+      }
+    }
+    
+    // Retorna o estado inicial padrão se o jogador ou o evento não tiverem registro.
+    return {'currentPhase': 1, 'hintsPurchased': []};
   }
+
+  // O método advancePlayerProgress foi removido, pois a sua lógica agora está no back-end.
 }
