@@ -11,13 +11,14 @@ class PhaseModel {
     this.enigmas = const [],
   });
 
+  // Construtor atualizado para lidar com a lista de enigmas aninhada
   factory PhaseModel.fromMap(Map<String, dynamic> map) {
     List<EnigmaModel> enigmasList = [];
     
-    // Verificação defensiva para a lista de enigmas
+    // Verifica se a chave 'enigmas' existe e se é uma lista
     if (map['enigmas'] is List) {
       final enigmasData = map['enigmas'] as List;
-      // Itera de forma segura, garantindo que cada item é um mapa válido
+      // Converte cada item da lista para um EnigmaModel de forma segura
       enigmasList = enigmasData
           .where((e) => e is Map<String, dynamic>)
           .map((e) => EnigmaModel.fromMap(e as Map<String, dynamic>))
