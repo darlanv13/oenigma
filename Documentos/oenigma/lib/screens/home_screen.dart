@@ -64,7 +64,15 @@ class _HomeScreenState extends State<HomeScreen> {
           final Map<String, dynamic>? playerData = snapshot.data![1];
 
           return RefreshIndicator(
-            onRefresh: () async => setState(() => _dataFuture = _loadData()),
+             onRefresh: () async {
+              // 1. Atualiza o estado para que o FutureBuilder comece a ouvir a nova operação de carregamento.
+              setState(() {
+                _dataFuture = _loadData();
+              });
+              // 2. Aguarda a conclusão da operação. Isso garante que o ícone de "refresh"
+              //    permaneça visível até que os dados sejam carregados, sem retornar um valor inválido.
+              await _dataFuture;
+            },
             color: primaryAmber,
             backgroundColor: cardColor,
             child: SingleChildScrollView(
