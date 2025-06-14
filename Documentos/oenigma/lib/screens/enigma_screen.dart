@@ -94,7 +94,7 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
     }
   }
 
-  Future<void> _handleAction(String action, {String? code}) async {
+ Future<void> _handleAction(String action, {String? code}) async {
     setState(() => _isLoading = true);
     try {
       final result = await _firebaseService.callEnigmaFunction(action, {
@@ -104,59 +104,62 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
         if (code != null) 'code': code,
       });
 
-      final data = result.data as Map<String, dynamic>;
+      // A conversão do resultado principal é segura.
+      final data = Map<String, dynamic>.from(result.data);
       final message = data['message'] ?? 'Ação concluída.';
       final success = data['success'] ?? false;
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(message),
-          backgroundColor: success ? Colors.green : Colors.red,
-        ),
-      );
+          backgroundColor: success ? Colors.green : Colors.red));
 
+      // --- LÓGICA DE PROGRESSÃO CORRIGIDA ---
       if (success && action == 'validateCode') {
-        final nextStep = data['nextStep'] as Map<String, dynamic>?;
+        // Verifica se 'nextStep' existe e é um mapa antes de tentar usá-lo.
+        if (data['nextStep'] != null && data['nextStep'] is Map) {
+          // Converte o mapa 'nextStep' de forma segura.
+          final nextStep = Map<String, dynamic>.from(data['nextStep']);
 
-        if (nextStep != null && nextStep['type'] == 'next_enigma') {
-          final nextEnigma = EnigmaModel.fromMap(
-            nextStep['enigmaData'] as Map<String, dynamic>,
-          );
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => EnigmaScreen(
-                event: widget.event,
-                phase: widget.phase,
-                enigma: nextEnigma,
-                onEnigmaSolved: widget.onEnigmaSolved,
-              ),
-            ),
-          );
-        } else {
-          // 'phase_complete'
-          showSuccessDialog(
-            context,
-            onOkPressed: () {
+          if (nextStep['type'] == 'next_enigma' && nextStep['enigmaData'] is Map) {
+            // Converte o mapa aninhado 'enigmaData' de forma segura.
+            final enigmaData = Map<String, dynamic>.from(nextStep['enigmaData']);
+            final nextEnigma = EnigmaModel.fromMap(enigmaData);
+
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => EnigmaScreen(
+                        event: widget.event,
+                        phase: widget.phase,
+                        enigma: nextEnigma,
+                        onEnigmaSolved: widget.onEnigmaSolved,
+                      )),
+            );
+          } else {
+            // Caso seja 'phase_complete'
+            showSuccessDialog(context, onOkPressed: () {
               Navigator.of(context).pop();
               Navigator.of(context).pop();
               widget.onEnigmaSolved();
-            },
-          );
+            });
+          }
+        } else {
+          // Fallback para o caso de 'phase_complete' onde nextStep pode não ser um mapa.
+          showSuccessDialog(context, onOkPressed: () {
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
+            widget.onEnigmaSolved();
+          });
         }
-      } else if (success && action == 'purchaseHint') {
-        _refreshState();
       } else if (!success && action == 'validateCode') {
+        _refreshState();
+      } else if (success && action == 'purchaseHint') {
         _refreshState();
       }
     } on FirebaseFunctionsException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message ?? 'Ocorreu um erro.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+          SnackBar(content: Text(e.message ?? 'Ocorreu um erro.'), backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

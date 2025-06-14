@@ -4,150 +4,193 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 const db = admin.firestore();
 
+// Define a região para todas as funções, garantindo consistência.
 const regionalFunctions = functions.region("southamerica-east1");
 
-// --- Função para buscar dados de eventos ---
+/**
+ * Busca dados de eventos. Se um eventId for fornecido, busca detalhes
+ * completos do evento, incluindo fases e enigmas.
+ *
+ * CORREÇÃO: A busca de enigmas foi corrigida removendo .orderBy("id"),
+ * que causava uma falha silenciosa e retornava uma lista vazia.
+ */
 exports.getEventData = regionalFunctions.https.onCall(async (data, context) => {
-    const eventId = data ? data.eventId : null;
+  const eventId = data ? data.eventId : null;
 
-    if (!eventId) {
-        const eventsSnapshot = await db.collection("events").get();
-        return eventsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    } else {
-        const eventDoc = await db.collection("events").doc(eventId).get();
-        if (!eventDoc.exists) {
-            throw new functions.https.HttpsError("not-found", "Evento não encontrado.");
-        }
-        const eventData = { id: eventDoc.id, ...eventDoc.data() };
-        const phasesSnapshot = await eventDoc.ref.collection("phases").orderBy("order").get();
-        eventData.phases = await Promise.all(phasesSnapshot.docs.map(async (phaseDoc) => {
-            const enigmasSnapshot = await phaseDoc.ref.collection("enigmas").orderBy("id").get();
-            const enigmas = enigmasSnapshot.docs.map((enigmaDoc) => ({ id: enigmaDoc.id, ...enigmaDoc.data() }));
-            return { id: phaseDoc.id, ...phaseDoc.data(), enigmas: enigmas };
+  if (!eventId) {
+    const eventsSnapshot = await db.collection("events").get();
+    return eventsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  } else {
+    console.log(`INICIANDO busca para o evento ID: ${eventId}`);
+    const eventDoc = await db.collection("events").doc(eventId).get();
+
+    if (!eventDoc.exists) {
+      console.error(`ERRO: Evento com ID: ${eventId} não foi encontrado.`);
+      throw new functions.https.HttpsError("not-found", "Evento não encontrado.");
+    }
+
+    const eventData = { id: eventDoc.id, ...eventDoc.data() };
+    console.log(`Dados do evento "${eventData.name}" carregados.`);
+
+    const phasesSnapshot = await eventDoc.ref.collection("phases").orderBy("order").get();
+    console.log(`Query para fases retornou ${phasesSnapshot.size} documentos.`);
+
+    const phasesList = [];
+    for (const phaseDoc of phasesSnapshot.docs) {
+      try {
+        const phaseId = phaseDoc.id;
+        const phaseData = phaseDoc.data();
+        console.log(`>> Processando Fase ID: ${phaseId}, Ordem: ${phaseData.order}`);
+
+        // CORREÇÃO: A consulta agora é direta, sem .orderBy("id"), para funcionar corretamente.
+        const enigmasSnapshot = await phaseDoc.ref.collection("enigmas").get();
+        console.log(` -> Para a fase ${phaseId}, encontrados ${enigmasSnapshot.size} enigmas.`);
+
+        const enigmas = enigmasSnapshot.docs.map((enigmaDoc) => ({
+          id: enigmaDoc.id,
+          ...enigmaDoc.data(),
         }));
-        return eventData;
+
+        phasesList.push({ id: phaseId, ...phaseData, enigmas: enigmas });
+      } catch (error) {
+        console.error(`!!! ERRO CRÍTICO ao processar a fase ${phaseDoc.id}:`, error);
+      }
     }
+
+    eventData.phases = phasesList;
+    console.log(`Processamento de fases concluído. Retornando ${phasesList.length} fases para o cliente.`);
+    return eventData;
+  }
 });
 
-// --- Função para ações do enigma (COM A LÓGICA CORRIGIDA) ---
+
+/**
+ * Lida com todas as ações do jogador relacionadas a um enigma.
+ *
+ * CORREÇÃO: A lógica de escrita foi refatorada para usar um padrão de
+ * "ler-modificar-escrever", garantindo que o progresso do jogador
+ * (dicas, fase, outros eventos) não seja apagado acidentalmente.
+ */
 exports.handleEnigmaAction = regionalFunctions.https.onCall(async (data, context) => {
-    if (!context.auth) {
-        throw new functions.https.HttpsError("unauthenticated", "Requer autenticação.");
-    }
-    const { eventId, phaseOrder, enigmaId, action, code } = data;
-    const userId = context.auth.uid;
-    const playerRef = db.collection("players").doc(userId);
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Requer autenticação.");
+  }
+  const { eventId, phaseOrder, enigmaId, action, code } = data;
+  const userId = context.auth.uid;
+  const playerRef = db.collection("players").doc(userId);
+
+  // Lê os dados atuais do jogador uma única vez para evitar múltiplas leituras.
+  const playerDoc = await playerRef.get();
+  const playerData = playerDoc.data() || {};
+  const allEventsProgress = playerData.events || {};
+  const currentEventProgress = allEventsProgress[eventId] || {};
+
+  // --- AÇÃO: Obter Status (dicas, bloqueio) ---
+  if (action === "getStatus") {
     const attemptRef = playerRef.collection("eventAttempts").doc(enigmaId);
-
-    if (action === "getStatus") {
-        const playerDoc = await playerRef.get();
-        const progress = playerDoc.data()?.events?.[eventId] || {};
-        const hintsPurchased = progress.hintsPurchased || [];
-        const attemptDoc = await attemptRef.get();
-        let cooldownUntil = null;
-        if (attemptDoc.exists && attemptDoc.data().cooldownUntil?.toDate() > new Date()) {
-            cooldownUntil = attemptDoc.data().cooldownUntil.toDate().toISOString();
-        }
-        return {
-            isHintVisible: hintsPurchased.includes(phaseOrder),
-            canBuyHint: phaseOrder <= 5 && !hintsPurchased.includes(phaseOrder),
-            isBlocked: cooldownUntil != null,
-            cooldownUntil: cooldownUntil,
-        };
+    const attemptDoc = await attemptRef.get();
+    let cooldownUntil = null;
+    if (attemptDoc.exists && attemptDoc.data().cooldownUntil?.toDate() > new Date()) {
+      cooldownUntil = attemptDoc.data().cooldownUntil.toDate().toISOString();
     }
+    return {
+      isHintVisible: (currentEventProgress.hintsPurchased || []).includes(phaseOrder),
+      canBuyHint: phaseOrder <= 5 && !(currentEventProgress.hintsPurchased || []).includes(phaseOrder),
+      isBlocked: cooldownUntil != null,
+      cooldownUntil: cooldownUntil,
+    };
+  }
 
-    if (action === "purchaseHint") {
-        if (phaseOrder > 5) {
-            throw new functions.https.HttpsError("failed-precondition", "Dicas não estão disponíveis após a fase 5.");
-        }
-        // CORREÇÃO: Usa 'update' com notação de ponto para adicionar a dica sem apagar outros dados.
-        const hintFieldPath = `events.${eventId}.hintsPurchased`;
-        await playerRef.update({
-            [hintFieldPath]: admin.firestore.FieldValue.arrayUnion(phaseOrder)
-        }).catch(async (error) => {
-            // Se o campo 'events' ou 'eventId' não existir, cria-o de forma segura.
-            if (error.code === 'not-found') {
-                await playerRef.set({ events: { [eventId]: { hintsPurchased: [phaseOrder] } } }, { merge: true });
-            } else {
-                throw error;
-            }
-        });
-        return { success: true, message: "Dica comprada!" };
+  // --- AÇÃO: Comprar Dica ---
+  if (action === "purchaseHint") {
+    if (phaseOrder > 5) {
+      throw new functions.https.HttpsError("failed-precondition", "Dicas não disponíveis para esta fase.");
     }
+    const newProgress = {
+      ...currentEventProgress,
+      hintsPurchased: admin.firestore.FieldValue.arrayUnion(phaseOrder),
+    };
+    await playerRef.set({ events: { ...allEventsProgress, [eventId]: newProgress } }, { merge: true });
+    return { success: true, message: "Dica comprada com sucesso!" };
+  }
 
-    if (action === "validateCode") {
-        if (!code) { throw new functions.https.HttpsError("invalid-argument", "Código obrigatório."); }
-        const attemptDoc = await attemptRef.get();
-        if (attemptDoc.exists && attemptDoc.data().cooldownUntil?.toDate() > new Date()) {
-            return { success: false, message: "Aguarde o fim do tempo de espera." };
-        }
-        const phaseSnapshot = await db.collection("events").doc(eventId).collection("phases").where("order", "==", phaseOrder).limit(1).get();
-        if (phaseSnapshot.empty) { throw new functions.https.HttpsError("not-found", "Fase não encontrada."); }
-        const phaseDoc = phaseSnapshot.docs[0];
-        const enigmaDoc = await phaseDoc.ref.collection("enigmas").doc(enigmaId).get();
-        if (!enigmaDoc.exists) { throw new functions.https.HttpsError("not-found", "Enigma não encontrado."); }
+  // --- AÇÃO: Validar Código ---
+  if (action === "validateCode") {
+    if (!code) throw new functions.https.HttpsError("invalid-argument", "Código obrigatório.");
 
-        const isCorrect = enigmaDoc.data().code.toUpperCase() === code.toUpperCase();
-        if (isCorrect) {
-            await attemptRef.delete().catch(() => {});
-            const enigmasSnapshot = await phaseDoc.ref.collection("enigmas").orderBy("id").get();
-            const enigmas = enigmasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const currentIndex = enigmas.findIndex(e => e.id === enigmaId);
+    const phaseSnapshot = await db.collection("events").doc(eventId).collection("phases").where("order", "==", phaseOrder).limit(1).get();
+    if (phaseSnapshot.empty) { throw new functions.https.HttpsError("not-found", "Fase não encontrada."); }
+    const phaseDoc = phaseSnapshot.docs[0];
+    const enigmaDoc = await phaseDoc.ref.collection("enigmas").doc(enigmaId).get();
+    if (!enigmaDoc.exists) { throw new functions.https.HttpsError("not-found", "Enigma não encontrado."); }
 
-            let nextStep = { type: "phase_complete" };
-            let nextEnigmaIndex = 1;
-            let nextPhaseOrder = phaseOrder + 1;
+    if (enigmaDoc.data().code.toUpperCase() === code.toUpperCase()) {
+      // Código correto: calcula a progressão
+      const enigmasSnapshot = await phaseDoc.ref.collection("enigmas").get();
+      const enigmas = enigmasSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const currentIndex = enigmas.findIndex((e) => e.id === enigmaId);
 
-            if (currentIndex < enigmas.length - 1) {
-                const nextEnigma = enigmas[currentIndex + 1];
-                nextStep = { type: "next_enigma", enigmaData: nextEnigma };
-                nextEnigmaIndex = currentIndex + 2;
-                nextPhaseOrder = phaseOrder;
-            }
+      let nextStep = { type: "phase_complete" };
+      let nextEnigmaIndex = 1;
+      let nextPhaseOrder = phaseOrder + 1;
 
-            // CORREÇÃO: Usa 'update' com notação de ponto para atualizar o progresso.
-            const progressUpdate = {};
-            progressUpdate[`events.${eventId}.currentPhase`] = nextPhaseOrder;
-            progressUpdate[`events.${eventId}.currentEnigma`] = nextEnigmaIndex;
-            await playerRef.update(progressUpdate).catch(async (error) => {
-                 if (error.code === 'not-found') {
-                    await playerRef.set({ events: { [eventId]: { currentPhase: nextPhaseOrder, currentEnigma: nextEnigmaIndex } } }, { merge: true });
-                 } else {
-                     throw error;
-                 }
-            });
+      if (currentIndex < enigmas.length - 1) {
+        nextStep = { type: "next_enigma", enigmaData: enigmas[currentIndex + 1] };
+        nextEnigmaIndex = currentIndex + 2;
+        nextPhaseOrder = phaseOrder;
+      }
 
-            return { success: true, message: "Parabéns! Código correto.", nextStep: nextStep };
-        } else {
-            const attempts = (attemptDoc.data()?.attempts || 0) + 1;
-            if (attempts >= 3) {
-                const cooldownTime = new Date(Date.now() + 10 * 60 * 1000);
-                await attemptRef.set({ attempts, cooldownUntil: admin.firestore.Timestamp.fromDate(cooldownTime) });
-                return { success: false, message: "Tentativas esgotadas. Aguarde 10 minutos." };
-            } else {
-                await attemptRef.set({ attempts }, { merge: true });
-                return { success: false, message: `Código incorreto. Você tem mais ${3 - attempts} tentativa(s).` };
-            }
-        }
+      const newProgress = {
+        ...currentEventProgress,
+        currentPhase: nextPhaseOrder,
+        currentEnigma: nextEnigmaIndex,
+      };
+      await playerRef.set({ events: { ...allEventsProgress, [eventId]: newProgress } }, { merge: true });
+      return { success: true, message: "Parabéns! Código correto.", nextStep };
+    } else {
+      // Código incorreto: lida com tentativas e bloqueio
+      const attemptRef = playerRef.collection("eventAttempts").doc(enigmaId);
+      const attemptDoc = await attemptRef.get();
+      if (attemptDoc.exists && attemptDoc.data().cooldownUntil?.toDate() > new Date()) {
+        return { success: false, message: "Aguarde o fim do tempo de espera." };
+      }
+      const attempts = (attemptDoc.data()?.attempts || 0) + 1;
+      if (attempts >= 3) {
+        const cooldownTime = new Date(Date.now() + 10 * 60 * 1000);
+        await attemptRef.set({ attempts, cooldownUntil: admin.firestore.Timestamp.fromDate(cooldownTime) });
+        return { success: false, message: "Tentativas esgotadas. Aguarde 10 minutos." };
+      } else {
+        await attemptRef.set({ attempts }, { merge: true });
+        return { success: false, message: `Código incorreto. Você tem mais ${3 - attempts} tentativa(s).` };
+      }
     }
-    throw new functions.https.HttpsError("unknown", "Ação desconhecida.");
+  }
+
+  throw new functions.https.HttpsError("unknown", "Ação desconhecida ou não implementada.");
 });
 
-// --- Função para buscar o ranking ---
+
+/**
+ * Busca o ranking de um evento específico.
+ */
 exports.getEventRanking = regionalFunctions.https.onCall(async (data, context) => {
     const { eventId } = data;
     if (!eventId) {
         throw new functions.https.HttpsError("invalid-argument", "O ID do evento é obrigatório.");
     }
+
     const phasesSnapshot = await db.collection("events").doc(eventId).collection("phases").get();
     const totalPhases = phasesSnapshot.docs.length;
     if (totalPhases === 0) return [];
+
     const playersSnapshot = await db.collection("players").get();
     let rankedPlayers = [];
+
     for (const playerDoc of playersSnapshot.docs) {
         const playerData = playerDoc.data();
         const progress = playerData.events?.[eventId];
         const phasesCompleted = progress ? (progress.currentPhase || 1) - 1 : 0;
+
         rankedPlayers.push({
             uid: playerDoc.id,
             name: playerData.name || 'Anônimo',
@@ -156,6 +199,7 @@ exports.getEventRanking = regionalFunctions.https.onCall(async (data, context) =
             totalPhases: totalPhases,
         });
     }
+
     rankedPlayers.sort((a, b) => b.phasesCompleted - a.phasesCompleted);
     return rankedPlayers.map((player, index) => ({ ...player, position: index + 1 }));
 });

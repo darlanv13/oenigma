@@ -48,7 +48,7 @@ class EventCard extends StatelessWidget {
                 alignment: Alignment.bottomLeft,
                 children: [
                   Container(
-                    height: 160, // Altura fixa para a imagem
+                    height: 180, // Altura fixa para a imagem
                     color: darkBackground,
                     child: Center(
                       child: Icon(

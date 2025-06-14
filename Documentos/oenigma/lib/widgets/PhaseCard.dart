@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../models/event_model.dart';
 import '../models/phase_model.dart';
-import '../screens/enigma_screen.dart'; // A tela do desafio!
+import '../screens/enigma_screen.dart';
 import '../utils/app_colors.dart';
 
 class PhaseCard extends StatelessWidget {
@@ -10,6 +10,7 @@ class PhaseCard extends StatelessWidget {
   final PhaseModel phase;
   final bool isLocked;
   final bool isCompleted;
+  final int currentEnigma;
   final VoidCallback onPhaseCompleted;
 
   const PhaseCard({
@@ -18,12 +19,12 @@ class PhaseCard extends StatelessWidget {
     required this.phase,
     required this.isLocked,
     required this.isCompleted,
+    required this.currentEnigma,
     required this.onPhaseCompleted,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Deixando o status mais amigável!
     String status;
     Color statusColor;
 
@@ -40,21 +41,24 @@ class PhaseCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        // Só deixa clicar se não estiver bloqueado ou já completo, beleza?
         if (!isLocked && !isCompleted) {
-          // Se tiver algum enigma, bora pra tela de desafio!
           if (phase.enigmas.isNotEmpty) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EnigmaScreen(
-                  event: event,
-                  phase: phase,
-                  enigma: phase.enigmas.first,
-                  onEnigmaSolved: onPhaseCompleted,
+            int enigmaIndex = currentEnigma - 1;
+            if (enigmaIndex >= 0 && enigmaIndex < phase.enigmas.length) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EnigmaScreen(
+                    event: event,
+                    phase: phase,
+                    enigma: phase.enigmas[enigmaIndex],
+                    onEnigmaSolved: onPhaseCompleted,
+                  ),
                 ),
-              ),
-            );
+              );
+            } else {
+              print("Erro: o índice do enigma ($enigmaIndex) é inválido.");
+            }
           }
         }
       },
@@ -95,7 +99,6 @@ class PhaseCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Se estiver bloqueado, a gente coloca um efeito legal por cima
             if (isLocked)
               Positioned.fill(
                 child: ClipRRect(
