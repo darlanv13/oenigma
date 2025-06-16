@@ -4,42 +4,48 @@ import '../utils/app_colors.dart';
 class NavButton extends StatelessWidget {
   final IconData icon;
   final String label;
-  final bool isActive;
+  final VoidCallback onTap;
 
   const NavButton({
     super.key,
     required this.icon,
     required this.label,
-    this.isActive = false,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: isActive ? primaryAmber : cardColor,
-            borderRadius: BorderRadius.circular(15),
-            border: isActive ? null : Border.all(color: Colors.grey[800]!),
-          ),
-          child: Icon(
-            icon,
-            color: isActive ? darkBackground : textColor,
-            size: 30,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12.0), // Raio para o efeito de ondulação
+        child: Padding(
+          // Espaçamento interno para aumentar a área de toque
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: primaryAmber, // Ícone sempre em âmbar
+                size: 28,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  // Texto em cinza para um visual mais suave
+                  color: secondaryTextColor,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            color: isActive ? primaryAmber : secondaryTextColor,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

@@ -26,13 +26,13 @@ class EnigmaCityApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        primaryColor: primaryAmber,
-        scaffoldBackgroundColor: darkBackground,
+        primaryColor: const Color(0xFFFFC107),
+        scaffoldBackgroundColor: const Color(0xFF121212),
         fontFamily: 'Poppins',
         appBarTheme: const AppBarTheme(
           elevation: 0,
           backgroundColor: Colors.transparent,
-          iconTheme: IconThemeData(color: textColor),
+          iconTheme: IconThemeData(color: Color(0xFFFFFFFF)),
         ),
         textTheme: const TextTheme(
           bodyLarge: TextStyle(color: textColor),

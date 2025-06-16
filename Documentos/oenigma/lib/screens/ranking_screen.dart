@@ -92,7 +92,7 @@ class _RankingScreenState extends State<RankingScreen> {
 
   Widget _buildPodium(List<RankingPlayerModel> top3) {
     return SizedBox(
-      height: 250,
+      height: 340,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: MainAxisAlignment.center,

@@ -1,23 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import '../models/enigma_model.dart';
 import '../models/event_model.dart';
 import '../models/phase_model.dart';
 import '../models/ranking_player_model.dart';
 
 class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseFunctions _functions =
-      FirebaseFunctions.instanceFor(region: 'southamerica-east1');
+  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
+    region: 'southamerica-east1',
+  );
 
-  Future<HttpsCallableResult> _callFunction(String functionName,
-      [Map<String, dynamic>? payload]) async {
+  Future<HttpsCallableResult> _callFunction(
+    String functionName, [
+    Map<String, dynamic>? payload,
+  ]) async {
     final callable = _functions.httpsCallable(functionName);
     try {
       return await callable.call<dynamic>(payload);
     } on FirebaseFunctionsException catch (e) {
       print(
-          "FirebaseFunctionsException em ${functionName}: ${e.code} - ${e.message}");
+        "FirebaseFunctionsException em ${functionName}: ${e.code} - ${e.message}",
+      );
       rethrow;
     } catch (e) {
       print("Exceção genérica em ${functionName}: $e");
@@ -65,7 +68,9 @@ class FirebaseService {
   }
 
   Future<HttpsCallableResult> callEnigmaFunction(
-      String action, Map<String, dynamic> payload) {
+    String action,
+    Map<String, dynamic> payload,
+  ) {
     final fullPayload = {'action': action, ...payload};
     return _callFunction('handleEnigmaAction', fullPayload);
   }
@@ -76,8 +81,13 @@ class FirebaseService {
   }
 
   Future<Map<String, dynamic>> getPlayerProgress(
-      String playerId, String eventId) async {
-    final playerDoc = await _firestore.collection('players').doc(playerId).get();
+    String playerId,
+    String eventId,
+  ) async {
+    final playerDoc = await _firestore
+        .collection('players')
+        .doc(playerId)
+        .get();
 
     if (playerDoc.exists && playerDoc.data() != null) {
       final playerData = playerDoc.data()!;
@@ -92,7 +102,7 @@ class FirebaseService {
         };
       }
     }
-    
+
     return {'currentPhase': 1, 'currentEnigma': 1, 'hintsPurchased': []};
   }
 }

@@ -4,7 +4,7 @@ import '../services/auth_service.dart';
 import '../services/firebase_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/event_card.dart';
-import '../widgets/nav_button.dart';
+import '../widgets/profile_action_button.dart';
 import 'profile_screen.dart';
 import 'ranking_screen.dart';
 
@@ -34,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
     ]);
   }
 
-  @override
+    @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
@@ -60,17 +60,15 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
 
+          // A lista de eventos já está disponível aqui!
           final List<EventModel> events = snapshot.data![0];
           final Map<String, dynamic>? playerData = snapshot.data![1];
 
           return RefreshIndicator(
-             onRefresh: () async {
-              // 1. Atualiza o estado para que o FutureBuilder comece a ouvir a nova operação de carregamento.
+            onRefresh: () async {
               setState(() {
                 _dataFuture = _loadData();
               });
-              // 2. Aguarda a conclusão da operação. Isso garante que o ícone de "refresh"
-              //    permaneça visível até que os dados sejam carregados, sem retornar um valor inválido.
               await _dataFuture;
             },
             color: primaryAmber,
@@ -81,10 +79,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 16),
-                  _buildProfileCard(playerData),
-                  const SizedBox(height: 24),
-                  _buildNavButtons(events),
-                  const SizedBox(height: 32),
+                  // --- CORREÇÃO AQUI: Passe 'events' como parâmetro ---
+                  _buildProfileCard(playerData, events),
+                  const SizedBox(height: 16),
                   _buildEventsSection(events),
                 ],
               ),
@@ -95,10 +92,38 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProfileCard(Map<String, dynamic>? playerData) {
+  // Substitua o seu método _buildProfileStat por este:
+  Widget _buildProfileStat(String label, String value) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 9,
+            color: secondaryTextColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileCard(Map<String, dynamic>? playerData, List<EventModel> events) {
+    // A linha abaixo foi REMOVIDA, pois não é mais necessária.
+    // final List<EventModel> events = ...
+
     final String fullName = playerData?['name'] ?? 'Jogador';
     final String firstName = fullName.split(' ').first;
-    final String cpf = playerData?['cpf'] ?? 'CPF não informado';
+    final String cpf = playerData?['cpf'] ?? 'Não informado';
     final String? photoUrl = playerData?['photoURL'];
 
     final int activeEventsCount = (playerData?['events'] as Map?)?.length ?? 0;
@@ -109,112 +134,174 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     final String playerTitle = getPlayerTitle(activeEventsCount);
+    final AuthService authService = AuthService();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [cardColor, const Color(0xFF2a2a2a)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: primaryAmber, width: 2),
-            ),
-            child: CircleAvatar(
-              radius: 30,
-              backgroundColor: darkBackground,
-              backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
-                  ? NetworkImage(photoUrl)
-                  : null,
-              child: (photoUrl == null || photoUrl.isEmpty)
-                  ? Text(
-                      firstName.isNotEmpty ? firstName[0].toUpperCase() : 'J',
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(3.0),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [primaryAmber, Colors.orangeAccent],
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 26,
+                  backgroundColor: darkBackground,
+                  backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
+                      ? NetworkImage(photoUrl)
+                      : null,
+                  child: (photoUrl == null || photoUrl.isEmpty)
+                      ? Text(
+                          firstName.isNotEmpty ? firstName[0].toUpperCase() : 'J',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        )
+                      : null,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Olá, $firstName!',
                       style: const TextStyle(
-                        fontSize: 24,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: textColor,
                       ),
-                    )
-                  : null,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Olá, $firstName!',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                          color: primaryAmber.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border:
+                              Border.all(color: primaryAmber.withOpacity(0.5))),
+                      child: Text(
+                        playerTitle.toUpperCase(),
+                        style: const TextStyle(
+                          color: primaryAmber,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 7,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'ID: $cpf',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: secondaryTextColor,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+              ),
+              ProfileActionButton(
+                icon: Icons.logout_outlined,
+                tooltip: 'Sair',
+                onTap: () async => await authService.signOut(),
+              ),
+            ],
+            
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          SizedBox(height: 9.0,),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildProfileStat('Status', playerTitle),
-              const SizedBox(height: 8),
               _buildProfileStat('Eventos Ativos', activeEventsCount.toString()),
+              Flexible(
+                  child: _buildProfileStat('ID de Jogador',
+                      cpf.substring(cpf.length - 11))),
             ],
           ),
+          const Divider(
+            height: 32,
+            thickness: 0.5,
+            color: secondaryTextColor,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              ProfileActionButton(
+                icon: Icons.person_outline,
+                tooltip: 'Perfil',
+                onTap: () => Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) => const ProfileScreen())),
+              ),
+              ProfileActionButton(
+                icon: Icons.bar_chart_outlined,
+                tooltip: 'Ranking',
+                onTap: () {
+                  // A variável 'events' agora está disponível diretamente aqui!
+                  if (events.isNotEmpty) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => RankingScreen(
+                          eventId: events.first.id,
+                          eventName: events.first.name,
+                        ),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Não há eventos para ver o ranking.'),
+                      ),
+                    );
+                  }
+                },
+              ),
+              ProfileActionButton(
+                icon: Icons.rule_folder_outlined,
+                tooltip: 'Regras',
+                onTap: () {},
+              ),
+              ProfileActionButton(
+                icon: Icons.support_agent_outlined,
+                tooltip: 'Suporte',
+                onTap: () {},
+              ),
+              ProfileActionButton(
+                icon: Icons.info_outline,
+                tooltip: 'Sobre',
+                onTap: () {},
+              ),
+            ],
+          )
         ],
       ),
     );
   }
 
-  Widget _buildProfileStat(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: secondaryTextColor,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: primaryAmber,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildEventsSection(List<EventModel> events) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const Text(
-          "Eventos",
+          "EVENTOS DISPONÍVEIS",
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: textColor,
+            color: secondaryTextColor,
+            letterSpacing: 1.5,
           ),
         ),
         const SizedBox(height: 20),
@@ -223,7 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Padding(
               padding: EdgeInsets.all(20.0),
               child: Text(
-                'Nenhum evento encontrado.',
+                'Nenhum evento encontrado no momento.',
                 style: TextStyle(color: secondaryTextColor),
               ),
             ),
@@ -233,9 +320,10 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: events.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              childAspectRatio: 0.65,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              // Ajuste na proporção para o novo design do card
+              childAspectRatio: 0.7,
             ),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -247,7 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      automaticallyImplyLeading: false,
+      automaticallyImplyLeading: true,
       title: const Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -256,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               color: textColor,
               fontWeight: FontWeight.bold,
-              fontSize: 18,
+              fontSize: 16,
               letterSpacing: 2,
             ),
           ),
@@ -265,62 +353,13 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               color: primaryAmber,
               fontWeight: FontWeight.w300,
-              fontSize: 14,
+              fontSize: 12,
               letterSpacing: 3,
             ),
           ),
         ],
       ),
       centerTitle: true,
-    );
-  }
-
-  Widget _buildNavButtons(List<EventModel> events) {
-    final AuthService authService = AuthService();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        GestureDetector(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            );
-          },
-          child: const NavButton(icon: Icons.person_outline, label: "Perfil"),
-        ),
-        GestureDetector(
-          onTap: () {
-            if (events.isNotEmpty) {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => RankingScreen(
-                    eventId: events.first.id,
-                    eventName: events.first.name,
-                  ),
-                ),
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Não há eventos para ver o ranking.'),
-                ),
-              );
-            }
-          },
-          child: const NavButton(
-            icon: Icons.bar_chart,
-            label: "Ranking",
-            isActive: true,
-          ),
-        ),
-        const NavButton(icon: Icons.rule, label: "Regras"),
-        GestureDetector(
-          onTap: () async {
-            await authService.signOut();
-          },
-          child: const NavButton(icon: Icons.logout, label: "Sair"),
-        ),
-      ],
     );
   }
 }

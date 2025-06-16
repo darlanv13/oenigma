@@ -2,6 +2,18 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>comgooglemaps</string>
+        <string>googlechromes</string>
+        <string>http</string>
+        <string>https</string>
+    </array>
+    <key>NSCameraUsageDescription</key>
+    <string>Precisamos da câmera para escanear os QR Codes dos enigmas.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Precisamos da sua localização para verificar se você está perto dos enigmas de GPS.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

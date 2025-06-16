@@ -5,6 +5,7 @@ import '../services/auth_service.dart';
 import '../services/firebase_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/PhaseCard.dart';
+import '../widgets/progress_header.dart';
 
 class EventProgressScreen extends StatefulWidget {
   final EventModel event;
@@ -25,58 +26,38 @@ class _EventProgressScreenState extends State<EventProgressScreen> {
   @override
   void initState() {
     super.initState();
-    _dataFuture = _loadEventDataWithDebug();
+    _dataFuture = _loadEventData();
   }
 
-  // NOVA FUNÇÃO COM BLOCO TRY-CATCH PARA CAPTURAR O ERRO
-  Future<void> _loadEventDataWithDebug() async {
-    try {
-      print("--- INICIANDO DEPURAÇÃO ---");
+  Future<void> _loadEventData() async {
+    final phases = await _firebaseService.getPhasesForEvent(widget.event.id);
+    if (!mounted) return;
 
-      final userId = _authService.currentUser?.uid;
-      if (userId == null) throw Exception("Usuário não autenticado.");
-      print("DEBUG: UserID obtido com sucesso: $userId");
-      
-      print("DEBUG: Passo 1 - Chamando getPhasesForEvent...");
-      final phases = await _firebaseService.getPhasesForEvent(widget.event.id);
-      print("DEBUG: Passo 1 - getPhasesForEvent CONCLUÍDO com sucesso.");
+    final userId = _authService.currentUser?.uid;
+    if (userId == null) throw Exception("Usuário não autenticado.");
 
-      if (!mounted) return;
+    final progress = await _firebaseService.getPlayerProgress(
+      userId,
+      widget.event.id,
+    );
+    if (!mounted) return;
 
-      print("DEBUG: Passo 2 - Chamando getPlayerProgress...");
-      final progress = await _firebaseService.getPlayerProgress(userId, widget.event.id);
-      print("DEBUG: Passo 2 - getPlayerProgress CONCLUÍDO com sucesso.");
-      
-      if (!mounted) return;
-
-      print("DEBUG: Passo 3 - Executando setState...");
-      setState(() {
-        _phases = phases;
-        _currentPhase = progress['currentPhase'];
-        _currentEnigma = progress['currentEnigma'];
-      });
-      print("DEBUG: Passo 3 - setState CONCLUÍDO com sucesso.");
-      print("--- DEPURAÇÃO CONCLUÍDA SEM ERROS ---");
-
-    } catch (e, stackTrace) {
-      print("\n\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-      print("!!!!!!!!!! ERRO CAPTURADO AQUI !!!!!!!!!!");
-      print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-      print("TIPO DO ERRO: ${e.runtimeType}");
-      print("MENSAGEM DE ERRO: $e");
-      print("\n--- STACK TRACE (RASTRO DO ERRO) ---");
-      print(stackTrace);
-      print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-      print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n");
-      // Relança o erro para que ele ainda apareça na tela.
-      rethrow;
-    }
+    setState(() {
+      _phases = phases;
+      _currentPhase = progress['currentPhase'];
+      _currentEnigma = progress['currentEnigma'];
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.event.name)),
+      appBar: AppBar(
+        title: Text(widget.event.name),
+        backgroundColor: darkBackground,
+        elevation: 0,
+      ),
+      backgroundColor: darkBackground,
       body: FutureBuilder<void>(
         future: _dataFuture,
         builder: (context, snapshot) {
@@ -85,28 +66,36 @@ class _EventProgressScreenState extends State<EventProgressScreen> {
               child: CircularProgressIndicator(color: primaryAmber),
             );
           }
-          // A tela de erro padrão do FutureBuilder será exibida aqui.
           if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  'Erro ao carregar dados: ${snapshot.error}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
-            );
+            return Center(child: Text('Erro: ${snapshot.error}'));
           }
           return RefreshIndicator(
-            onRefresh: () async {
-              setState(() {
-                _dataFuture = _loadEventDataWithDebug();
-              });
-            },
+            onRefresh: _loadEventData,
+            color: primaryAmber,
             child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16.0),
-              child: _buildPhasesGrid(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ProgressHeader(
+                    totalPhases: _phases.length,
+                    completedPhases: _currentPhase - 1,
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'FASES DO EVENTO',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: secondaryTextColor,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildPhasesGrid(),
+                ],
+              ),
             ),
           );
         },
@@ -115,14 +104,12 @@ class _EventProgressScreenState extends State<EventProgressScreen> {
   }
 
   Widget _buildPhasesGrid() {
-    // O restante do código não precisa de alterações.
-    // Apenas colei aqui para garantir que o arquivo fique completo.
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.8,
+        childAspectRatio: 0.85,
       ),
       itemCount: _phases.length,
       shrinkWrap: true,
@@ -138,10 +125,11 @@ class _EventProgressScreenState extends State<EventProgressScreen> {
           phase: phase,
           isLocked: isLocked,
           isCompleted: isCompleted,
+          isActive: isActive,
           currentEnigma: isActive ? _currentEnigma : 1,
           onPhaseCompleted: () {
             setState(() {
-              _dataFuture = _loadEventDataWithDebug();
+              _dataFuture = _loadEventData();
             });
           },
         );
