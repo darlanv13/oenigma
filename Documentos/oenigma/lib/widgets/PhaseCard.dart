@@ -51,7 +51,9 @@ class PhaseCard extends StatelessWidget {
                         builder: (context) => EnigmaScreen(
                           event: event,
                           phase: phase,
-                          enigma: phase.enigmas[enigmaIndex],
+                          // --- CORREÇÃO ESTÁ AQUI ---
+                          // Trocado 'enigma:' por 'initialEnigma:'
+                          initialEnigma: phase.enigmas[enigmaIndex],
                           onEnigmaSolved: onPhaseCompleted,
                         ),
                       ),
