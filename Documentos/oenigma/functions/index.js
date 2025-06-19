@@ -56,7 +56,8 @@ exports.handleEnigmaAction = regionalFunctions.https.onCall(async (data, context
   // --- AÇÃO: Obter Status (chamada ao entrar na tela do enigma) ---
   if (action === "getStatus") {
     const playerDoc = await playerRef.get();
-    const eventProgress = (playerDoc.data()?.events || {})[eventId] || {};
+    // FIX: Garante que o progresso do evento tenha uma estrutura padrão.
+    const eventProgress = { currentPhase: 1, currentEnigma: 1, ...(playerDoc.data()?.events || {})[eventId] };
     const hintsPurchased = eventProgress.hintsPurchased || [];
     const attemptRef = playerRef.collection("eventAttempts").doc(enigmaId);
     const attemptDoc = await attemptRef.get();
@@ -86,7 +87,8 @@ exports.handleEnigmaAction = regionalFunctions.https.onCall(async (data, context
     const playerDoc = await playerRef.get();
     const playerData = playerDoc.data() || {};
     const playerEvents = playerData.events || {};
-    const eventProgress = playerEvents[eventId] || {};
+    // FIX: Garante que o progresso do evento tenha uma estrutura padrão antes de ser modificado.
+    const eventProgress = { currentPhase: 1, currentEnigma: 1, ...playerEvents[eventId] };
     const hintsPurchased = eventProgress.hintsPurchased || [];
 
     if (hintsPurchased.includes(phaseOrder)) {
@@ -157,7 +159,8 @@ exports.handleEnigmaAction = regionalFunctions.https.onCall(async (data, context
         const playerDoc = await transaction.get(playerRef);
         const playerData = playerDoc.data();
         const playerEvents = playerData.events || {};
-        const eventProgress = playerEvents[eventId] || { currentPhase: 1, currentEnigma: 1 };
+        // FIX: Garante que o progresso do evento tenha uma estrutura padrão antes de ser modificado.
+        const eventProgress = { currentPhase: 1, currentEnigma: 1, ...playerEvents[eventId] };
         const phasesSnapshot = await transaction.get(eventRef.collection("phases"));
         const totalPhases = phasesSnapshot.size;
         const enigmasInPhaseSnapshot = await transaction.get(phaseDocRef.collection("enigmas").orderBy(admin.firestore.FieldPath.documentId()));
