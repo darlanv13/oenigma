@@ -28,14 +28,17 @@ class PhaseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () async {
+      //...
+      onTap: () {
+        // Sem async
         if (isActive && phase.enigmas.isNotEmpty) {
           int enigmaIndex = currentEnigma - 1;
           if (enigmaIndex < 0 || enigmaIndex >= phase.enigmas.length) {
             enigmaIndex = 0;
           }
 
-          await Navigator.push(
+          Navigator.push(
+            // Sem await
             context,
             MaterialPageRoute(
               builder: (context) => EnigmaScreen(
@@ -46,10 +49,11 @@ class PhaseCard extends StatelessWidget {
               ),
             ),
           );
-          
-          onPhaseCompleted();
+
+          // A chamada para onPhaseCompleted() foi removida daqui.
         }
       },
+      //...
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
@@ -84,9 +88,13 @@ class PhaseCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      isCompleted ? Icons.verified_user : (isActive ? Icons.explore : Icons.lock_outline),
+                      isCompleted
+                          ? Icons.verified_user
+                          : (isActive ? Icons.explore : Icons.lock_outline),
                       size: 50,
-                      color: isCompleted ? Colors.white : textColor.withOpacity(0.7),
+                      color: isCompleted
+                          ? Colors.white
+                          : textColor.withOpacity(0.7),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -110,7 +118,11 @@ class PhaseCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(18),
                       ),
                       alignment: Alignment.center,
-                      child: const Icon(Icons.lock, size: 50, color: secondaryTextColor),
+                      child: const Icon(
+                        Icons.lock,
+                        size: 50,
+                        color: secondaryTextColor,
+                      ),
                     ),
                   ),
                 ),

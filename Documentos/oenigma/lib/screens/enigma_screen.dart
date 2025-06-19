@@ -222,6 +222,8 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
         if (code != null) 'code': code,
       });
 
+      if (!mounted) return;
+
       final data = Map<String, dynamic>.from(result.data);
       final success = data['success'] ?? false;
       if (!mounted) return;
@@ -257,8 +259,11 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
             showCompletionDialog(
               context,
               onOkPressed: () {
-                Navigator.of(context).popUntil((route) => route.isFirst);
-                widget.onEnigmaSolved();
+                Navigator.of(context).pop(); // 1. Fecha o diálogo
+                Navigator.of(
+                  context,
+                ).pop(); // 2. Fecha a EnigmaScreen e volta para a tela de fases
+                widget.onEnigmaSolved(); // Atualiza a tela de fases
               },
             );
           }
