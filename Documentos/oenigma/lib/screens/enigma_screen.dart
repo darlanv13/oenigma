@@ -21,7 +21,6 @@ import '../widgets/completion_dialog.dart';
 import '../widgets/cooldown_dialog.dart';
 import '../widgets/error_dialog.dart';
 
-// Tela do Scanner
 class ScannerScreen extends StatelessWidget {
   final Function(String) onScan;
   const ScannerScreen({super.key, required this.onScan});
@@ -83,19 +82,27 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
     _resetEnigmaState();
   }
 
-  void _resetEnigmaState() {
-    _codeController.clear();
-    _isHintVisible = false;
-    _canBuyHint = false;
-    _hintData = null;
-    _distance = null;
-    _isNear = false;
-    _isBlocked = false;
+  Future<void> _resetEnigmaState() async {
     _locationSubscription?.cancel();
     _statusPollTimer?.cancel();
-    _fetchInitialStatus();
-    if (_currentEnigma.type == 'qr_code_gps') {
-      _initializeGpsListener();
+    setState(() {
+      _codeController.clear();
+      _isHintVisible = false;
+      _canBuyHint = false;
+      _hintData = null;
+      _distance = null;
+      _isNear = false;
+      _isBlocked = false;
+      _isLoading = true;
+    });
+    await _fetchInitialStatus();
+    if (mounted && _currentEnigma.type == 'qr_code_gps') {
+      await _initializeGpsListener();
+    }
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -119,9 +126,11 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
         builder: (_) => CooldownDialog(
           cooldownUntil: cooldownUntil,
           onCooldownFinished: () {
-            setState(() {
-              _isBlocked = false;
-            });
+            if (mounted) {
+              setState(() {
+                _isBlocked = false;
+              });
+            }
           },
         ),
       );
@@ -129,17 +138,14 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
   }
 
   Future<void> _fetchInitialStatus() async {
-    setState(() {
-      _isLoading = true;
-    });
     try {
       final result = await _firebaseService.callEnigmaFunction('getStatus', {
         'eventId': widget.event.id,
         'phaseOrder': widget.phase.order,
         'enigmaId': _currentEnigma.id,
       });
-      final statusData = Map<String, dynamic>.from(result.data);
       if (mounted) {
+        final statusData = Map<String, dynamic>.from(result.data);
         setState(() {
           _isHintVisible = statusData['isHintVisible'] ?? false;
           _canBuyHint = statusData['canBuyHint'] ?? false;
@@ -149,12 +155,8 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
           _handleCooldown(statusData['cooldownUntil']);
         }
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+    } catch (e) {
+      print("Erro ao buscar status: $e");
     }
   }
 
@@ -167,26 +169,16 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
         'enigmaId': _currentEnigma.id,
         if (code != null) 'code': code,
       });
-
       if (!mounted) return;
-
       final data = Map<String, dynamic>.from(result.data);
       final success = data['success'] ?? false;
-
       if (success) {
-        // ================================================================
-        // CORREÇÃO: Usar 'if / else if' para separar as ações de sucesso.
-        // Isso garante que a lógica de comprar dica não execute a lógica de validar código.
-        // ================================================================
-
         if (action == 'purchaseHint') {
-          // Ação de comprar dica: apenas atualiza a UI para mostrar a dica
           setState(() {
             _isHintVisible = true;
             _hintData = Map<String, dynamic>.from(data['hint']);
           });
         } else if (action == 'validateCode') {
-          // Ação de validar código: avança para o próximo enigma ou finaliza a fase
           final nextStep = data['nextStep'];
           if (nextStep != null && nextStep['type'] == 'next_enigma') {
             final nextEnigma = EnigmaModel.fromMap(
@@ -284,7 +276,48 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
     }
   }
 
-  // Métodos auxiliares (_saveImageFromUrl, _initializeGpsListener, etc.)
+  Future<void> _initializeGpsListener() async {
+    bool serviceEnabled = await _location.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await _location.requestService();
+      if (!serviceEnabled) return;
+    }
+    PermissionStatus permissionGranted = await _location.hasPermission();
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await _location.requestPermission();
+      if (permissionGranted != PermissionStatus.granted) return;
+    }
+    _locationSubscription = _location.onLocationChanged.listen((
+      currentLocation,
+    ) {
+      if (!mounted || _currentEnigma.location == null) return;
+      final distanceInMeters = _calculateDistance(
+        currentLocation.latitude!,
+        currentLocation.longitude!,
+        _currentEnigma.location!.latitude,
+        _currentEnigma.location!.longitude,
+      );
+      setState(() {
+        _distance = distanceInMeters;
+        _isNear = distanceInMeters <= 100;
+      });
+    });
+  }
+
+  double _calculateDistance(
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
+    var p = 0.017453292519943295;
+    var a =
+        0.5 -
+        cos((lat2 - lat1) * p) / 2 +
+        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+    return 12742 * asin(sqrt(a)) * 1000;
+  }
+
   Future<void> _saveImageFromUrl(String url) async {
     var status = await Permission.storage.request();
     if (status.isGranted) {
@@ -328,50 +361,6 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
     }
   }
 
-  Future<void> _initializeGpsListener() async {
-    bool serviceEnabled = await _location.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await _location.requestService();
-      if (!serviceEnabled) return;
-    }
-    PermissionStatus permissionGranted = await _location.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await _location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) return;
-    }
-    _locationSubscription = _location.onLocationChanged.listen((
-      LocationData currentLocation,
-    ) {
-      if (_currentEnigma.location == null) return;
-      final distanceInMeters = _calculateDistance(
-        currentLocation.latitude!,
-        currentLocation.longitude!,
-        _currentEnigma.location!.latitude,
-        _currentEnigma.location!.longitude,
-      );
-      if (mounted) {
-        setState(() {
-          _distance = distanceInMeters;
-          _isNear = distanceInMeters <= 100;
-        });
-      }
-    });
-  }
-
-  double _calculateDistance(
-    double lat1,
-    double lon1,
-    double lat2,
-    double lon2,
-  ) {
-    var p = 0.017453292519943295;
-    var a =
-        0.5 -
-        cos((lat2 - lat1) * p) / 2 +
-        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
-    return 12742 * asin(sqrt(a)) * 1000;
-  }
-
   Future<void> _launchMapsUrl(String coordinates) async {
     final Uri googleMapsUrl = Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=$coordinates',
@@ -395,222 +384,303 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Fase ${widget.phase.order}")),
-      body: _isLoading && _hintData == null
+      appBar: AppBar(
+        title: Text(
+          "Fase ${widget.phase.order} - Enigma ${widget.phase.enigmas.indexOf(_currentEnigma) + 1}",
+        ),
+        centerTitle: true,
+        backgroundColor: darkBackground,
+        elevation: 0,
+      ),
+      backgroundColor: darkBackground,
+      body: _isLoading && !_isHintVisible
           ? const Center(child: CircularProgressIndicator(color: primaryAmber))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildEnigmaContent(),
-                  const SizedBox(height: 24),
+                  _buildEnigmaCard(),
+                  const SizedBox(height: 20),
                   _buildHintSection(),
-                  const SizedBox(height: 24),
-                  if (_currentEnigma.type != 'qr_code_gps')
-                    _buildCodeInputSection(),
+                  const SizedBox(height: 20),
+                  _buildActionArea(),
                 ],
               ),
             ),
     );
   }
 
-  // Métodos de construção da UI (_buildEnigmaContent, _buildHintSection, etc.)
-  Widget _buildEnigmaContent() {
-    switch (_currentEnigma.type) {
-      case 'photo_location':
-        return _buildPhotoLocationUI();
-      case 'qr_code_gps':
-        return _buildQrCodeGpsUI();
-      case 'text':
-      default:
-        return _buildTextEnigmaUI();
-    }
-  }
-
-  Widget _buildTextEnigmaUI() =>
-      Text(_currentEnigma.instruction, style: const TextStyle(fontSize: 18));
-
-  Widget _buildPhotoLocationUI() {
-    return Column(
-      children: [
-        SizedBox(
-          height: 200,
-          width: double.infinity,
-          child:
-              (_currentEnigma.imageUrl != null &&
-                  _currentEnigma.imageUrl!.isNotEmpty)
-              ? Image.network(_currentEnigma.imageUrl!)
-              : Lottie.asset('assets/animations/no_enigma.json'),
-        ),
-        const SizedBox(height: 16),
-        Text(_currentEnigma.instruction, style: const TextStyle(fontSize: 18)),
-      ],
+  Widget _buildCard({required String title, required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: primaryAmber,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const Divider(height: 24, color: secondaryTextColor, thickness: 0.5),
+          child,
+        ],
+      ),
     );
   }
 
-  Widget _buildQrCodeGpsUI() {
-    return Column(
-      children: [
-        if (_currentEnigma.imageUrl != null &&
-            _currentEnigma.imageUrl!.isNotEmpty)
-          SizedBox(
-            height: 200,
-            width: double.infinity,
-            child: Image.network(_currentEnigma.imageUrl!),
-          )
-        else
-          SizedBox(
-            height: 200,
-            width: double.infinity,
-            child: Lottie.asset('assets/animations/no_enigma.json'),
-          ),
-        const SizedBox(height: 16),
-        Text(
-          _currentEnigma.instruction,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 18),
-        ),
-        const SizedBox(height: 24),
-        if (_distance != null)
+  Widget _buildEnigmaCard() {
+    return _buildCard(title: 'O ENIGMA', child: _buildEnigmaContent());
+  }
+
+  Widget _buildEnigmaContent() {
+    switch (_currentEnigma.type) {
+      case 'photo_location':
+      case 'text':
+        return Column(
+          children: [
+            if (_currentEnigma.imageUrl != null &&
+                _currentEnigma.imageUrl!.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(15),
+                child: Image.network(_currentEnigma.imageUrl!),
+              )
+            else if (_currentEnigma.type != 'text')
+              Lottie.asset('assets/animations/no_enigma.json', height: 150),
+            if (_currentEnigma.imageUrl != null) const SizedBox(height: 16),
+            Text(
+              _currentEnigma.instruction,
+              style: const TextStyle(
+                fontSize: 16,
+                color: textColor,
+                height: 1.5,
+              ),
+            ),
+          ],
+        );
+      case 'qr_code_gps':
+        return const SizedBox.shrink(); // Tratado na área de ação
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildActionArea() {
+    if (_currentEnigma.type == 'qr_code_gps') {
+      return _buildQrCodeGpsCard();
+    }
+    return _buildCodeInputSection();
+  }
+
+  Widget _buildQrCodeGpsCard() {
+    return _buildCard(
+      title: 'MISSÃO DE CAMPO',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (_currentEnigma.imageUrl != null &&
+              _currentEnigma.imageUrl!.isNotEmpty)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: Image.network(_currentEnigma.imageUrl!),
+            )
+          else
+            Lottie.asset('assets/animations/no_enigma.json', height: 150),
+          const SizedBox(height: 16),
           Text(
-            "Distância do alvo: ${_distance!.toStringAsFixed(0)} metros",
-            style: const TextStyle(fontSize: 16, color: secondaryTextColor),
+            _currentEnigma.instruction,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: textColor, height: 1.5),
           ),
-        const SizedBox(height: 20),
-        ElevatedButton.icon(
-          onPressed: _isNear && !_isBlocked
-              ? () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => ScannerScreen(
-                        onScan: (scannedCode) {
-                          _handleAction('validateCode', code: scannedCode);
-                        },
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: darkBackground,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: _distance == null
+                ? const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: secondaryTextColor,
+                        ),
                       ),
+                      SizedBox(width: 8),
+                      Text(
+                        "Buscando localização...",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: secondaryTextColor,
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(
+                    "Distância do alvo: ${_distance!.toStringAsFixed(0)} metros",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: secondaryTextColor,
                     ),
-                  );
-                }
-              : null,
-          icon: Icon(
-            _isBlocked ? Icons.timer_off_outlined : Icons.qr_code_scanner,
+                  ),
           ),
-          label: Text(
-            _isBlocked
-                ? 'Aguarde'
-                : (_isNear ? 'Escanear QR Code' : 'Aproxime-se do local'),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: _isNear && !_isBlocked
+                ? () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => ScannerScreen(
+                          onScan: (scannedCode) {
+                            _handleAction('validateCode', code: scannedCode);
+                          },
+                        ),
+                      ),
+                    );
+                  }
+                : null,
+            icon: Icon(
+              _isBlocked ? Icons.timer_off_outlined : Icons.qr_code_scanner,
+            ),
+            label: Text(
+              _isBlocked
+                  ? 'Aguarde'
+                  : (_isNear ? 'Escanear QR Code' : 'Aproxime-se do local'),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _isNear && !_isBlocked
+                  ? Colors.green
+                  : Colors.grey.shade800,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+              textStyle: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _isNear && !_isBlocked
-                ? Colors.green
-                : Colors.grey.shade800,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildHintSection() {
-    if (!_isHintVisible && _canBuyHint) {
-      return TextButton.icon(
-        onPressed: _isLoading ? null : () => _handleAction('purchaseHint'),
-        icon: const Icon(Icons.lightbulb, color: primaryAmber),
-        label: const Text(
-          'Comprar Dica',
-          style: TextStyle(color: primaryAmber),
-        ),
-      );
-    }
-    if (_isHintVisible && _hintData != null) {
-      final String type = _hintData!['type'];
-      final String data = _hintData!['data'];
-      Widget hintContent;
-      Widget actionButton;
-      if (type == 'photo') {
-        hintContent = ClipRRect(
-          borderRadius: BorderRadius.circular(15),
-          child: Image.network(data),
-        );
-        actionButton = ElevatedButton.icon(
-          onPressed: _isLoading ? null : () => _saveImageFromUrl(data),
-          icon: const Icon(Icons.save_alt_rounded),
-          label: const Text('Salvar na Galeria'),
-        );
-      } else if (type == 'gps') {
-        final coords = data.split(',');
-        final lat = double.tryParse(coords[0]) ?? 0.0;
-        final lng = double.tryParse(coords[1]) ?? 0.0;
-        hintContent = SizedBox(
-          height: 200,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: LatLng(lat, lng),
-                zoom: 15,
-              ),
-              markers: {
-                Marker(
-                  markerId: const MarkerId('hintLocation'),
-                  position: LatLng(lat, lng),
-                ),
-              },
-              scrollGesturesEnabled: false,
-              zoomGesturesEnabled: false,
-            ),
-          ),
-        );
-        actionButton = ElevatedButton.icon(
-          onPressed: () => _launchMapsUrl(data),
-          icon: const Icon(Icons.map_rounded),
-          label: const Text('Ver no Google Maps'),
-        );
-      } else {
-        hintContent = Text(
-          data,
-          style: const TextStyle(color: textColor, fontSize: 16),
-        );
-        actionButton = ElevatedButton.icon(
-          onPressed: () {
-            Clipboard.setData(ClipboardData(text: data));
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Dica copiada!'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          },
-          icon: const Icon(Icons.copy_rounded),
-          label: const Text('Copiar Dica'),
-        );
+    if (_isHintVisible) {
+      if (_hintData != null) {
+        return _buildCard(title: 'DICA REVELADA', child: _buildHintContent());
       }
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: primaryAmber.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: primaryAmber),
-        ),
-        child: Column(
-          children: [
-            hintContent,
-            if (actionButton is! SizedBox) const SizedBox(height: 16),
-            actionButton,
-          ],
+      return const SizedBox.shrink();
+    }
+
+    if (_canBuyHint) {
+      return Center(
+        child: TextButton.icon(
+          onPressed: _isLoading ? null : () => _handleAction('purchaseHint'),
+          icon: const Icon(Icons.lightbulb_outline, color: primaryAmber),
+          label: const Text(
+            'Comprar Dica',
+            style: TextStyle(color: primaryAmber),
+          ),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            backgroundColor: primaryAmber.withOpacity(0.1),
+          ),
         ),
       );
     }
     return const SizedBox.shrink();
   }
 
+  Widget _buildHintContent() {
+    final String type = _hintData!['type'];
+    final String data = _hintData!['data'];
+    Widget hintContent;
+    Widget actionButton;
+
+    if (type == 'photo') {
+      hintContent = ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Image.network(data),
+      );
+      actionButton = ElevatedButton.icon(
+        onPressed: _isLoading ? null : () => _saveImageFromUrl(data),
+        icon: const Icon(Icons.save_alt_rounded),
+        label: const Text('Salvar na Galeria'),
+      );
+    } else if (type == 'gps') {
+      final coords = data.split(',');
+      final lat = double.tryParse(coords[0]) ?? 0.0;
+      final lng = double.tryParse(coords[1]) ?? 0.0;
+      hintContent = SizedBox(
+        height: 200,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(15),
+          child: GoogleMap(
+            initialCameraPosition: CameraPosition(
+              target: LatLng(lat, lng),
+              zoom: 15,
+            ),
+            markers: {
+              Marker(
+                markerId: const MarkerId('hintLocation'),
+                position: LatLng(lat, lng),
+              ),
+            },
+            scrollGesturesEnabled: false,
+            zoomGesturesEnabled: false,
+          ),
+        ),
+      );
+      actionButton = ElevatedButton.icon(
+        onPressed: () => _launchMapsUrl(data),
+        icon: const Icon(Icons.map_rounded),
+        label: const Text('Ver no Google Maps'),
+      );
+    } else {
+      hintContent = Text(
+        data,
+        style: const TextStyle(color: textColor, fontSize: 16),
+      );
+      actionButton = ElevatedButton.icon(
+        onPressed: () {
+          Clipboard.setData(ClipboardData(text: data));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Dica copiada!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        },
+        icon: const Icon(Icons.copy_rounded),
+        label: const Text('Copiar Dica'),
+      );
+    }
+
+    return Column(
+      children: [
+        hintContent,
+        const SizedBox(height: 16),
+        Center(child: actionButton),
+      ],
+    );
+  }
+
   Widget _buildCodeInputSection() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
+    return _buildCard(
+      title: 'SUA RESPOSTA',
       child: Column(
         children: [
           TextField(
@@ -620,11 +690,17 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
             style: TextStyle(
               fontSize: 24,
               letterSpacing: 8,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'monospace',
               color: _isBlocked ? secondaryTextColor : textColor,
             ),
             decoration: InputDecoration(
-              hintText: 'XXX-XXX-XXX',
-              hintStyle: TextStyle(color: secondaryTextColor.withOpacity(0.5)),
+              hintText: 'CÓDIGO',
+              hintStyle: TextStyle(
+                color: secondaryTextColor.withOpacity(0.5),
+                letterSpacing: 2,
+                fontFamily: 'Poppins',
+              ),
               filled: true,
               fillColor: _isBlocked ? Colors.grey.shade800 : darkBackground,
               border: OutlineInputBorder(

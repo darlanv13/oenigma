@@ -71,7 +71,7 @@ class PhaseCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Fase ${phase.order}",
+                        "Nivel ${phase.order}",
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
