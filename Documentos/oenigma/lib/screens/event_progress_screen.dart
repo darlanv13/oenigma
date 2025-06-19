@@ -93,7 +93,7 @@ class _EventProgressScreenState extends State<EventProgressScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildPhasesGrid(),
+                  _buildPhasesList(), // Alterado de Grid para List
                 ],
               ),
             ),
@@ -103,17 +103,13 @@ class _EventProgressScreenState extends State<EventProgressScreen> {
     );
   }
 
-  Widget _buildPhasesGrid() {
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.85,
-      ),
+  // MODIFICADO: De GridView para ListView
+  Widget _buildPhasesList() {
+    return ListView.separated(
       itemCount: _phases.length,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final phase = _phases[index];
         final bool isCompleted = phase.order < _currentPhase;

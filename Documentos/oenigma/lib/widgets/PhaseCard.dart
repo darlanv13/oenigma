@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import '../models/event_model.dart';
 import '../models/phase_model.dart';
 import '../screens/enigma_screen.dart';
@@ -27,109 +26,136 @@ class PhaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      //...
-      onTap: () {
-        // Sem async
-        if (isActive && phase.enigmas.isNotEmpty) {
-          int enigmaIndex = currentEnigma - 1;
-          if (enigmaIndex < 0 || enigmaIndex >= phase.enigmas.length) {
-            enigmaIndex = 0;
-          }
+    // Define a opacidade para fases bloqueadas
+    final double opacity = isLocked ? 0.5 : 1.0;
 
-          Navigator.push(
-            // Sem await
-            context,
-            MaterialPageRoute(
-              builder: (context) => EnigmaScreen(
-                event: event,
-                phase: phase,
-                enigma: phase.enigmas[enigmaIndex],
-                onEnigmaSolved: onPhaseCompleted,
-              ),
+    return Opacity(
+      opacity: opacity,
+      child: Material(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(15),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(15),
+          onTap: isLocked || isCompleted
+              ? null // Impede o clique em fases bloqueadas
+              : () {
+                  if (phase.enigmas.isNotEmpty) {
+                    int enigmaIndex = currentEnigma - 1;
+                    if (enigmaIndex < 0 ||
+                        enigmaIndex >= phase.enigmas.length) {
+                      enigmaIndex = 0;
+                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EnigmaScreen(
+                          event: event,
+                          phase: phase,
+                          enigma: phase.enigmas[enigmaIndex],
+                          onEnigmaSolved: onPhaseCompleted,
+                        ),
+                      ),
+                    );
+                  }
+                },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            child: Row(
+              children: [
+                _buildLeftIcon(),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Fase ${phase.order}",
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      _buildStars(),
+                    ],
+                  ),
+                ),
+                if (!isLocked)
+                  const Icon(
+                    Icons.chevron_right,
+                    color: secondaryTextColor,
+                    size: 28,
+                  ),
+              ],
             ),
-          );
-
-          // A chamada para onPhaseCompleted() foi removida daqui.
-        }
-      },
-      //...
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: isCompleted
-              ? LinearGradient(
-                  colors: [Colors.blue.shade800, Colors.blue.shade600],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : const LinearGradient(
-                  colors: [cardColor, Color(0xFF2a2a2a)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-          border: isActive ? Border.all(color: primaryAmber, width: 2) : null,
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                    color: primaryAmber.withOpacity(0.5),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  ),
-                ]
-              : [],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Stack(
-            children: [
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      isCompleted
-                          ? Icons.verified_user
-                          : (isActive ? Icons.explore : Icons.lock_outline),
-                      size: 50,
-                      color: isCompleted
-                          ? Colors.white
-                          : textColor.withOpacity(0.7),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      "Fase ${phase.order}",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: isCompleted ? Colors.white : textColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (isLocked)
-                Positioned.fill(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.lock,
-                        size: 50,
-                        color: secondaryTextColor,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
           ),
         ),
       ),
+    );
+  }
+
+  // Helper para construir o ícone da esquerda
+  Widget _buildLeftIcon() {
+    IconData iconData;
+    Color backgroundColor;
+    Color iconColor = Colors.white;
+
+    if (isCompleted) {
+      iconData = Icons.check;
+      backgroundColor = primaryAmber;
+      iconColor = darkBackground;
+    } else if (isActive) {
+      iconData = Icons.explore_outlined;
+      backgroundColor = primaryAmber.withOpacity(0.2);
+      iconColor = primaryAmber;
+    } else {
+      // isLocked
+      iconData = Icons.lock;
+      backgroundColor = Colors.black.withOpacity(0.3);
+      iconColor = secondaryTextColor;
+    }
+
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        shape: BoxShape.circle,
+        border: isActive ? Border.all(color: primaryAmber, width: 1.5) : null,
+      ),
+      child: Icon(iconData, color: iconColor, size: 26),
+    );
+  }
+
+  // Helper para construir as estrelas de enigmas
+  Widget _buildStars() {
+    int totalEnigmas = phase.enigmas.length;
+    int completedEnigmas = 0;
+
+    if (isCompleted) {
+      completedEnigmas = totalEnigmas;
+    } else if (isActive) {
+      // currentEnigma é 1-based, então subtraímos 1
+      completedEnigmas = currentEnigma - 1;
+    }
+    // Para fases bloqueadas, completedEnigmas continua 0
+
+    if (totalEnigmas == 0) {
+      return const Text(
+        'Nenhum enigma nesta fase',
+        style: TextStyle(color: secondaryTextColor, fontSize: 12),
+      );
+    }
+
+    return Row(
+      children: List.generate(totalEnigmas, (index) {
+        return Icon(
+          index < completedEnigmas ? Icons.star : Icons.star_border,
+          color: primaryAmber,
+          size: 20,
+        );
+      }),
     );
   }
 }

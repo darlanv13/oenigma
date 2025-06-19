@@ -53,48 +53,41 @@ exports.handleEnigmaAction = regionalFunctions.https.onCall(async (data, context
   const playerRef = db.collection("players").doc(playerId);
   const eventRef = db.collection("events").doc(eventId);
 
-  // --- AÇÃO: Obter Status (chamada ao entrar na tela do enigma) ---
+  // Ações 'getStatus' e 'purchaseHint' permanecem as mesmas...
   if (action === "getStatus") {
+    // (código da ação getStatus aqui, sem alterações)
     const playerDoc = await playerRef.get();
-    // FIX: Garante que o progresso do evento tenha uma estrutura padrão.
     const eventProgress = { currentPhase: 1, currentEnigma: 1, ...(playerDoc.data()?.events || {})[eventId] };
     const hintsPurchased = eventProgress.hintsPurchased || [];
     const attemptRef = playerRef.collection("eventAttempts").doc(enigmaId);
     const attemptDoc = await attemptRef.get();
     let cooldownUntil = null;
     let isBlocked = false;
-
     if (attemptDoc.exists && attemptDoc.data().cooldownUntil?.toDate() > new Date()) {
       cooldownUntil = attemptDoc.data().cooldownUntil.toDate().toISOString();
       isBlocked = true;
     }
-
     return {
       isHintVisible: hintsPurchased.includes(phaseOrder),
-      // Regra de negócio: Dicas não estão disponíveis a partir da fase 4
       canBuyHint: phaseOrder < 4 && !hintsPurchased.includes(phaseOrder),
       isBlocked: isBlocked,
       cooldownUntil: cooldownUntil,
     };
   }
 
-  // --- AÇÃO: Comprar Dica ---
   if (action === "purchaseHint") {
+    // (código da ação purchaseHint aqui, sem alterações)
     if (phaseOrder >= 4) {
       throw new functions.https.HttpsError("failed-precondition", "Dicas não estão disponíveis para esta fase.");
     }
-
     const playerDoc = await playerRef.get();
     const playerData = playerDoc.data() || {};
     const playerEvents = playerData.events || {};
-    // FIX: Garante que o progresso do evento tenha uma estrutura padrão antes de ser modificado.
     const eventProgress = { currentPhase: 1, currentEnigma: 1, ...playerEvents[eventId] };
     const hintsPurchased = eventProgress.hintsPurchased || [];
-
     if (hintsPurchased.includes(phaseOrder)) {
       throw new functions.https.HttpsError("already-exists", "Você já comprou a dica para esta fase.");
     }
-
     const enigmaDoc = await eventRef.collection("phases").doc(`fase_${phaseOrder}`).collection("enigmas").doc(enigmaId).get();
     const enigmaData = enigmaDoc.data();
     if (!enigmaData || !enigmaData.hintType || !enigmaData.hintData) {
@@ -106,7 +99,6 @@ exports.handleEnigmaAction = regionalFunctions.https.onCall(async (data, context
     };
     const newPlayerEvents = { ...playerEvents, [eventId]: newProgress };
     await playerRef.update({ events: newPlayerEvents });
-
     return {
       success: true,
       message: "Dica comprada!",
@@ -114,7 +106,7 @@ exports.handleEnigmaAction = regionalFunctions.https.onCall(async (data, context
     };
   }
 
-  // --- AÇÃO: Validar Código ---
+  // --- AÇÃO: Validar Código (COM A NOVA LÓGICA DE SEGURANÇA) ---
   if (action === "validateCode") {
     const eventDoc = await eventRef.get();
     if (!eventDoc.exists || eventDoc.data().status !== "open") {
@@ -132,7 +124,6 @@ exports.handleEnigmaAction = regionalFunctions.https.onCall(async (data, context
 
     const phaseDocRef = eventRef.collection("phases").doc(`fase_${phaseOrder}`);
     const enigmaDocRef = phaseDocRef.collection("enigmas").doc(enigmaId);
-
     const enigmaDoc = await enigmaDocRef.get();
     if (!enigmaDoc.exists) throw new functions.https.HttpsError("not-found", "Enigma não encontrado.");
 
@@ -156,11 +147,18 @@ exports.handleEnigmaAction = regionalFunctions.https.onCall(async (data, context
       await db.runTransaction(async (transaction) => {
         const freshEventDoc = await transaction.get(eventRef);
         if (freshEventDoc.data().status === "closed") return;
+
         const playerDoc = await transaction.get(playerRef);
         const playerData = playerDoc.data();
         const playerEvents = playerData.events || {};
-        // FIX: Garante que o progresso do evento tenha uma estrutura padrão antes de ser modificado.
         const eventProgress = { currentPhase: 1, currentEnigma: 1, ...playerEvents[eventId] };
+
+        // ===== NOVA LÓGICA DE VALIDAÇÃO =====
+        if (phaseOrder !== eventProgress.currentPhase) {
+          throw new functions.https.HttpsError("failed-precondition", "Você está tentando resolver um enigma de uma fase que não é a sua fase atual.");
+        }
+        // ===== FIM DA NOVA LÓGICA =====
+
         const phasesSnapshot = await transaction.get(eventRef.collection("phases"));
         const totalPhases = phasesSnapshot.size;
         const enigmasInPhaseSnapshot = await transaction.get(phaseDocRef.collection("enigmas").orderBy(admin.firestore.FieldPath.documentId()));
@@ -192,7 +190,11 @@ exports.handleEnigmaAction = regionalFunctions.https.onCall(async (data, context
         transaction.update(playerRef, { events: newPlayerEvents });
       });
     } catch (error) {
-      console.error("Erro na transação:", error);
+      console.error("Erro na transação ou validação:", error);
+      // Se for o erro que adicionamos, repassa a mensagem para o app
+      if (error instanceof functions.https.HttpsError) {
+        throw error;
+      }
       throw new functions.https.HttpsError("internal", "Erro ao processar sua resposta.");
     }
 

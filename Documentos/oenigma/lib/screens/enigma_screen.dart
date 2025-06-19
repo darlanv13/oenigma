@@ -226,70 +226,115 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
 
       final data = Map<String, dynamic>.from(result.data);
       final success = data['success'] ?? false;
-      if (!mounted) return;
 
       if (success) {
         if (action == 'validateCode') {
-          // Lógica de navegação após acertar o código
           final nextStep = data['nextStep'] != null
               ? Map<String, dynamic>.from(data['nextStep'])
               : null;
+
           if (nextStep != null && nextStep['type'] == 'next_enigma') {
             final nextEnigma = EnigmaModel.fromMap(
               Map<String, dynamic>.from(nextStep['enigmaData']),
             );
-            showEnigmaSuccessDialog(
-              context,
-              onContinue: () {
-                Navigator.of(context).pop();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EnigmaScreen(
-                      event: widget.event,
-                      phase: widget.phase,
-                      enigma: nextEnigma,
-                      onEnigmaSolved: widget.onEnigmaSolved,
+
+            // ===== NOVA LÓGICA DE NAVEGAÇÃO =====
+            // 1. Mostra o diálogo e AGUARDA ele ser fechado.
+            final shouldNavigate = await showDialog<bool>(
+              context: context,
+              barrierDismissible: false,
+              builder: (dialogContext) {
+                return Dialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  backgroundColor: cardColor,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Lottie.asset(
+                          'assets/animations/check.json',
+                          height: 130,
+                          repeat: false,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Enigma Resolvido!',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            // 2. Ao pressionar, ele fecha o diálogo retornando 'true'.
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(true),
+                            child: const Text(
+                              'Próximo Desafio',
+                              style: TextStyle(fontSize: 18, color: textColor),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
               },
             );
+
+            // 3. Se o diálogo retornou 'true', navega com o context da tela, que está garantido.
+            if (shouldNavigate == true && mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EnigmaScreen(
+                    event: widget.event,
+                    phase: widget.phase,
+                    enigma: nextEnigma,
+                    onEnigmaSolved: widget.onEnigmaSolved,
+                  ),
+                ),
+              );
+            }
           } else {
+            // A lógica para o showCompletionDialog pode permanecer a mesma, pois já era mais estável.
             showCompletionDialog(
               context,
               onOkPressed: () {
-                Navigator.of(context).pop(); // 1. Fecha o diálogo
-                Navigator.of(
-                  context,
-                ).pop(); // 2. Fecha a EnigmaScreen e volta para a tela de fases
-                widget.onEnigmaSolved(); // Atualiza a tela de fases
+                Navigator.of(context).pop(); // Fecha o diálogo
+                Navigator.of(context).pop(); // Fecha a EnigmaScreen
+                widget.onEnigmaSolved();
               },
             );
           }
         } else if (action == 'purchaseHint') {
-          // Mostra a dica recebida da Cloud Function
           setState(() {
             _isHintVisible = true;
             _hintData = Map<String, dynamic>.from(data['hint']);
           });
         }
       } else {
+        if (!mounted) return;
         final message = data['message'] ?? 'Ação falhou.';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: Colors.red),
         );
       }
     } on FirebaseFunctionsException catch (e) {
-      // --- INÍCIO DA CORREÇÃO ---
-      // Adicione estas linhas para imprimir o erro detalhado no console
-      print('==== ERRO DETALHADO DA CLOUD FUNCTION ====');
-      print('Código do Erro: ${e.code}');
-      print('Mensagem do Erro: ${e.message}');
-      print('Detalhes: ${e.details}');
-      print('========================================');
-      // --- FIM DA CORREÇÃO ---
-
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.message ?? 'Ocorreu um erro desconhecido.'),
@@ -297,13 +342,7 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
         ),
       );
     } catch (e) {
-      // --- INÍCIO DA CORREÇÃO ---
-      // Adicione estas linhas para capturar outros tipos de erro
-      print('==== ERRO INESPERADO NO FLUTTER ====');
-      print('Erro: $e');
-      print('====================================');
-      // --- FIM DA CORREÇÃO ---
-
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Ocorreu um erro inesperado no aplicativo.'),

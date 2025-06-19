@@ -4,7 +4,6 @@ import '../services/auth_service.dart';
 import '../services/firebase_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/event_card.dart';
-import '../widgets/profile_action_button.dart';
 import 'profile_screen.dart';
 import 'ranking_screen.dart';
 
@@ -25,232 +24,227 @@ class _HomeScreenState extends State<HomeScreen> {
     _dataFuture = _loadData();
   }
 
+  // A função de carregamento permanece simples
   Future<List<dynamic>> _loadData() async {
     final userId = _authService.currentUser!.uid;
-    // Busca os eventos e os dados do jogador em paralelo
     return await Future.wait([
       _firebaseService.getEvents(),
       _firebaseService.getPlayerDetails(userId),
     ]);
   }
 
-    @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(),
-      body: FutureBuilder<List<dynamic>>(
-        future: _dataFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: primaryAmber),
-            );
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Erro ao carregar dados: ${snapshot.error}',
-                style: const TextStyle(color: Colors.red),
-              ),
-            );
-          }
-          if (!snapshot.hasData || snapshot.data == null) {
-            return const Center(
-              child: Text('Não foi possível carregar os dados.'),
-            );
-          }
+      backgroundColor: darkBackground,
+      body: SafeArea(
+        child: FutureBuilder<List<dynamic>>(
+          future: _dataFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(color: primaryAmber),
+              );
+            }
+            if (snapshot.hasError ||
+                !snapshot.hasData ||
+                snapshot.data!.length < 2) {
+              return Center(
+                child: Text(
+                  'Erro ao carregar dados: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              );
+            }
 
-          // A lista de eventos já está disponível aqui!
-          final List<EventModel> events = snapshot.data![0];
-          final Map<String, dynamic>? playerData = snapshot.data![1];
+            final List<EventModel> events = snapshot.data![0];
+            final Map<String, dynamic>? playerData = snapshot.data![1];
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              setState(() {
-                _dataFuture = _loadData();
-              });
-              await _dataFuture;
-            },
-            color: primaryAmber,
-            backgroundColor: cardColor,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
-                  // --- CORREÇÃO AQUI: Passe 'events' como parâmetro ---
-                  _buildProfileCard(playerData, events),
-                  const SizedBox(height: 16),
-                  _buildEventsSection(events),
+            return RefreshIndicator(
+              onRefresh: () async {
+                setState(() {
+                  _dataFuture = _loadData();
+                });
+                await _dataFuture;
+              },
+              color: primaryAmber,
+              backgroundColor: cardColor,
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: _buildFinalProfileCard(
+                        context,
+                        playerData,
+                        events,
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0),
+                      child: _buildEventsSectionHeader(),
+                    ),
+                  ),
+                  _buildEventsGrid(events),
                 ],
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
 
-  // Substitua o seu método _buildProfileStat por este:
-  Widget _buildProfileStat(String label, String value) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: textColor,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 9,
-            color: secondaryTextColor,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProfileCard(Map<String, dynamic>? playerData, List<EventModel> events) {
-    // A linha abaixo foi REMOVIDA, pois não é mais necessária.
-    // final List<EventModel> events = ...
-
+  // CARD DE PERFIL FINAL, COMPACTO E ESTILIZADO
+  Widget _buildFinalProfileCard(
+    BuildContext context,
+    Map<String, dynamic>? playerData,
+    List<EventModel> events,
+  ) {
+    final authService = AuthService();
     final String fullName = playerData?['name'] ?? 'Jogador';
     final String firstName = fullName.split(' ').first;
-    final String cpf = playerData?['cpf'] ?? 'Não informado';
     final String? photoUrl = playerData?['photoURL'];
+    final String cpf = playerData?['cpf'] ?? '0000';
 
-    final int activeEventsCount = (playerData?['events'] as Map?)?.length ?? 0;
-    String getPlayerTitle(int count) {
-      if (count >= 3) return 'Mestre dos Enigmas';
-      if (count >= 1) return 'Detetive Astuto';
-      return 'Noviço Explorador';
+    // Usando "Fases Concluídas" como a métrica por enquanto
+    int totalPhasesCompleted = 0;
+    if (playerData != null && playerData['events'] is Map) {
+      (playerData['events'] as Map).forEach((key, value) {
+        if (value is Map && value.containsKey('currentPhase')) {
+          totalPhasesCompleted += (value['currentPhase'] as int) - 1;
+        }
+      });
     }
 
-    final String playerTitle = getPlayerTitle(activeEventsCount);
-    final AuthService authService = AuthService();
-
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [cardColor, const Color(0xFF2a2a2a)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // Para manter o card compacto
         children: [
+          // --- Linha Superior: Avatar, Saudação e Menu ---
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(3.0),
-                decoration: const BoxDecoration(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [primaryAmber, Colors.orangeAccent],
-                  ),
+                  border: Border.all(color: primaryAmber, width: 1.0),
                 ),
                 child: CircleAvatar(
-                  radius: 26,
+                  radius: 28,
                   backgroundColor: darkBackground,
                   backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
                       ? NetworkImage(photoUrl)
                       : null,
                   child: (photoUrl == null || photoUrl.isEmpty)
-                      ? Text(
-                          firstName.isNotEmpty ? firstName[0].toUpperCase() : 'J',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
+                      ? const Icon(
+                          Icons.person,
+                          color: secondaryTextColor,
+                          size: 28,
                         )
                       : null,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Olá, $firstName!',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                          color: primaryAmber.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                          border:
-                              Border.all(color: primaryAmber.withOpacity(0.5))),
-                      child: Text(
-                        playerTitle.toUpperCase(),
-                        style: const TextStyle(
-                          color: primaryAmber,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 7,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'Olá, $firstName!',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              ProfileActionButton(
-                icon: Icons.logout_outlined,
-                tooltip: 'Sair',
-                onTap: () async => await authService.signOut(),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'profile') {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    );
+                  } else if (value == 'logout') {
+                    authService.signOut();
+                  }
+                },
+                icon: const Icon(
+                  Icons.settings_outlined,
+                  color: secondaryTextColor,
+                ),
+                color: cardColor,
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'profile',
+                    child: Text('Editar Perfil'),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'logout',
+                    child: Text('Sair'),
+                  ),
+                ],
               ),
             ],
-            
           ),
-          SizedBox(height: 9.0,),
+          const Divider(height: 24, thickness: 0.5, color: secondaryTextColor),
+          // --- Linha Inferior: Stats e Botões ---
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildProfileStat('Eventos Ativos', activeEventsCount.toString()),
-              Flexible(
-                  child: _buildProfileStat('ID de Jogador',
-                      cpf.substring(cpf.length - 11))),
-            ],
-          ),
-          const Divider(
-            height: 32,
-            thickness: 0.5,
-            color: secondaryTextColor,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              ProfileActionButton(
-                icon: Icons.person_outline,
-                tooltip: 'Perfil',
-                onTap: () => Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) => const ProfileScreen())),
+              // Coluna de Stats à esquerda
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Estatísticas',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: secondaryTextColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      // Stat 1: Pontuação (Fases com estrela)
+                      const Icon(Icons.star, color: primaryAmber, size: 18),
+                      const SizedBox(width: 4),
+                      Text(
+                        totalPhasesCompleted.toString(),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // Stat 2: ID do Jogador
+                      const Icon(
+                        Icons.badge_outlined,
+                        color: secondaryTextColor,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'ID: ${cpf.substring(cpf.length - 11)}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: secondaryTextColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              ProfileActionButton(
-                icon: Icons.bar_chart_outlined,
-                tooltip: 'Ranking',
-                onTap: () {
-                  // A variável 'events' agora está disponível diretamente aqui!
+              // Botão de Ranking à direita
+              TextButton.icon(
+                onPressed: () {
                   if (events.isNotEmpty) {
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -268,98 +262,64 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   }
                 },
-              ),
-              ProfileActionButton(
-                icon: Icons.rule_folder_outlined,
-                tooltip: 'Regras',
-                onTap: () {},
-              ),
-              ProfileActionButton(
-                icon: Icons.support_agent_outlined,
-                tooltip: 'Suporte',
-                onTap: () {},
-              ),
-              ProfileActionButton(
-                icon: Icons.info_outline,
-                tooltip: 'Sobre',
-                onTap: () {},
+                icon: const Icon(Icons.leaderboard_outlined, size: 20),
+                label: const Text('Ranking'),
+                style: TextButton.styleFrom(
+                  foregroundColor: textColor,
+                  backgroundColor: Colors.white.withOpacity(0.08),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildEventsSection(List<EventModel> events) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Text(
-          "EVENTOS DISPONÍVEIS",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: secondaryTextColor,
-            letterSpacing: 1.5,
+  // Demais widgets da tela (sem alteração)
+  Widget _buildEventsSectionHeader() {
+    return const Text(
+      "EVENTOS DISPONÍVEIS",
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: secondaryTextColor,
+        letterSpacing: 1.5,
+      ),
+    );
+  }
+
+  Widget _buildEventsGrid(List<EventModel> events) {
+    if (events.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(40.0),
+            child: Text(
+              'Nenhum evento encontrado no momento.',
+              style: TextStyle(color: secondaryTextColor),
+            ),
           ),
         ),
-        const SizedBox(height: 20),
-        if (events.isEmpty)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: Text(
-                'Nenhum evento encontrado no momento.',
-                style: TextStyle(color: secondaryTextColor),
-              ),
-            ),
-          )
-        else
-          GridView.builder(
-            itemCount: events.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              // Ajuste na proporção para o novo design do card
-              childAspectRatio: 0.7,
-            ),
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemBuilder: (context, index) => EventCard(event: events[index]),
-          ),
-      ],
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      automaticallyImplyLeading: true,
-      title: const Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            "ENIGMA",
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              letterSpacing: 2,
-            ),
-          ),
-          Text(
-            "CITY",
-            style: TextStyle(
-              color: primaryAmber,
-              fontWeight: FontWeight.w300,
-              fontSize: 12,
-              letterSpacing: 3,
-            ),
-          ),
-        ],
+      );
+    }
+    return SliverPadding(
+      padding: const EdgeInsets.all(16.0),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 0.7,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => EventCard(event: events[index]),
+          childCount: events.length,
+        ),
       ),
-      centerTitle: true,
     );
   }
 }
