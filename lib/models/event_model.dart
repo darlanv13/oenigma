@@ -1,16 +1,18 @@
+import 'package:oenigma/models/phase_model.dart'; // Importe o PhaseModel
+
 class EventModel {
   final String id;
   final String name;
   final String prize;
   final double price;
-  final String icon; // URL da animação Lottie
+  final String icon;
   final String startDate;
   final String location;
   final String fullDescription;
-
-  // CAMPOS ADICIONADOS PARA O STATUS DO EVENTO
   final String status;
   final String? winnerName;
+  // CAMPO ADICIONADO PARA CORRIGIR O ERRO
+  final List<PhaseModel> phases;
 
   EventModel({
     required this.id,
@@ -21,11 +23,23 @@ class EventModel {
     required this.startDate,
     required this.location,
     required this.fullDescription,
-    required this.status, // Novo campo
-    this.winnerName, // Novo campo
+    required this.status,
+    this.winnerName,
+    this.phases = const [], // Define um valor padrão
   });
 
   factory EventModel.fromMap(Map<String, dynamic> map) {
+    // Lógica para converter os dados das fases, se existirem
+    var phasesList = <PhaseModel>[];
+    if (map['phases'] is List) {
+      phasesList = (map['phases'] as List)
+          .map(
+            (phaseData) =>
+                PhaseModel.fromMap(Map<String, dynamic>.from(phaseData)),
+          )
+          .toList();
+    }
+
     return EventModel(
       id: map['id'] ?? '',
       name: map['name'] ?? 'Evento Desconhecido',
@@ -35,9 +49,9 @@ class EventModel {
       startDate: map['startDate'] ?? 'Data não definida',
       location: map['location'] ?? 'Local não definido',
       fullDescription: map['fullDescription'] ?? 'Nenhuma descrição.',
-      // Lendo os novos campos do banco de dados
       status: map['status'] ?? 'open',
       winnerName: map['winnerName'],
+      phases: phasesList, // Atribui a lista de fases convertida
     );
   }
 }

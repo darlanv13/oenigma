@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:oenigma/models/user_wallet_model.dart';
 import 'package:oenigma/screens/wallet_screen.dart';
-import 'package:oenigma/widgets/nav_button.dart';
 import '../models/event_model.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_service.dart';
@@ -17,22 +18,19 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseService _firebaseService = FirebaseService();
-  final AuthService _authService = AuthService();
-  late Future<List<dynamic>> _dataFuture;
+  late Future<Map<String, dynamic>> _dataFuture;
 
   @override
   void initState() {
     super.initState();
-    _dataFuture = _loadData();
+    _dataFuture = _firebaseService.getHomeScreenData(); // <-- CHAMADA OTIMIZADA
   }
 
-  // A função de carregamento permanece simples
-  Future<List<dynamic>> _loadData() async {
-    final userId = _authService.currentUser!.uid;
-    return await Future.wait([
-      _firebaseService.getEvents(),
-      _firebaseService.getPlayerDetails(userId),
-    ]);
+  // Função de recarregar
+  Future<void> _reloadData() async {
+    setState(() {
+      _dataFuture = _firebaseService.getHomeScreenData();
+    });
   }
 
   @override
@@ -40,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: darkBackground,
       body: SafeArea(
-        child: FutureBuilder<List<dynamic>>(
+        child: FutureBuilder<Map<String, dynamic>>(
           future: _dataFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -48,27 +46,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: CircularProgressIndicator(color: primaryAmber),
               );
             }
-            if (snapshot.hasError ||
-                !snapshot.hasData ||
-                snapshot.data!.length < 2) {
+            if (snapshot.hasError || !snapshot.hasData) {
               return Center(
-                child: Text(
-                  'Erro ao carregar dados: ${snapshot.error}',
-                  style: const TextStyle(color: Colors.red),
-                ),
+                child: Text('Erro ao carregar dados: ${snapshot.error}'),
               );
             }
 
-            final List<EventModel> events = snapshot.data![0];
-            final Map<String, dynamic>? playerData = snapshot.data![1];
+            // Desempacota os dados da resposta única
+            final allData = snapshot.data!;
+            final List<EventModel> events = (allData['events'] as List)
+                .map((e) => EventModel.fromMap(Map<String, dynamic>.from(e)))
+                .toList();
+            final UserWalletModel walletData = UserWalletModel.fromMap(
+              Map<String, dynamic>.from(allData['walletData']),
+            );
+            final List<dynamic> allPlayersRaw = allData['allPlayers'];
 
             return RefreshIndicator(
-              onRefresh: () async {
-                setState(() {
-                  _dataFuture = _loadData();
-                });
-                await _dataFuture;
-              },
+              onRefresh: _reloadData,
               color: primaryAmber,
               backgroundColor: cardColor,
               child: CustomScrollView(
@@ -78,8 +73,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.all(16.0),
                       child: _buildFinalProfileCard(
                         context,
-                        playerData,
+                        walletData,
                         events,
+                        allPlayersRaw,
                       ),
                     ),
                   ),
@@ -99,153 +95,93 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // CARD DE PERFIL FINAL, COMPACTO E ESTILIZADO
+  // Card de Perfil agora recebe os dados necessários para passar para a tela de Ranking
   Widget _buildFinalProfileCard(
     BuildContext context,
-    Map<String, dynamic>? playerData,
+    UserWalletModel wallet,
     List<EventModel> events,
+    List<dynamic> allPlayers, // Recebe a lista de todos os jogadores
   ) {
-    final authService = AuthService();
-    final String fullName = playerData?['name'] ?? 'Jogador';
-    final String firstName = fullName.split(' ').first;
-    final String? photoUrl = playerData?['photoURL'];
-    final String cpf = playerData?['cpf'] ?? '0000';
-
-    // Usando "Fases Concluídas" como a métrica por enquanto
-    int totalPhasesCompleted = 0;
-    if (playerData != null && playerData['events'] is Map) {
-      (playerData['events'] as Map).forEach((key, value) {
-        if (value is Map && value.containsKey('currentPhase')) {
-          totalPhasesCompleted += (value['currentPhase'] as int) - 1;
-        }
-      });
-    }
+    final String firstName = wallet.name.split(' ').first;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // Para manter o card compacto
         children: [
-          // --- Linha Superior: Avatar, Saudação e Menu ---
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: primaryAmber, width: 1.0),
-                ),
-                child: CircleAvatar(
-                  radius: 28,
-                  backgroundColor: darkBackground,
-                  backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
-                      ? NetworkImage(photoUrl)
-                      : null,
-                  child: (photoUrl == null || photoUrl.isEmpty)
-                      ? const Icon(
-                          Icons.person,
-                          color: secondaryTextColor,
-                          size: 28,
-                        )
-                      : null,
-                ),
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: darkBackground,
+                backgroundImage:
+                    (wallet.photoURL != null && wallet.photoURL!.isNotEmpty)
+                    ? NetworkImage(wallet.photoURL!)
+                    : null,
+                child: (wallet.photoURL == null || wallet.photoURL!.isEmpty)
+                    ? const Icon(
+                        Icons.person_outline,
+                        color: secondaryTextColor,
+                        size: 28,
+                      )
+                    : null,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
-                child: Text(
-                  'Olá, $firstName!',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Olá, $firstName!',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Ranking: #${wallet.lastEventRank ?? '-'}',
+                      style: const TextStyle(
+                        color: secondaryTextColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == 'profile') {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                    );
-                  } else if (value == 'logout') {
-                    authService.signOut();
-                  }
-                },
-                icon: const Icon(
-                  Icons.settings_outlined,
-                  color: secondaryTextColor,
-                ),
-                color: cardColor,
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
-                    value: 'profile',
-                    child: Text('Editar Perfil'),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text(
+                    'Saldo',
+                    style: TextStyle(color: secondaryTextColor, fontSize: 12),
                   ),
-                  const PopupMenuItem<String>(
-                    value: 'logout',
-                    child: Text('Sair'),
+                  const SizedBox(height: 4),
+                  Text(
+                    'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
+                    style: const TextStyle(
+                      color: primaryAmber,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
             ],
           ),
-          const Divider(height: 24, thickness: 0.5, color: secondaryTextColor),
-          // --- Linha Inferior: Stats e Botões ---
+          const Divider(height: 32, thickness: 0.5, color: secondaryTextColor),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // Coluna de Stats à esquerda
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Estatísticas',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: secondaryTextColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      // Stat 1: Pontuação (Fases com estrela)
-                      const Icon(Icons.star, color: primaryAmber, size: 18),
-                      const SizedBox(width: 4),
-                      Text(
-                        totalPhasesCompleted.toString(),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      // Stat 2: ID do Jogador
-                      const Icon(
-                        Icons.badge_outlined,
-                        color: secondaryTextColor,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'ID: ${cpf.substring(cpf.length - 11)}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: secondaryTextColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-
-              NavButton(
+              _buildActionButton(
+                context: context,
                 icon: Icons.account_balance_wallet_outlined,
                 label: 'Carteira',
                 onTap: () {
@@ -256,39 +192,57 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
-              // Botão de Ranking à direita
-              TextButton.icon(
-                onPressed: () {
-                  if (events.isNotEmpty) {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => RankingScreen(
-                          eventId: events.first.id,
-                          eventName: events.first.name,
-                        ),
+              _buildActionButton(
+                context: context,
+                icon: Icons.leaderboard_outlined,
+                label: 'Ranking',
+                onTap: () {
+                  // Navega para o Ranking passando a lista de eventos e jogadores
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => RankingScreen(
+                        availableEvents: events
+                            .where((e) => e.status != 'closed')
+                            .toList(),
+                        allPlayers: allPlayers,
                       ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Não há eventos para ver o ranking.'),
-                      ),
-                    );
-                  }
+                    ),
+                  );
                 },
-                icon: const Icon(Icons.leaderboard_outlined, size: 20),
-                label: const Text('Ranking'),
-                style: TextButton.styleFrom(
-                  foregroundColor: textColor,
-                  backgroundColor: Colors.white.withOpacity(0.08),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+              ),
+              _buildActionButton(
+                context: context,
+                icon: Icons.settings_outlined,
+                label: 'Perfil',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                  );
+                },
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  // WIDGET HELPER PARA OS BOTÕES DE AÇÃO
+  Widget _buildActionButton({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 20),
+      label: Text(label),
+      style: TextButton.styleFrom(
+        foregroundColor: textColor,
+        backgroundColor: Colors.white.withOpacity(0.08),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
     );
   }

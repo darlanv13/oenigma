@@ -29,16 +29,16 @@ class FirebaseService {
     }
   }
 
-  Future<List<EventModel>> getEvents() async {
-    final result = await _callFunction('getEventData');
-    final List<dynamic> eventsData = result.data ?? [];
-    return eventsData.map((data) {
-      final eventMap = Map<String, dynamic>.from(data);
-      return EventModel.fromMap(eventMap);
-    }).toList();
+  // NOVA FUNÇÃO OTIMIZADA E CENTRALIZADA
+  Future<Map<String, dynamic>> getHomeScreenData() async {
+    final result = await _callFunction('getHomeScreenData');
+    return Map<String, dynamic>.from(result.data);
   }
 
+  // --- FUNÇÕES MANTIDAS PARA OUTRAS TELAS ---
+
   Future<List<PhaseModel>> getPhasesForEvent(String eventId) async {
+    // Esta função ainda é usada na tela de progresso do evento
     final result = await _callFunction('getEventData', {'eventId': eventId});
     if (result.data == null) {
       return [];
@@ -59,26 +59,29 @@ class FirebaseService {
     return phases?.length ?? 0;
   }
 
-  Future<List<RankingPlayerModel>> getRankingForEvent(String eventId) async {
-    final result = await _callFunction('getEventRanking', {'eventId': eventId});
-    final List<dynamic> rankingData = result.data ?? [];
-    return rankingData.map((data) {
-      final rankingMap = Map<String, dynamic>.from(data);
-      return RankingPlayerModel.fromMap(rankingMap);
-    }).toList();
+  Future<Map<String, dynamic>?> getPlayerDetails(String userId) async {
+    // Usado na tela de Perfil
+    final doc = await _firestore.collection('players').doc(userId).get();
+    return doc.data();
   }
 
+  Future<UserWalletModel> getUserWalletData() async {
+    // Usado na tela de Carteira
+    final result = await _callFunction('getUserWalletData');
+    if (result.data == null) {
+      throw Exception("Não foi possível carregar os dados da carteira.");
+    }
+    final walletData = Map<String, dynamic>.from(result.data);
+    return UserWalletModel.fromMap(walletData);
+  }
+
+  // --- FUNÇÕES DE GAMEPLAY (permanecem inalteradas) ---
   Future<HttpsCallableResult> callEnigmaFunction(
     String action,
     Map<String, dynamic> payload,
   ) {
     final fullPayload = {'action': action, ...payload};
     return _callFunction('handleEnigmaAction', fullPayload);
-  }
-
-  Future<Map<String, dynamic>?> getPlayerDetails(String userId) async {
-    final doc = await _firestore.collection('players').doc(userId).get();
-    return doc.data();
   }
 
   Future<Map<String, dynamic>> getPlayerProgress(
@@ -105,17 +108,5 @@ class FirebaseService {
     }
 
     return {'currentPhase': 1, 'currentEnigma': 1, 'hintsPurchased': []};
-  }
-
-  /// Busca os dados da carteira do utilizador autenticado.
-  Future<UserWalletModel> getUserWalletData() async {
-    // Chama a Cloud Function 'getUserWalletData' que está no backend.
-    final result = await _callFunction('getUserWalletData');
-    if (result.data == null) {
-      throw Exception("Não foi possível carregar os dados da carteira.");
-    }
-    // Converte a resposta num mapa e depois usa o modelo para criar um objeto.
-    final walletData = Map<String, dynamic>.from(result.data);
-    return UserWalletModel.fromMap(walletData);
   }
 }
