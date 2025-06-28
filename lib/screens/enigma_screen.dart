@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart' hide Marker;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:location/location.dart';
+import 'package:oenigma/models/user_wallet_model.dart';
 import 'package:oenigma/widgets/dialogs/completion_dialog.dart';
 import 'package:oenigma/widgets/dialogs/cooldown_dialog.dart';
 import 'package:permission_handler/permission_handler.dart'
@@ -20,7 +21,7 @@ import '../models/phase_model.dart';
 import '../services/firebase_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/dialogs/error_dialog.dart';
-import 'wallet_screen.dart'; // Importa a tela da carteira
+import 'wallet_screen.dart';
 
 // --- TELA DE SCANNER (sem alterações) ---
 class ScannerScreen extends StatelessWidget {
@@ -44,7 +45,6 @@ class ScannerScreen extends StatelessWidget {
   }
 }
 
-// --- TELA DE ENIGMA (com alterações) ---
 class EnigmaScreen extends StatefulWidget {
   final EventModel event;
   final PhaseModel phase;
@@ -120,9 +120,7 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
   void _handleCooldown(String cooldownUntilStr) {
     final cooldownUntil = DateTime.parse(cooldownUntilStr);
     if (cooldownUntil.isAfter(DateTime.now())) {
-      setState(() {
-        _isBlocked = true;
-      });
+      setState(() => _isBlocked = true);
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -130,9 +128,7 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
           cooldownUntil: cooldownUntil,
           onCooldownFinished: () {
             if (mounted) {
-              setState(() {
-                _isBlocked = false;
-              });
+              setState(() => _isBlocked = false);
             }
           },
         ),
@@ -163,11 +159,11 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
     }
   }
 
-  // --- NOVA FUNÇÃO PARA EXIBIR O DIALOG DE SALDO INSUFICIENTE ---
+  // --- FUNÇÃO CORRIGIDA ---
   void _showInsufficientFundsDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: cardColor,
         title: const Text(
           'Saldo Insuficiente',
@@ -178,19 +174,49 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text(
               'Não',
               style: TextStyle(color: secondaryTextColor),
             ),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Fecha o dialog
-              Navigator.of(context).push(
-                // Navega para a Carteira
-                MaterialPageRoute(builder: (context) => const WalletScreen()),
-              );
+            onPressed: () async {
+              // Pop o dialog primeiro para dar feedback visual ao usuário
+              Navigator.of(dialogContext).pop();
+
+              // Mostra um indicador de carregamento na tela principal
+              setState(() => _isLoading = true);
+
+              try {
+                // Await para buscar os dados ANTES de navegar
+                final UserWalletModel walletData = await _firebaseService
+                    .getUserWalletData();
+
+                // Verifica se a tela ainda está montada ANTES de usar o context
+                if (!mounted) return;
+
+                // Navega para a WalletScreen com os dados
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => WalletScreen(wallet: walletData),
+                  ),
+                );
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Erro ao carregar dados da carteira."),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              } finally {
+                // Garante que o indicador de carregamento seja removido
+                if (mounted) {
+                  setState(() => _isLoading = false);
+                }
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: primaryAmber),
             child: const Text(
@@ -203,7 +229,6 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
     );
   }
 
-  // --- NOVO DIÁLOGO DE CONFIRMAÇÃO ---
   Future<bool?> _showPurchaseConfirmationDialog(int cost) {
     return showDialog<bool>(
       context: context,
@@ -218,16 +243,14 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.of(context).pop(false), // Utilizador cancela
+            onPressed: () => Navigator.of(context).pop(false),
             child: const Text(
               'CANCELAR',
               style: TextStyle(color: secondaryTextColor),
             ),
           ),
           ElevatedButton(
-            onPressed: () =>
-                Navigator.of(context).pop(true), // Utilizador confirma
+            onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: primaryAmber),
             child: const Text(
               'SIM, COMPRAR',
@@ -239,7 +262,6 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
     );
   }
 
-  // --- MÉTODO handleAction ATUALIZADO PARA TRATAR O NOVO ERRO ---
   Future<void> _handleAction(String action, {String? code}) async {
     setState(() => _isLoading = true);
     try {
@@ -319,8 +341,8 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
             );
             setState(() {
               _currentEnigma = nextEnigma;
-              _resetEnigmaState();
             });
+            await _resetEnigmaState();
           } else {
             showCompletionDialog(
               context,

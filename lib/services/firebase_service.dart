@@ -1,9 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
-import '../models/event_model.dart';
 import '../models/phase_model.dart';
-import '../models/ranking_player_model.dart';
 
 class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

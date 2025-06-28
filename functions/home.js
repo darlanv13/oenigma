@@ -68,7 +68,8 @@ exports.getHomeScreenData = onCall(async (request) => {
         // 4. Retorna um único objeto consolidado
         return {
             events: allEvents,
-            allPlayers: allPlayers, // Incluímos todos os jogadores para passar para a tela de Ranking
+            allPlayers: allPlayers,
+            playerData: playerData, // Incluímos todos os jogadores para passar para a tela de Ranking
             walletData: {
                 uid: userId,
                 name: playerData.name,

@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:oenigma/models/ranking_player_model.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
+import 'package:oenigma/screens/profile_screen.dart';
+import 'package:oenigma/screens/ranking_screen.dart';
 import 'package:oenigma/screens/wallet_screen.dart';
 import '../models/event_model.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/event_card.dart';
-import 'profile_screen.dart';
-import 'ranking_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,15 +19,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseService _firebaseService = FirebaseService();
+  final AuthService _authService = AuthService();
   late Future<Map<String, dynamic>> _dataFuture;
 
   @override
   void initState() {
     super.initState();
-    _dataFuture = _firebaseService.getHomeScreenData(); // <-- CHAMADA OTIMIZADA
+    _dataFuture = _firebaseService.getHomeScreenData();
   }
 
-  // Função de recarregar
   Future<void> _reloadData() async {
     setState(() {
       _dataFuture = _firebaseService.getHomeScreenData();
@@ -48,11 +49,29 @@ class _HomeScreenState extends State<HomeScreen> {
             }
             if (snapshot.hasError || !snapshot.hasData) {
               return Center(
-                child: Text('Erro ao carregar dados: ${snapshot.error}'),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Erro ao carregar dados.',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '${snapshot.error}',
+                      style: const TextStyle(color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _reloadData,
+                      child: const Text("Tentar Novamente"),
+                    ),
+                  ],
+                ),
               );
             }
 
-            // Desempacota os dados da resposta única
             final allData = snapshot.data!;
             final List<EventModel> events = (allData['events'] as List)
                 .map((e) => EventModel.fromMap(Map<String, dynamic>.from(e)))
@@ -60,7 +79,12 @@ class _HomeScreenState extends State<HomeScreen> {
             final UserWalletModel walletData = UserWalletModel.fromMap(
               Map<String, dynamic>.from(allData['walletData']),
             );
-            final List<dynamic> allPlayersRaw = allData['allPlayers'];
+            // Agora 'playerData' será preenchido corretamente
+            final Map<String, dynamic> playerData =
+                allData['playerData'] != null
+                ? Map<String, dynamic>.from(allData['playerData'])
+                : {};
+            final List<dynamic> allPlayers = allData['allPlayers'] ?? [];
 
             return RefreshIndicator(
               onRefresh: _reloadData,
@@ -73,9 +97,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.all(16.0),
                       child: _buildFinalProfileCard(
                         context,
+                        playerData,
                         walletData,
                         events,
-                        allPlayersRaw,
+                        allPlayers,
                       ),
                     ),
                   ),
@@ -95,12 +120,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Card de Perfil agora recebe os dados necessários para passar para a tela de Ranking
   Widget _buildFinalProfileCard(
     BuildContext context,
+    Map<String, dynamic> playerData,
     UserWalletModel wallet,
     List<EventModel> events,
-    List<dynamic> allPlayers, // Recebe a lista de todos os jogadores
+    List<dynamic> allPlayers,
   ) {
     final String firstName = wallet.name.split(' ').first;
 
@@ -187,7 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const WalletScreen(),
+                      builder: (context) => WalletScreen(wallet: wallet),
                     ),
                   );
                 },
@@ -197,7 +222,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: Icons.leaderboard_outlined,
                 label: 'Ranking',
                 onTap: () {
-                  // Navega para o Ranking passando a lista de eventos e jogadores
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => RankingScreen(
@@ -216,7 +240,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 label: 'Perfil',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => ProfileScreen(
+                        playerData: playerData,
+                        walletData: wallet,
+                      ),
+                    ),
                   );
                 },
               ),
@@ -227,7 +256,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // WIDGET HELPER PARA OS BOTÕES DE AÇÃO
   Widget _buildActionButton({
     required BuildContext context,
     required IconData icon,
@@ -247,7 +275,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Demais widgets da tela (sem alteração)
   Widget _buildEventsSectionHeader() {
     return const Text(
       "EVENTOS DISPONÍVEIS",

@@ -1,32 +1,16 @@
 import 'package:flutter/material.dart';
 import '../models/user_wallet_model.dart';
-import '../services/firebase_service.dart';
 import '../utils/app_colors.dart';
 
-class WalletScreen extends StatefulWidget {
-  const WalletScreen({super.key});
+// 1. Transformado de StatefulWidget para StatelessWidget
+class WalletScreen extends StatelessWidget {
+  // 2. Recebe o modelo de dados já carregado
+  final UserWalletModel wallet;
 
-  @override
-  State<WalletScreen> createState() => _WalletScreenState();
-}
+  const WalletScreen({super.key, required this.wallet});
 
-class _WalletScreenState extends State<WalletScreen> {
-  final FirebaseService _firebaseService = FirebaseService();
-  late Future<UserWalletModel> _walletFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadWalletData();
-  }
-
-  void _loadWalletData() {
-    setState(() {
-      _walletFuture = _firebaseService.getUserWalletData();
-    });
-  }
-
-  void _showPurchaseDialog() {
+  // Funções de dialog agora recebem o BuildContext
+  void _showPurchaseDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -51,7 +35,7 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  void _showWithdrawDialog() {
+  void _showWithdrawDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -80,57 +64,32 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Minha Carteira'), centerTitle: true),
-      body: FutureBuilder<UserWalletModel>(
-        future: _walletFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: primaryAmber),
-            );
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Erro ao carregar dados da carteira: ${snapshot.error}',
-                style: const TextStyle(color: Colors.red),
-              ),
-            );
-          }
-          if (!snapshot.hasData) {
-            return const Center(child: Text('Nenhum dado encontrado.'));
-          }
-
-          final wallet = snapshot.data!;
-
-          return RefreshIndicator(
-            onRefresh: () async => _loadWalletData(),
-            color: primaryAmber,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _buildProfileHeader(wallet),
-                const SizedBox(height: 24),
-                _buildBalanceCard(wallet.balance),
-                const SizedBox(height: 24),
-                _buildSectionTitle('ADICIONAR SALDO'),
-                const SizedBox(height: 12),
-                _buildCreditOptions(),
-                const SizedBox(height: 24),
-                _buildSectionTitle('ÚLTIMO PRÉMIO'),
-                const SizedBox(height: 12),
-                _buildPrizesCard(wallet.lastWonEventName),
-                const SizedBox(height: 24),
-                _buildSectionTitle('ESTATÍSTICAS'),
-                const SizedBox(height: 12),
-                _buildStatsCard(wallet.lastEventRank, wallet.lastEventName),
-              ],
-            ),
-          );
-        },
+      // 3. O FutureBuilder e o RefreshIndicator foram removidos.
+      // A tela agora é construída instantaneamente com os dados recebidos.
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildProfileHeader(wallet),
+          const SizedBox(height: 24),
+          _buildBalanceCard(context, wallet.balance),
+          const SizedBox(height: 24),
+          _buildSectionTitle('ADICIONAR SALDO'),
+          const SizedBox(height: 12),
+          _buildCreditOptions(context),
+          const SizedBox(height: 24),
+          _buildSectionTitle('ÚLTIMO PRÉMIO'),
+          const SizedBox(height: 12),
+          _buildPrizesCard(wallet.lastWonEventName),
+          const SizedBox(height: 24),
+          _buildSectionTitle('ESTATÍSTICAS'),
+          const SizedBox(height: 12),
+          _buildStatsCard(wallet.lastEventRank, wallet.lastEventName),
+        ],
       ),
     );
   }
 
+  // Os widgets de construção permanecem os mesmos, recebendo os dados diretamente do objeto 'wallet'.
   Widget _buildProfileHeader(UserWalletModel wallet) {
     return Row(
       children: [
@@ -170,7 +129,7 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildBalanceCard(double balance) {
+  Widget _buildBalanceCard(BuildContext context, double balance) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -199,7 +158,7 @@ class _WalletScreenState extends State<WalletScreen> {
             ],
           ),
           ElevatedButton.icon(
-            onPressed: _showWithdrawDialog,
+            onPressed: () => _showWithdrawDialog(context),
             icon: const Icon(Icons.arrow_circle_up_rounded),
             label: const Text('Sacar'),
             style: ElevatedButton.styleFrom(
@@ -227,7 +186,7 @@ class _WalletScreenState extends State<WalletScreen> {
     );
   }
 
-  Widget _buildCreditOptions() {
+  Widget _buildCreditOptions(BuildContext context) {
     final options = [5, 10, 15, 20];
     return GridView.builder(
       shrinkWrap: true,
@@ -244,7 +203,7 @@ class _WalletScreenState extends State<WalletScreen> {
           color: cardColor,
           borderRadius: BorderRadius.circular(15),
           child: InkWell(
-            onTap: _showPurchaseDialog,
+            onTap: () => _showPurchaseDialog(context),
             borderRadius: BorderRadius.circular(15),
             child: Center(
               child: Text(

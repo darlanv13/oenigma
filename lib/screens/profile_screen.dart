@@ -3,11 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
 import '../services/auth_service.dart';
-import '../services/firebase_service.dart';
 import '../utils/app_colors.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  // A tela recebe os dados pré-carregados
+  final Map<String, dynamic> playerData;
+  final UserWalletModel walletData;
+
+  const ProfileScreen({
+    super.key,
+    required this.playerData,
+    required this.walletData,
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -15,42 +22,29 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _authService = AuthService();
-  final _firebaseService = FirebaseService();
   final _formKey = GlobalKey<FormState>();
 
   final _phoneController = TextEditingController();
   final _birthDateController = TextEditingController();
 
-  // Futuro unificado para carregar todos os dados de uma vez
-  late Future<Map<String, dynamic>> _dataFuture;
-
-  File? _selectedImage;
   bool _isLoading = false;
+  File? _selectedImage;
+  String? _networkImageURL;
 
   @override
   void initState() {
     super.initState();
-    _dataFuture = _loadUserData();
+    // Popula os campos com os dados recebidos
+    _phoneController.text = widget.playerData['phone'] ?? '';
+    _birthDateController.text = widget.playerData['birthDate'] ?? '';
+    _networkImageURL = widget.playerData['photoURL'];
   }
 
-  // Lógica de carregamento unificada
-  Future<Map<String, dynamic>> _loadUserData() async {
-    final userId = _authService.currentUser!.uid;
-    // Usamos Future.wait para carregar dados do jogador e da carteira em paralelo
-    final results = await Future.wait([
-      _firebaseService.getPlayerDetails(userId),
-      _firebaseService.getUserWalletData(),
-    ]);
-
-    final playerData = results[0] as Map<String, dynamic>?;
-    final walletData = results[1] as UserWalletModel;
-
-    if (playerData != null) {
-      _phoneController.text = playerData['phone'] ?? '';
-      _birthDateController.text = playerData['birthDate'] ?? '';
-    }
-
-    return {'playerData': playerData, 'walletData': walletData};
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _birthDateController.dispose();
+    super.dispose();
   }
 
   Future<void> _pickImage() async {
@@ -58,7 +52,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       source: ImageSource.gallery,
     );
     if (pickedFile != null) {
-      setState(() => _selectedImage = File(pickedFile.path));
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+        _networkImageURL = null;
+      });
     }
   }
 
@@ -84,18 +81,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
         if (error == null) {
-          // Recarrega os dados para mostrar a nova foto
-          setState(() {
-            _dataFuture = _loadUserData();
-            _selectedImage = null; // Limpa a imagem selecionada
-          });
+          Navigator.of(context).pop();
         }
       }
       setState(() => _isLoading = false);
     }
   }
 
-  // Nova função para redefinir senha
   Future<void> _resetPassword(String email) async {
     final error = await _authService.sendPasswordResetEmail(email);
     if (mounted) {
@@ -111,56 +103,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   @override
-  void dispose() {
-    _phoneController.dispose();
-    _birthDateController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Meu Perfil')),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _dataFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: primaryAmber),
-            );
-          }
-          if (snapshot.hasError || !snapshot.hasData) {
-            return Center(
-              child: Text("Erro ao carregar dados: ${snapshot.error}"),
-            );
-          }
-
-          final UserWalletModel wallet = snapshot.data!['walletData'];
-          final Map<String, dynamic>? playerData = snapshot.data!['playerData'];
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildProfileHeader(wallet),
-                const SizedBox(height: 24),
-                _buildStatsSection(wallet),
-                const SizedBox(height: 24),
-                _buildSectionHeader("DADOS PESSOAIS"),
-                _buildEditableInfoCard(playerData),
-                const SizedBox(height: 24),
-                _buildSectionHeader("CONTA"),
-                _buildAccountActions(wallet.email),
-              ],
-            ),
-          );
-        },
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildProfileHeader(widget.walletData),
+            const SizedBox(height: 24),
+            _buildSectionHeader("ESTATÍSTICAS"), // <- Cabeçalho da seção
+            _buildStatsSection(
+              widget.walletData,
+            ), // <- SEÇÃO DE DASHBOARD REINSERIDA
+            const SizedBox(height: 24),
+            _buildSectionHeader("DADOS PESSOAIS"),
+            _buildEditableInfoCard(widget.playerData),
+            const SizedBox(height: 24),
+            _buildSectionHeader("CONTA"),
+            _buildAccountActions(widget.walletData.email),
+          ],
+        ),
       ),
     );
   }
 
-  // --- WIDGETS REFEITOS E NOVOS ---
+  // --- WIDGETS DE CONSTRUÇÃO ---
 
   Widget _buildSectionHeader(String title) {
     return Padding(
@@ -188,11 +157,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               backgroundColor: cardColor,
               backgroundImage: _selectedImage != null
                   ? FileImage(_selectedImage!)
-                  : (wallet.photoURL != null
+                  : (wallet.photoURL != null && wallet.photoURL!.isNotEmpty
                             ? NetworkImage(wallet.photoURL!)
                             : null)
                         as ImageProvider?,
-              child: (_selectedImage == null && wallet.photoURL == null)
+              child:
+                  (_selectedImage == null &&
+                      (wallet.photoURL == null || wallet.photoURL!.isEmpty))
                   ? const Icon(
                       Icons.person,
                       size: 50,
@@ -228,6 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // WIDGET DO DASHBOARD / STATS
   Widget _buildStatsSection(UserWalletModel wallet) {
     return GridView.count(
       crossAxisCount: 3,
@@ -282,18 +254,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               fontWeight: FontWeight.bold,
               color: textColor,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: const TextStyle(fontSize: 12, color: secondaryTextColor),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEditableInfoCard(Map<String, dynamic>? playerData) {
+  Widget _buildEditableInfoCard(Map<String, dynamic> playerData) {
     return Card(
       color: cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -304,12 +278,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             children: [
               _buildInfoRow(
-                Icons.badge_outlined,
                 'Nome Completo',
-                playerData?['name'] ?? '',
+                playerData['name'] ?? '',
+                Icons.badge_outlined,
               ),
               const Divider(height: 32),
-              _buildInfoRow(Icons.credit_card, 'CPF', playerData?['cpf'] ?? ''),
+              _buildInfoRow(
+                'CPF',
+                playerData['cpf'] ?? '',
+                Icons.credit_card_outlined,
+              ),
               const Divider(height: 32),
               _buildTextFormField(
                 controller: _phoneController,
@@ -327,13 +305,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: _isLoading ? null : _saveProfile,
-                  icon: const Icon(Icons.save, color: darkBackground),
+                  icon: _isLoading
+                      ? Container(
+                          width: 20,
+                          height: 20,
+                          child: const CircularProgressIndicator(
+                            color: darkBackground,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.save_outlined, color: darkBackground),
                   label: const Text('Salvar Alterações'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryAmber,
                     foregroundColor: darkBackground,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
@@ -344,7 +334,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
+  Widget _buildInfoRow(String label, String value, IconData icon) {
     return Row(
       children: [
         Icon(icon, color: secondaryTextColor, size: 20),
@@ -398,20 +388,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Card(
       color: cardColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Column(
-        children: [
-          ListTile(
-            leading: const Icon(
-              Icons.password_outlined,
-              color: secondaryTextColor,
-            ),
-            title: const Text(
-              'Redefinir Senha',
-              style: TextStyle(color: textColor),
-            ),
-            onTap: () => _resetPassword(email),
-          ),
-        ],
+      child: ListTile(
+        leading: const Icon(Icons.password_outlined, color: secondaryTextColor),
+        title: const Text(
+          'Redefinir Senha',
+          style: TextStyle(color: textColor),
+        ),
+        trailing: const Icon(Icons.chevron_right, color: secondaryTextColor),
+        onTap: () => _resetPassword(email),
       ),
     );
   }
