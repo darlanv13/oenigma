@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:oenigma/models/phase_model.dart';
 import 'package:oenigma/screens/wallet_screen.dart';
 import 'package:oenigma/widgets/nav_button.dart';
 import '../models/event_model.dart';

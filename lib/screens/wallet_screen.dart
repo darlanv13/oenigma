@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import '../models/user_wallet_model.dart';
-import '../services/auth_service.dart';
 import '../services/firebase_service.dart';
 import '../utils/app_colors.dart';
 
@@ -14,7 +12,6 @@ class WalletScreen extends StatefulWidget {
 
 class _WalletScreenState extends State<WalletScreen> {
   final FirebaseService _firebaseService = FirebaseService();
-  final AuthService _authService = AuthService();
   late Future<UserWalletModel> _walletFuture;
 
   @override
