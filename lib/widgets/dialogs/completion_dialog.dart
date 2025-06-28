@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import '../utils/app_colors.dart';
+import '../../utils/app_colors.dart';
 
-void showCompletionDialog(BuildContext context, {required VoidCallback onOkPressed}) {
+void showCompletionDialog(
+  BuildContext context, {
+  required VoidCallback onOkPressed,
+}) {
   showGeneralDialog(
     context: context,
     barrierDismissible: false,
@@ -12,7 +15,9 @@ void showCompletionDialog(BuildContext context, {required VoidCallback onOkPress
       return ScaleTransition(
         scale: CurvedAnimation(parent: anim1, curve: Curves.elasticOut),
         child: Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           backgroundColor: cardColor,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -54,9 +59,10 @@ void showCompletionDialog(BuildContext context, {required VoidCallback onOkPress
                     child: const Text(
                       'CONTINUAR',
                       style: TextStyle(
-                          fontSize: 18,
-                          color: darkBackground,
-                          fontWeight: FontWeight.bold),
+                        fontSize: 18,
+                        color: darkBackground,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import '../utils/app_colors.dart';
+import '../../utils/app_colors.dart';
 
 // Diálogo para quando um enigma é resolvido, mas a fase ainda não acabou.
-void showEnigmaSuccessDialog(BuildContext context, {required VoidCallback onContinue}) {
+void showEnigmaSuccessDialog(
+  BuildContext context, {
+  required VoidCallback onContinue,
+}) {
   showDialog(
     context: context,
     barrierDismissible: false,
@@ -17,7 +20,7 @@ void showEnigmaSuccessDialog(BuildContext context, {required VoidCallback onCont
             mainAxisSize: MainAxisSize.min,
             children: [
               Lottie.asset(
-                  'assets/animations/check.json', // Animação de "check"
+                'assets/animations/check.json', // Animação de "check"
                 height: 130,
                 repeat: false,
               ),

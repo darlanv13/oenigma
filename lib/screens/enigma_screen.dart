@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart' hide Marker;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:location/location.dart';
+import 'package:oenigma/widgets/dialogs/completion_dialog.dart';
+import 'package:oenigma/widgets/dialogs/cooldown_dialog.dart';
 import 'package:permission_handler/permission_handler.dart'
     hide PermissionStatus;
 import 'package:saver_gallery/saver_gallery.dart';
@@ -17,9 +19,7 @@ import '../models/event_model.dart';
 import '../models/phase_model.dart';
 import '../services/firebase_service.dart';
 import '../utils/app_colors.dart';
-import '../widgets/completion_dialog.dart';
-import '../widgets/cooldown_dialog.dart';
-import '../widgets/error_dialog.dart';
+import '../widgets/dialogs/error_dialog.dart';
 import 'wallet_screen.dart'; // Importa a tela da carteira
 
 // --- TELA DE SCANNER (sem alterações) ---
