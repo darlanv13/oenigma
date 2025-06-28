@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "990242303280",
+    "project_id": "enigmaweb-82979",
+    "storage_bucket": "enigmaweb-82979.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:990242303280:android:191a802e33658c58372cf5",
+        "android_client_info": {
+          "package_name": "com.example.oenigma"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "990242303280-4cisnfnek43phh8rtgnln5v3seuv8gr8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAEmY6J0_IBNA-z9kixpMNiECYzk17yK3s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "990242303280-4cisnfnek43phh8rtgnln5v3seuv8gr8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "990242303280-6to5r5bv3mm908pfnqmobh2rc94j3gpe.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.oenigama"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
