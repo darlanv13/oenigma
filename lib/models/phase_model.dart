@@ -19,15 +19,18 @@ class PhaseModel {
       final enigmasData = map['enigmas'] as List;
 
       // 2. Mapeia a lista de enigmas de forma SEGURA.
-      enigmasList = enigmasData.map((enigmaData) {
-        // 3. Garante que cada item da lista é um mapa.
-        if (enigmaData is Map) {
-          // 4. CONVERSÃO SEGURA: Usa Map.from() para criar um novo mapa com os tipos corretos.
-          //    Isso elimina o erro de "type cast".
-          return EnigmaModel.fromMap(Map<String, dynamic>.from(enigmaData));
-        }
-        return null; // Descarta itens que não são mapas.
-      }).whereType<EnigmaModel>().toList(); // Filtra qualquer item nulo/inválido.
+      enigmasList = enigmasData
+          .map((enigmaData) {
+            // 3. Garante que cada item da lista é um mapa.
+            if (enigmaData is Map) {
+              // 4. CONVERSÃO SEGURA: Usa Map.from() para criar um novo mapa com os tipos corretos.
+              //    Isso elimina o erro de "type cast".
+              return EnigmaModel.fromMap(Map<String, dynamic>.from(enigmaData));
+            }
+            return null; // Descarta itens que não são mapas.
+          })
+          .whereType<EnigmaModel>()
+          .toList(); // Filtra qualquer item nulo/inválido.
     }
 
     return PhaseModel(

@@ -7,8 +7,8 @@ import '../screens/event_details_screen.dart';
 import '../utils/app_colors.dart';
 
 class EventCard extends StatefulWidget {
-  final Map<String, dynamic> playerData;
   final EventModel event;
+  final Map<String, dynamic> playerData;
   final VoidCallback onReturn;
 
   const EventCard({
@@ -17,6 +17,7 @@ class EventCard extends StatefulWidget {
     required this.playerData,
     required this.onReturn,
   });
+
   @override
   State<EventCard> createState() => _EventCardState();
 }
@@ -27,14 +28,10 @@ class _EventCardState extends State<EventCard> {
   @override
   void initState() {
     super.initState();
-    // --- LÓGICA ATUALIZADA ---
-    // Verifica se o 'icon' é uma URL válida.
     if (widget.event.icon.isNotEmpty &&
         Uri.tryParse(widget.event.icon)?.isAbsolute == true) {
-      // Se for, carrega da rede.
       _composition = NetworkLottie(widget.event.icon).load();
     } else {
-      // Se não, carrega a animação padrão dos assets locais.
       _composition = AssetLottie('assets/animations/no_enigma.json').load();
     }
   }
@@ -51,10 +48,8 @@ class _EventCardState extends State<EventCard> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        // Permite o clique mesmo se o evento estiver em dev ou fechado,
-        // pois a tela de detalhes tratará o estado.
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => EventDetailsScreen(
@@ -88,10 +83,6 @@ class _EventCardState extends State<EventCard> {
                               return Lottie(
                                 composition: snapshot.data!,
                                 fit: BoxFit.scaleDown,
-                              );
-                            } else if (snapshot.hasError) {
-                              return Lottie.asset(
-                                'assets/animations/no_enigma.json',
                               );
                             }
                             return const Center(
@@ -231,77 +222,115 @@ class _EventCardState extends State<EventCard> {
                 ),
               ),
 
-              // Overlay para evento FINALIZADO
+              // --- OVERLAYS DE STATUS ---
               if (widget.event.status == 'closed')
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.75),
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.flag, color: primaryAmber, size: 50),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'FINALIZADO',
-                            style: TextStyle(
-                              color: primaryAmber,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                              letterSpacing: 2,
-                            ),
-                          ),
-                          if (widget.event.winnerName != null &&
-                              widget.event.winnerName!.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                'Vencedor: ${widget.event.winnerName}',
-                                style: const TextStyle(
-                                  color: textColor,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                _buildFinishedOverlay(context, widget.event),
 
-              // Overlay para evento EM BREVE
-              if (widget.event.status == 'dev')
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.75),
-                    ),
-                    child: Center(
-                      child: Column(
+              if (widget.event.status == 'dev') _buildComingSoonOverlay(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFinishedOverlay(BuildContext context, EventModel event) {
+    // CORREÇÃO APLICADA AQUI
+    final String winnerFirstName = event.winnerName?.split(' ').first ?? '';
+
+    return Positioned.fill(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+          child: Container(
+            decoration: BoxDecoration(color: Colors.black.withOpacity(0.6)),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Lottie.asset('assets/animations/trofel.json', height: 80),
+                const SizedBox(height: 8),
+                const Text(
+                  'FINALIZADO',
+                  style: TextStyle(
+                    color: primaryAmber,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    letterSpacing: 2,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (winnerFirstName.isNotEmpty)
+                  Column(
+                    children: [
+                      const Text(
+                        "Vencedor",
+                        style: TextStyle(
+                          color: secondaryTextColor,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
-                            Icons.hourglass_top_rounded,
-                            color: secondaryTextColor,
-                            size: 50,
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: darkBackground,
+                            backgroundImage: event.winnerPhotoURL != null
+                                ? NetworkImage(event.winnerPhotoURL!)
+                                : null,
+                            child: event.winnerPhotoURL == null
+                                ? const Icon(Icons.person, size: 16)
+                                : null,
                           ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'EM BREVE',
-                            style: TextStyle(
-                              color: secondaryTextColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                              letterSpacing: 2,
+                          const SizedBox(width: 8),
+                          Text(
+                            winnerFirstName, // Exibe apenas o primeiro nome
+                            style: const TextStyle(
+                              color: textColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
-                    ),
+                    ],
                   ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildComingSoonOverlay() {
+    return Positioned.fill(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.75),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.hourglass_top_rounded,
+                color: secondaryTextColor,
+                size: 50,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'EM BREVE',
+                style: TextStyle(
+                  color: secondaryTextColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  letterSpacing: 2,
                 ),
+              ),
             ],
           ),
         ),

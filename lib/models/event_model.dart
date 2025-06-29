@@ -1,4 +1,6 @@
-import 'package:oenigma/models/phase_model.dart'; // Importe o PhaseModel
+// lib/models/event_model.dart
+
+import 'package:oenigma/models/phase_model.dart';
 
 class EventModel {
   final String id;
@@ -11,7 +13,7 @@ class EventModel {
   final String fullDescription;
   final String status;
   final String? winnerName;
-  // CAMPO ADICIONADO PARA CORRIGIR O ERRO
+  final String? winnerPhotoURL; // <-- 1. ADICIONE ESTA LINHA
   final List<PhaseModel> phases;
 
   EventModel({
@@ -25,11 +27,11 @@ class EventModel {
     required this.fullDescription,
     required this.status,
     this.winnerName,
-    this.phases = const [], // Define um valor padrão
+    this.winnerPhotoURL, // <-- 2. ADICIONE AO CONSTRUTOR
+    this.phases = const [],
   });
 
   factory EventModel.fromMap(Map<String, dynamic> map) {
-    // Lógica para converter os dados das fases, se existirem
     var phasesList = <PhaseModel>[];
     if (map['phases'] is List) {
       phasesList = (map['phases'] as List)
@@ -51,7 +53,8 @@ class EventModel {
       fullDescription: map['fullDescription'] ?? 'Nenhuma descrição.',
       status: map['status'] ?? 'open',
       winnerName: map['winnerName'],
-      phases: phasesList, // Atribui a lista de fases convertida
+      winnerPhotoURL: map['winnerPhotoURL'], // <-- 3. LEIA O DADO DO MAPA
+      phases: phasesList,
     );
   }
 }
