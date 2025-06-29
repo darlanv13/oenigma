@@ -1,14 +1,23 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:oenigma/screens/wallet_screen.dart';
 import 'dart:ui';
 import '../models/event_model.dart';
+import '../models/user_wallet_model.dart';
 import '../screens/event_progress_screen.dart';
 import '../services/firebase_service.dart';
 import '../utils/app_colors.dart';
 
 class EventDetailsScreen extends StatefulWidget {
   final EventModel event;
-  const EventDetailsScreen({super.key, required this.event});
+  final Map<String, dynamic> playerData;
+
+  const EventDetailsScreen({
+    super.key,
+    required this.event,
+    required this.playerData,
+  });
 
   @override
   State<EventDetailsScreen> createState() => _EventDetailsScreenState();
@@ -17,8 +26,10 @@ class EventDetailsScreen extends StatefulWidget {
 class _EventDetailsScreenState extends State<EventDetailsScreen> {
   final FirebaseService _firebaseService = FirebaseService();
   late Future<int> _challengeCountFuture;
-  // Guarda a animação em memória
   late final Future<LottieComposition> _composition;
+
+  bool _isSubscribed = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -27,16 +38,133 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       widget.event.id,
     );
 
-    // --- LÓGICA ATUALIZADA ---
-    // Verifica se o 'icon' é uma URL válida.
+    // Verifica se o jogador já está inscrito neste evento
+    _isSubscribed = widget.playerData['events']?[widget.event.id] != null;
+
     if (widget.event.icon.isNotEmpty &&
         Uri.tryParse(widget.event.icon)?.isAbsolute == true) {
-      // Se for, carrega da rede.
       _composition = NetworkLottie(widget.event.icon).load();
     } else {
-      // Se não, carrega a animação padrão dos assets locais.
       _composition = AssetLottie('assets/animations/no_enigma.json').load();
     }
+  }
+
+  // Função para lidar com a inscrição
+  Future<void> _handleSubscription() async {
+    final confirmed = await _showSubscriptionConfirmationDialog();
+    if (confirmed != true) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _firebaseService.subscribeToEvent(widget.event.id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Inscrição realizada com sucesso!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        setState(() => _isSubscribed = true);
+      }
+    } on FirebaseFunctionsException catch (e) {
+      if (mounted) {
+        if (e.code == 'failed-precondition') {
+          _showInsufficientFundsDialog();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message ?? "Ocorreu um erro."),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // Dialog de confirmação
+  Future<bool?> _showSubscriptionConfirmationDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: cardColor,
+        title: const Text(
+          'Confirmar Inscrição',
+          style: TextStyle(color: primaryAmber),
+        ),
+        content: Text(
+          'Confirma a sua inscrição no evento "${widget.event.name}" pelo valor de R\$ ${widget.event.price.toStringAsFixed(2)}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: secondaryTextColor),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: primaryAmber),
+            child: const Text(
+              'CONFIRMAR',
+              style: TextStyle(color: darkBackground),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Dialog de saldo insuficiente
+  void _showInsufficientFundsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: cardColor,
+        title: const Text(
+          'Saldo Insuficiente',
+          style: TextStyle(color: primaryAmber),
+        ),
+        content: const Text(
+          'Você não tem saldo para se inscrever. Deseja adicionar créditos à sua carteira?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              'Depois',
+              style: TextStyle(color: secondaryTextColor),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop(); // Fecha o dialog
+              // Busca os dados da carteira para passar para a próxima tela
+              final walletData = await _firebaseService.getUserWalletData();
+              if (mounted) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => WalletScreen(wallet: walletData),
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: primaryAmber),
+            child: const Text(
+              'RECARREGAR',
+              style: TextStyle(color: darkBackground),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -329,71 +457,22 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   // Em event_details_screen.dart
+  // Substitua o seu _buildBottomCtaButton por este:
   Widget _buildBottomCtaButton(BuildContext context) {
-    // Se o evento estiver fechado, mostra um botão desabilitado
     if (widget.event.status == 'closed') {
-      return Positioned(
-        bottom: 0,
-        left: 0,
-        right: 0,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [darkBackground, darkBackground.withOpacity(0.0)],
-              begin: Alignment.bottomCenter,
-              end: Alignment.topCenter,
-            ),
-          ),
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey.shade800,
-              foregroundColor: Colors.grey.shade500,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-            ),
-            onPressed: null, // onPressed: null desabilita o botão
-            icon: const Icon(Icons.check, size: 28),
-            label: const Text(
-              'Evento Finalizado',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
+      return _buildDisabledButton(
+        icon: Icons.flag_outlined,
+        label: 'Evento Finalizado',
       );
     }
-    // --- NOVA CONDIÇÃO PARA "EM BREVE" ---
-    else if (widget.event.status == 'dev') {
-      return Positioned(
-        bottom: 0,
-        left: 0,
-        right: 0,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-          // ... (decoração do container)
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              // Usamos um estilo diferente para o botão "Em Breve"
-              backgroundColor: const Color(0xFF2a2a2a),
-              foregroundColor: secondaryTextColor,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-            ),
-            onPressed: null, // onPressed: null desabilita o botão
-            icon: const Icon(Icons.hourglass_top_rounded, size: 28),
-            label: const Text(
-              'Em Breve',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
+    if (widget.event.status == 'dev') {
+      return _buildDisabledButton(
+        icon: Icons.hourglass_top_rounded,
+        label: 'Em Breve',
       );
     }
-    // Caso contrário, mostra o botão normal para iniciar o evento
+
+    // Lógica principal: Jogar ou Inscrever-se
     return Positioned(
       bottom: 0,
       left: 0,
@@ -409,25 +488,83 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         ),
         child: ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
-            backgroundColor: primaryAmber,
+            backgroundColor: _isSubscribed ? Colors.green : primaryAmber,
             foregroundColor: darkBackground,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
             ),
           ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EventProgressScreen(event: widget.event),
-              ),
-            );
-          },
-          icon: const Icon(Icons.explore_outlined, size: 28),
-          label: const Text(
-            'Iniciar Evento',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          onPressed: _isLoading
+              ? null
+              : () {
+                  if (_isSubscribed) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            EventProgressScreen(event: widget.event),
+                      ),
+                    );
+                  } else {
+                    _handleSubscription();
+                  }
+                },
+          icon: _isLoading
+              ? Container(
+                  width: 24,
+                  height: 24,
+                  child: const CircularProgressIndicator(
+                    color: darkBackground,
+                    strokeWidth: 2,
+                  ),
+                )
+              : Icon(
+                  _isSubscribed
+                      ? Icons.play_arrow_rounded
+                      : Icons.login_rounded,
+                  size: 28,
+                ),
+          label: Text(
+            _isSubscribed
+                ? 'Jogar'
+                : 'Inscreva-se (R\$ ${widget.event.price.toStringAsFixed(2)})',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Widget auxiliar para botões desabilitados
+  Widget _buildDisabledButton({required IconData icon, required String label}) {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [darkBackground, darkBackground.withOpacity(0.0)],
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+          ),
+        ),
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.grey.shade800,
+            foregroundColor: Colors.grey.shade500,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+          onPressed: null,
+          icon: Icon(icon, size: 28),
+          label: Text(
+            label,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
       ),

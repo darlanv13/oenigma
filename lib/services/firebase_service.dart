@@ -107,4 +107,8 @@ class FirebaseService {
 
     return {'currentPhase': 1, 'currentEnigma': 1, 'hintsPurchased': []};
   }
+
+  Future<HttpsCallableResult> subscribeToEvent(String eventId) {
+    return _callFunction('subscribeToEvent', {'eventId': eventId});
+  }
 }

@@ -7,9 +7,16 @@ import '../screens/event_details_screen.dart';
 import '../utils/app_colors.dart';
 
 class EventCard extends StatefulWidget {
+  final Map<String, dynamic> playerData;
   final EventModel event;
-  const EventCard({super.key, required this.event});
+  final VoidCallback onReturn;
 
+  const EventCard({
+    super.key,
+    required this.event,
+    required this.playerData,
+    required this.onReturn,
+  });
   @override
   State<EventCard> createState() => _EventCardState();
 }
@@ -50,9 +57,13 @@ class _EventCardState extends State<EventCard> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => EventDetailsScreen(event: widget.event),
+            builder: (context) => EventDetailsScreen(
+              event: widget.event,
+              playerData: widget.playerData,
+            ),
           ),
         );
+        widget.onReturn();
       },
       child: Container(
         decoration: BoxDecoration(
@@ -219,9 +230,6 @@ class _EventCardState extends State<EventCard> {
                   ],
                 ),
               ),
-
-              // --- CORREÇÃO APLICADA AQUI ---
-              // Os dois blocos 'if' agora são independentes.
 
               // Overlay para evento FINALIZADO
               if (widget.event.status == 'closed')

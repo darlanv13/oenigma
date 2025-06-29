@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:oenigma/models/ranking_player_model.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
 import 'package:oenigma/screens/profile_screen.dart';
 import 'package:oenigma/screens/ranking_screen.dart';
@@ -79,7 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
             final UserWalletModel walletData = UserWalletModel.fromMap(
               Map<String, dynamic>.from(allData['walletData']),
             );
-            // Agora 'playerData' será preenchido corretamente
             final Map<String, dynamic> playerData =
                 allData['playerData'] != null
                 ? Map<String, dynamic>.from(allData['playerData'])
@@ -110,7 +107,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: _buildEventsSectionHeader(),
                     ),
                   ),
-                  _buildEventsGrid(events),
+                  // CORREÇÃO APLICADA AQUI: Passando playerData como argumento
+                  _buildEventsGrid(events, playerData),
                 ],
               ),
             );
@@ -142,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
-                radius: 28,
+                radius: 25,
                 backgroundColor: darkBackground,
                 backgroundImage:
                     (wallet.photoURL != null && wallet.photoURL!.isNotEmpty)
@@ -164,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       'Olá, $firstName!',
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: textColor,
                       ),
@@ -175,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       'Ranking: #${wallet.lastEventRank ?? '-'}',
                       style: const TextStyle(
                         color: secondaryTextColor,
-                        fontSize: 14,
+                        fontSize: 10,
                       ),
                     ),
                   ],
@@ -193,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
                     style: const TextStyle(
                       color: primaryAmber,
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -201,9 +199,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const Divider(height: 32, thickness: 0.5, color: secondaryTextColor),
+          const Divider(height: 32, thickness: 0.4, color: secondaryTextColor),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildActionButton(
                 context: context,
@@ -237,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildActionButton(
                 context: context,
                 icon: Icons.settings_outlined,
-                label: 'Perfil',
+                label: 'Perfil   ',
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -264,13 +262,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     return TextButton.icon(
       onPressed: onTap,
-      icon: Icon(icon, size: 20),
+      icon: Icon(icon, size: 18),
       label: Text(label),
       style: TextButton.styleFrom(
         foregroundColor: textColor,
         backgroundColor: Colors.white.withOpacity(0.08),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
     );
   }
@@ -287,7 +285,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildEventsGrid(List<EventModel> events) {
+  Widget _buildEventsGrid(
+    List<EventModel> events,
+    Map<String, dynamic> playerData,
+  ) {
     if (events.isEmpty) {
       return const SliverToBoxAdapter(
         child: Center(
@@ -311,7 +312,11 @@ class _HomeScreenState extends State<HomeScreen> {
           childAspectRatio: 0.7,
         ),
         delegate: SliverChildBuilderDelegate(
-          (context, index) => EventCard(event: events[index]),
+          (context, index) => EventCard(
+            event: events[index],
+            playerData: playerData,
+            onReturn: _reloadData, // <-- PASSA A FUNÇÃO DE RECARREGAR AQUI
+          ),
           childCount: events.length,
         ),
       ),

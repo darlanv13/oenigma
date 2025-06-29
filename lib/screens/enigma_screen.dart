@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' show cos, sqrt, asin;
@@ -9,6 +11,7 @@ import 'package:lottie/lottie.dart' hide Marker;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:location/location.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
+import 'package:oenigma/screens/winner_certificate_screen.dart';
 import 'package:oenigma/widgets/dialogs/completion_dialog.dart';
 import 'package:oenigma/widgets/dialogs/cooldown_dialog.dart';
 import 'package:permission_handler/permission_handler.dart'
@@ -24,22 +27,114 @@ import '../widgets/dialogs/error_dialog.dart';
 import 'wallet_screen.dart';
 
 // --- TELA DE SCANNER (sem alterações) ---
-class ScannerScreen extends StatelessWidget {
+class ScannerScreen extends StatefulWidget {
   final Function(String) onScan;
   const ScannerScreen({super.key, required this.onScan});
+
+  @override
+  State<ScannerScreen> createState() => _ScannerScreenState();
+}
+
+class _ScannerScreenState extends State<ScannerScreen> {
+  // 1. Controlador para pausar/iniciar o scanner
+  final MobileScannerController _scannerController = MobileScannerController();
+
+  // 2. Variável para armazenar o código detectado
+  String? _detectedQRCode;
+
+  @override
+  void dispose() {
+    _scannerController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Aponte para o QR Code')),
-      body: MobileScanner(
-        onDetect: (capture) {
-          final List<Barcode> barcodes = capture.barcodes;
-          if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
-            onScan(barcodes.first.rawValue!);
-            Navigator.of(context).pop();
-          }
-        },
+      // 3. Usamos um Stack para sobrepor a confirmação na câmera
+      body: Stack(
+        alignment: Alignment.center,
+        children: [
+          MobileScanner(
+            controller: _scannerController,
+            onDetect: (capture) {
+              // Só processa se ainda não tivermos um código detectado
+              if (_detectedQRCode == null) {
+                final List<Barcode> barcodes = capture.barcodes;
+                if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+                  setState(() {
+                    _detectedQRCode = barcodes.first.rawValue;
+                  });
+                  // Pausa o scanner para evitar múltiplas leituras
+                  _scannerController.stop();
+                }
+              }
+            },
+          ),
+          // 4. Mostra a UI de confirmação se um código foi detectado
+          if (_detectedQRCode != null) _buildConfirmationOverlay(),
+        ],
+      ),
+    );
+  }
+
+  // 5. Widget para a UI de confirmação
+  Widget _buildConfirmationOverlay() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          width: MediaQuery.of(context).size.width * 0.8,
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: primaryAmber),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Código Detectado',
+                style: TextStyle(
+                  color: primaryAmber,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _detectedQRCode!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: textColor, fontSize: 16),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  widget.onScan(_detectedQRCode!);
+                  Navigator.of(context).pop();
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                child: const Text('Confirmar'),
+              ),
+              TextButton(
+                onPressed: () {
+                  // Limpa o código e reinicia o scanner
+                  setState(() {
+                    _detectedQRCode = null;
+                  });
+                  _scannerController.start();
+                },
+                child: const Text(
+                  'Escanear Novamente',
+                  style: TextStyle(color: textColor),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -262,6 +357,7 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
     );
   }
 
+  // --- LÓGICA DE NAVEGAÇÃO CORRIGIDA ---
   Future<void> _handleAction(String action, {String? code}) async {
     setState(() => _isLoading = true);
     try {
@@ -284,74 +380,102 @@ class _EnigmaScreenState extends State<EnigmaScreen> {
             _hintData = Map<String, dynamic>.from(data['hint']);
           });
         } else if (action == 'validateCode') {
-          final nextStep = data['nextStep'];
-          if (nextStep != null && nextStep['type'] == 'next_enigma') {
-            final nextEnigma = EnigmaModel.fromMap(
-              Map<String, dynamic>.from(nextStep['enigmaData']),
-            );
-            await showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (dialogContext) => Dialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                backgroundColor: cardColor,
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Lottie.asset(
-                        'assets/animations/check.json',
-                        height: 130,
-                        repeat: false,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Enigma Resolvido!',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
+          final nextStep = data['nextStep'] != null
+              ? Map<String, dynamic>.from(data['nextStep'])
+              : null;
+
+          if (nextStep == null) return; // Segurança
+
+          switch (nextStep['type']) {
+            case 'event_complete':
+              final double prizeWon =
+                  (nextStep['prizeWon'] as num?)?.toDouble() ?? 0.0;
+              final List<PhaseModel> allPhases = await _firebaseService
+                  .getPhasesForEvent(widget.event.id);
+              if (mounted) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => WinnerCertificateScreen(
+                      event: widget.event,
+                      prizeWon: prizeWon,
+                      allPhases: allPhases,
+                    ),
+                  ),
+                );
+              }
+              break;
+
+            case 'next_enigma':
+              final nextEnigma = EnigmaModel.fromMap(
+                Map<String, dynamic>.from(nextStep['enigmaData']),
+              );
+              await showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (dialogContext) => Dialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  backgroundColor: cardColor,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Lottie.asset(
+                          'assets/animations/check.json',
+                          height: 130,
+                          repeat: false,
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Enigma Resolvido!',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          onPressed: () => Navigator.of(dialogContext).pop(),
-                          child: const Text(
-                            'Próximo Desafio',
-                            style: TextStyle(fontSize: 18, color: textColor),
+                            onPressed: () => Navigator.of(dialogContext).pop(),
+                            child: const Text(
+                              'Próximo Desafio',
+                              style: TextStyle(fontSize: 18, color: textColor),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-            setState(() {
-              _currentEnigma = nextEnigma;
-            });
-            await _resetEnigmaState();
-          } else {
-            showCompletionDialog(
-              context,
-              onOkPressed: () {
-                Navigator.of(context).pop();
-                widget.onEnigmaSolved();
-                Navigator.of(context).pop();
-              },
-            );
+              );
+              setState(() {
+                _currentEnigma = nextEnigma;
+              });
+              await _resetEnigmaState();
+              break;
+
+            case 'phase_complete':
+              showCompletionDialog(
+                context,
+                isPhaseComplete: true,
+                onOkPressed: () {
+                  Navigator.of(context).pop();
+                  widget.onEnigmaSolved();
+                  Navigator.of(context).pop();
+                },
+              );
+              break;
           }
         }
       } else {

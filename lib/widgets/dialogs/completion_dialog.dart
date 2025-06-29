@@ -5,6 +5,7 @@ import '../../utils/app_colors.dart';
 void showCompletionDialog(
   BuildContext context, {
   required VoidCallback onOkPressed,
+  required bool isPhaseComplete,
 }) {
   showGeneralDialog(
     context: context,

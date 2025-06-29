@@ -1,23 +1,18 @@
 const { HttpsError, onCall } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
+// Esta linha é essencial e deve estar no topo do arquivo.
 const db = admin.firestore();
 
 // =================================================================== //
-// FUNÇÃO: handleEnigmaAction (v2)                                     //
-// DESCRIÇÃO: Processa ações do enigma (status, dica e validação).     //
+// FUNÇÃO: handleEnigmaAction (EXISTENTE)
 // =================================================================== //
-exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) => { // AppCheck pode ser ativado depois
-    // A verificação de autenticação é automática em funções v2 `onCall`.
-    // Se o usuário não estiver autenticado, a função lançará um erro 'unauthenticated'.
-    // `context.auth` se torna `request.auth`.
+exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) => {
     const playerId = request.auth.uid;
-
     const { action, eventId, phaseOrder, enigmaId, code } = request.data;
     const playerRef = db.collection("players").doc(playerId);
     const eventRef = db.collection("events").doc(eventId);
 
-    // --- Ação: getStatus ---
     if (action === "getStatus") {
         const playerDoc = await playerRef.get();
         const playerData = playerDoc.data() || {};
@@ -39,7 +34,6 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
         };
     }
 
-    // --- Ação: purchaseHint ---
     if (action === "purchaseHint") {
         const hintCosts = { 1: 5, 2: 10, 3: 15 };
         const hintCost = hintCosts[phaseOrder];
@@ -71,10 +65,10 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
                 }
 
                 const enigmaDoc = await transaction.get(eventRef.collection("phases").doc(`fase_${phaseOrder}`).collection("enigmas").doc(enigmaId));
-                const enigmaData = enigmaDoc.data();
-                if (!enigmaData || !enigmaData.hintType || !enigmaData.hintData) {
+                if (!enigmaDoc.exists || !enigmaDoc.data().hintType) {
                     throw new HttpsError("not-found", "Nenhuma dica disponível para este enigma.");
                 }
+                const enigmaData = enigmaDoc.data();
 
                 const newBalance = currentBalance - hintCost;
                 const newProgress = {
@@ -107,8 +101,6 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
         }
     }
 
-    // ... (o restante da função 'handleEnigmaAction' continua o mesmo, apenas usando `HttpsError` diretamente) ...
-    // --- Ação: validateCode ---
     if (action === "validateCode") {
         const eventDoc = await eventRef.get();
         if (!eventDoc.exists || eventDoc.data().status !== "open") {
@@ -156,10 +148,19 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
         let nextStepForClient = null;
         let isEventFinishedByThisPlayer = false;
 
+        // Função auxiliar para converter o prêmio de string para número
+        const parsePrizeValue = (prizeString) => {
+            if (!prizeString || typeof prizeString !== 'string') return 0;
+            const numberString = prizeString.replace(/[^0-9,.]/g, "").replace(",", ".");
+            return parseFloat(numberString) || 0;
+        };
+
         try {
             await db.runTransaction(async (transaction) => {
                 const playerDoc = await transaction.get(playerRef);
                 const playerData = playerDoc.data();
+                const eventDoc = await transaction.get(eventRef);
+                const eventData = eventDoc.data(); // <- E os dados do evento aqui
                 const playerEvents = playerData.events || {};
                 const eventProgress = { currentPhase: 1, currentEnigma: 1, ...playerEvents[eventId] };
 
@@ -173,16 +174,29 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
                 const enigmasInCurrentPhase = enigmasInPhaseSnapshot.size;
                 const isLastEnigma = eventProgress.currentEnigma >= enigmasInCurrentPhase;
                 const isLastPhase = eventProgress.currentPhase >= totalPhases;
-
                 if (isLastEnigma && isLastPhase) {
                     isEventFinishedByThisPlayer = true;
+
+                    // --- MUDANÇA 1: Adicionar prêmio ao saldo ---
+                    const prizeValue = parsePrizeValue(eventData.prize);
+                    const currentBalance = playerData.balance || 0;
+                    const newBalance = currentBalance + prizeValue;
+
+                    transaction.update(playerRef, { balance: newBalance }); // Atualiza o saldo
+
                     transaction.update(eventRef, {
                         status: "closed",
                         winnerId: playerId,
                         winnerName: playerData.name || "Anônimo",
+                        winnerPhotoURL: playerData.photoURL || null, // <- Adicionamos a foto
                         finishedAt: admin.firestore.FieldValue.serverTimestamp(),
                     });
-                    nextStepForClient = { type: "event_complete" };
+
+                    // --- MUDANÇA 2: Enviar dados do prêmio para o cliente ---
+                    nextStepForClient = {
+                        type: "event_complete",
+                        prizeWon: prizeValue // <- Enviamos o valor do prêmio
+                    };
                 } else if (isLastEnigma) {
                     eventProgress.currentPhase += 1;
                     eventProgress.currentEnigma = 1;
@@ -214,7 +228,6 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
     throw new HttpsError("invalid-argument", "Ação não suportada.");
 });
 
-// ... (A função sendCompletionNotifications não precisa de alterações) ...
 async function sendCompletionNotifications(eventId, eventName, winnerId, winnerName) {
     const allPlayersSnap = await db.collection("players").get();
     const tokens = [];
@@ -240,3 +253,72 @@ async function sendCompletionNotifications(eventId, eventName, winnerId, winnerN
         await admin.messaging().sendToDevice(tokens, payload);
     }
 }
+
+
+// =================================================================== //
+// NOVA FUNÇÃO: subscribeToEvent
+// =================================================================== //
+exports.subscribeToEvent = onCall(async (request) => {
+    const userId = request.auth.uid;
+    if (!userId) {
+        throw new HttpsError("unauthenticated", "Usuário não autenticado.");
+    }
+    const { eventId } = request.data;
+    if (!eventId) {
+        throw new HttpsError("invalid-argument", "O ID do evento é obrigatório.");
+    }
+
+    const playerRef = db.collection("players").doc(userId);
+    const eventRef = db.collection("events").doc(eventId);
+
+    try {
+        await db.runTransaction(async (transaction) => {
+            const playerDoc = await transaction.get(playerRef);
+            const eventDoc = await transaction.get(eventRef);
+
+            if (!playerDoc.exists) {
+                throw new HttpsError("not-found", "Jogador não encontrado.");
+            }
+            if (!eventDoc.exists) {
+                throw new HttpsError("not-found", "Evento não encontrado.");
+            }
+
+            const playerData = playerDoc.data();
+            const eventData = eventDoc.data();
+            const price = eventData.price || 0;
+            const balance = playerData.balance || 0;
+
+            if (playerData.events && playerData.events[eventId]) {
+                throw new HttpsError("already-exists", "Você já está inscrito neste evento.");
+            }
+
+            if (balance < price) {
+                throw new HttpsError("failed-precondition", "Saldo insuficiente.");
+            }
+
+            const newBalance = balance - price;
+            const newPlayerEvents = {
+                ...playerData.events,
+                [eventId]: {
+                    currentPhase: 1,
+                    currentEnigma: 1,
+                    hintsPurchased: []
+                }
+            };
+
+            transaction.update(playerRef, {
+                balance: newBalance,
+                events: newPlayerEvents
+            });
+        });
+
+        return { success: true, message: "Inscrição realizada com sucesso!" };
+
+    } catch (error) {
+        if (error instanceof HttpsError) {
+            throw error;
+        }
+        console.error("Erro na transação de inscrição:", error);
+        throw new HttpsError("internal", "Não foi possível concluir a inscrição.");
+    }
+});

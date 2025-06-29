@@ -29,7 +29,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isLoading = false;
   File? _selectedImage;
-  String? _networkImageURL;
 
   @override
   void initState() {
@@ -37,7 +36,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Popula os campos com os dados recebidos
     _phoneController.text = widget.playerData['phone'] ?? '';
     _birthDateController.text = widget.playerData['birthDate'] ?? '';
-    _networkImageURL = widget.playerData['photoURL'];
   }
 
   @override
@@ -54,7 +52,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (pickedFile != null) {
       setState(() {
         _selectedImage = File(pickedFile.path);
-        _networkImageURL = null;
       });
     }
   }
@@ -93,9 +90,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            error == null ? 'Email de recuperação enviado!' : error,
-          ),
+          content: Text(error ?? 'Email de recuperação enviado!'),
           backgroundColor: error == null ? Colors.green : Colors.red,
         ),
       );
@@ -245,12 +240,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 32),
+          Icon(icon, color: color, size: 28),
           const SizedBox(height: 8),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               color: textColor,
             ),
@@ -306,7 +301,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: ElevatedButton.icon(
                   onPressed: _isLoading ? null : _saveProfile,
                   icon: _isLoading
-                      ? Container(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: const CircularProgressIndicator(

@@ -26,11 +26,7 @@ class ProfileActionButton extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(10.0),
-            child: Icon(
-              icon,
-              color: primaryAmber,
-              size: 24,
-            ),
+            child: Icon(icon, color: primaryAmber, size: 24),
           ),
         ),
       ),
