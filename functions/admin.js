@@ -4,56 +4,45 @@ const admin = require("firebase-admin");
 const db = admin.firestore();
 
 // =================================================================== //
-// FUNÇÃO: getAdminDashboardData (v2)                                  //
-// DESCRIÇÃO: Busca todos os dados para o painel de admin em uma chamada.//
+// FUNÇÃO: getAdminDashboardData (CORRIGIDA)
+// DESCRIÇÃO: Busca todos os dados para o painel de admin em uma chamada.
 // =================================================================== //
 exports.getAdminDashboardData = onCall(async (request) => {
     /*
     // Para reativar a autenticação, use a verificação automática da v2.
-    // O código da função só será executado se o usuário estiver autenticado.
-    // Opcionalmente, verifique permissões de admin:
     if (request.auth.token.role !== 'admin') {
         throw new HttpsError("permission-denied", "Requer permissão de administrador.");
     }
     */
 
-    const eventsSnapshot = await db.collection("events").get();
-    const playersSnapshot = await db.collection("players").get();
+    // Busca os dados em paralelo para mais eficiência
+    const [eventsSnapshot, playersSnapshot] = await Promise.all([
+        db.collection("events").get(),
+        db.collection("players").get()
+    ]);
 
     const playersData = playersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const totalPlayers = playersSnapshot.size;
 
-    const dashboardData = [];
-
-    for (const eventDoc of eventsSnapshot.docs) {
+    // Mapeia os eventos e calcula a contagem de jogadores para cada um
+    const eventsData = await Promise.all(eventsSnapshot.docs.map(async (eventDoc) => {
         const eventData = { id: eventDoc.id, ...eventDoc.data() };
-        const eventId = eventDoc.id;
 
-        const phasesSnapshot = await db.collection("events").doc(eventId).collection("phases").get();
+        const phasesSnapshot = await db.collection("events").doc(eventDoc.id).collection("phases").get();
         eventData.totalPhases = phasesSnapshot.size;
 
-        eventData.playerCount = playersData.filter(p => p.events && p.events[eventId]).length;
+        // Calcula a contagem de jogadores inscritos neste evento
+        eventData.playerCount = playersData.filter(p => p.events && p.events[eventDoc.id]).length;
 
-        let rankedPlayers = [];
-        for (const player of playersData) {
-            if (player.events && player.events[eventId]) {
-                const progress = player.events[eventId];
-                const phasesCompleted = progress.currentPhase ? (progress.currentPhase - 1) : 0;
+        return eventData;
+    }));
 
-                rankedPlayers.push({
-                    uid: player.id,
-                    name: player.name || 'Anônimo',
-                    progress: eventData.totalPhases > 0 ? phasesCompleted / eventData.totalPhases : 0,
-                });
-            }
-        }
-
-        rankedPlayers.sort((a, b) => b.progress - a.progress);
-        eventData.ranking = rankedPlayers.slice(0, 5).map((player, index) => ({ ...player, position: index + 1 }));
-
-        dashboardData.push(eventData);
-    }
-
-    return dashboardData;
+    // --- CORREÇÃO PRINCIPAL AQUI ---
+    // Retorna um único objeto (mapa) em vez de uma lista
+    return {
+        events: eventsData,
+        playerCount: totalPlayers,
+    };
 });
 
 // =================================================================== //

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:oenigma/models/event_model.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
 import '../models/phase_model.dart';
 
@@ -110,5 +111,60 @@ class FirebaseService {
 
   Future<HttpsCallableResult> subscribeToEvent(String eventId) {
     return _callFunction('subscribeToEvent', {'eventId': eventId});
+  }
+
+  // --- Funções de Leitura ---
+  Future<Map<String, dynamic>> getAdminDashboardData() async {
+    final result = await _callFunction('getAdminDashboardData');
+    return Map<String, dynamic>.from(result.data);
+  }
+
+  Future<EventModel> getFullEventDetails(String eventId) async {
+    final result = await _callFunction('getEventData', {'eventId': eventId});
+    if (result.data == null) {
+      throw Exception('Evento não encontrado');
+    }
+    return EventModel.fromMap(Map<String, dynamic>.from(result.data));
+  }
+
+  // --- Funções de Escrita (Gerenciamento) ---
+  Future<HttpsCallableResult> createOrUpdateEvent({
+    String? eventId,
+    required Map<String, dynamic> data,
+  }) {
+    return _callFunction('createOrUpdateEvent', {
+      'eventId': eventId,
+      'data': data,
+    });
+  }
+
+  Future<HttpsCallableResult> createOrUpdatePhase({
+    required String eventId,
+    String? phaseId,
+    required Map<String, dynamic> data,
+  }) {
+    return _callFunction('createOrUpdatePhase', {
+      'eventId': eventId,
+      'phaseId': phaseId,
+      'data': data,
+    });
+  }
+
+  Future<HttpsCallableResult> createOrUpdateEnigma({
+    required String eventId,
+    required String phaseId,
+    String? enigmaId,
+    required Map<String, dynamic> data,
+  }) {
+    return _callFunction('createOrUpdateEnigma', {
+      'eventId': eventId,
+      'phaseId': phaseId,
+      'enigmaId': enigmaId,
+      'data': data,
+    });
+  }
+
+  Future<HttpsCallableResult> deleteEvent(String eventId) {
+    return _callFunction('deleteEvent', {'eventId': eventId});
   }
 }

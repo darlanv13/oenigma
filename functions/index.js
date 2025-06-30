@@ -16,5 +16,6 @@ Object.assign(exports,
     require("./gameplay"),
     require("./admin"),
     require("./wallet"),
-    require("./home")
+    require("./home"),
+    require("./management")
 );

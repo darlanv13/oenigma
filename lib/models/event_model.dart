@@ -15,6 +15,7 @@ class EventModel {
   final String? winnerName;
   final String? winnerPhotoURL; // <-- 1. ADICIONE ESTA LINHA
   final List<PhaseModel> phases;
+  final int playerCount;
 
   EventModel({
     required this.id,
@@ -29,6 +30,7 @@ class EventModel {
     this.winnerName,
     this.winnerPhotoURL, // <-- 2. ADICIONE AO CONSTRUTOR
     this.phases = const [],
+    this.playerCount = 0,
   });
 
   factory EventModel.fromMap(Map<String, dynamic> map) {
@@ -55,6 +57,7 @@ class EventModel {
       winnerName: map['winnerName'],
       winnerPhotoURL: map['winnerPhotoURL'], // <-- 3. LEIA O DADO DO MAPA
       phases: phasesList,
+      playerCount: map['playerCount'] ?? 0,
     );
   }
 }
