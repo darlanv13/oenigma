@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/admin/event_editor_screen.dart';
+import 'package:oenigma/admin/player_management_screen.dart';
 import 'package:oenigma/models/event_model.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_service.dart';
@@ -123,6 +124,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             "Total de Jogadores",
             (data['playerCount'] ?? 0).toString(),
             Icons.person_outline,
+          ),
+        ),
+        const SizedBox(width: 20),
+        // --- NOVO CARD/BOTÃO ADICIONADO AQUI ---
+        Expanded(
+          child: InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const PlayerManagementScreen(),
+                ),
+              );
+            },
+            child: _buildStatCard(
+              "Gerenciar",
+              "Jogadores",
+              Icons.admin_panel_settings,
+            ),
           ),
         ),
       ],

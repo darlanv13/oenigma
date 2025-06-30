@@ -167,4 +167,19 @@ class FirebaseService {
   Future<HttpsCallableResult> deleteEvent(String eventId) {
     return _callFunction('deleteEvent', {'eventId': eventId});
   }
+
+  // --- Funções de Gerenciamento de Usuários ---
+
+  Future<List<dynamic>> listAllUsers() async {
+    final result = await _callFunction('listAllUsers');
+    return result.data as List<dynamic>;
+  }
+
+  Future<void> grantAdminRole(String uid) {
+    return _callFunction('grantAdminRole', {'uid': uid});
+  }
+
+  Future<void> revokeAdminRole(String uid) {
+    return _callFunction('revokeAdminRole', {'uid': uid});
+  }
 }

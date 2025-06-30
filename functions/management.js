@@ -6,12 +6,10 @@ const db = admin.firestore();
 
 // Função de verificação de permissão de administrador
 const ensureIsAdmin = (context) => {
-    // Para produção, descomente esta verificação!
-    /*
+
     if (!context.auth || context.auth.token.role !== 'admin') {
         throw new HttpsError("permission-denied", "Acesso negado. Requer permissão de administrador.");
     }
-    */
     // Mantemos o aviso para lembrar que a segurança está desativada para testes.
     console.warn("AVISO: Verificação de admin desativada para fins de teste.");
 };
@@ -124,4 +122,73 @@ exports.deleteEvent = onCall(async (request) => {
     return { success: true, message: "Evento excluído." };
 });
 
+
+// =================================================================== //
+// FUNÇÃO: listAllUsers
+// DESCRIÇÃO: Retorna uma lista de todos os usuários registrados.
+// =================================================================== //
+exports.listAllUsers = onCall(async (request) => {
+    ensureIsAdmin(request); // Apenas admins podem listar usuários
+
+    try {
+        const userRecords = await admin.auth().listUsers();
+        const users = userRecords.users.map((user) => ({
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || 'Sem nome',
+            photoURL: user.photoURL,
+            disabled: user.disabled,
+            // Retorna as permissões customizadas (claims)
+            isAdmin: user.customClaims?.role === 'admin',
+        }));
+        return users;
+    } catch (error) {
+        console.error("Erro ao listar usuários:", error);
+        throw new HttpsError("internal", "Não foi possível listar os usuários.");
+    }
+});
+
+// =================================================================== //
+// FUNÇÃO: grantAdminRole
+// DESCRIÇÃO: Atribui a permissão de administrador a um usuário.
+// =================================================================== //
+exports.grantAdminRole = onCall(async (request) => {
+    ensureIsAdmin(request); // Apenas admins podem promover outros admins
+
+    const { uid } = request.data;
+    if (!uid) {
+        throw new HttpsError("invalid-argument", "O UID do usuário é obrigatório.");
+    }
+
+    try {
+        // Define o custom claim 'role' como 'admin'
+        await admin.auth().setCustomUserClaims(uid, { role: 'admin' });
+        return { success: true, message: "Permissão de administrador concedida." };
+    } catch (error) {
+        console.error("Erro ao conceder permissão:", error);
+        throw new HttpsError("internal", "Não foi possível conceder a permissão.");
+    }
+});
+
+// =================================================================== //
+// FUNÇÃO: revokeAdminRole
+// DESCRIÇÃO: Remove a permissão de administrador de um usuário.
+// =================================================================== //
+exports.revokeAdminRole = onCall(async (request) => {
+    ensureIsAdmin(request);
+
+    const { uid } = request.data;
+    if (!uid) {
+        throw new HttpsError("invalid-argument", "O UID do usuário é obrigatório.");
+    }
+
+    try {
+        // Remove os custom claims, revertendo o usuário ao padrão
+        await admin.auth().setCustomUserClaims(uid, null);
+        return { success: true, message: "Permissão de administrador revogada." };
+    } catch (error) {
+        console.error("Erro ao revogar permissão:", error);
+        throw new HttpsError("internal", "Não foi possível revogar a permissão.");
+    }
+});
 // Você pode adicionar funções como deletePhase e deleteEnigma aqui no futuro.
