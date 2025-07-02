@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oenigma/models/phase_model.dart';
@@ -40,7 +41,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
     ).create();
     await imagePath.writeAsBytes(image);
 
-    SharePlus.instance.share(
+    await SharePlus.instance.share(
       ShareParams(
         files: [XFile(imagePath.path)],
         text:
@@ -83,10 +84,10 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                 ),
                 child: Column(
                   children: [
+                    // --- 1. LOGO ADICIONADA AQUI ---
                     _buildEnigmaCityLogo(),
                     const SizedBox(height: 10),
-                    Lottie.asset('assets/animations/trofel.json', height: 100),
-                    const SizedBox(height: 10),
+                    Lottie.asset('assets/animations/trofel.json', height: 120),
                     const Text(
                       "CERTIFICADO DE CONQUISTA",
                       style: TextStyle(
@@ -95,10 +96,8 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.5,
                       ),
-                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 20),
-                    // --- AVATAR COM BORDA DOURADA ---
                     Stack(
                       alignment: Alignment.center,
                       children: [
@@ -116,33 +115,26 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                               ? const Icon(Icons.person, size: 45)
                               : null,
                         ),
+                        Positioned(
+                          top: -1,
+                          child: Icon(
+                            Icons.military_tech,
+                            color: primaryAmber,
+                            size: 30,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Text(
                       winnerFirstName.toUpperCase(),
                       style: const TextStyle(
-                        fontSize: 26,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: textColor,
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                    // --- MEDALHA ---
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: //Image.asset(
-                          //'assets/icons/medal.png', // Substitua pelo seu asset
-                          // height: 24,
-                          // ),
-                          // Ou use um ícone do Flutter:
-                          Icon(
-                            Icons.star_border,
-                            color: Colors.amber,
-                            size: 28,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     const Text(
                       "O CAÇADOR Nº 1",
                       style: TextStyle(
@@ -174,7 +166,6 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                         color: secondaryTextColor,
                         fontStyle: FontStyle.italic,
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -183,7 +174,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
             const SizedBox(height: 24),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE1306C),
+                backgroundColor: const Color(0xFFE1306C), // Cor do Instagram
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
@@ -213,6 +204,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
     );
   }
 
+  // --- 2. NOVO WIDGET PARA A LOGO ---
   Widget _buildEnigmaCityLogo() {
     return RichText(
       textAlign: TextAlign.center,
@@ -221,7 +213,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
           fontSize: 28,
           fontWeight: FontWeight.bold,
           letterSpacing: 2,
-          fontFamily: 'Montserrat',
+          fontFamily: 'Montserrat', // Sinta-se à vontade para trocar a fonte
         ),
         children: <TextSpan>[
           TextSpan(
@@ -268,7 +260,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
       decoration: BoxDecoration(
         color: darkBackground,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.grey.shade800),
+        border: Border.all(color: Colors.grey[800]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,7 +282,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
           const SizedBox(height: 12),
           Text(
             "O valor do prêmio já foi adicionado ao seu saldo na carteira do aplicativo.\n\nVocê pode usá-lo para se inscrever em novos eventos ou solicitar um saque. Para sacar, vá até a sua Carteira e clique no botão 'Sacar'.",
-            style: TextStyle(color: Colors.grey.shade300, height: 1.5),
+            style: TextStyle(color: Colors.grey[300], height: 1.5),
           ),
         ],
       ),

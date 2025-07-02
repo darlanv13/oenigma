@@ -15,32 +15,67 @@ const ensureIsAdmin = (context) => {
 };
 
 // =================================================================== //
-// FUNÇÃO: createOrUpdateEvent
-// DESCRIÇÃO: Cria um novo evento ou atualiza um existente.
+// FUNÇÃO: createOrUpdateEvent (ATUALIZADA)
 // =================================================================== //
 exports.createOrUpdateEvent = onCall(async (request) => {
     ensureIsAdmin(request);
-
     const { eventId, data } = request.data;
 
-    // Validação básica dos dados recebidos
     if (!data || !data.name || !data.prize || data.price == null) {
-        throw new HttpsError("invalid-argument", "Dados do evento incompletos (nome, prêmio e preço são obrigatórios).");
+        throw new HttpsError("invalid-argument", "Dados do evento incompletos.");
+    }
+
+    // Adiciona o eventType se não for fornecido (para eventos antigos)
+    if (!data.eventType) {
+        data.eventType = 'classic';
     }
 
     try {
         if (eventId) {
-            // Atualiza um evento existente
             await db.collection("events").doc(eventId).set(data, { merge: true });
-            return { success: true, eventId: eventId, message: "Evento atualizado com sucesso." };
+            return { success: true, eventId: eventId, message: "Evento atualizado." };
         } else {
-            // Cria um novo evento
             const newEventRef = await db.collection("events").add(data);
-            return { success: true, eventId: newEventRef.id, message: "Evento criado com sucesso." };
+            return { success: true, eventId: newEventRef.id, message: "Evento criado." };
         }
     } catch (error) {
         console.error("Erro em createOrUpdateEvent:", error);
         throw new HttpsError("internal", "Não foi possível salvar o evento.");
+    }
+});
+
+// =================================================================== //
+// FUNÇÃO: createOrUpdateEnigma (ATUALIZADA)
+// =================================================================== //
+exports.createOrUpdateEnigma = onCall(async (request) => {
+    ensureIsAdmin(request);
+    const { eventId, phaseId, enigmaId, data } = request.data;
+
+    if (!eventId || !data || !data.type || !data.code || !data.instruction) {
+        throw new HttpsError("invalid-argument", "Dados do enigma incompletos.");
+    }
+
+    // Validação condicional para imageUrl
+    if ((data.type === 'photo_location' || data.type === 'qr_code_gps') && !data.imageUrl) {
+        throw new HttpsError("invalid-argument", "A URL da imagem é obrigatória para este tipo de enigma.");
+    }
+
+    // Garante que o prêmio seja um número
+    data.prize = Number(data.prize) || 0;
+
+    try {
+        // Para "Find & Win", não teremos phaseId, então salvamos na coleção de enigmas do evento
+        const collectionPath = phaseId
+            ? db.collection("events").doc(eventId).collection("phases").doc(phaseId).collection("enigmas")
+            : db.collection("events").doc(eventId).collection("enigmas");
+
+        const enigmaRef = enigmaId ? collectionPath.doc(enigmaId) : collectionPath.doc();
+
+        await enigmaRef.set(data, { merge: true });
+        return { success: true, enigmaId: enigmaRef.id, message: "Enigma salvo." };
+    } catch (error) {
+        console.error("Erro em createOrUpdateEnigma:", error);
+        throw new HttpsError("internal", "Não foi possível salvar o enigma.");
     }
 });
 
@@ -67,43 +102,6 @@ exports.createOrUpdatePhase = onCall(async (request) => {
     } catch (error) {
         console.error("Erro em createOrUpdatePhase:", error);
         throw new HttpsError("internal", "Não foi possível salvar a fase.");
-    }
-});
-
-//=================================================================== / /
-// FUNÇÃO: createOrUpdateEnigma (ATUALIZADA)
-// =================================================================== //
-exports.createOrUpdateEnigma = onCall(async (request) => {
-    ensureIsAdmin(request);
-    const { eventId, phaseId, enigmaId, data } = request.data;
-
-    if (!eventId || !phaseId || !data || !data.type || !data.code || !data.instruction) {
-        throw new HttpsError("invalid-argument", "Dados do enigma incompletos.");
-    }
-
-    // Validação condicional para imageUrl
-    if ((data.type === 'photo_location' || data.type === 'qr_code_gps') && !data.imageUrl) {
-        throw new HttpsError("invalid-argument", "A URL da imagem é obrigatória para este tipo de enigma.");
-    }
-
-    // Validação para formato de GPS na dica
-    if (data.hintType === 'gps' && data.hintData) {
-        const coords = data.hintData.split(',');
-        if (coords.length !== 2 || isNaN(parseFloat(coords[0])) || isNaN(parseFloat(coords[1]))) {
-            throw new HttpsError("invalid-argument", 'O formato da dica de GPS deve ser "latitude,longitude".');
-        }
-    }
-
-    try {
-        const enigmaRef = enigmaId
-            ? db.collection("events").doc(eventId).collection("phases").doc(phaseId).collection("enigmas").doc(enigmaId)
-            : db.collection("events").doc(eventId).collection("phases").doc(phaseId).collection("enigmas").doc();
-
-        await enigmaRef.set(data, { merge: true });
-        return { success: true, enigmaId: enigmaRef.id, message: "Enigma salvo com sucesso." };
-    } catch (error) {
-        console.error("Erro em createOrUpdateEnigma:", error);
-        throw new HttpsError("internal", "Não foi possível salvar o enigma.");
     }
 });
 

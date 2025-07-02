@@ -11,6 +11,7 @@ class AuthService {
   Stream<User?> get authStateChanges => _auth.authStateChanges();
   User? get currentUser => _auth.currentUser;
 
+  // Função de login padrão para os jogadores no app móvel
   Future<String?> signInWithEmailAndPassword(
     String email,
     String password,
@@ -22,6 +23,42 @@ class AuthService {
       );
       return null;
     } on FirebaseAuthException catch (e) {
+      return e.message ?? "Ocorreu um erro desconhecido.";
+    }
+  }
+
+  // --- NOVA FUNÇÃO DE LOGIN APENAS PARA ADMINS ---
+  Future<String?> signInAdminWithEmailAndPassword(
+    String email,
+    String password,
+  ) async {
+    try {
+      // 1. Tenta fazer o login normalmente
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password.trim(),
+      );
+
+      final user = userCredential.user;
+      if (user == null) {
+        return "Ocorreu um erro inesperado.";
+      }
+
+      // 2. Busca o token do usuário para verificar as permissões (claims)
+      // O 'true' força a atualização do token para pegar as permissões mais recentes.
+      final idTokenResult = await user.getIdTokenResult(true);
+
+      // 3. Verifica se a permissão 'role' é igual a 'admin'
+      if (idTokenResult.claims?['role'] == 'admin') {
+        // Se for admin, o login é um sucesso.
+        return null;
+      } else {
+        // 4. Se NÃO for admin, desloga o usuário imediatamente e retorna um erro.
+        await _auth.signOut();
+        return "Acesso negado. Esta conta não possui privilégios de administrador.";
+      }
+    } on FirebaseAuthException catch (e) {
+      // Retorna erros de login padrão (senha errada, usuário não encontrado)
       return e.message ?? "Ocorreu um erro desconhecido.";
     }
   }

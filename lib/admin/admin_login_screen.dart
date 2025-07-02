@@ -17,16 +17,21 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   Future<void> _login() async {
     setState(() => _isLoading = true);
-    final error = await _authService.signInWithEmailAndPassword(
-      _emailController.text,
-      _passwordController.text,
+    // --- CORREÇÃO APLICADA AQUI ---
+    // Chamamos a nova função de login que verifica a permissão de admin
+    final error = await _authService.signInAdminWithEmailAndPassword(
+      _emailController.text.trim(),
+      _passwordController.text.trim(),
     );
-    if (mounted && error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error), backgroundColor: Colors.red),
-      );
+    if (mounted) {
+      if (error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
+      }
+      // Se o login for bem-sucedido (error == null), o AuthGate fará a navegação.
+      setState(() => _isLoading = false);
     }
-    setState(() => _isLoading = false);
   }
 
   @override
@@ -38,6 +43,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           constraints: const BoxConstraints(maxWidth: 400),
           child: Card(
             color: cardColor,
+            elevation: 8,
             child: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -45,26 +51,49 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 children: [
                   const Text(
                     "Painel de Admin",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: primaryAmber,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   TextField(
                     controller: _emailController,
-                    decoration: const InputDecoration(labelText: "Email"),
+                    decoration: const InputDecoration(
+                      labelText: "Email",
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: _passwordController,
-                    decoration: const InputDecoration(labelText: "Senha"),
+                    decoration: const InputDecoration(
+                      labelText: "Senha",
+                      border: OutlineInputBorder(),
+                    ),
                     obscureText: true,
                   ),
                   const SizedBox(height: 24),
-                  _isLoading
-                      ? const CircularProgressIndicator(color: primaryAmber)
-                      : ElevatedButton(
-                          onPressed: _login,
-                          child: const Text("Entrar"),
-                        ),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryAmber,
+                        foregroundColor: darkBackground,
+                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                              color: darkBackground,
+                            )
+                          : const Text(
+                              "Entrar",
+                              style: TextStyle(fontSize: 16),
+                            ),
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -182,4 +182,21 @@ class FirebaseService {
   Future<void> revokeAdminRole(String uid) {
     return _callFunction('revokeAdminRole', {'uid': uid});
   }
+
+  Future<void> toggleEventStatus({
+    required String eventId,
+    required String newStatus,
+  }) {
+    return _callFunction('toggleEventStatus', {
+      'eventId': eventId,
+      'newStatus': newStatus,
+    });
+  }
+
+  Future<Map<String, dynamic>> getFindAndWinStats(String eventId) async {
+    final result = await _callFunction('getFindAndWinStats', {
+      'eventId': eventId,
+    });
+    return Map<String, dynamic>.from(result.data);
+  }
 }

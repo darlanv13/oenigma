@@ -40,6 +40,36 @@ exports.getEventData = onCall(async (request) => {
 });
 
 // =================================================================== //
+// NOVA FUNÇÃO: getFindAndWinStats
+// DESCRIÇÃO: Busca o total de enigmas e quantos foram resolvidos
+//            para um evento do tipo "Find & Win".
+// =================================================================== //
+exports.getFindAndWinStats = onCall(async (request) => {
+    const { eventId } = request.data;
+    if (!eventId) {
+        throw new HttpsError("invalid-argument", "O ID do evento é obrigatório.");
+    }
+
+    try {
+        const enigmasRef = db.collection("events").doc(eventId).collection("enigmas");
+
+        // Busca o total de enigmas e os resolvidos em paralelo
+        const [allEnigmasSnapshot, solvedEnigmasSnapshot] = await Promise.all([
+            enigmasRef.get(),
+            enigmasRef.where("status", "==", "closed").get()
+        ]);
+
+        return {
+            totalEnigmas: allEnigmasSnapshot.size,
+            solvedEnigmas: solvedEnigmasSnapshot.size,
+        };
+    } catch (error) {
+        console.error("Erro ao buscar estatísticas do evento:", error);
+        throw new HttpsError("internal", "Não foi possível buscar as estatísticas.");
+    }
+});
+
+// =================================================================== //
 // FUNÇÃO: getEventRanking (v2)                                        //
 // DESCRIÇÃO: Calcula e retorna o ranking dos jogadores para um evento.//
 // =================================================================== //

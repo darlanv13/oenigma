@@ -1,6 +1,7 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:oenigma/screens/find_and_win_progress_screen.dart';
 import 'package:oenigma/screens/wallet_screen.dart';
 import 'dart:ui';
 import '../models/event_model.dart';
@@ -27,6 +28,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   final FirebaseService _firebaseService = FirebaseService();
   late Future<int> _challengeCountFuture;
   late final Future<LottieComposition> _composition;
+  Future<Map<String, int>>? _statsFuture;
 
   bool _isSubscribed = false;
   bool _isLoading = false;
@@ -34,19 +36,40 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _challengeCountFuture = _firebaseService.getChallengeCountForEvent(
-      widget.event.id,
-    );
-
-    // Verifica se o jogador já está inscrito neste evento
     _isSubscribed = widget.playerData['events']?[widget.event.id] != null;
 
+    // Carrega a animação do header
     if (widget.event.icon.isNotEmpty &&
         Uri.tryParse(widget.event.icon)?.isAbsolute == true) {
       _composition = NetworkLottie(widget.event.icon).load();
     } else {
       _composition = AssetLottie('assets/animations/no_enigma.json').load();
     }
+
+    // --- LÓGICA DE CARREGAMENTO CONDICIONAL ---
+    if (widget.event.eventType == 'find_and_win') {
+      _statsFuture = _getFindAndWinStats();
+    } else {
+      _statsFuture = _getClassicEventStats();
+    }
+  }
+
+  Future<Map<String, int>> _getFindAndWinStats() async {
+    final stats = await _firebaseService.getFindAndWinStats(widget.event.id);
+    return {
+      'total': stats['totalEnigmas'] ?? 0,
+      'solved': stats['solvedEnigmas'] ?? 0,
+    };
+  }
+
+  Future<Map<String, int>> _getClassicEventStats() async {
+    final count = await _firebaseService.getChallengeCountForEvent(
+      widget.event.id,
+    );
+    return {
+      'total': count,
+      'solved': 0,
+    }; // O progresso é individual no modo clássico
   }
 
   // Função para lidar com a inscrição
@@ -321,6 +344,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     );
   }
 
+  // --- WIDGET DE INFORMAÇÕES ATUALIZADO ---
   Widget _buildInfoGrid() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -342,13 +366,31 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             'Data',
             widget.event.startDate,
           ),
-          FutureBuilder<int>(
-            future: _challengeCountFuture,
+
+          // --- WIDGET DE ESTATÍSTICAS CONDICIONAL ---
+          FutureBuilder<Map<String, int>>(
+            future: _statsFuture,
             builder: (context, snapshot) {
-              final count = snapshot.hasData ? snapshot.data.toString() : '...';
-              return _buildInfoPill(Icons.filter_alt_outlined, 'Fases', count);
+              if (widget.event.eventType == 'find_and_win') {
+                final solved = snapshot.data?['solved'] ?? 0;
+                final total = snapshot.data?['total'] ?? 0;
+                return _buildInfoPill(
+                  Icons.track_changes,
+                  'Enigmas Resolvidos',
+                  '$solved / $total',
+                );
+              } else {
+                // Modo Clássico
+                final total = snapshot.data?['total'] ?? 0;
+                return _buildInfoPill(
+                  Icons.filter_alt_outlined,
+                  'Fases',
+                  total.toString(),
+                );
+              }
             },
           ),
+
           _buildInfoPill(
             Icons.monetization_on_outlined,
             'Inscrição',
@@ -499,13 +541,26 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               ? null
               : () {
                   if (_isSubscribed) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            EventProgressScreen(event: widget.event),
-                      ),
-                    );
+                    // --- CORREÇÃO APLICADA AQUI ---
+                    // Verifica o tipo de evento para decidir para onde navegar
+                    if (widget.event.eventType == 'find_and_win') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              FindAndWinProgressScreen(event: widget.event),
+                        ),
+                      );
+                    } else {
+                      // Navegação padrão para o modo clássico
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              EventProgressScreen(event: widget.event),
+                        ),
+                      );
+                    }
                   } else {
                     _handleSubscription();
                   }

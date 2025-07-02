@@ -1,11 +1,12 @@
 // lib/models/event_model.dart
 
+import 'package:oenigma/models/enigma_model.dart';
 import 'package:oenigma/models/phase_model.dart';
 
 class EventModel {
   final String id;
   final String name;
-  final String prize;
+  final String prize; // No modo Find & Win, este será o prêmio total (soma)
   final double price;
   final String icon;
   final String startDate;
@@ -13,9 +14,11 @@ class EventModel {
   final String fullDescription;
   final String status;
   final String? winnerName;
-  final String? winnerPhotoURL; // <-- 1. ADICIONE ESTA LINHA
-  final List<PhaseModel> phases;
+  final String? winnerPhotoURL;
   final int playerCount;
+  final List<PhaseModel> phases;
+  final String eventType; // <-- NOVO CAMPO: 'classic' ou 'find_and_win'
+  final List<EnigmaModel> enigmas; // Para o modo Find & Win
 
   EventModel({
     required this.id,
@@ -28,11 +31,12 @@ class EventModel {
     required this.fullDescription,
     required this.status,
     this.winnerName,
-    this.winnerPhotoURL, // <-- 2. ADICIONE AO CONSTRUTOR
+    this.winnerPhotoURL,
     this.phases = const [],
     this.playerCount = 0,
+    this.eventType = 'classic', // <-- NOVO CAMPO
+    this.enigmas = const [], // Valor padrão
   });
-
   factory EventModel.fromMap(Map<String, dynamic> map) {
     var phasesList = <PhaseModel>[];
     if (map['phases'] is List) {
@@ -40,6 +44,16 @@ class EventModel {
           .map(
             (phaseData) =>
                 PhaseModel.fromMap(Map<String, dynamic>.from(phaseData)),
+          )
+          .toList();
+    }
+
+    var enigmasList = <EnigmaModel>[];
+    if (map['enigmas'] is List) {
+      enigmasList = (map['enigmas'] as List)
+          .map(
+            (enigmaData) =>
+                EnigmaModel.fromMap(Map<String, dynamic>.from(enigmaData)),
           )
           .toList();
     }
@@ -58,6 +72,8 @@ class EventModel {
       winnerPhotoURL: map['winnerPhotoURL'], // <-- 3. LEIA O DADO DO MAPA
       phases: phasesList,
       playerCount: map['playerCount'] ?? 0,
+      eventType: map['eventType'] ?? 'classic', // <-- Lendo o novo campo
+      enigmas: enigmasList,
     );
   }
 }
