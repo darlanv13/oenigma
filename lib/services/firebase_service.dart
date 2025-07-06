@@ -152,13 +152,13 @@ class FirebaseService {
 
   Future<HttpsCallableResult> createOrUpdateEnigma({
     required String eventId,
-    required String phaseId,
+    String? phaseId, // <-- Torne este parâmetro opcional usando '?'
     String? enigmaId,
     required Map<String, dynamic> data,
   }) {
     return _callFunction('createOrUpdateEnigma', {
       'eventId': eventId,
-      'phaseId': phaseId,
+      'phaseId': phaseId, // Agora pode ser nulo
       'enigmaId': enigmaId,
       'data': data,
     });
@@ -198,5 +198,25 @@ class FirebaseService {
       'eventId': eventId,
     });
     return Map<String, dynamic>.from(result.data);
+  }
+
+  ///deletar Fases e Enigmas///
+  Future<void> deletePhase({required String eventId, required String phaseId}) {
+    return _callFunction('deletePhase', {
+      'eventId': eventId,
+      'phaseId': phaseId,
+    });
+  }
+
+  Future<void> deleteEnigma({
+    required String eventId,
+    String? phaseId,
+    required String enigmaId,
+  }) {
+    return _callFunction('deleteEnigma', {
+      'eventId': eventId,
+      'phaseId': phaseId,
+      'enigmaId': enigmaId,
+    });
   }
 }
