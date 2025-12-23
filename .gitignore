@@ -32,6 +32,7 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+node_modules/
 
 # Symbolication related
 app.*.symbols
@@ -44,14 +45,14 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+
 # Arquivos e pastas gerados pelo Flutter.
 .dart_tool/
-.node_modules/
 .idea/
 .packages
 .project
 build/
-
+node_modules/
 # Arquivos de log e dependências.
 *.log
 pubspec.lock
