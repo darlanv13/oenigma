@@ -46,6 +46,7 @@ app.*.map.json
 
 # Arquivos e pastas gerados pelo Flutter.
 .dart_tool/
+.node_modules/
 .idea/
 .packages
 .project
