@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:oenigma/models/enigma_model.dart';
 import 'package:oenigma/models/event_model.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
 import '../models/phase_model.dart';
@@ -10,7 +11,7 @@ class FirebaseService {
     region: 'southamerica-east1',
   );
 
-  Future<HttpsCallableResult> _callFunction(
+  Future<HttpsCallableResult> callFunction(
     String functionName, [
     Map<String, dynamic>? payload,
   ]) async {
@@ -30,7 +31,7 @@ class FirebaseService {
 
   // NOVA FUNÇÃO OTIMIZADA E CENTRALIZADA
   Future<Map<String, dynamic>> getHomeScreenData() async {
-    final result = await _callFunction('getHomeScreenData');
+    final result = await callFunction('getHomeScreenData');
     return Map<String, dynamic>.from(result.data);
   }
 
@@ -38,7 +39,7 @@ class FirebaseService {
 
   Future<List<PhaseModel>> getPhasesForEvent(String eventId) async {
     // Esta função ainda é usada na tela de progresso do evento
-    final result = await _callFunction('getEventData', {'eventId': eventId});
+    final result = await callFunction('getEventData', {'eventId': eventId});
     if (result.data == null) {
       return [];
     }
@@ -51,7 +52,7 @@ class FirebaseService {
   }
 
   Future<int> getChallengeCountForEvent(String eventId) async {
-    final result = await _callFunction('getEventData', {'eventId': eventId});
+    final result = await callFunction('getEventData', {'eventId': eventId});
     if (result.data == null) return 0;
     final eventData = Map<String, dynamic>.from(result.data);
     final phases = eventData['phases'] as List?;
@@ -66,7 +67,7 @@ class FirebaseService {
 
   Future<UserWalletModel> getUserWalletData() async {
     // Usado na tela de Carteira
-    final result = await _callFunction('getUserWalletData');
+    final result = await callFunction('getUserWalletData');
     if (result.data == null) {
       throw Exception("Não foi possível carregar os dados da carteira.");
     }
@@ -80,7 +81,7 @@ class FirebaseService {
     Map<String, dynamic> payload,
   ) {
     final fullPayload = {'action': action, ...payload};
-    return _callFunction('handleEnigmaAction', fullPayload);
+    return callFunction('handleEnigmaAction', fullPayload);
   }
 
   Future<Map<String, dynamic>> getPlayerProgress(
@@ -110,17 +111,17 @@ class FirebaseService {
   }
 
   Future<HttpsCallableResult> subscribeToEvent(String eventId) {
-    return _callFunction('subscribeToEvent', {'eventId': eventId});
+    return callFunction('subscribeToEvent', {'eventId': eventId});
   }
 
   // --- Funções de Leitura ---
   Future<Map<String, dynamic>> getAdminDashboardData() async {
-    final result = await _callFunction('getAdminDashboardData');
+    final result = await callFunction('getAdminDashboardData');
     return Map<String, dynamic>.from(result.data);
   }
 
   Future<EventModel> getFullEventDetails(String eventId) async {
-    final result = await _callFunction('getEventData', {'eventId': eventId});
+    final result = await callFunction('getEventData', {'eventId': eventId});
     if (result.data == null) {
       throw Exception('Evento não encontrado');
     }
@@ -132,7 +133,7 @@ class FirebaseService {
     String? eventId,
     required Map<String, dynamic> data,
   }) {
-    return _callFunction('createOrUpdateEvent', {
+    return callFunction('createOrUpdateEvent', {
       'eventId': eventId,
       'data': data,
     });
@@ -143,7 +144,7 @@ class FirebaseService {
     String? phaseId,
     required Map<String, dynamic> data,
   }) {
-    return _callFunction('createOrUpdatePhase', {
+    return callFunction('createOrUpdatePhase', {
       'eventId': eventId,
       'phaseId': phaseId,
       'data': data,
@@ -156,7 +157,7 @@ class FirebaseService {
     String? enigmaId,
     required Map<String, dynamic> data,
   }) {
-    return _callFunction('createOrUpdateEnigma', {
+    return callFunction('createOrUpdateEnigma', {
       'eventId': eventId,
       'phaseId': phaseId, // Agora pode ser nulo
       'enigmaId': enigmaId,
@@ -165,36 +166,36 @@ class FirebaseService {
   }
 
   Future<HttpsCallableResult> deleteEvent(String eventId) {
-    return _callFunction('deleteEvent', {'eventId': eventId});
+    return callFunction('deleteEvent', {'eventId': eventId});
   }
 
   // --- Funções de Gerenciamento de Usuários ---
 
   Future<List<dynamic>> listAllUsers() async {
-    final result = await _callFunction('listAllUsers');
+    final result = await callFunction('listAllUsers');
     return result.data as List<dynamic>;
   }
 
   Future<void> grantAdminRole(String uid) {
-    return _callFunction('grantAdminRole', {'uid': uid});
+    return callFunction('grantAdminRole', {'uid': uid});
   }
 
   Future<void> revokeAdminRole(String uid) {
-    return _callFunction('revokeAdminRole', {'uid': uid});
+    return callFunction('revokeAdminRole', {'uid': uid});
   }
 
   Future<void> toggleEventStatus({
     required String eventId,
     required String newStatus,
   }) {
-    return _callFunction('toggleEventStatus', {
+    return callFunction('toggleEventStatus', {
       'eventId': eventId,
       'newStatus': newStatus,
     });
   }
 
   Future<Map<String, dynamic>> getFindAndWinStats(String eventId) async {
-    final result = await _callFunction('getFindAndWinStats', {
+    final result = await callFunction('getFindAndWinStats', {
       'eventId': eventId,
     });
     return Map<String, dynamic>.from(result.data);
@@ -202,7 +203,7 @@ class FirebaseService {
 
   ///deletar Fases e Enigmas///
   Future<void> deletePhase({required String eventId, required String phaseId}) {
-    return _callFunction('deletePhase', {
+    return callFunction('deletePhase', {
       'eventId': eventId,
       'phaseId': phaseId,
     });
@@ -213,10 +214,26 @@ class FirebaseService {
     String? phaseId,
     required String enigmaId,
   }) {
-    return _callFunction('deleteEnigma', {
+    return callFunction('deleteEnigma', {
       'eventId': eventId,
       'phaseId': phaseId,
       'enigmaId': enigmaId,
     });
+  }
+
+  ///Funsoes Painel de Gerencia//
+  Future<List<EnigmaModel>> getEnigmasForParent(
+    String eventId,
+    String? phaseId,
+  ) async {
+    final EventModel event = await getFullEventDetails(eventId);
+    if (phaseId != null) {
+      // Modo Clássico: busca enigmas da fase
+      final phase = event.phases.firstWhere((p) => p.id == phaseId);
+      return phase.enigmas;
+    } else {
+      // Modo Find & Win: busca enigmas do evento
+      return event.enigmas;
+    }
   }
 }

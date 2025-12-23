@@ -5,7 +5,6 @@ import 'package:oenigma/screens/find_and_win_progress_screen.dart';
 import 'package:oenigma/screens/wallet_screen.dart';
 import 'dart:ui';
 import '../models/event_model.dart';
-import '../models/user_wallet_model.dart';
 import '../screens/event_progress_screen.dart';
 import '../services/firebase_service.dart';
 import '../utils/app_colors.dart';
@@ -297,9 +296,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   Widget _buildTitleSection() {
-    // Adicione a importação do Lottie no início do seu arquivo, caso não tenha ainda.
-    // import 'package:lottie/lottie.dart';
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Column(
@@ -498,8 +494,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     );
   }
 
-  // Em event_details_screen.dart
-  // Substitua o seu _buildBottomCtaButton por este:
   Widget _buildBottomCtaButton(BuildContext context) {
     if (widget.event.status == 'closed') {
       return _buildDisabledButton(

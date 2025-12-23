@@ -18,13 +18,12 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
     const playerRef = db.collection("players").doc(playerId);
     const eventRef = db.collection("events").doc(eventId);
 
-    // 1. Busca o evento para saber qual lógica usar
     const eventDoc = await eventRef.get();
     if (!eventDoc.exists) throw new HttpsError("not-found", "Evento não encontrado.");
-    const eventType = eventDoc.data().eventType || 'classic'; // Padrão é 'classic'
+    const eventType = eventDoc.data().eventType || 'classic';
 
     // ==========================================================
-    // --- ROTA PARA O MODO DE JOGO: FIND & WIN ---
+    // --- LÓGICA ATUALIZADA PARA O MODO: FIND & WIN ---
     // ==========================================================
     if (eventType === 'find_and_win') {
         if (!enigmaId || !code) {
@@ -36,7 +35,6 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
         if (!currentEnigmaDoc.exists) throw new HttpsError("not-found", "Enigma não encontrado.");
         if (currentEnigmaDoc.data().status === 'closed') throw new HttpsError("failed-precondition", "Este enigma já foi resolvido!");
 
-        // Lógica de Tentativas e Cooldown
         const attemptRef = playerRef.collection("eventAttempts").doc(enigmaId);
         const attemptDoc = await attemptRef.get();
         if (attemptDoc.exists && attemptDoc.data().cooldownUntil?.toDate() > new Date()) {
@@ -70,14 +68,24 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
                 transaction.update(enigmaRef, { status: 'closed', winnerId: playerId, winnerName: playerDoc.data().name, winnerPhotoURL: playerDoc.data().photoURL });
             });
 
-            const nextEnigmaOrder = (currentEnigmaDoc.data().order || 0) + 1;
-            const nextEnigmaQuery = await eventRef.collection("enigmas").where("order", "==", nextEnigmaOrder).where("status", "==", "open").limit(1).get();
-            const nextEnigmaId = !nextEnigmaQuery.empty ? nextEnigmaQuery.docs[0].id : null;
+            // --- LÓGICA DE SELEÇÃO ALEATÓRIA ---
+            // Busca TODOS os enigmas que ainda estão abertos.
+            const remainingEnigmasQuery = await eventRef.collection("enigmas").where("status", "==", "open").get();
 
+            let nextEnigmaId = null;
+            if (!remainingEnigmasQuery.empty) {
+                // Se houver enigmas restantes, escolhe um aleatoriamente.
+                const remainingEnigmas = remainingEnigmasQuery.docs;
+                const randomIndex = Math.floor(Math.random() * remainingEnigmas.length);
+                nextEnigmaId = remainingEnigmas[randomIndex].id;
+            }
+
+            // Atualiza o evento com o próximo enigma (ou nulo se não houver mais).
             await eventRef.update({ currentEnigmaId: nextEnigmaId });
 
             const prizeValue = currentEnigmaDoc.data().prize || 0;
-            return { success: true, message: `Parabéns! Você ganhou R\$ ${prizeValue.toFixed(2)}!` };
+            return { success: true, message: `Parabéns! Você ganhou R$ ${prizeValue.toFixed(2)}!` };
+
         } catch (error) {
             console.error("Erro na transação Find & Win:", error);
             if (error instanceof HttpsError) throw error;
