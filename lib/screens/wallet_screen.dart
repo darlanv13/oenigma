@@ -1,4 +1,8 @@
+import 'dart:convert';
+
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/user_wallet_model.dart';
 import '../utils/app_colors.dart';
 
@@ -9,30 +13,144 @@ class WalletScreen extends StatelessWidget {
 
   const WalletScreen({super.key, required this.wallet});
 
-  // Funções de dialog agora recebem o BuildContext
-  void _showPurchaseDialog(BuildContext context) {
+  // Importante: Adicione os imports necessários no topo do arquivo
+  // import 'package:cloud_functions/cloud_functions.dart';
+  // import 'dart:convert'; // Para decodificar a imagem Base64
+
+  // Adicione os imports necessários no topo do arquivo, se não houver:
+  // import 'package:cloud_functions/cloud_functions.dart';
+  // import 'dart:convert';
+
+  void _buyCredits(BuildContext context, double amount) async {
+    // 1. Mostra o Loading
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: cardColor,
-        title: const Text(
-          'Adicionar Créditos',
-          style: TextStyle(color: primaryAmber),
-        ),
-        content: const Text(
-          'A integração com um sistema de pagamentos (como Mercado Pago, Stripe, etc.) seria implementada aqui para processar a compra.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
-              'ENTENDIDO',
-              style: TextStyle(color: primaryAmber),
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final result =
+          await FirebaseFunctions.instanceFor(
+            region: 'southamerica-east1',
+          ).httpsCallable('createPixCharge').call({
+            'amount': amount,
+            'cpf': '', // O backend busca o CPF
+          });
+
+      if (!context.mounted) return;
+      Navigator.of(context).pop(); // Fecha Loading
+
+      final data = result.data as Map<dynamic, dynamic>;
+
+      if (data['qrCodeImage'] == null) {
+        throw "Imagem QR Code não retornada.";
+      }
+
+      // Tratamento da imagem Base64
+      String base64String = data['qrCodeImage'];
+      if (base64String.contains(',')) {
+        base64String = base64String.split(',').last;
+      }
+
+      final imageBytes = base64Decode(base64String);
+      final String? copiaCola = data['copiaCola'];
+
+      // 3. Mostra o Dialog com o PIX
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: cardColor,
+          title: const Center(
+            child: Text(
+              'Pagamento via Pix',
+              style: TextStyle(
+                color: primaryAmber,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-        ],
-      ),
-    );
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // === NOVO: MOSTRANDO O VALOR ===
+              const Text(
+                "Valor a pagar:",
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'R\$ ${amount.toStringAsFixed(2).replaceAll('.', ',')}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // ==============================
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.all(8.0),
+                child: Image.memory(imageBytes, height: 200, width: 200),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Escaneie o QR Code ou use o botão abaixo para copiar:',
+                style: TextStyle(color: Colors.white70),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                if (copiaCola != null) {
+                  await Clipboard.setData(ClipboardData(text: copiaCola));
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Código Pix copiado com sucesso!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text(
+                'COPIAR CÓDIGO',
+                style: TextStyle(
+                  color: primaryAmber,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('FECHAR', style: TextStyle(color: Colors.grey)),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!e.toString().contains("Invalid character") &&
+          Navigator.canPop(context)) {
+        try {
+          Navigator.of(context).pop();
+        } catch (_) {}
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   void _showWithdrawDialog(BuildContext context) {
@@ -203,7 +321,7 @@ class WalletScreen extends StatelessWidget {
           color: cardColor,
           borderRadius: BorderRadius.circular(15),
           child: InkWell(
-            onTap: () => _showPurchaseDialog(context),
+            onTap: () => _buyCredits(context, amount.toDouble()),
             borderRadius: BorderRadius.circular(15),
             child: Center(
               child: Text(
