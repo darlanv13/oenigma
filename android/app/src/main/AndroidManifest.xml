@@ -8,9 +8,9 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
-        android:label="oenigma"
+        android:label="Enigma City"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
 
         <meta-data android:name="com.google.android.geo.API_KEY"
                    android:value="Y9o8RO58kEgvYamuoAqjTrkXwDM="/>

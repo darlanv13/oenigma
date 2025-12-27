@@ -8,11 +8,11 @@ const db = admin.firestore();
 // Configure suas credenciais aqui ou use variáveis de ambiente (Recomendado)
 const options = {
     // SE MUDAR PARA TRUE, USE O CERTIFICADO E CREDENCIAIS DE HOMOLOGAÇÃO
-    sandbox: true,
-    client_id: "Client_Id_526bca0ff30f7b4fa4ed44d71e83cd1692cc2bbf",
-    client_secret: "Client_Secret_7b244babbda032181ba8c51d36d40ac48ed95926",
+    sandbox: false,
+    client_id: "Client_Id_4b4ab1903a7db8fef763f5e9fd42cde6cc568a1d",
+    client_secret: "Client_Secret_a19e15526954e679c0e0e2ee0cb8209dc524bf52",
     // O certificado deve estar na pasta functions/certs
-    certificate: path.resolve(__dirname, "certs/homologacao.p12"),
+    certificate: path.resolve(__dirname, "certs/producao-644069-producaoenigma.p12"),
     cert_base64: false
 };
 
