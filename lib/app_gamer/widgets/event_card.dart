@@ -62,6 +62,7 @@ class _EventCardState extends State<EventCard> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 260, // Altura fixa para evitar erro de layout em listas (SliverList)
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(24),
