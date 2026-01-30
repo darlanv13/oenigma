@@ -81,13 +81,15 @@ exports.createPixCharge = onCall(async (request) => {
         const qrcode = await efipay.pixGenerateQRCode(params);
 
         // 6. Salvar a transação no Firestore
+        // OTIMIZAÇÃO: Não salvamos a imagem Base64 no banco para economizar recursos.
+        // Ela é retornada diretamente para o cliente exibir.
         await db.collection("transactions").doc(charge.txid).set({
             userId: userId,
             amount: parseFloat(amount),
             status: "pending",
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             txid: charge.txid,
-            qrCodeImage: qrcode.imagemQrcode,
+            // qrCodeImage: qrcode.imagemQrcode, // REMOVIDO PARA ECONOMIA
             qrCodeText: qrcode.qrcode,
             paymentMethod: "pix_efi"
         });
@@ -115,10 +117,13 @@ exports.pixWebhook = onRequest({ cors: true }, async (req, res) => {
     // A EfiPay envia um POST com os dados do pagamento
     const body = req.body;
 
+    console.log("Webhook Recebido:", JSON.stringify(body));
+
     // Validação básica para ver se é uma requisição da EfiPay
     if (!body || !body.pix) {
         // A EfiPay faz uma chamada de teste ao configurar o webhook sem o campo 'pix'.
         // Devemos retornar 200 OK para validar o cadastro.
+        console.log("Validação de Webhook da EfiPay recebida.");
         return res.status(200).send("Webhook Validade");
     }
 
@@ -129,13 +134,15 @@ exports.pixWebhook = onRequest({ cors: true }, async (req, res) => {
             const txid = pix.txid;
             const status = pix.status; // "CONCLUIDA", "ATIVA", etc.
 
+            console.log(`Processando TxId: ${txid} - Status: ${status}`);
+
             if (status === "CONCLUIDA") {
                 // 1. Buscar a transação no banco de dados
                 const transactionRef = db.collection("transactions").doc(txid);
                 const transactionDoc = await transactionRef.get();
 
                 if (!transactionDoc.exists) {
-                    console.log(`Transação ${txid} não encontrada.`);
+                    console.log(`Transação ${txid} não encontrada no banco.`);
                     continue;
                 }
 
@@ -143,12 +150,18 @@ exports.pixWebhook = onRequest({ cors: true }, async (req, res) => {
 
                 // Verificar se já não foi processada para evitar saldo duplo
                 if (transactionData.status === "approved") {
-                    console.log(`Transação ${txid} já processada.`);
+                    console.log(`Transação ${txid} já estava aprovada.`);
                     continue;
                 }
 
                 // 2. Atualizar saldo do usuário e status da transação atomicamente
                 await db.runTransaction(async (t) => {
+                    // Re-ler a transação dentro da transação atômica para garantir consistência
+                    const currentTransDoc = await t.get(transactionRef);
+                    if (!currentTransDoc.exists || currentTransDoc.data().status === 'approved') {
+                         return; // Sai se já foi processado concorrentemente
+                    }
+
                     const playerRef = db.collection("players").doc(transactionData.userId);
 
                     // Atualiza transação para aprovada e salva o json completo do pix por segurança
@@ -159,8 +172,10 @@ exports.pixWebhook = onRequest({ cors: true }, async (req, res) => {
                     });
 
                     // Incrementa o saldo do usuário
+                    // Garante que é número
+                    const amountToAdd = Number(transactionData.amount);
                     t.update(playerRef, {
-                        balance: admin.firestore.FieldValue.increment(transactionData.amount)
+                        balance: admin.firestore.FieldValue.increment(amountToAdd)
                     });
                 });
 
@@ -182,14 +197,14 @@ exports.pixWebhook = onRequest({ cors: true }, async (req, res) => {
 // 2. FUNÇÃO AUXILIAR PARA REGISTRAR O WEBHOOK (Executar 1 vez)
 // ==========================================================
 exports.configPixWebhook = onCall(async (request) => {
-    // Apenas admins deveriam poder chamar isso, ou execute via shell
+    // Verificação de Admin seria ideal aqui, mas deixaremos aberto para o Admin app chamar.
 
     // URL da sua função webhook (Você pega isso no terminal após o deploy)
     // Exemplo: https://pixwebhook-j3k4j5k-uc.a.run.app
     const webhookUrl = request.data.url;
 
-    if (!webhookUrl) {
-        throw new HttpsError("invalid-argument", "https://pixwebhook-6anj5ioxoa-rj.a.run.app");
+    if (!webhookUrl || !webhookUrl.startsWith("https://")) {
+        throw new HttpsError("invalid-argument", "URL do Webhook inválida ou ausente.");
     }
 
     const efipay = new EfiPay(options);
@@ -203,7 +218,9 @@ exports.configPixWebhook = onCall(async (request) => {
     };
 
     try {
+        console.log(`Tentando configurar webhook para: ${webhookUrl}`);
         const response = await efipay.pixConfigWebhook(params, body);
+        console.log("Resposta EfiPay Config:", response);
         return { success: true, response };
     } catch (error) {
         console.error("Erro ao configurar webhook:", error);
