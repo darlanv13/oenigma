@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:oenigma/admin/services/admin_service.dart';
 import 'package:oenigma/admin/widgets/admin_scaffold.dart';
@@ -14,6 +15,97 @@ class FinancialScreen extends StatefulWidget {
 class _FinancialScreenState extends State<FinancialScreen> {
   final AdminService _adminService = AdminService();
   bool _isProcessing = false;
+
+  void _configureWebhook() {
+    final TextEditingController urlController = TextEditingController(
+      text: "https://pixwebhook-6anj5ioxoa-rj.a.run.app", // Sugestão Padrão
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: cardColor,
+        title: const Text(
+          "Configurar Webhook Pix",
+          style: TextStyle(color: textColor),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Insira a URL da Cloud Function 'pixWebhook' para registrar na EfiPay.",
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: urlController,
+              style: const TextStyle(color: textColor),
+              decoration: const InputDecoration(
+                labelText: "Webhook URL",
+                labelStyle: TextStyle(color: secondaryTextColor),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white24),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: primaryAmber),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancelar", style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: primaryAmber),
+            onPressed: () {
+              Navigator.pop(context); // Fecha diálogo
+              _executeWebhookConfig(urlController.text.trim());
+            },
+            child: const Text(
+              "Configurar",
+              style: TextStyle(color: Colors.black),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _executeWebhookConfig(String url) async {
+    if (url.isEmpty) return;
+    setState(() => _isProcessing = true);
+
+    try {
+      final result = await FirebaseFunctions.instanceFor(
+        region: 'southamerica-east1',
+      ).httpsCallable('configPixWebhook').call({'url': url});
+
+      if (!mounted) return;
+
+      final data = result.data as Map<dynamic, dynamic>;
+      print("Resultado Webhook: $data");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Webhook Configurado com Sucesso! ✅'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao configurar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
 
   Future<void> _confirmAction(WithdrawalModel req, String status) async {
     final isApproval = status == 'approved';
@@ -106,6 +198,14 @@ class _FinancialScreenState extends State<FinancialScreen> {
     return AdminScaffold(
       title: 'Financeiro & Saques',
       selectedIndex: 3,
+      // Botão Extra na AppBar para Webhook
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.settings_ethernet, color: primaryAmber),
+          tooltip: "Configurar Webhook Pix",
+          onPressed: _isProcessing ? null : _configureWebhook,
+        ),
+      ],
       body: Stack(
         children: [
           Column(
@@ -293,7 +393,7 @@ class _FinancialScreenState extends State<FinancialScreen> {
             ],
           ),
 
-          // Bloqueio de tela extra durante processamento (opcional, mas boa UX)
+          // Bloqueio de tela extra durante processamento
           if (_isProcessing)
             Container(color: Colors.black12, child: const Center()),
         ],
