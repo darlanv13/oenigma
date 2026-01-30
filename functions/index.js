@@ -1,8 +1,10 @@
 const admin = require("firebase-admin");
 const { setGlobalOptions } = require("firebase-functions/v2");
 
-// Inicializa o Firebase Admin SDK uma única vez.
-admin.initializeApp();
+// Inicializa o Firebase Admin SDK uma única vez, se ainda não estiver inicializado.
+if (!admin.apps.length) {
+    admin.initializeApp();
+}
 
 // Define a região global para todas as funções de 2ª geração.
 // Isso evita ter que declarar a região em cada função individualmente.

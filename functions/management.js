@@ -2,7 +2,7 @@
 
 const { HttpsError, onCall } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
-const functions = require("firebase-functions"); // Necessário para o path
+// const functions = require("firebase-functions"); // Removido pois não é usado e pode causar conflitos
 
 const db = admin.firestore();
 
