@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:oenigma/admin/screens/admin_dashboard_screen.dart'; // Crie este arquivo
-import 'package:oenigma/admin/screens/admin_login_screen.dart'; // Crie este arquivo
+import 'package:oenigma/admin/screens/main_admin_screen.dart';
+import 'package:oenigma/admin/screens/admin_login_screen.dart';
 import 'package:oenigma/services/auth_service.dart';
 import 'package:oenigma/utils/app_colors.dart';
 
@@ -25,7 +25,7 @@ class AdminAuthWrapper extends StatelessWidget {
 
         if (snapshot.hasData) {
           // Se houver um usuário, vá para o dashboard
-          return AdminDashboardScreen();
+          return const MainAdminScreen();
         } else {
           // Senão, mostre a tela de login do admin
           return const AdminLoginScreen();

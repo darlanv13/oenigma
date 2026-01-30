@@ -17,5 +17,6 @@ Object.assign(exports,
     require("./admin"),
     require("./wallet"),
     require("./home"),
-    require("./management")
+    require("./management"),
+    require("./withdrawals")
 );
