@@ -11,38 +11,41 @@ const db = admin.firestore();
 // em uma única chamada.
 // =================================================================== //
 exports.getHomeScreenData = onCall(async (request) => {
-    const userId = request.auth.uid;
-    if (!userId) {
+    // 1. Verificação de Segurança (Correção de Crash)
+    if (!request.auth) {
         throw new HttpsError("unauthenticated", "Usuário não autenticado.");
     }
 
+    const userId = request.auth.uid;
+
     try {
-        // 1. Executa todas as leituras necessárias em paralelo
+        // 2. Executa leituras em paralelo
+        // REMOVIDO: A query específica para wonEvents que exigia índice composto
         const [
             eventsSnapshot,
             allPlayersSnapshot,
-            playerDoc,
-            wonEventsSnapshot,
+            playerDoc
         ] = await Promise.all([
             db.collection("events").get(),
             db.collection("players").get(),
-            db.collection("players").doc(userId).get(),
-            db.collection("events").where("winnerId", "==", userId).orderBy("finishedAt", "desc").limit(1).get()
+            db.collection("players").doc(userId).get()
         ]);
 
         if (!playerDoc.exists) {
             throw new HttpsError("not-found", "Dados do jogador não encontrados.");
         }
 
-        // 2. Processa os dados
+        // 3. Processa os dados
         const allEvents = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const allPlayers = allPlayersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const playerData = playerDoc.data();
 
-        // 3. Lógica para o Ranking e Saldo (similar ao que estava em wallet.js)
+        // 4. Lógica para o Ranking e Saldo
         let lastEventRank = null;
         let lastEventName = null;
         const playerEventIds = Object.keys(playerData.events || {});
+
+        // Encontra o último evento ativo que o usuário participa
         const lastActiveEvent = allEvents
             .filter(event => playerEventIds.includes(event.id) && event.status !== 'closed')
             .pop();
@@ -60,16 +63,27 @@ exports.getHomeScreenData = onCall(async (request) => {
             }
         }
 
+        // 5. Lógica para Última Vitória (Em Memória - Sem Custo Adicional de Leitura)
+        // Filtra os eventos onde o usuário é o vencedor
+        const wonEvents = allEvents.filter(e => e.winnerId === userId);
+
+        // Ordena por data de finalização (mais recente primeiro)
+        wonEvents.sort((a, b) => {
+            const timeA = a.finishedAt && a.finishedAt.toMillis ? a.finishedAt.toMillis() : 0;
+            const timeB = b.finishedAt && b.finishedAt.toMillis ? b.finishedAt.toMillis() : 0;
+            return timeB - timeA;
+        });
+
         let lastWonEventName = null;
-        if (!wonEventsSnapshot.empty) {
-            lastWonEventName = wonEventsSnapshot.docs[0].data().name;
+        if (wonEvents.length > 0) {
+            lastWonEventName = wonEvents[0].name;
         }
 
-        // 4. Retorna um único objeto consolidado
+        // 6. Retorna objeto consolidado
         return {
             events: allEvents,
             allPlayers: allPlayers,
-            playerData: playerData, // Incluímos todos os jogadores para passar para a tela de Ranking
+            playerData: playerData,
             walletData: {
                 uid: userId,
                 name: playerData.name,
@@ -84,6 +98,10 @@ exports.getHomeScreenData = onCall(async (request) => {
 
     } catch (error) {
         console.error("Erro em getHomeScreenData:", error);
-        throw new HttpsError("internal", "Não foi possível carregar os dados da tela inicial.");
+        // Retorna a mensagem original se for uma HttpsError conhecida, senão genérica
+        if (error instanceof HttpsError) {
+            throw error;
+        }
+        throw new HttpsError("internal", "Não foi possível carregar os dados da tela inicial: " + error.message);
     }
 });
