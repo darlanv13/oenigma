@@ -8,7 +8,8 @@ import 'package:oenigma/services/firebase_service.dart';
 import 'package:oenigma/utils/app_colors.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({super.key});
+  final String? userRole;
+  const AdminDashboardScreen({super.key, this.userRole});
 
   @override
   _AdminDashboardScreenState createState() => _AdminDashboardScreenState();
@@ -51,164 +52,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               _buildSummaryCards(),
               const SizedBox(height: 24),
 
-              // 2. Gráfico de Atividade (Mock)
-              const Text(
-                "Atividade Recente (Novos Usuários)",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 200,
-                child: BarChart(
-                  BarChartData(
-                    borderData: FlBorderData(show: false),
-                    gridData: const FlGridData(show: false),
-                    titlesData: FlTitlesData(
-                      leftTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          getTitlesWidget: (val, meta) {
-                            switch (val.toInt()) {
-                              case 0:
-                                return const Text(
-                                  'Seg',
-                                  style: TextStyle(color: secondaryTextColor),
-                                );
-                              case 1:
-                                return const Text(
-                                  'Ter',
-                                  style: TextStyle(color: secondaryTextColor),
-                                );
-                              case 2:
-                                return const Text(
-                                  'Qua',
-                                  style: TextStyle(color: secondaryTextColor),
-                                );
-                              case 3:
-                                return const Text(
-                                  'Qui',
-                                  style: TextStyle(color: secondaryTextColor),
-                                );
-                              case 4:
-                                return const Text(
-                                  'Sex',
-                                  style: TextStyle(color: secondaryTextColor),
-                                );
-                              case 5:
-                                return const Text(
-                                  'Sab',
-                                  style: TextStyle(color: secondaryTextColor),
-                                );
-                              case 6:
-                                return const Text(
-                                  'Dom',
-                                  style: TextStyle(color: secondaryTextColor),
-                                );
-                            }
-                            return const Text('');
-                          },
-                        ),
-                      ),
-                    ),
-                    barGroups: [
-                      BarChartGroupData(
-                        x: 0,
-                        barRods: [
-                          BarChartRodData(
-                            toY: 5,
-                            color: primaryAmber,
-                            width: 15,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ],
-                      ),
-                      BarChartGroupData(
-                        x: 1,
-                        barRods: [
-                          BarChartRodData(
-                            toY: 10,
-                            color: primaryAmber,
-                            width: 15,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ],
-                      ),
-                      BarChartGroupData(
-                        x: 2,
-                        barRods: [
-                          BarChartRodData(
-                            toY: 14,
-                            color: primaryAmber,
-                            width: 15,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ],
-                      ),
-                      BarChartGroupData(
-                        x: 3,
-                        barRods: [
-                          BarChartRodData(
-                            toY: 15,
-                            color: primaryAmber,
-                            width: 15,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ],
-                      ),
-                      BarChartGroupData(
-                        x: 4,
-                        barRods: [
-                          BarChartRodData(
-                            toY: 13,
-                            color: primaryAmber,
-                            width: 15,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ],
-                      ),
-                      BarChartGroupData(
-                        x: 5,
-                        barRods: [
-                          BarChartRodData(
-                            toY: 18,
-                            color: primaryAmber,
-                            width: 15,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ],
-                      ),
-                      BarChartGroupData(
-                        x: 6,
-                        barRods: [
-                          BarChartRodData(
-                            toY: 22,
-                            color: primaryAmber,
-                            width: 15,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
+              // 2. Gráficos e Visualizações
+              if (['super_admin', 'admin'].contains(widget.userRole)) ...[
+                 _buildActivityChart(),
+                 const SizedBox(height: 24),
+                 _buildDifficultyHeatmap(),
+                 const SizedBox(height: 24),
+              ],
 
               // 3. Lista de Eventos
+              if (['editor', 'super_admin', 'admin'].contains(widget.userRole))
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -247,53 +100,289 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildSummaryCards() {
-    return Row(
+  Widget _buildActivityChart() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: _buildCard(
-            "Saques Pendentes",
-            pendingWithdrawals.toString(),
-            Icons.monetization_on,
-            Colors.orange,
+        const Text(
+          "Atividade Recente (Novos Usuários)",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: textColor,
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildCard("Eventos Ativos", "...", Icons.event, Colors.blue),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildCard("Usuários", "...", Icons.people, Colors.green),
+        const SizedBox(height: 16),
+        Container(
+           height: 250,
+           padding: const EdgeInsets.all(16),
+           decoration: BoxDecoration(
+             color: cardColor,
+             borderRadius: BorderRadius.circular(16),
+           ),
+           child: BarChart(
+            BarChartData(
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                getDrawingHorizontalLine: (value) => FlLine(
+                  color: Colors.white10,
+                  strokeWidth: 1,
+                ),
+              ),
+              titlesData: FlTitlesData(
+                show: true,
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (double value, TitleMeta meta) {
+                       const style = TextStyle(color: Colors.white54, fontSize: 12);
+                       Widget text;
+                       switch (value.toInt()) {
+                         case 0: text = const Text('Seg', style: style); break;
+                         case 1: text = const Text('Ter', style: style); break;
+                         case 2: text = const Text('Qua', style: style); break;
+                         case 3: text = const Text('Qui', style: style); break;
+                         case 4: text = const Text('Sex', style: style); break;
+                         case 5: text = const Text('Sab', style: style); break;
+                         case 6: text = const Text('Dom', style: style); break;
+                         default: text = const Text('', style: style);
+                       }
+                       return SideTitleWidget(axisSide: meta.axisSide, child: text);
+                    },
+                  ),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 30,
+                    getTitlesWidget: (value, meta) {
+                      return Text(value.toInt().toString(), style: const TextStyle(color: Colors.white54, fontSize: 12));
+                    },
+                  ),
+                ),
+              ),
+              borderData: FlBorderData(show: false),
+              barGroups: [
+                _makeGroupData(0, 5),
+                _makeGroupData(1, 10),
+                _makeGroupData(2, 14),
+                _makeGroupData(3, 15),
+                _makeGroupData(4, 13),
+                _makeGroupData(5, 18),
+                _makeGroupData(6, 22),
+              ],
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildCard(String title, String value, IconData icon, Color color) {
+  BarChartGroupData _makeGroupData(int x, double y) {
+    return BarChartGroupData(
+      x: x,
+      barRods: [
+        BarChartRodData(
+          toY: y,
+          gradient: const LinearGradient(
+            colors: [primaryAmber, Colors.deepOrange],
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+          ),
+          width: 16,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+          backDrawRodData: BackgroundBarChartRodData(
+            show: true,
+            toY: 25, // Max value
+            color: Colors.white10,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Placeholder for "Heatmap" / Difficulty Zones
+  Widget _buildDifficultyHeatmap() {
+    // Mock data for "Zones with most difficulty"
+    final zones = [
+      {'name': 'Praça Central - Enigma #4', 'fails': 45, 'color': Colors.red},
+      {'name': 'Biblioteca - Enigma #2', 'fails': 32, 'color': Colors.orange},
+      {'name': 'Estação - Enigma #1', 'fails': 15, 'color': Colors.yellow},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Zonas de Alta Dificuldade (Heatmap)",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            children: zones.map((zone) {
+              final fails = zone['fails'] as int;
+              final widthFactor = fails / 50.0; // Assuming 50 is max
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        zone['name'] as String,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 7,
+                      child: Stack(
+                        children: [
+                          Container(
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: Colors.white10,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                          FractionallySizedBox(
+                            widthFactor: widthFactor.clamp(0.0, 1.0),
+                            child: Container(
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: zone['color'] as Color,
+                                borderRadius: BorderRadius.circular(5),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: (zone['color'] as Color).withOpacity(0.5),
+                                    blurRadius: 6,
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "$fails falhas",
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryCards() {
+    // Define visibility based on role
+    final role = widget.userRole;
+    final canViewFinance = ['auditor', 'super_admin', 'admin'].contains(role);
+    final canViewEvents = ['editor', 'super_admin', 'admin'].contains(role);
+    final canViewUsers = ['editor', 'super_admin', 'admin'].contains(role);
+
+    List<Widget> cards = [];
+
+    if (canViewFinance) {
+      cards.add(Expanded(
+        child: _buildCard(
+          "Saques Pendentes",
+          pendingWithdrawals.toString(),
+          Icons.monetization_on,
+          [Colors.orange.shade400, Colors.deepOrange.shade600],
+        ),
+      ));
+    }
+
+    if (canViewEvents) {
+      if (cards.isNotEmpty) cards.add(const SizedBox(width: 16));
+      cards.add(Expanded(
+        child: _buildCard(
+          "Eventos Ativos",
+          "...", // Placeholder
+          Icons.event,
+          [Colors.blue.shade400, Colors.indigo.shade600],
+        ),
+      ));
+    }
+
+    if (canViewUsers) {
+      if (cards.isNotEmpty) cards.add(const SizedBox(width: 16));
+      cards.add(Expanded(
+        child: _buildCard(
+          "Usuários",
+          "...", // Placeholder
+          Icons.people,
+          [Colors.green.shade400, Colors.teal.shade600],
+        ),
+      ));
+    }
+
+    // If empty (shouldn't happen with correct routing), show nothing
+    if (cards.isEmpty) return const SizedBox.shrink();
+
+    return Row(
+      children: cards,
+    );
+  }
+
+  Widget _buildCard(String title, String value, IconData icon, List<Color> gradientColors) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        gradient: LinearGradient(
+          colors: gradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: gradientColors.last.withOpacity(0.4),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: color),
-          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+               Icon(icon, color: Colors.white, size: 28),
+            ],
+          ),
+          const SizedBox(height: 16),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 24,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
           ),
           Text(
             title,
-            style: const TextStyle(color: secondaryTextColor, fontSize: 12),
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
         ],
       ),
