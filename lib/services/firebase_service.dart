@@ -115,10 +115,6 @@ class FirebaseService {
   }
 
   // --- Funções de Leitura ---
-  Future<Map<String, dynamic>> getAdminDashboardData() async {
-    final result = await callFunction('getAdminDashboardData');
-    return Map<String, dynamic>.from(result.data);
-  }
 
   Future<EventModel> getFullEventDetails(String eventId) async {
     final result = await callFunction('getEventData', {'eventId': eventId});
@@ -182,16 +178,6 @@ class FirebaseService {
 
   Future<void> revokeAdminRole(String uid) {
     return callFunction('revokeAdminRole', {'uid': uid});
-  }
-
-  Future<void> toggleEventStatus({
-    required String eventId,
-    required String newStatus,
-  }) {
-    return callFunction('toggleEventStatus', {
-      'eventId': eventId,
-      'newStatus': newStatus,
-    });
   }
 
   Future<Map<String, dynamic>> getFindAndWinStats(String eventId) async {

@@ -75,33 +75,3 @@ exports.getFindAndWinStats = onCall(async (request) => {
         throw new HttpsError("internal", "Não foi possível buscar as estatísticas.");
     }
 });
-
-// =================================================================== //
-// FUNÇÃO: getEventRanking (v2)                                        //
-// DESCRIÇÃO: Calcula e retorna o ranking dos jogadores para um evento.//
-// =================================================================== //
-exports.getEventRanking = onCall(async (request) => {
-    const { eventId } = request.data;
-    if (!eventId) {
-        throw new HttpsError("invalid-argument", "O ID do evento é obrigatório.");
-    }
-    const phasesSnapshot = await db.collection("events").doc(eventId).collection("phases").get();
-    const totalPhases = phasesSnapshot.docs.length;
-    if (totalPhases === 0) return [];
-    const playersSnapshot = await db.collection("players").get();
-    let rankedPlayers = [];
-    for (const playerDoc of playersSnapshot.docs) {
-        const playerData = playerDoc.data();
-        const progress = playerData.events?.[eventId];
-        const phasesCompleted = progress ? (progress.currentPhase - 1) : 0;
-        rankedPlayers.push({
-            uid: playerDoc.id,
-            name: playerData.name || 'Anônimo',
-            photoURL: playerData.photoURL || null,
-            phasesCompleted: phasesCompleted,
-            totalPhases: totalPhases,
-        });
-    }
-    rankedPlayers.sort((a, b) => b.phasesCompleted - a.phasesCompleted);
-    return rankedPlayers.map((player, index) => ({ ...player, position: index + 1 }));
-});
