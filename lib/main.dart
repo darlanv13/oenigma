@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'screens/splash_screen.dart'; // <-- 1. IMPORTE A NOVA TELA
-import 'utils/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'app_gamer/screens/splash_screen.dart'; // <-- 1. IMPORTE A NOVA TELA
+import 'app_gamer/utils/app_colors.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -26,15 +27,15 @@ class EnigmaCityApp extends StatelessWidget {
         brightness: Brightness.dark,
         primaryColor: const Color(0xFFFFC107),
         scaffoldBackgroundColor: const Color(0xFF121212),
-        fontFamily: 'Poppins',
+        // fontFamily: 'Poppins',
         appBarTheme: const AppBarTheme(
           elevation: 0,
           backgroundColor: Colors.transparent,
           iconTheme: IconThemeData(color: Color(0xFFFFFFFF)),
         ),
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: textColor),
-          bodyMedium: TextStyle(color: textColor),
+        textTheme: GoogleFonts.poppinsTextTheme().apply(
+          bodyColor: textColor,
+          displayColor: textColor,
         ),
       ),
       // --- 2. ALTERE A TELA INICIAL ---
