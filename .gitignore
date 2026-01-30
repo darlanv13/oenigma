@@ -66,3 +66,4 @@ pubspec.lock
 functions/definir_admin.js
 functions/serviceAccountKey.json
 functions/certs/
+serviceAccountKey.json
