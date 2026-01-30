@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'screens/home_screen.dart';
-import 'screens/login_screen.dart';
-import 'services/auth_service.dart';
-import 'utils/app_colors.dart';
+import 'package:oenigma/app_gamer/screens/home_screen.dart';
+import 'package:oenigma/app_gamer/screens/login_screen.dart';
+import 'package:oenigma/services/auth_service.dart';
+import 'package:oenigma/app_gamer/utils/app_colors.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
-import 'package:oenigma/screens/profile_screen.dart';
-import 'package:oenigma/screens/ranking_screen.dart';
-import 'package:oenigma/screens/wallet_screen.dart';
-import '../models/event_model.dart';
-import '../services/firebase_service.dart';
+import 'package:oenigma/app_gamer/screens/profile_screen.dart';
+import 'package:oenigma/app_gamer/screens/ranking_screen.dart';
+import 'package:oenigma/app_gamer/screens/wallet_screen.dart';
+import 'package:oenigma/models/event_model.dart';
+import 'package:oenigma/services/firebase_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/event_card.dart';
 
@@ -211,8 +212,8 @@ class _HomeScreenState extends State<HomeScreen>
                       ? NetworkImage(wallet.photoURL!)
                       : null,
                   child: (wallet.photoURL == null || wallet.photoURL!.isEmpty)
-                      ? const Icon(
-                          Icons.person_outline,
+                      ? const FaIcon(
+                          FontAwesomeIcons.user,
                           color: secondaryTextColor,
                           size: 30,
                         )
@@ -236,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen>
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.emoji_events, size: 14, color: primaryAmber),
+                        FaIcon(FontAwesomeIcons.rankingStar, size: 14, color: primaryAmber),
                         const SizedBox(width: 4),
                         Text(
                           'Ranking: #${wallet.lastEventRank ?? '-'}',
@@ -276,7 +277,7 @@ class _HomeScreenState extends State<HomeScreen>
             children: [
               _buildActionButton(
                 context: context,
-                icon: Icons.account_balance_wallet_rounded,
+                icon: FontAwesomeIcons.wallet,
                 label: 'Carteira',
                 onTap: () {
                   Navigator.of(context).push(
@@ -288,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               _buildActionButton(
                 context: context,
-                icon: Icons.leaderboard_rounded,
+                icon: FontAwesomeIcons.trophy,
                 label: 'Ranking',
                 onTap: () {
                   Navigator.of(context).push(
@@ -305,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen>
               ),
               _buildActionButton(
                 context: context,
-                icon: Icons.person_rounded,
+                icon: FontAwesomeIcons.idCard,
                 label: 'Perfil',
                 onTap: () {
                   Navigator.of(context).push(
@@ -342,7 +343,7 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         child: Column(
           children: [
-            Icon(icon, size: 24, color: textColor),
+            FaIcon(icon, size: 24, color: textColor),
             const SizedBox(height: 8),
             Text(
               label,
@@ -394,7 +395,7 @@ class _HomeScreenState extends State<HomeScreen>
             padding: EdgeInsets.all(40.0),
             child: Column(
               children: [
-                Icon(Icons.event_busy, size: 40, color: secondaryTextColor),
+                FaIcon(FontAwesomeIcons.calendarXmark, size: 40, color: secondaryTextColor),
                 SizedBox(height: 16),
                 Text(
                   'Nenhum evento ativo no momento.',
