@@ -1,440 +1,557 @@
+import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:oenigma/models/user_wallet_model.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/app_gamer/screens/profile_screen.dart';
-import 'package:oenigma/app_gamer/screens/ranking_screen.dart';
 import 'package:oenigma/app_gamer/screens/wallet_screen.dart';
+import 'package:oenigma/app_gamer/widgets/event_card.dart';
 import 'package:oenigma/models/event_model.dart';
+import 'package:oenigma/models/user_wallet_model.dart';
+import 'package:oenigma/services/auth_service.dart';
 import 'package:oenigma/services/firebase_service.dart';
 import 'package:oenigma/utils/app_colors.dart';
-import '../widgets/event_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> {
   final FirebaseService _firebaseService = FirebaseService();
-  late Future<Map<String, dynamic>> _dataFuture;
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+
+  // Estado
+  bool _isLoading = true;
+  String? _errorMessage; // Para mostrar na tela se der erro
+
+  List<EventModel> _events = [];
+  Map<String, dynamic> _playerData = {};
+  UserWalletModel? _walletData;
+  String _selectedFilter = 'Todos';
+
+  // Banner Control
+  final PageController _bannerController = PageController();
+  int _currentBannerPage = 0;
+  Timer? _bannerTimer;
 
   @override
   void initState() {
     super.initState();
-    _dataFuture = _firebaseService.getHomeScreenData();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    );
-    _fadeController.forward();
-  }
-
-  @override
-  void dispose() {
-    _fadeController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _reloadData() async {
-    setState(() {
-      _dataFuture = _firebaseService.getHomeScreenData();
+    _initData();
+    // Timer só inicia se não houver erro de build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startBannerTimer();
     });
   }
 
   @override
+  void dispose() {
+    _bannerTimer?.cancel();
+    if (_bannerController.hasClients) _bannerController.dispose();
+    super.dispose();
+  }
+
+  void _startBannerTimer() {
+    _bannerTimer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
+      if (mounted && _bannerController.hasClients) {
+        setState(() {
+          _currentBannerPage = (_currentBannerPage + 1) % 3;
+        });
+        _bannerController.animateToPage(
+          _currentBannerPage,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeIn,
+        );
+      }
+    });
+  }
+
+  Future<void> _initData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Carregamento Seguro
+      final results = await Future.wait([
+        _firebaseService.getHomeScreenData(),
+        _firebaseService.getUserWalletData().catchError(
+          (e) => UserWalletModel(
+            balance: 0,
+            history: [],
+            uid: '',
+            name: '',
+            email: '',
+          ),
+        ), // Fallback
+      ]);
+
+      final homeData = results[0] as Map<String, dynamic>;
+      final walletData = results[1] as UserWalletModel;
+
+      final List<dynamic> eventsData = homeData['events'] ?? [];
+      final List<EventModel> loadedEvents = eventsData
+          .map((e) => EventModel.fromMap(Map<String, dynamic>.from(e)))
+          .toList();
+
+      if (mounted) {
+        setState(() {
+          _events = loadedEvents;
+          _playerData = Map<String, dynamic>.from(homeData['player'] ?? {});
+          _walletData = walletData;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("CRITICAL ERROR HOME: $e");
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString();
+        });
+      }
+    }
+  }
+
+  List<EventModel> get _filteredEvents {
+    if (_selectedFilter == 'Todos') return _events;
+    if (_selectedFilter == 'Ao Vivo')
+      return _events.where((e) => e.status == 'open').toList();
+    if (_selectedFilter == 'Em Breve')
+      return _events
+          .where((e) => e.status == 'dev' || e.status == 'upcoming')
+          .toList();
+    if (_selectedFilter == 'Finalizados')
+      return _events.where((e) => e.status == 'closed').toList();
+    return _events;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // 1. Tratamento de Erro Visual
+    if (_errorMessage != null) {
+      return Scaffold(
+        backgroundColor: darkBackground,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 50),
+              const SizedBox(height: 16),
+              const Text(
+                "Erro ao carregar dados",
+                style: TextStyle(color: Colors.white),
+              ),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _initData,
+                child: const Text("Tentar Novamente"),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 2. Loading Simples (Sem Shimmer para evitar bugs de layout)
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: darkBackground,
+        body: Center(child: CircularProgressIndicator(color: primaryAmber)),
+      );
+    }
+
+    // 3. Tela Principal
     return Scaffold(
       backgroundColor: darkBackground,
-      body: SafeArea(
-        child: FutureBuilder<Map<String, dynamic>>(
-          future: _dataFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: primaryAmber),
-              );
-            }
-            if (snapshot.hasError || !snapshot.hasData) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: Colors.redAccent,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Erro ao carregar dados.',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                      child: Text(
-                        '${snapshot.error}',
-                        style: const TextStyle(color: Colors.grey),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: _reloadData,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text("Tentar Novamente"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryAmber,
-                        foregroundColor: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
+      body: RefreshIndicator(
+        color: primaryAmber,
+        backgroundColor: cardColor,
+        onRefresh: _initData,
+        child: CustomScrollView(
+          slivers: [
+            _buildSliverAppBar(),
 
-            final allData = snapshot.data!;
-            final List<EventModel> events = (allData['events'] as List)
-                .map((e) => EventModel.fromMap(Map<String, dynamic>.from(e)))
-                .toList();
-            final UserWalletModel walletData = UserWalletModel.fromMap(
-              Map<String, dynamic>.from(allData['walletData']),
-            );
-            final Map<String, dynamic> playerData =
-                allData['playerData'] != null
-                ? Map<String, dynamic>.from(allData['playerData'])
-                : {};
-            final List<dynamic> allPlayers = allData['allPlayers'] ?? [];
-
-            return RefreshIndicator(
-              onRefresh: _reloadData,
-              color: primaryAmber,
-              backgroundColor: cardColor,
-              child: CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: _buildFinalProfileCard(
-                          context,
-                          playerData,
-                          walletData,
-                          events,
-                          allPlayers,
-                        ),
-                      ),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          20.0,
-                          16.0,
-                          20.0,
-                          8.0,
-                        ),
-                        child: _buildEventsSectionHeader(),
-                      ),
-                    ),
-                  ),
-                  _buildEventsGrid(events, playerData),
-                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFinalProfileCard(
-    BuildContext context,
-    Map<String, dynamic> playerData,
-    UserWalletModel wallet,
-    List<EventModel> events,
-    List<dynamic> allPlayers,
-  ) {
-    final String firstName = wallet.name.split(' ').first;
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [cardColor, cardColor.withOpacity(0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: primaryAmber, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: primaryAmber.withOpacity(0.2),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: CircleAvatar(
-                  radius: 28,
-                  backgroundColor: darkBackground,
-                  backgroundImage:
-                      (wallet.photoURL != null && wallet.photoURL!.isNotEmpty)
-                      ? NetworkImage(wallet.photoURL!)
-                      : null,
-                  child: (wallet.photoURL == null || wallet.photoURL!.isEmpty)
-                      ? const FaIcon(
-                          FontAwesomeIcons.user,
-                          color: secondaryTextColor,
-                          size: 30,
-                        )
-                      : null,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Olá, $firstName!',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        FaIcon(
-                          FontAwesomeIcons.rankingStar,
-                          size: 14,
-                          color: primaryAmber,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Ranking: #${wallet.lastEventRank ?? '-'}',
-                          style: const TextStyle(
-                            color: secondaryTextColor,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Text(
-                    'Saldo',
-                    style: TextStyle(color: secondaryTextColor, fontSize: 12),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
-                    style: const TextStyle(
-                      color: primaryAmber,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildActionButton(
-                context: context,
-                icon: FontAwesomeIcons.wallet,
-                label: 'Carteira',
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => WalletScreen(wallet: wallet),
-                    ),
-                  );
-                },
-              ),
-              _buildActionButton(
-                context: context,
-                icon: FontAwesomeIcons.trophy,
-                label: 'Ranking',
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => RankingScreen(
-                        availableEvents: events
-                            .where((e) => e.status != 'closed')
-                            .toList(),
-                        allPlayers: allPlayers,
-                      ),
-                    ),
-                  );
-                },
-              ),
-              _buildActionButton(
-                context: context,
-                icon: FontAwesomeIcons.idCard,
-                label: 'Perfil',
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ProfileScreen(
-                        playerData: playerData,
-                        walletData: wallet,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            FaIcon(icon, size: 24, color: textColor),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: secondaryTextColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 16, bottom: 24),
+                child: _buildBannerSection(),
               ),
             ),
+
+            SliverToBoxAdapter(child: _buildFilterChips()),
+
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "MISSÕES DISPONÍVEIS",
+                      style: GoogleFonts.orbitron(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    Text(
+                      "${_filteredEvents.length}",
+                      style: GoogleFonts.orbitron(color: primaryAmber),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            _filteredEvents.isEmpty
+                ? SliverToBoxAdapter(child: _buildEmptyState())
+                : SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: EventCard(
+                          event: _filteredEvents[index],
+                          playerData: _playerData,
+                          onReturn: _initData,
+                        ),
+                      );
+                    }, childCount: _filteredEvents.length),
+                  ),
+
+            const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildEventsSectionHeader() {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 18,
-          decoration: BoxDecoration(
-            color: primaryAmber,
-            borderRadius: BorderRadius.circular(2),
+  Widget _buildSliverAppBar() {
+    final photoUrl = _playerData['photoURL'];
+    final name = _playerData['name']?.toString().split(' ').first ?? 'Agente';
+
+    // Proteção contra Null no saldo
+    double balanceVal = 0.0;
+    if (_walletData != null) {
+      balanceVal = _walletData!.balance;
+    } else if (_playerData['balance'] != null) {
+      balanceVal = double.tryParse(_playerData['balance'].toString()) ?? 0.0;
+    }
+    final balance = balanceVal.toStringAsFixed(2);
+
+    return SliverAppBar(
+      backgroundColor: darkBackground,
+      floating: true,
+      pinned: true,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      expandedHeight: 80, // Aumentei um pouco para evitar overflow
+      flexibleSpace: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () {
+                  // Navegação Segura
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProfileScreen(
+                        playerData: _playerData,
+                        walletData:
+                            _walletData ??
+                            UserWalletModel(
+                              balance: 0,
+                              history: [],
+                              uid: '',
+                              name: '',
+                              email: '',
+                            ),
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: primaryAmber, width: 2),
+                  ),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: cardColor,
+                    // Validação de URL segura
+                    backgroundImage:
+                        (photoUrl != null &&
+                            photoUrl.toString().startsWith('http'))
+                        ? CachedNetworkImageProvider(photoUrl)
+                        : null,
+                    child:
+                        (photoUrl == null ||
+                            !photoUrl.toString().startsWith('http'))
+                        ? const Icon(Icons.person, color: secondaryTextColor)
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Olá, $name",
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      "Pronto para a caçada?",
+                      style: GoogleFonts.inter(
+                        color: secondaryTextColor,
+                        fontSize: 12,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => WalletScreen(wallet: _walletData!),
+                  ),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: primaryAmber.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize:
+                        MainAxisSize.min, // Importante para não quebrar layout
+                    children: [
+                      const Icon(
+                        Icons.account_balance_wallet_outlined,
+                        color: primaryAmber,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        "R\$ $balance",
+                        style: GoogleFonts.orbitron(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 8),
-        const Text(
-          "EVENTOS DISPONÍVEIS",
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: secondaryTextColor,
-            letterSpacing: 1.2,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildEventsGrid(
-    List<EventModel> events,
-    Map<String, dynamic> playerData,
+  Widget _buildBannerSection() {
+    return SizedBox(
+      height: 160,
+      child: PageView(
+        controller: _bannerController,
+        onPageChanged: (index) => setState(() => _currentBannerPage = index),
+        children: [
+          _buildBannerCard(
+            "NOVA TEMPORADA",
+            "O Tesouro Perdido",
+            "Jogue Agora",
+            Colors.purpleAccent,
+            Icons.explore,
+          ),
+          _buildBannerCard(
+            "CÓDIGO SECRETO",
+            "Use o cupom 'ENIGMA20'",
+            "Resgatar",
+            Colors.blueAccent,
+            Icons.qr_code,
+          ),
+          _buildBannerCard(
+            "RANKING SEMANAL",
+            "Veja os top caçadores",
+            "Ver Líderes",
+            Colors.orangeAccent,
+            Icons.emoji_events,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBannerCard(
+    String tag,
+    String title,
+    String buttonText,
+    Color color,
+    IconData icon,
   ) {
-    if (events.isEmpty) {
-      return const SliverToBoxAdapter(
-        child: Center(
-          child: Padding(
-            padding: EdgeInsets.all(40.0),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [color.withOpacity(0.8), Colors.black],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            right: -20,
+            bottom: -20,
+            child: Icon(icon, size: 120, color: Colors.white.withOpacity(0.1)),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                FaIcon(
-                  FontAwesomeIcons.calendarXmark,
-                  size: 40,
-                  color: secondaryTextColor,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    tag,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 8),
                 Text(
-                  'Nenhum evento ativo no momento.',
-                  style: TextStyle(color: secondaryTextColor),
+                  title,
+                  style: GoogleFonts.orbitron(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    buttonText,
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-        ),
-      );
-    }
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.75, // Ajustado para melhor proporção
-        ),
-        delegate: SliverChildBuilderDelegate((context, index) {
-          // Adiciona uma animação escalonada simples
-          return FadeTransition(
-            opacity: _fadeAnimation,
-            child: EventCard(
-              event: events[index],
-              playerData: playerData,
-              onReturn: _reloadData,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChips() {
+    final filters = ['Todos', 'Ao Vivo', 'Em Breve', 'Finalizados'];
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: filters.map((filter) {
+          final isSelected = _selectedFilter == filter;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              selected: isSelected,
+              label: Text(filter),
+              onSelected: (_) => setState(() => _selectedFilter = filter),
+              backgroundColor: cardColor,
+              selectedColor: primaryAmber,
+              checkmarkColor: darkBackground,
+              labelStyle: TextStyle(
+                color: isSelected ? darkBackground : secondaryTextColor,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected
+                      ? primaryAmber
+                      : Colors.white.withOpacity(0.1),
+                ),
+              ),
             ),
           );
-        }, childCount: events.length),
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40.0),
+        child: Column(
+          children: [
+            Icon(
+              Icons.search_off_rounded,
+              size: 60,
+              color: secondaryTextColor.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Nenhum evento encontrado.",
+              style: TextStyle(color: secondaryTextColor),
+            ),
+          ],
+        ),
       ),
     );
   }

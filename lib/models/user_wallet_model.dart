@@ -17,6 +17,7 @@ class UserWalletModel {
     this.lastWonEventName, // Campo alterado
     this.lastEventRank,
     this.lastEventName,
+    required List<dynamic> history,
   });
 
   factory UserWalletModel.fromMap(Map<String, dynamic> map) {
@@ -30,6 +31,7 @@ class UserWalletModel {
           map['lastWonEventName'] as String?, // Mapeia o novo campo
       lastEventRank: map['lastEventRank'] as int?,
       lastEventName: map['lastEventName'] as String?,
+      history: [],
     );
   }
 }
