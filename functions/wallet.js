@@ -64,12 +64,17 @@ exports.getUserWalletData = onCall(async (request) => {
     let lastWonEventName = null;
     const wonEventsSnapshot = await db.collection("events")
         .where("winnerId", "==", userId)
-        .orderBy("finishedAt", "desc")
-        .limit(1)
         .get();
 
     if (!wonEventsSnapshot.empty) {
-        lastWonEventName = wonEventsSnapshot.docs[0].data().name;
+        const wonEvents = wonEventsSnapshot.docs.map(doc => doc.data());
+        // Ordenação em memória para evitar índice composto
+        wonEvents.sort((a, b) => {
+            const timeA = a.finishedAt && a.finishedAt.toMillis ? a.finishedAt.toMillis() : 0;
+            const timeB = b.finishedAt && b.finishedAt.toMillis ? b.finishedAt.toMillis() : 0;
+            return timeB - timeA;
+        });
+        lastWonEventName = wonEvents[0].name;
     }
 
     return {
