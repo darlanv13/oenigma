@@ -230,22 +230,35 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
 
   Widget _buildStatItem(String label, String value, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0), // Mais espaçamento
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment:
+            MainAxisAlignment.spaceBetween, // Espalhar para os lados
         children: [
-          Icon(icon, color: secondaryTextColor, size: 20),
-          const SizedBox(width: 10),
-          Text(
-            "$label: ",
-            style: const TextStyle(color: secondaryTextColor, fontSize: 16),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: primaryAmber.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: primaryAmber, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: const TextStyle(color: secondaryTextColor, fontSize: 14),
+              ),
+            ],
           ),
           Text(
             value,
             style: const TextStyle(
               color: textColor,
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
+              fontFamily: 'Orbitron', // Uso da fonte tech para números
             ),
           ),
         ],

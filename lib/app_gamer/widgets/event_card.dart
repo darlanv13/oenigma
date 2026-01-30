@@ -1,7 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart'; // NOVO IMPORT
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui';
 import 'package:lottie/lottie.dart';
+import 'package:shimmer/shimmer.dart'; // NOVO IMPORT
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oenigma/models/event_model.dart';
 import 'package:oenigma/utils/app_colors.dart';
@@ -24,6 +26,8 @@ class EventCard extends StatefulWidget {
 }
 
 class _EventCardState extends State<EventCard> {
+  // LottieComposition não é mais tão crítico para cache se usarmos o próprio Lottie.asset com frameBuilder
+  // mas mantive a lógica original, apenas otimizando a UI.
   late final Future<LottieComposition> _composition;
 
   @override
@@ -44,6 +48,15 @@ class _EventCardState extends State<EventCard> {
     } catch (e) {
       return dateStr;
     }
+  }
+
+  // Widget para Skeleton Loading
+  Widget _buildShimmerLoading() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[800]!,
+      highlightColor: Colors.grey[600]!,
+      child: Container(color: Colors.black),
+    );
   }
 
   @override
@@ -96,12 +109,8 @@ class _EventCardState extends State<EventCard> {
                                 fit: BoxFit.scaleDown,
                               );
                             }
-                            return const Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: primaryAmber,
-                              ),
-                            );
+                            // Usando Shimmer enquanto carrega
+                            return _buildShimmerLoading();
                           },
                         )
                       : const SizedBox(),
@@ -123,6 +132,7 @@ class _EventCardState extends State<EventCard> {
                   ),
                 ),
               ),
+              // ... (Preço e labels mantidos igual) ...
               Positioned(
                 top: 12,
                 left: 12,
@@ -240,7 +250,6 @@ class _EventCardState extends State<EventCard> {
                 ),
               ),
 
-              // --- OVERLAYS DE STATUS ---
               if (widget.event.status == 'closed')
                 _buildFinishedOverlay(context, widget.event),
 
@@ -253,7 +262,6 @@ class _EventCardState extends State<EventCard> {
   }
 
   Widget _buildFinishedOverlay(BuildContext context, EventModel event) {
-    // CORREÇÃO APLICADA AQUI
     final String winnerFirstName = event.winnerName?.split(' ').first ?? '';
 
     return Positioned.fill(
@@ -292,11 +300,14 @@ class _EventCardState extends State<EventCard> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          // USANDO CACHED IMAGE AQUI
                           CircleAvatar(
                             radius: 16,
                             backgroundColor: darkBackground,
                             backgroundImage: event.winnerPhotoURL != null
-                                ? NetworkImage(event.winnerPhotoURL!)
+                                ? CachedNetworkImageProvider(
+                                    event.winnerPhotoURL!,
+                                  )
                                 : null,
                             child: event.winnerPhotoURL == null
                                 ? const Icon(Icons.person, size: 16)
@@ -304,7 +315,7 @@ class _EventCardState extends State<EventCard> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            winnerFirstName, // Exibe apenas o primeiro nome
+                            winnerFirstName,
                             style: const TextStyle(
                               color: textColor,
                               fontSize: 16,

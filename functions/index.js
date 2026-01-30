@@ -16,7 +16,6 @@ setGlobalOptions({ region: "southamerica-east1" });
 Object.assign(exports,
     require("./events"),
     require("./gameplay"),
-    require("./admin"),
     require("./wallet"),
     require("./home"),
     require("./management"),

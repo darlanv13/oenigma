@@ -27,6 +27,14 @@ class AuthService {
     }
   }
 
+  // --- GET USER ROLE ---
+  Future<String?> getUserRole() async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    final idTokenResult = await user.getIdTokenResult(true); // force refresh
+    return idTokenResult.claims?['role'] as String?;
+  }
+
   // --- NOVA FUNÇÃO DE LOGIN APENAS PARA ADMINS ---
   Future<String?> signInAdminWithEmailAndPassword(
     String email,
@@ -47,15 +55,17 @@ class AuthService {
       // 2. Busca o token do usuário para verificar as permissões (claims)
       // O 'true' força a atualização do token para pegar as permissões mais recentes.
       final idTokenResult = await user.getIdTokenResult(true);
+      final role = idTokenResult.claims?['role'];
 
-      // 3. Verifica se a permissão 'role' é igual a 'admin'
-      if (idTokenResult.claims?['role'] == 'admin') {
-        // Se for admin, o login é um sucesso.
+      // 3. Verifica se a permissão 'role' é válida
+      const validRoles = ['admin', 'super_admin', 'editor', 'auditor'];
+      if (validRoles.contains(role)) {
+        // Se for uma role válida, o login é um sucesso.
         return null;
       } else {
-        // 4. Se NÃO for admin, desloga o usuário imediatamente e retorna um erro.
+        // 4. Se NÃO for autorizado, desloga o usuário imediatamente e retorna um erro.
         await _auth.signOut();
-        return "Acesso negado. Esta conta não possui privilégios de administrador.";
+        return "Acesso negado. Esta conta não possui privilégios de acesso.";
       }
     } on FirebaseAuthException catch (e) {
       // Retorna erros de login padrão (senha errada, usuário não encontrado)

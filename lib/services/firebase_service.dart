@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:oenigma/models/enigma_model.dart';
 import 'package:oenigma/models/event_model.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
@@ -11,6 +12,8 @@ class FirebaseService {
     region: 'southamerica-east1',
   );
 
+  final FirebaseCrashlytics _crashlytics = FirebaseCrashlytics.instance;
+
   Future<HttpsCallableResult> callFunction(
     String functionName, [
     Map<String, dynamic>? payload,
@@ -18,13 +21,28 @@ class FirebaseService {
     final callable = _functions.httpsCallable(functionName);
     try {
       return await callable.call<dynamic>(payload);
-    } on FirebaseFunctionsException catch (e) {
+    } on FirebaseFunctionsException catch (e, stack) {
+      // LOG DE ERRO DE FUNÇÃO
       print(
-        "FirebaseFunctionsException em ${functionName}: ${e.code} - ${e.message}",
+        "FirebaseFunctionsException em $functionName: ${e.code} - ${e.message}",
       );
+      // Não logamos 'canceled' ou erros de validação simples como fatais, mas erros 'internal' sim
+      if (e.code == 'internal' || e.code == 'unknown') {
+        await _crashlytics.recordError(
+          e,
+          stack,
+          reason: 'Function: $functionName',
+        );
+      }
       rethrow;
-    } catch (e) {
-      print("Exceção genérica em ${functionName}: $e");
+    } catch (e, stack) {
+      // LOG DE ERRO GENÉRICO
+      print("Exceção genérica em $functionName: $e");
+      await _crashlytics.recordError(
+        e,
+        stack,
+        reason: 'Function Generic: $functionName',
+      );
       rethrow;
     }
   }
@@ -35,10 +53,7 @@ class FirebaseService {
     return Map<String, dynamic>.from(result.data);
   }
 
-  // --- FUNÇÕES MANTIDAS PARA OUTRAS TELAS ---
-
   Future<List<PhaseModel>> getPhasesForEvent(String eventId) async {
-    // Esta função ainda é usada na tela de progresso do evento
     final result = await callFunction('getEventData', {'eventId': eventId});
     if (result.data == null) {
       return [];
@@ -60,13 +75,11 @@ class FirebaseService {
   }
 
   Future<Map<String, dynamic>?> getPlayerDetails(String userId) async {
-    // Usado na tela de Perfil
     final doc = await _firestore.collection('players').doc(userId).get();
     return doc.data();
   }
 
   Future<UserWalletModel> getUserWalletData() async {
-    // Usado na tela de Carteira
     final result = await callFunction('getUserWalletData');
     if (result.data == null) {
       throw Exception("Não foi possível carregar os dados da carteira.");
@@ -75,7 +88,6 @@ class FirebaseService {
     return UserWalletModel.fromMap(walletData);
   }
 
-  // --- FUNÇÕES DE GAMEPLAY (permanecem inalteradas) ---
   Future<HttpsCallableResult> callEnigmaFunction(
     String action,
     Map<String, dynamic> payload,
@@ -114,7 +126,6 @@ class FirebaseService {
     return callFunction('subscribeToEvent', {'eventId': eventId});
   }
 
-  // --- Funções de Leitura ---
   Future<Map<String, dynamic>> getAdminDashboardData() async {
     final result = await callFunction('getAdminDashboardData');
     return Map<String, dynamic>.from(result.data);
@@ -128,7 +139,6 @@ class FirebaseService {
     return EventModel.fromMap(Map<String, dynamic>.from(result.data));
   }
 
-  // --- Funções de Escrita (Gerenciamento) ---
   Future<HttpsCallableResult> createOrUpdateEvent({
     String? eventId,
     required Map<String, dynamic> data,
@@ -153,13 +163,13 @@ class FirebaseService {
 
   Future<HttpsCallableResult> createOrUpdateEnigma({
     required String eventId,
-    String? phaseId, // <-- Torne este parâmetro opcional usando '?'
+    String? phaseId,
     String? enigmaId,
     required Map<String, dynamic> data,
   }) {
     return callFunction('createOrUpdateEnigma', {
       'eventId': eventId,
-      'phaseId': phaseId, // Agora pode ser nulo
+      'phaseId': phaseId,
       'enigmaId': enigmaId,
       'data': data,
     });
@@ -168,8 +178,6 @@ class FirebaseService {
   Future<HttpsCallableResult> deleteEvent(String eventId) {
     return callFunction('deleteEvent', {'eventId': eventId});
   }
-
-  // --- Funções de Gerenciamento de Usuários ---
 
   Future<List<dynamic>> listAllUsers() async {
     final result = await callFunction('listAllUsers');
@@ -201,7 +209,6 @@ class FirebaseService {
     return Map<String, dynamic>.from(result.data);
   }
 
-  ///deletar Fases e Enigmas///
   Future<void> deletePhase({required String eventId, required String phaseId}) {
     return callFunction('deletePhase', {
       'eventId': eventId,
@@ -221,23 +228,18 @@ class FirebaseService {
     });
   }
 
-  ///Funsoes Painel de Gerencia//
   Future<List<EnigmaModel>> getEnigmasForParent(
     String eventId,
     String? phaseId,
   ) async {
     final EventModel event = await getFullEventDetails(eventId);
     if (phaseId != null) {
-      // Modo Clássico: busca enigmas da fase
       final phase = event.phases.firstWhere((p) => p.id == phaseId);
       return phase.enigmas;
     } else {
-      // Modo Find & Win: busca enigmas do evento
       return event.enigmas;
     }
   }
-
-  // --- GERENCIAMENTO DE SAQUES (NOVO) ---
 
   Future<List<Map<String, dynamic>>> getPendingWithdrawals() async {
     final snapshot = await _firestore

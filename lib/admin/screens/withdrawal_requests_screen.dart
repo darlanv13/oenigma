@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/services/firebase_service.dart';
 import 'package:oenigma/utils/app_colors.dart';
+import 'package:oenigma/widgets/lottie_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -149,7 +150,7 @@ class _WithdrawalRequestsScreenState extends State<WithdrawalRequestsScreen> {
        try {
          await _firebaseService.approveWithdrawal(id);
          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Saque aprovado!"), backgroundColor: Colors.green));
+            await LottieDialog.show(context, assetPath: 'assets/animations/check.json', message: 'Saque Aprovado!');
             _loadData();
          }
        } catch (e) {
@@ -194,7 +195,7 @@ class _WithdrawalRequestsScreenState extends State<WithdrawalRequestsScreen> {
        try {
          await _firebaseService.rejectWithdrawal(id, reason: reasonController.text);
          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Saque rejeitado e estornado."), backgroundColor: Colors.orange));
+            await LottieDialog.show(context, assetPath: 'assets/animations/error.json', message: 'Saque Rejeitado.');
             _loadData();
          }
        } catch (e) {

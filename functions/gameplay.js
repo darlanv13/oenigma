@@ -4,17 +4,26 @@ const admin = require("firebase-admin");
 // Esta linha é essencial e deve estar no topo do arquivo.
 const db = admin.firestore();
 
-// =================================================================== //
-// FUNÇÃO: handleEnigmaAction (CORRIGIDA)
-// DESCRIÇÃO: Processa ações do enigma com a lógica de busca de fase corrigida.
-// =================================================================== //
-// =================================================================== //
-// FUNÇÃO UNIFICADA: handleEnigmaAction
-// DESCRIÇÃO: Processa ações para AMBOS os modos de jogo, 'classic' e 'find_and_win'.
-// =================================================================== //
+// Função auxiliar para calcular distância (Haversine Formula)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // Raio da terra em metros
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) *
+        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distância em metros
+}
+
 exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) => {
     const playerId = request.auth.uid;
-    const { eventId, enigmaId, code, action, phaseOrder } = request.data;
+    // Adicionei userLocation (lat, lng) aos dados esperados
+    const { eventId, enigmaId, code, action, phaseOrder, userLocation } = request.data;
     const playerRef = db.collection("players").doc(playerId);
     const eventRef = db.collection("events").doc(eventId);
 
@@ -22,14 +31,13 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
     if (!eventDoc.exists) throw new HttpsError("not-found", "Evento não encontrado.");
     const eventType = eventDoc.data().eventType || 'classic';
 
-    // ==========================================================
-    // --- LÓGICA ATUALIZADA PARA O MODO: FIND & WIN ---
-    // ==========================================================
+    // ... (Lógica Find & Win mantida igual - se desejar GPS lá, aplique a mesma lógica abaixo) ...
     if (eventType === 'find_and_win') {
+        // ... (código find_and_win existente) ...
+        // (Para brevidade, mantive o código find_and_win original aqui, focado no classic abaixo)
         if (!enigmaId || !code) {
             throw new HttpsError("invalid-argument", "Dados insuficientes para este modo de jogo.");
         }
-
         const enigmaRef = eventRef.collection("enigmas").doc(enigmaId);
         const currentEnigmaDoc = await enigmaRef.get();
         if (!currentEnigmaDoc.exists) throw new HttpsError("not-found", "Enigma não encontrado.");
@@ -52,40 +60,27 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
                 return { success: false, message: `Código incorreto. Você tem mais ${3 - attempts} tentativa(s).` };
             }
         }
-
         await attemptRef.delete().catch(() => { });
-
         try {
             await db.runTransaction(async (transaction) => {
                 const playerDoc = await transaction.get(playerRef);
                 const enigmaToSolve = await transaction.get(enigmaRef);
                 if (enigmaToSolve.data().status === 'closed') throw new HttpsError("aborted", "Outro jogador resolveu este enigma primeiro.");
-
                 const prize = enigmaToSolve.data().prize || 0;
                 const newBalance = (playerDoc.data().balance || 0) + prize;
-
                 transaction.update(playerRef, { balance: newBalance });
                 transaction.update(enigmaRef, { status: 'closed', winnerId: playerId, winnerName: playerDoc.data().name, winnerPhotoURL: playerDoc.data().photoURL });
             });
-
-            // --- LÓGICA DE SELEÇÃO ALEATÓRIA ---
-            // Busca TODOS os enigmas que ainda estão abertos.
             const remainingEnigmasQuery = await eventRef.collection("enigmas").where("status", "==", "open").get();
-
             let nextEnigmaId = null;
             if (!remainingEnigmasQuery.empty) {
-                // Se houver enigmas restantes, escolhe um aleatoriamente.
                 const remainingEnigmas = remainingEnigmasQuery.docs;
                 const randomIndex = Math.floor(Math.random() * remainingEnigmas.length);
                 nextEnigmaId = remainingEnigmas[randomIndex].id;
             }
-
-            // Atualiza o evento com o próximo enigma (ou nulo se não houver mais).
             await eventRef.update({ currentEnigmaId: nextEnigmaId });
-
             const prizeValue = currentEnigmaDoc.data().prize || 0;
             return { success: true, message: `Parabéns! Você ganhou R$ ${prizeValue.toFixed(2)}!` };
-
         } catch (error) {
             console.error("Erro na transação Find & Win:", error);
             if (error instanceof HttpsError) throw error;
@@ -93,7 +88,7 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
         }
     }
     else {
-        // --- CORREÇÃO PRINCIPAL: BUSCA A FASE PELO CAMPO 'order' ---
+        // --- MODO CLÁSSICO ---
         const getPhaseDocRefByOrder = async (order) => {
             const phasesQuery = await eventRef.collection("phases").where("order", "==", order).limit(1).get();
             if (phasesQuery.empty) {
@@ -103,6 +98,7 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
         };
 
         if (action === "getStatus") {
+            // ... (Lógica getStatus mantida igual) ...
             const playerDoc = await playerRef.get();
             const playerData = playerDoc.data() || {};
             const eventProgress = { currentPhase: 1, currentEnigma: 1, ...(playerData.events || {})[eventId] };
@@ -123,49 +119,39 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
             };
         }
 
-        // --- Ação: purchaseHint ---
         if (action === "purchaseHint") {
+            // ... (Lógica purchaseHint mantida igual) ...
             const hintCosts = { 1: 5, 2: 10, 3: 15 };
             const hintCost = hintCosts[phaseOrder];
             if (!hintCost) throw new HttpsError("failed-precondition", "Dicas não estão disponíveis para esta fase.");
 
             try {
-                const phaseDocRef = await getPhaseDocRefByOrder(phaseOrder); // <-- Usa a nova busca
+                const phaseDocRef = await getPhaseDocRefByOrder(phaseOrder);
                 const enigmaDocRef = phaseDocRef.collection("enigmas").doc(enigmaId);
-
                 await db.runTransaction(async (transaction) => {
                     const playerDoc = await transaction.get(playerRef);
-                    const enigmaDoc = await transaction.get(enigmaDocRef); // <-- Pega o enigma dentro da transação
-
+                    const enigmaDoc = await transaction.get(enigmaDocRef);
                     if (!playerDoc.exists) throw new HttpsError("not-found", "Jogador não encontrado.");
                     if (!enigmaDoc.exists) throw new HttpsError("not-found", "Enigma não encontrado.");
-
                     const playerData = playerDoc.data();
                     const enigmaData = enigmaDoc.data();
-
-                    // A verificação de dica agora funcionará corretamente
                     if (!enigmaData.hintType || !enigmaData.hintData) {
                         throw new HttpsError("not-found", "Nenhuma dica disponível para este enigma.");
                     }
-
                     const currentBalance = playerData.balance || 0;
                     if (currentBalance < hintCost) throw new HttpsError("failed-precondition", "Saldo insuficiente.");
-
                     const hintsPurchased = (playerData.events?.[eventId]?.hintsPurchased) || [];
                     if (hintsPurchased.includes(phaseOrder)) throw new HttpsError("already-exists", "Você já comprou a dica para esta fase.");
-
                     const newBalance = currentBalance - hintCost;
                     const newProgress = {
                         ...playerData.events?.[eventId],
                         hintsPurchased: admin.firestore.FieldValue.arrayUnion(phaseOrder),
                     };
-
                     transaction.update(playerRef, {
                         balance: newBalance,
-                        [`events.${eventId}`]: newProgress, // Atualiza o sub-campo de forma segura
+                        [`events.${eventId}`]: newProgress,
                     });
                 });
-
                 const updatedEnigmaDoc = await enigmaDocRef.get();
                 const updatedEnigmaData = updatedEnigmaDoc.data();
                 return {
@@ -180,7 +166,6 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
             }
         }
 
-        // --- CORREÇÃO PRINCIPAL APLICADA AQUI ---
         if (action === "validateCode") {
             const eventDoc = await eventRef.get();
             if (!eventDoc.exists || eventDoc.data().status !== "open") {
@@ -190,23 +175,47 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
                 throw new HttpsError("invalid-argument", "O código é obrigatório.");
             }
 
-            // Usa a busca correta pela fase
             const phaseDocRef = await getPhaseDocRefByOrder(phaseOrder);
             const enigmaDocRef = phaseDocRef.collection("enigmas").doc(enigmaId);
+            const enigmaDoc = await enigmaDocRef.get();
+
+            if (!enigmaDoc.exists) {
+                throw new HttpsError("not-found", "Enigma não encontrado.");
+            }
+
+            // --- VALIDAÇÃO DE GPS BACKEND (ANTI-CHEAT) ---
+            const enigmaData = enigmaDoc.data();
+            if (enigmaData.type === 'qr_code_gps' || enigmaData.type === 'gps') {
+                if (!userLocation || !userLocation.latitude || !userLocation.longitude) {
+                    throw new HttpsError("invalid-argument", "Localização GPS é obrigatória para este enigma.");
+                }
+
+                // Verifica se o enigma tem local configurado
+                if (enigmaData.location) {
+                    const distance = calculateDistance(
+                        userLocation.latitude,
+                        userLocation.longitude,
+                        enigmaData.location.latitude,
+                        enigmaData.location.longitude
+                    );
+
+                    // Margem de erro de 60 metros (pode ajustar)
+                    if (distance > 60) {
+                        throw new HttpsError("failed-precondition", `Você está muito longe! Distância: ${Math.round(distance)}m. Aproxime-se do local.`);
+                    }
+                }
+            }
+            // ---------------------------------------------
 
             const attemptRef = playerRef.collection("eventAttempts").doc(enigmaId);
             const attemptDoc = await attemptRef.get();
+
+            // ... (Restante da lógica de validação de tentativas e conclusão mantida igual) ...
             if (attemptDoc.exists && attemptDoc.data().cooldownUntil?.toDate() > new Date()) {
                 return { success: false, message: "Aguarde o fim do tempo de espera.", cooldownUntil: attemptDoc.data().cooldownUntil.toDate().toISOString() };
             }
 
-            const enigmaDoc = await enigmaDocRef.get();
-            if (!enigmaDoc.exists) {
-                // Este é o erro que você estava recebendo. Agora será resolvido.
-                throw new HttpsError("not-found", "Enigma não encontrado.");
-            }
-
-            if (enigmaDoc.data().code.toUpperCase() !== code.toUpperCase()) {
+            if (enigmaData.code.toUpperCase() !== code.toUpperCase()) {
                 const attempts = (attemptDoc.data()?.attempts || 0) + 1;
                 if (attempts >= 3) {
                     const cooldownTime = new Date(Date.now() + 10 * 60 * 1000);
@@ -223,7 +232,6 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
             let nextStepForClient = null;
             let isEventFinishedByThisPlayer = false;
 
-            // Função auxiliar para converter o prêmio de string para número
             const parsePrizeValue = (prizeString) => {
                 if (!prizeString || typeof prizeString !== 'string') return 0;
                 const numberString = prizeString.replace(/[^0-9,.]/g, "").replace(",", ".");
@@ -235,7 +243,7 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
                     const playerDoc = await transaction.get(playerRef);
                     const playerData = playerDoc.data();
                     const eventDoc = await transaction.get(eventRef);
-                    const eventData = eventDoc.data(); // <- E os dados do evento aqui
+                    const eventData = eventDoc.data();
                     const playerEvents = playerData.events || {};
                     const eventProgress = { currentPhase: 1, currentEnigma: 1, ...playerEvents[eventId] };
 
@@ -251,26 +259,21 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
                     const isLastPhase = eventProgress.currentPhase >= totalPhases;
                     if (isLastEnigma && isLastPhase) {
                         isEventFinishedByThisPlayer = true;
-
-                        // --- MUDANÇA 1: Adicionar prêmio ao saldo ---
                         const prizeValue = parsePrizeValue(eventData.prize);
                         const currentBalance = playerData.balance || 0;
                         const newBalance = currentBalance + prizeValue;
 
-                        transaction.update(playerRef, { balance: newBalance }); // Atualiza o saldo
-
+                        transaction.update(playerRef, { balance: newBalance });
                         transaction.update(eventRef, {
                             status: "closed",
                             winnerId: playerId,
                             winnerName: playerData.name || "Anônimo",
-                            winnerPhotoURL: playerData.photoURL || null, // <- Adicionamos a foto
+                            winnerPhotoURL: playerData.photoURL || null,
                             finishedAt: admin.firestore.FieldValue.serverTimestamp(),
                         });
-
-                        // --- MUDANÇA 2: Enviar dados do prêmio para o cliente ---
                         nextStepForClient = {
                             type: "event_complete",
-                            prizeWon: prizeValue // <- Enviamos o valor do prêmio
+                            prizeWon: prizeValue
                         };
                     } else if (isLastEnigma) {
                         eventProgress.currentPhase += 1;
@@ -282,7 +285,6 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
                         const nextEnigmaDoc = enigmaDocs[eventProgress.currentEnigma - 1];
                         nextStepForClient = { type: "next_enigma", enigmaData: { id: nextEnigmaDoc.id, ...nextEnigmaDoc.data() } };
                     }
-
                     const newPlayerEvents = { ...playerEvents, [eventId]: eventProgress };
                     transaction.update(playerRef, { events: newPlayerEvents });
                 });
@@ -290,21 +292,19 @@ exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) 
                 if (error instanceof HttpsError) throw error;
                 throw new HttpsError("internal", "Erro ao processar sua resposta.", error.message);
             }
-
             if (isEventFinishedByThisPlayer) {
                 const eventData = (await eventRef.get()).data();
                 const playerData = (await playerRef.get()).data();
                 await sendCompletionNotifications(eventId, eventData.name, playerId, playerData.name);
             }
-
             return { success: true, message: "Parabéns!", nextStep: nextStepForClient };
         }
-
         throw new HttpsError("invalid-argument", "Ação não suportada.");
     }
 });
 
 async function sendCompletionNotifications(eventId, eventName, winnerId, winnerName) {
+    // ... (Mantido Igual) ...
     const allPlayersSnap = await db.collection("players").get();
     const tokens = [];
     allPlayersSnap.forEach((doc) => {
@@ -330,11 +330,8 @@ async function sendCompletionNotifications(eventId, eventName, winnerId, winnerN
     }
 };
 
-
-// =================================================================== //
-// NOVA FUNÇÃO: subscribeToEvent
-// =================================================================== //
 exports.subscribeToEvent = onCall(async (request) => {
+    // ... (Mantido Igual) ...
     const userId = request.auth.uid;
     if (!userId) {
         throw new HttpsError("unauthenticated", "Usuário não autenticado.");

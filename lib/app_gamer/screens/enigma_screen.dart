@@ -763,68 +763,120 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     return _buildCodeInputSection();
   }
 
+  // --- WIDGET DO CARD DE MISSÃO GPS ATUALIZADO ---
   Widget _buildQrCodeGpsCard() {
+    // Definir cores baseadas no status
+    Color statusColor = secondaryTextColor;
+    String statusText = "Calculando distância...";
+    IconData statusIcon = Icons.location_searching;
+
+    if (_distance != null) {
+      if (_isBlocked) {
+        statusColor = Colors.redAccent;
+        statusText = "Bloqueado Temporariamente";
+        statusIcon = Icons.timer_off;
+      } else if (_isNear) {
+        statusColor = Colors.greenAccent;
+        statusText = "Você está na zona do alvo!";
+        statusIcon = Icons.location_on;
+      } else {
+        statusColor = primaryAmber;
+        statusText = "Aproxime-se: ${_distance!.toStringAsFixed(0)}m";
+        statusIcon = Icons.directions_walk;
+      }
+    }
+
     return _buildCard(
-      title: 'MISSÃO DE CAMPO',
+      title: 'MISSÃO TÁTICA',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // Imagem do Local (Se houver)
           if (_currentEnigma.imageUrl != null &&
               _currentEnigma.imageUrl!.isNotEmpty)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.network(_currentEnigma.imageUrl!),
+            Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(
+                    _currentEnigma.imageUrl!,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    "Referência Visual",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ],
             )
           else
-            Lottie.asset('assets/animations/no_enigma.json', height: 150),
+            Lottie.asset('assets/animations/no_enigma.json', height: 120),
+
           const SizedBox(height: 16),
+
           Text(
             _currentEnigma.instruction,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: textColor, height: 1.5),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: darkBackground,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white10),
+            style: const TextStyle(
+              fontSize: 16,
+              color: textColor,
+              height: 1.5,
+              fontFamily: 'Roboto',
             ),
-            child: _distance == null
-                ? const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 12,
-                        height: 12,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: secondaryTextColor,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        "Localizando alvo...",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: secondaryTextColor,
-                        ),
-                      ),
-                    ],
-                  )
-                : Text(
-                    "Distância: ${_distance!.toStringAsFixed(0)} metros",
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: primaryAmber,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
           ),
-          const SizedBox(height: 20),
+
+          const SizedBox(height: 24),
+
+          // Indicador de Distância (Radar Visual)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: statusColor.withOpacity(0.3)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(statusIcon, color: statusColor, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  statusText,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: statusColor,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Orbitron', // Fonte Tech sugerida
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Botão Principal de Ação
           SizedBox(
             width: double.infinity,
+            height: 56,
             child: ElevatedButton.icon(
               onPressed: _isNear && !_isBlocked
                   ? () {
@@ -838,31 +890,40 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         ),
                       );
                     }
-                  : null,
-              icon: Icon(
-                _isBlocked ? Icons.timer_off_outlined : Icons.qr_code_scanner,
-              ),
-              label: Text(
-                _isBlocked
-                    ? 'Aguarde o Cooldown'
-                    : (_isNear ? 'ESCANEAR CÓDIGO' : 'APROXIME-SE DO LOCAL'),
+                  : null, // Desabilita se estiver longe
+              icon: const Icon(Icons.qr_code_scanner, size: 28),
+              label: const Text(
+                'ESCANEAR AGORA',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _isNear && !_isBlocked
-                    ? Colors.green
-                    : cardColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                elevation: 0,
-                side: BorderSide(
-                  color: _isNear && !_isBlocked
-                      ? Colors.transparent
-                      : Colors.white10,
+                backgroundColor: Colors.green, // Verde quando ativo
+                disabledBackgroundColor:
+                    cardColor, // Cinza/Escuro quando inativo
+                disabledForegroundColor: secondaryTextColor,
+                elevation: _isNear ? 8 : 0,
+                shadowColor: Colors.green.withOpacity(0.4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
           ),
+          if (!_isNear)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                "Chegue a menos de 50m para liberar o scanner.",
+                style: TextStyle(
+                  color: secondaryTextColor.withOpacity(0.5),
+                  fontSize: 12,
+                ),
+              ),
+            ),
         ],
       ),
     );
