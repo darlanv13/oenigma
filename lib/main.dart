@@ -1,77 +1,45 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:oenigma/auth_wrapper.dart';
-import 'package:oenigma/firebase_options.dart';
-import 'package:oenigma/utils/app_colors.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'screens/splash_screen.dart'; // <-- 1. IMPORTE A NOVA TELA
+import 'utils/app_colors.dart';
+import 'firebase_options.dart';
 
-// Importações das telas do Usuário
-import 'package:oenigma/screens/login_screen.dart';
-import 'package:oenigma/screens/home_screen.dart';
-import 'package:oenigma/screens/signup_screen.dart';
-import 'package:oenigma/screens/forgot_password_screen.dart';
-
-// Importações das telas do Admin (NECESSÁRIO PARA O REDIRECIONAMENTO WEB)
-import 'package:oenigma/admin/screens/dashboard_screen.dart';
-import 'package:oenigma/admin/screens/events_manager_screen.dart';
-import 'package:oenigma/admin/screens/users_manager_screen.dart';
-import 'package:oenigma/admin/screens/financial_screen.dart';
-
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Forçar orientação retrato no mobile (opcional)
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  await initializeDateFormatting('pt_BR', null);
 
-  runApp(const MyApp());
+  runApp(const EnigmaCityApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class EnigmaCityApp extends StatelessWidget {
+  const EnigmaCityApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'O Enigma',
+      title: 'Enigma City',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        primaryColor: primaryAmber,
-        scaffoldBackgroundColor: darkBackground,
+        primaryColor: const Color(0xFFFFC107),
+        scaffoldBackgroundColor: const Color(0xFF121212),
         fontFamily: 'Poppins',
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: primaryAmber,
-          brightness: Brightness.dark,
-          surface: cardColor,
-        ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
           elevation: 0,
-          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          iconTheme: IconThemeData(color: Color(0xFFFFFFFF)),
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: textColor),
+          bodyMedium: TextStyle(color: textColor),
         ),
       ),
-      // Rota Inicial controlada pelo Wrapper Inteligente
-      home: const AuthWrapper(),
-
-      // ROTAS (Misturando Rotas de User e Admin)
-      routes: {
-        // Rotas de Usuário
-        '/login': (context) => const LoginScreen(),
-        '/signup': (context) => const SignUpScreen(),
-        '/home': (context) => const HomeScreen(),
-        '/forgot-password': (context) => const ForgotPasswordScreen(),
-
-        // Rotas de Admin (Essenciais para o menu lateral funcionar na Web)
-        '/admin/dashboard': (context) => const DashboardScreen(),
-        '/admin/events': (context) => const EventsManagerScreen(),
-        '/admin/users': (context) => const UsersManagerScreen(),
-        '/admin/financial': (context) => const FinancialScreen(),
-      },
+      // --- 2. ALTERE A TELA INICIAL ---
+      // A tela inicial agora é a SplashScreen.
+      home: const SplashScreen(),
     );
   }
 }

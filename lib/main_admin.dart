@@ -1,14 +1,10 @@
+// lib/main_admin.dart
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:oenigma/firebase_options.dart';
+import 'package:oenigma/admin/screens/admin_auth_wrapper.dart'; // Crie este arquivo a seguir
 import 'package:oenigma/utils/app_colors.dart';
-
-// Telas
-import 'package:oenigma/admin/screens/admin_auth_wrapper.dart';
-import 'package:oenigma/admin/screens/dashboard_screen.dart';
-import 'package:oenigma/admin/screens/events_manager_screen.dart';
-import 'package:oenigma/admin/screens/users_manager_screen.dart';
-import 'package:oenigma/admin/screens/financial_screen.dart';
+import 'package:oenigma/firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +18,7 @@ class AdminApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Painel Admin - OEnigma',
+      title: 'Painel de Gerenciamento - OEnigma',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
@@ -30,15 +26,12 @@ class AdminApp extends StatelessWidget {
         scaffoldBackgroundColor: darkBackground,
         fontFamily: 'Poppins',
         cardColor: cardColor,
-        // Configurações globais de inputs e botões
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: cardColor,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
-          ),
-          labelStyle: const TextStyle(color: Colors.grey),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: cardColor,
+          elevation: 1,
+        ),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: primaryAmber,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
@@ -46,21 +39,12 @@ class AdminApp extends StatelessWidget {
             foregroundColor: darkBackground,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
         ),
       ),
-      // Rota inicial é o Wrapper (decide entre Login ou Dashboard)
       home: const AdminAuthWrapper(),
-
-      // AQUI ESTÃO AS ROTAS NECESSÁRIAS PARA O SCAFFOLD FUNCIONAR:
-      routes: {
-        '/admin/dashboard': (context) => const DashboardScreen(),
-        '/admin/events': (context) => const EventsManagerScreen(),
-        '/admin/users': (context) => const UsersManagerScreen(),
-        '/admin/financial': (context) => const FinancialScreen(),
-      },
     );
   }
 }

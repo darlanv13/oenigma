@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../auth_wrapper.dart';
+import 'package:oenigma/auth_wrapper.dart';
+
 import '../utils/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {

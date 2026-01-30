@@ -6,7 +6,6 @@ import '../services/auth_service.dart';
 import '../utils/app_colors.dart';
 
 class ProfileScreen extends StatefulWidget {
-  // A tela recebe os dados pré-carregados
   final Map<String, dynamic> playerData;
   final UserWalletModel walletData;
 
@@ -25,7 +24,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _phoneController = TextEditingController();
-  // _birthDateController removido pois o campo agora é apenas leitura
 
   bool _isLoading = false;
   File? _selectedImage;
@@ -33,7 +31,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Popula os campos com os dados recebidos
     _phoneController.text = widget.playerData['phone'] ?? '';
   }
 
@@ -63,7 +60,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         userId: userId,
         imageFile: _selectedImage,
         phone: _phoneController.text,
-        // Envia a data de nascimento original, já que não é mais editável nesta tela
         birthDate: widget.playerData['birthDate'] ?? '',
       );
 
@@ -99,30 +95,135 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Meu Perfil')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      backgroundColor: darkBackground,
+      body: CustomScrollView(
+        slivers: [
+          _buildSliverAppBar(),
+          SliverPadding(
+            padding: const EdgeInsets.all(16.0),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                _buildSectionHeader("ESTATÍSTICAS"),
+                _buildStatsSection(widget.walletData),
+                const SizedBox(height: 24),
+                _buildSectionHeader("DADOS PESSOAIS"),
+                _buildEditableInfoCard(widget.playerData),
+                const SizedBox(height: 24),
+                _buildSectionHeader("SEGURANÇA"),
+                _buildAccountActions(widget.walletData.email),
+                const SizedBox(height: 30),
+              ]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSliverAppBar() {
+    return SliverAppBar(
+      expandedHeight: 250.0,
+      floating: false,
+      pinned: true,
+      backgroundColor: darkBackground,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          alignment: Alignment.center,
+          fit: StackFit.expand,
           children: [
-            _buildProfileHeader(widget.walletData),
-            const SizedBox(height: 24),
-            _buildSectionHeader("ESTATÍSTICAS"),
-            _buildStatsSection(widget.walletData),
-            const SizedBox(height: 24),
-            _buildSectionHeader("DADOS PESSOAIS"),
-            _buildEditableInfoCard(widget.playerData),
-            const SizedBox(height: 24),
-            _buildSectionHeader("CONTA"),
-            _buildAccountActions(widget.walletData.email),
-            const SizedBox(height: 30),
+            // Background decorativo
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [primaryAmber.withOpacity(0.1), darkBackground],
+                ),
+              ),
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 40),
+                Hero(
+                  tag: 'profile-avatar', // Hero tag para animação
+                  child: Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: primaryAmber, width: 2),
+                        ),
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundColor: cardColor,
+                          backgroundImage: _selectedImage != null
+                              ? FileImage(_selectedImage!)
+                              : (widget.walletData.photoURL != null &&
+                                            widget
+                                                .walletData
+                                                .photoURL!
+                                                .isNotEmpty
+                                        ? NetworkImage(
+                                            widget.walletData.photoURL!,
+                                          )
+                                        : null)
+                                    as ImageProvider?,
+                          child:
+                              (_selectedImage == null &&
+                                  (widget.walletData.photoURL == null ||
+                                      widget.walletData.photoURL!.isEmpty))
+                              ? const Icon(
+                                  Icons.person,
+                                  size: 50,
+                                  color: secondaryTextColor,
+                                )
+                              : null,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: primaryAmber,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            size: 20,
+                            color: darkBackground,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  widget.walletData.name,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                ),
+                Text(
+                  widget.walletData.email,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: secondaryTextColor,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
-
-  // --- WIDGETS DE CONSTRUÇÃO ---
 
   Widget _buildSectionHeader(String title) {
     return Padding(
@@ -131,7 +232,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title,
         style: const TextStyle(
           color: secondaryTextColor,
-          fontSize: 14,
+          fontSize: 12,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.5,
         ),
@@ -139,85 +240,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileHeader(UserWalletModel wallet) {
-    return Column(
+  Widget _buildStatsSection(UserWalletModel wallet) {
+    return Row(
       children: [
-        Stack(
-          alignment: Alignment.bottomRight,
-          children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: cardColor,
-              backgroundImage: _selectedImage != null
-                  ? FileImage(_selectedImage!)
-                  : (wallet.photoURL != null && wallet.photoURL!.isNotEmpty
-                            ? NetworkImage(wallet.photoURL!)
-                            : null)
-                        as ImageProvider?,
-              child:
-                  (_selectedImage == null &&
-                      (wallet.photoURL == null || wallet.photoURL!.isEmpty))
-                  ? const Icon(
-                      Icons.person,
-                      size: 50,
-                      color: secondaryTextColor,
-                    )
-                  : null,
-            ),
-            GestureDetector(
-              onTap: _pickImage,
-              child: const CircleAvatar(
-                radius: 18,
-                backgroundColor: primaryAmber,
-                child: Icon(Icons.edit, size: 20, color: darkBackground),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          wallet.name,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: textColor,
+        Expanded(
+          child: _buildStatCard(
+            'Saldo',
+            'R\$ ${wallet.balance.toStringAsFixed(2)}',
+            Icons.wallet,
+            primaryAmber,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          wallet.email,
-          style: const TextStyle(fontSize: 16, color: secondaryTextColor),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatCard(
+            'Ranking',
+            '#${wallet.lastEventRank ?? '-'}',
+            Icons.bar_chart,
+            Colors.lightBlueAccent,
+          ),
         ),
-      ],
-    );
-  }
-
-  // WIDGET DO DASHBOARD / STATS
-  Widget _buildStatsSection(UserWalletModel wallet) {
-    return GridView.count(
-      crossAxisCount: 3,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      children: [
-        _buildStatCard(
-          'Saldo',
-          'R\$ ${wallet.balance.toStringAsFixed(2)}',
-          Icons.account_balance_wallet_outlined,
-          primaryAmber,
-        ),
-        _buildStatCard(
-          'Ranking',
-          '#${wallet.lastEventRank ?? '-'}',
-          Icons.leaderboard_outlined,
-          Colors.lightBlue.shade300,
-        ),
-        _buildStatCard(
-          'Vitórias',
-          wallet.lastWonEventName != null ? "1" : "0",
-          Icons.emoji_events_outlined,
-          Colors.orange.shade300,
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatCard(
+            'Vitórias',
+            wallet.lastWonEventName != null ? "1" : "0",
+            Icons.emoji_events,
+            Colors.orangeAccent,
+          ),
         ),
       ],
     );
@@ -230,20 +280,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Color color,
   ) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, color: color, size: 28),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: textColor,
             ),
@@ -261,68 +311,69 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildEditableInfoCard(Map<String, dynamic> playerData) {
-    return Card(
-      color: cardColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              _buildInfoRow(
-                'Nome Completo',
-                playerData['name'] ?? '',
-                Icons.badge_outlined,
-              ),
-              const Divider(height: 32),
-              _buildInfoRow(
-                'CPF',
-                playerData['cpf'] ?? '',
-                Icons.credit_card_outlined,
-              ),
-              const Divider(height: 32),
-              // Data de Nascimento agora é apenas leitura
-              _buildInfoRow(
-                'Data de Nascimento',
-                playerData['birthDate'] ?? '',
-                Icons.calendar_today_outlined,
-              ),
-              const Divider(height: 32),
-              _buildTextFormField(
-                controller: _phoneController,
-                label: 'Telefone (WhatsApp)',
-                icon: Icons.phone_outlined,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _saveProfile,
-                  icon: _isLoading
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: const CircularProgressIndicator(
-                            color: darkBackground,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Icon(Icons.save_outlined, color: darkBackground),
-                  label: const Text('Salvar Alterações'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryAmber,
-                    foregroundColor: darkBackground,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            _buildInfoRow(
+              'Nome Completo',
+              playerData['name'] ?? '',
+              Icons.badge_outlined,
+            ),
+            const Divider(height: 32, color: Colors.white10),
+            _buildInfoRow('CPF', playerData['cpf'] ?? '', Icons.credit_card),
+            const Divider(height: 32, color: Colors.white10),
+            _buildInfoRow(
+              'Data de Nascimento',
+              playerData['birthDate'] ?? '',
+              Icons.calendar_month,
+            ),
+            const Divider(height: 32, color: Colors.white10),
+            _buildTextFormField(
+              controller: _phoneController,
+              label: 'Telefone',
+              icon: Icons.phone_android,
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _saveProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryAmber,
+                  foregroundColor: darkBackground,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
+                  elevation: 0,
                 ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: darkBackground,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'SALVAR ALTERAÇÕES',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -331,7 +382,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildInfoRow(String label, String value, IconData icon) {
     return Row(
       children: [
-        Icon(icon, color: secondaryTextColor, size: 20),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: secondaryTextColor, size: 20),
+        ),
         const SizedBox(width: 16),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,17 +419,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         labelText: label,
         labelStyle: const TextStyle(color: secondaryTextColor),
         filled: true,
-        fillColor: darkBackground.withOpacity(0.5),
+        fillColor: darkBackground,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey[800]!),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: primaryAmber),
         ),
       ),
@@ -379,19 +437,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildAccountActions(String email) {
-    return Card(
-      color: cardColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
       child: Column(
         children: [
           ListTile(
-            leading: const Icon(
-              Icons.password_outlined,
-              color: secondaryTextColor,
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.lock_reset, color: textColor, size: 20),
             ),
             title: const Text(
               'Redefinir Senha',
-              style: TextStyle(color: textColor),
+              style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
             ),
             trailing: const Icon(
               Icons.chevron_right,
@@ -399,13 +464,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             onTap: () => _resetPassword(email),
           ),
-          // Divisor sutil
-          Divider(height: 1, color: Colors.grey[800]),
-          // Botão de Sair
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Divider(height: 1, color: Colors.white.withOpacity(0.1)),
+          ),
           ListTile(
-            leading: const Icon(Icons.logout, color: Colors.redAccent),
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.logout,
+                color: Colors.redAccent,
+                size: 20,
+              ),
+            ),
             title: const Text(
-              'Sair',
+              'Sair da Conta',
               style: TextStyle(
                 color: Colors.redAccent,
                 fontWeight: FontWeight.w600,

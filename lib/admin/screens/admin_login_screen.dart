@@ -1,5 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
+// lib/admin/screens/admin_login_screen.dart
+
 import 'package:flutter/material.dart';
+import 'package:oenigma/services/auth_service.dart';
 import 'package:oenigma/utils/app_colors.dart';
 
 class AdminLoginScreen extends StatefulWidget {
@@ -10,161 +12,76 @@ class AdminLoginScreen extends StatefulWidget {
 }
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _passController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _isLoading = false;
 
-  Future<void> _login() async {
-    setState(() => _isLoading = true);
-
-    try {
-      // 1. Autenticação Padrão (Gera o token de segurança para as Functions)
-      final userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passController.text.trim(),
-          );
-
-      final user = userCredential.user;
-
-      if (user != null) {
-        // 2. SEGURANÇA: Força a atualização do token para baixar as 'claims' mais recentes
-        // Isso garante que se você acabou de dar 'admin' no banco, o app saiba imediatamente.
-        final idTokenResult = await user.getIdTokenResult(true);
-
-        // 3. Verifica se o usuário tem a permissão 'admin' definida nas suas Functions
-        final isAdmin = idTokenResult.claims?['role'] == 'admin';
-
-        if (!isAdmin) {
-          // Se não for admin, desloga imediatamente e mostra erro
-          await FirebaseAuth.instance.signOut();
-          throw FirebaseAuthException(
-            code: 'access-denied',
-            message: 'Este usuário não tem permissão de Administrador.',
+  Future<void> _handleLogin() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+      // Utiliza a função de login específica para administradores
+      final error = await _authService.signInAdminWithEmailAndPassword(
+        _emailController.text,
+        _passwordController.text,
+      );
+      if (mounted) {
+        if (error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error), backgroundColor: Colors.red),
           );
         }
-
-        // Se for admin, o AuthWrapper (no main_admin.dart) vai redirecionar automaticamente para o Dashboard
+        setState(() => _isLoading = false);
       }
-    } on FirebaseAuthException catch (e) {
-      String message = "Erro desconhecido";
-      if (e.code == 'user-not-found') message = "Usuário não encontrado.";
-      if (e.code == 'wrong-password') message = "Senha incorreta.";
-      if (e.code == 'invalid-email') message = "Email inválido.";
-      if (e.code == 'access-denied') message = e.message ?? "Acesso negado.";
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erro: $e"), backgroundColor: Colors.red),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: darkBackground,
       body: Center(
-        child: Container(
-          width: 400,
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.admin_panel_settings,
-                size: 64,
-                color: primaryAmber,
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                "Painel Admin",
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 30),
-              TextField(
-                controller: _emailController,
-                style: const TextStyle(color: textColor),
-                decoration: const InputDecoration(
-                  labelText: "Email Admin",
-                  labelStyle: TextStyle(color: Colors.grey),
-                  prefixIcon: Icon(Icons.email, color: primaryAmber),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: primaryAmber),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passController,
-                obscureText: true,
-                style: const TextStyle(color: textColor),
-                decoration: const InputDecoration(
-                  labelText: "Senha",
-                  labelStyle: TextStyle(color: Colors.grey),
-                  prefixIcon: Icon(Icons.lock, color: primaryAmber),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: primaryAmber),
-                  ),
-                ),
-                onSubmitted: (_) => _isLoading ? null : _login(),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryAmber,
-                    foregroundColor: darkBackground,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: darkBackground,
-                            strokeWidth: 2,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Painel do Administrador',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(labelText: 'Email'),
+                      validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _passwordController,
+                      decoration: const InputDecoration(labelText: 'Senha'),
+                      obscureText: true,
+                      validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
+                    ),
+                    const SizedBox(height: 24),
+                    _isLoading
+                        ? const CircularProgressIndicator()
+                        : ElevatedButton(
+                            onPressed: _handleLogin,
+                            child: const Text('Entrar'),
                           ),
-                        )
-                      : const Text(
-                          "ENTRAR",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),

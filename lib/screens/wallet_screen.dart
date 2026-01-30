@@ -7,233 +7,19 @@ import 'package:flutter/services.dart';
 import '../models/user_wallet_model.dart';
 import '../utils/app_colors.dart';
 
-// 1. Transformado de StatefulWidget para StatelessWidget
 class WalletScreen extends StatelessWidget {
-  // 2. Recebe o modelo de dados já carregado
   final UserWalletModel wallet;
 
   const WalletScreen({super.key, required this.wallet});
 
   void _buyCredits(BuildContext context, double amount) async {
-    // 1. Mostra o Loading
-    showDialog(
+    // Exibe o BottomSheet imediatamente com estado de carregamento
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _PaymentBottomSheet(amount: amount, wallet: wallet),
     );
-
-    try {
-      final result =
-          await FirebaseFunctions.instanceFor(
-            region: 'southamerica-east1',
-          ).httpsCallable('createPixCharge').call({
-            'amount': amount,
-            'cpf': '', // O backend busca o CPF do perfil
-          });
-
-      if (!context.mounted) return;
-      Navigator.of(context).pop(); // Fecha Loading
-
-      final data = result.data as Map<dynamic, dynamic>;
-
-      if (data['qrCodeImage'] == null) {
-        throw "Imagem QR Code não retornada.";
-      }
-
-      // Tratamento da imagem Base64
-      String base64String = data['qrCodeImage'];
-      if (base64String.contains(',')) {
-        base64String = base64String.split(',').last;
-      }
-
-      final imageBytes = base64Decode(base64String);
-      final String? copiaCola = data['copiaCola'];
-      final String txid = data['txid']; // Captura o ID da transação
-
-      // 3. Mostra o Dialog com o PIX e STREAM
-      showDialog(
-        context: context,
-        barrierDismissible: false, // Impede fechar clicando fora
-        builder: (context) {
-          // StreamBuilder para escutar a transação em tempo real
-          return StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('transactions')
-                .doc(txid)
-                .snapshots(),
-            builder: (context, snapshot) {
-              String status = 'pending';
-
-              if (snapshot.hasData && snapshot.data!.exists) {
-                final transData = snapshot.data!.data() as Map<String, dynamic>;
-                status = transData['status'] ?? 'pending';
-              }
-
-              // Se o pagamento for aprovado, mostra tela de sucesso
-              if (status == 'approved') {
-                return AlertDialog(
-                  backgroundColor: cardColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.check_circle,
-                        color: Colors.green,
-                        size: 80,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Pagamento Confirmado!',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'R\$ ${amount.toStringAsFixed(2).replaceAll('.', ',')} foram adicionados à sua carteira.',
-                        style: const TextStyle(color: Colors.white70),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'CONCLUIR',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              // Tela padrão do QR Code (Pendente)
-              return AlertDialog(
-                backgroundColor: cardColor,
-                title: const Center(
-                  child: Text(
-                    'Pagamento via Pix',
-                    style: TextStyle(
-                      color: primaryAmber,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "Valor a pagar:",
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'R\$ ${amount.toStringAsFixed(2).replaceAll('.', ',')}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.all(8.0),
-                      child: Image.memory(imageBytes, height: 200, width: 200),
-                    ),
-                    const SizedBox(height: 16),
-                    // Indicador de carregamento discreto para mostrar que está escutando
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: primaryAmber,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Aguardando confirmação...',
-                          style: TextStyle(color: primaryAmber, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Escaneie o QR Code ou use o botão abaixo para copiar:',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () async {
-                      if (copiaCola != null) {
-                        await Clipboard.setData(ClipboardData(text: copiaCola));
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Código Pix copiado com sucesso!'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    child: const Text(
-                      'COPIAR CÓDIGO',
-                      style: TextStyle(
-                        color: primaryAmber,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text(
-                      'FECHAR',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      );
-    } catch (e) {
-      if (!e.toString().contains("Invalid character") &&
-          Navigator.canPop(context)) {
-        try {
-          Navigator.of(context).pop();
-        } catch (_) {}
-      }
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
   }
 
   void _showWithdrawDialog(BuildContext context) {
@@ -246,7 +32,7 @@ class WalletScreen extends StatelessWidget {
           style: TextStyle(color: primaryAmber),
         ),
         content: const Text(
-          'Aqui, o utilizador informaria os seus dados de pagamento (ex: Chave PIX) e a sua solicitação seria enviada para aprovação do administrador.',
+          'Informe seus dados de pagamento (ex: Chave PIX) para que sua solicitação seja enviada para aprovação.',
         ),
         actions: [
           TextButton(
@@ -270,7 +56,7 @@ class WalletScreen extends StatelessWidget {
         children: [
           _buildProfileHeader(wallet),
           const SizedBox(height: 24),
-          _buildBalanceCard(context, wallet.balance), // Passa o saldo inicial
+          _buildBalanceCard(context, wallet.balance),
           const SizedBox(height: 24),
           _buildSectionTitle('ADICIONAR SALDO'),
           const SizedBox(height: 12),
@@ -283,74 +69,6 @@ class WalletScreen extends StatelessWidget {
           _buildSectionTitle('ESTATÍSTICAS'),
           const SizedBox(height: 12),
           _buildStatsCard(wallet.lastEventRank, wallet.lastEventName),
-
-          const SizedBox(height: 40),
-
-          // === BOTÃO TEMPORÁRIO DE CONFIGURAÇÃO (REMOVA DEPOIS DE USAR) ===
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.settings_ethernet, color: Colors.white),
-              label: const Text(
-                'CONFIGURAR WEBHOOK (ADMIN)',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors
-                    .redAccent, // Cor de destaque para lembrar que é admin
-                padding: const EdgeInsets.symmetric(vertical: 15),
-              ),
-              onPressed: () async {
-                // 1. URL FIXA (V2) - ESSENCIAL PARA FUNCIONAR
-                const webhookUrl = "https://pixwebhook-6anj5ioxoa-rj.a.run.app";
-
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (_) =>
-                      const Center(child: CircularProgressIndicator()),
-                );
-
-                try {
-                  print("Tentando configurar webhook para: $webhookUrl");
-
-                  final result = await FirebaseFunctions.instanceFor(
-                    region: 'southamerica-east1',
-                  ).httpsCallable('configPixWebhook').call({'url': webhookUrl});
-
-                  if (!context.mounted) return;
-                  Navigator.of(context).pop(); // Fecha Loading
-
-                  // Mostra o resultado vindo da EfiPay
-                  final data = result.data as Map<dynamic, dynamic>;
-                  print("Resultado: $data");
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Webhook Configurado com Sucesso! ✅'),
-                      backgroundColor: Colors.green,
-                      duration: Duration(seconds: 5),
-                    ),
-                  );
-                } catch (e) {
-                  if (!context.mounted) return;
-                  Navigator.of(context).pop(); // Fecha Loading
-
-                  print("Erro ao configurar: $e");
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Erro: $e'),
-                      backgroundColor: Colors.red,
-                      duration: const Duration(seconds: 10),
-                    ),
-                  );
-                }
-              },
-            ),
-          ),
           const SizedBox(height: 40),
         ],
       ),
@@ -396,10 +114,8 @@ class WalletScreen extends StatelessWidget {
     );
   }
 
-  // Widget de saldo com StreamBuilder para atualização em tempo real
   Widget _buildBalanceCard(BuildContext context, double initialBalance) {
     return StreamBuilder<DocumentSnapshot>(
-      // Escuta as mudanças no documento do jogador (onde está o saldo)
       stream: FirebaseFirestore.instance
           .collection('players')
           .doc(wallet.uid)
@@ -409,17 +125,27 @@ class WalletScreen extends StatelessWidget {
 
         if (snapshot.hasData && snapshot.data!.exists) {
           final data = snapshot.data!.data() as Map<String, dynamic>;
-          // Se o campo balance existir, usa ele. Se não, usa 0.
           if (data['balance'] != null) {
             currentBalance = (data['balance'] as num).toDouble();
           }
         }
 
         return Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              colors: [cardColor, cardColor.withOpacity(0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -428,31 +154,29 @@ class WalletScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Saldo Atual',
-                    style: TextStyle(color: secondaryTextColor, fontSize: 16),
+                    'Saldo Disponível',
+                    style: TextStyle(color: secondaryTextColor, fontSize: 14),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'R\$ ${currentBalance.toStringAsFixed(2).replaceAll('.', ',')}',
                     style: const TextStyle(
-                      color: textColor,
-                      fontSize: 32,
+                      color: primaryAmber,
+                      fontSize: 36,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-              ElevatedButton.icon(
+              IconButton(
                 onPressed: () => _showWithdrawDialog(context),
-                icon: const Icon(Icons.arrow_circle_up_rounded),
-                label: const Text('Sacar'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryAmber.withOpacity(0.2),
+                icon: const Icon(Icons.arrow_upward_rounded),
+                style: IconButton.styleFrom(
+                  backgroundColor: primaryAmber.withOpacity(0.1),
                   foregroundColor: primaryAmber,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  padding: const EdgeInsets.all(12),
                 ),
+                tooltip: 'Sacar',
               ),
             ],
           ),
@@ -465,40 +189,41 @@ class WalletScreen extends StatelessWidget {
     return Text(
       title.toUpperCase(),
       style: const TextStyle(
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: FontWeight.bold,
         color: secondaryTextColor,
-        letterSpacing: 1.5,
+        letterSpacing: 1.2,
       ),
     );
   }
 
   Widget _buildCreditOptions(BuildContext context) {
-    final options = [5, 10, 15, 20];
+    final options = [5, 10, 15, 20, 50, 100];
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
+        crossAxisCount: 3,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
+        childAspectRatio: 1.6,
       ),
       itemCount: options.length,
       itemBuilder: (context, index) {
         final amount = options[index];
         return Material(
           color: cardColor,
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(16),
           child: InkWell(
             onTap: () => _buyCredits(context, amount.toDouble()),
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(16),
             child: Center(
               child: Text(
                 'R\$ $amount',
                 style: const TextStyle(
                   color: textColor,
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -509,101 +234,412 @@ class WalletScreen extends StatelessWidget {
   }
 
   Widget _buildPrizesCard(String? lastWonEventName) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: (lastWonEventName == null)
-          ? const Center(
-              child: Text(
-                'Você ainda não venceu nenhum evento.',
-                style: TextStyle(color: secondaryTextColor),
-              ),
-            )
-          : Row(
-              children: [
-                const Icon(
-                  Icons.emoji_events_outlined,
-                  color: primaryAmber,
-                  size: 40,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Parabéns pela sua última vitória!",
-                        style: TextStyle(
-                          color: secondaryTextColor,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        lastWonEventName,
-                        style: const TextStyle(
-                          color: textColor,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-    );
-  }
-
-  Widget _buildStatsCard(int? rank, String? eventName) {
+    if (lastWonEventName == null) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: cardColor.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: const Center(
+          child: Text(
+            'Você ainda não venceu nenhum evento.',
+            style: TextStyle(color: secondaryTextColor),
+          ),
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: primaryAmber.withOpacity(0.3)),
       ),
-      child: (rank == null || eventName == null)
-          ? const Center(
-              child: Text(
-                "Nenhum ranking de evento ativo para exibir.",
-                style: TextStyle(color: secondaryTextColor),
-              ),
-            )
-          : Column(
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: primaryAmber.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.emoji_events_rounded,
+              color: primaryAmber,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "SUA POSIÇÃO NO ÚLTIMO EVENTO ATIVO",
+                  "Última Vitória",
+                  style: TextStyle(color: secondaryTextColor, fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  lastWonEventName,
+                  style: const TextStyle(
+                    color: textColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsCard(int? rank, String? eventName) {
+    if (rank == null || eventName == null) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "RANKING ATUAL",
                   style: TextStyle(
                     color: secondaryTextColor,
                     fontSize: 12,
                     letterSpacing: 1.0,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   eventName,
                   style: const TextStyle(
-                    color: primaryAmber,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '#$rank',
-                  style: const TextStyle(
                     color: textColor,
-                    fontSize: 28,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: primaryAmber,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '#$rank',
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// WIDGET DO BOTTOM SHEET DE PAGAMENTO
+// ============================================================================
+class _PaymentBottomSheet extends StatefulWidget {
+  final double amount;
+  final UserWalletModel wallet;
+
+  const _PaymentBottomSheet({required this.amount, required this.wallet});
+
+  @override
+  State<_PaymentBottomSheet> createState() => _PaymentBottomSheetState();
+}
+
+class _PaymentBottomSheetState extends State<_PaymentBottomSheet> {
+  bool _isLoading = true;
+  String? _error;
+  String? _qrCodeBase64;
+  String? _copiaCola;
+  String? _txid;
+
+  @override
+  void initState() {
+    super.initState();
+    _initiatePayment();
+  }
+
+  Future<void> _initiatePayment() async {
+    try {
+      final result = await FirebaseFunctions.instanceFor(
+        region: 'southamerica-east1',
+      ).httpsCallable('createPixCharge').call({'amount': widget.amount});
+
+      final data = result.data as Map<dynamic, dynamic>;
+
+      if (mounted) {
+        setState(() {
+          _qrCodeBase64 = data['qrCodeImage'];
+          _copiaCola = data['copiaCola'];
+          _txid = data['txid'];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle Bar
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[700],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          if (_isLoading)
+            _buildLoadingState()
+          else if (_error != null)
+            _buildErrorState()
+          else
+            _buildPaymentState(),
+
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Column(
+      children: const [
+        CircularProgressIndicator(color: primaryAmber),
+        SizedBox(height: 16),
+        Text(
+          "Gerando Cobrança Pix...",
+          style: TextStyle(color: Colors.white70),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Column(
+      children: [
+        const Icon(Icons.error_outline, color: Colors.redAccent, size: 50),
+        const SizedBox(height: 16),
+        Text(
+          "Erro ao gerar Pix",
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _error ?? "Erro desconhecido",
+          style: const TextStyle(color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white10,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Fechar", style: TextStyle(color: Colors.white)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPaymentState() {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('transactions')
+          .doc(_txid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        String status = 'pending';
+        if (snapshot.hasData && snapshot.data!.exists) {
+          final transData = snapshot.data!.data() as Map<String, dynamic>;
+          status = transData['status'] ?? 'pending';
+        }
+
+        if (status == 'approved') {
+          return _buildSuccessState();
+        }
+
+        return Column(
+          children: [
+            const Text(
+              "Pagamento Pix",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')}",
+              style: const TextStyle(
+                color: primaryAmber,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
+            if (_qrCodeBase64 != null)
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(12),
+                child: Image.memory(
+                  base64Decode(_qrCodeBase64!.split(',').last),
+                  height: 200,
+                  width: 200,
+                ),
+              ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: primaryAmber,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Text(
+                  "Aguardando confirmação...",
+                  style: TextStyle(color: primaryAmber, fontSize: 14),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.copy, color: Colors.black),
+                label: const Text(
+                  "COPIAR CÓDIGO PIX",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryAmber,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () async {
+                  if (_copiaCola != null) {
+                    await Clipboard.setData(ClipboardData(text: _copiaCola!));
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Código Pix copiado!"),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSuccessState() {
+    return Column(
+      children: [
+        const Icon(Icons.check_circle_rounded, color: Colors.green, size: 80),
+        const SizedBox(height: 16),
+        const Text(
+          "Pagamento Confirmado!",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "O valor de R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')} já está na sua carteira.",
+          style: const TextStyle(color: Colors.white70),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 32),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              "CONCLUIR",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
