@@ -227,3 +227,57 @@ exports.configPixWebhook = onCall(async (request) => {
         throw new HttpsError("internal", "Erro na EfiPay: " + error.message);
     }
 });
+
+
+const functions = require('firebase-functions');
+const { MercadoPagoConfig, Payment } = require('mercadopago');
+
+// Acessando o token de forma segura via Secret Manager
+exports.createPixPayment = functions
+    .runWith({ secrets: ["MP_ACCESS_TOKEN"] })
+    .https.onCall(async (data, context) => {
+
+        // Verificação de autenticação
+        if (!context.auth) {
+            throw new functions.https.HttpsError('unauthenticated', 'User must be logged in.');
+        }
+
+        const client = new MercadoPagoConfig({
+            accessToken: process.env.MP_ACCESS_TOKEN
+        });
+
+        const payment = new Payment(client);
+
+        const body = {
+            transaction_amount: data.amount,
+            description: `O Enigma - ${data.description}`,
+            payment_method_id: 'pix',
+            payer: {
+                email: data.email,
+                identification: {
+                    type: 'CPF',
+                    number: data.cpf
+                }
+            },
+            // Expira em 30 minutos
+            date_of_expiration: new Date(Date.now() + 30 * 60000).toISOString(),
+        };
+
+        try {
+            const requestOptions = {
+                idempotencyKey: `enigma-pix-${Date.now()}-${context.auth.uid}`
+            };
+
+            const response = await payment.create({ body, requestOptions });
+
+            return {
+                id: response.id,
+                status: response.status,
+                qr_code: response.point_of_interaction.transaction_data.qr_code,
+                qr_code_base64: response.point_of_interaction.transaction_data.qr_code_base64,
+            };
+        } catch (error) {
+            console.error('Mercado Pago Error:', error);
+            throw new functions.https.HttpsError('internal', 'Payment failed');
+        }
+    });

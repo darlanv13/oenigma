@@ -1,17 +1,22 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
+const { logAdminAction } = require("./utils");
 
 const db = admin.firestore();
 
 // Helper para verificar admin
-const ensureIsAdmin = (request) => {
-    if (!request.auth || request.auth.token.role !== 'admin') {
-        throw new HttpsError("permission-denied", "Acesso negado. Requer permissão de administrador.");
+const ensureIsAuditor = (request) => {
+    if (!request.auth) {
+        throw new HttpsError("permission-denied", "Acesso negado.");
+    }
+    const role = request.auth.token.role;
+    if (role !== 'admin' && role !== 'super_admin' && role !== 'auditor') {
+        throw new HttpsError("permission-denied", "Acesso negado. Requer permissão de auditor ou administrador.");
     }
 };
 
 exports.approveWithdrawal = onCall(async (request) => {
-    ensureIsAdmin(request);
+    ensureIsAuditor(request);
     const { withdrawalId } = request.data;
 
     if (!withdrawalId) {
@@ -41,6 +46,8 @@ exports.approveWithdrawal = onCall(async (request) => {
             });
         });
 
+        await logAdminAction(request.auth.uid, 'approve_withdrawal', withdrawalId, {});
+
         return { success: true, message: "Saque aprovado com sucesso." };
     } catch (error) {
         console.error("Erro ao aprovar saque:", error);
@@ -49,7 +56,7 @@ exports.approveWithdrawal = onCall(async (request) => {
 });
 
 exports.rejectWithdrawal = onCall(async (request) => {
-    ensureIsAdmin(request);
+    ensureIsAuditor(request);
     const { withdrawalId, reason } = request.data;
 
     if (!withdrawalId) {
@@ -99,6 +106,8 @@ exports.rejectWithdrawal = onCall(async (request) => {
                 processedBy: request.auth.uid
             });
         });
+
+        await logAdminAction(request.auth.uid, 'reject_withdrawal', withdrawalId, { reason });
 
         return { success: true, message: "Saque rejeitado e valor reembolsado." };
     } catch (error) {
