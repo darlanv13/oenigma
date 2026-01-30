@@ -22,27 +22,38 @@ class RankingScreen extends StatefulWidget {
 class _RankingScreenState extends State<RankingScreen> {
   final AuthService _authService = AuthService();
 
-  late String _selectedEventId;
+  String? _selectedEventId;
   late List<RankingPlayerModel> _currentRanking;
 
   @override
   void initState() {
     super.initState();
-    _selectedEventId = widget.availableEvents.isNotEmpty
-        ? widget.availableEvents.first.id
-        : '';
+    // Inicia com o primeiro ID válido se houver eventos, senão null
+    if (widget.availableEvents.isNotEmpty) {
+      _selectedEventId = widget.availableEvents.first.id;
+    } else {
+      _selectedEventId = null;
+    }
     _calculateRankingForSelectedEvent();
   }
 
   void _calculateRankingForSelectedEvent() {
-    if (_selectedEventId.isEmpty) {
+    if (_selectedEventId == null || _selectedEventId!.isEmpty) {
       setState(() => _currentRanking = []);
       return;
     }
 
-    final selectedEvent = widget.availableEvents.firstWhere(
-      (e) => e.id == _selectedEventId,
-    );
+    // Tenta encontrar o evento. Se não achar, não quebra.
+    EventModel selectedEvent;
+    try {
+      selectedEvent = widget.availableEvents.firstWhere(
+        (e) => e.id == _selectedEventId,
+      );
+    } catch (e) {
+      setState(() => _currentRanking = []);
+      return;
+    }
+
     final totalPhases = selectedEvent.phases.length;
 
     var rankedPlayers = widget.allPlayers
