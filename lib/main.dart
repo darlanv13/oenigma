@@ -33,7 +33,15 @@ class EnigmaCityApp extends StatelessWidget {
           backgroundColor: Colors.transparent,
           iconTheme: IconThemeData(color: Color(0xFFFFFFFF)),
         ),
-        textTheme: GoogleFonts.poppinsTextTheme().apply(
+        textTheme: GoogleFonts.interTextTheme().copyWith(
+          displayLarge: GoogleFonts.orbitron(color: textColor),
+          displayMedium: GoogleFonts.orbitron(color: textColor),
+          displaySmall: GoogleFonts.orbitron(color: textColor),
+          headlineLarge: GoogleFonts.orbitron(color: textColor),
+          headlineMedium: GoogleFonts.orbitron(color: textColor),
+          headlineSmall: GoogleFonts.orbitron(color: textColor),
+          titleLarge: GoogleFonts.orbitron(color: textColor),
+        ).apply(
           bodyColor: textColor,
           displayColor: textColor,
         ),

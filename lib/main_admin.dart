@@ -14,15 +14,59 @@ class MainAdminScreen extends StatefulWidget {
 
 class _MainAdminScreenState extends State<MainAdminScreen> {
   int _selectedIndex = 0;
+  String? _userRole;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserRole();
+  }
+
+  Future<void> _fetchUserRole() async {
+    final role = await AuthService().getUserRole();
+    if (mounted) {
+      setState(() {
+        _userRole = role;
+        _isLoading = false;
+
+        // Auditor defaults to Withdrawals screen if Dashboard is too event-heavy,
+        // but we will make Dashboard adaptive.
+        // For now, let's keep Dashboard as home for everyone.
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Usaremos um IndexedStack para manter o estado das páginas
-    final List<Widget> screens = [
-      AdminDashboardScreen(),
-      const WithdrawalRequestsScreen(),
-      const UserListScreen(),
-    ];
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: primaryAmber)),
+      );
+    }
+
+    // Determine available screens based on role
+    Widget content;
+
+    if (_selectedIndex == 0) {
+      content = AdminDashboardScreen(userRole: _userRole);
+    } else if (_selectedIndex == 1) {
+       // Withdrawals
+       if (['auditor', 'super_admin', 'admin'].contains(_userRole)) {
+         content = const WithdrawalRequestsScreen();
+       } else {
+         content = const Center(child: Text("Acesso Negado", style: TextStyle(color: Colors.red)));
+       }
+    } else if (_selectedIndex == 2) {
+      // Users
+       if (['super_admin', 'admin'].contains(_userRole)) {
+         content = const UserListScreen();
+       } else {
+         content = const Center(child: Text("Acesso Negado", style: TextStyle(color: Colors.red)));
+       }
+    } else {
+      content = Container();
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -64,13 +108,21 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                 ],
               ),
             ),
-            _buildDrawerItem(0, "Dashboard & Eventos", Icons.dashboard),
-            _buildDrawerItem(1, "Solicitações de Saque", Icons.attach_money),
-            _buildDrawerItem(2, "Gerenciar Usuários", Icons.people),
+
+            // Dashboard: Everyone
+            _buildDrawerItem(0, "Dashboard & Visão Geral", Icons.dashboard),
+
+            // Withdrawals: Auditor & Super Admin
+            if (['auditor', 'super_admin', 'admin'].contains(_userRole))
+              _buildDrawerItem(1, "Solicitações de Saque", Icons.attach_money),
+
+            // Users: Editor & Super Admin - REMOVED editor
+            if (['super_admin', 'admin'].contains(_userRole))
+              _buildDrawerItem(2, "Gerenciar Usuários", Icons.people),
           ],
         ),
       ),
-      body: screens[_selectedIndex],
+      body: content,
     );
   }
 
