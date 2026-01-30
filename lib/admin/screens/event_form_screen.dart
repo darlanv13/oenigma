@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:oenigma/models/event_model.dart';
 import 'package:oenigma/services/firebase_service.dart';
 import 'package:oenigma/utils/app_colors.dart';
@@ -108,6 +109,33 @@ class _EventFormScreenState extends State<EventFormScreen> {
     }
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: primaryAmber,
+              onPrimary: darkBackground,
+              onSurface: textColor,
+            ),
+            dialogBackgroundColor: cardColor,
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _startDateController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
+  }
+
   List<Step> _getSteps() {
     return [
       Step(
@@ -119,15 +147,24 @@ class _EventFormScreenState extends State<EventFormScreen> {
             _buildTextField(
               controller: _nameController,
               label: 'Nome do Evento',
+              prefixIcon: Icons.event,
             ),
             _buildTextField(
               controller: _prizeController,
               label: 'Prêmio Total',
+              prefixIcon: Icons.emoji_events,
             ),
             _buildTextField(
               controller: _priceController,
               label: 'Preço da Inscrição',
+              prefixIcon: Icons.attach_money,
               keyboardType: TextInputType.number,
+              validator: (val) {
+                if (val == null || val.isEmpty) return 'Campo obrigatório';
+                final n = double.tryParse(val);
+                if (n == null || n < 0) return 'Digite um valor válido >= 0';
+                return null;
+              },
             ),
           ],
         ),
@@ -141,11 +178,14 @@ class _EventFormScreenState extends State<EventFormScreen> {
             _buildTextField(
               controller: _descriptionController,
               label: 'Descrição Completa',
+              prefixIcon: Icons.description,
               maxLines: 5,
             ),
             _buildTextField(
               controller: _iconController,
               label: 'URL da Animação Lottie',
+              prefixIcon: Icons.animation,
+              helperText: 'Insira a URL do arquivo JSON do Lottie',
             ),
           ],
         ),
@@ -159,10 +199,17 @@ class _EventFormScreenState extends State<EventFormScreen> {
             _buildTextField(
               controller: _locationController,
               label: 'Localização (Cidade, Estado)',
+              prefixIcon: Icons.location_on,
             ),
-            _buildTextField(
-              controller: _startDateController,
-              label: 'Data de Início (dd/MM/yyyy)',
+            GestureDetector(
+              onTap: () => _selectDate(context),
+              child: AbsorbPointer(
+                child: _buildTextField(
+                  controller: _startDateController,
+                  label: 'Data de Início (dd/MM/yyyy)',
+                  prefixIcon: Icons.calendar_today,
+                ),
+              ),
             ),
             const SizedBox(height: 16),
             _buildDropdown(
@@ -235,14 +282,26 @@ class _EventFormScreenState extends State<EventFormScreen> {
                 children: [
                   ElevatedButton(
                     onPressed: _isLoading ? null : details.onStepContinue,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryAmber,
+                      foregroundColor: darkBackground,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
                     child: _isLoading && _currentStep == 2
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: darkBackground,
+                            ),
                           )
                         : Text(
                             _currentStep == 2 ? 'Salvar Evento' : 'Continuar',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                   ),
                   const SizedBox(width: 12),
@@ -251,7 +310,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
                       onPressed: _isLoading ? null : details.onStepCancel,
                       child: const Text(
                         'Voltar',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(color: secondaryTextColor),
                       ),
                     ),
                 ],
@@ -269,6 +328,9 @@ class _EventFormScreenState extends State<EventFormScreen> {
     required String label,
     int maxLines = 1,
     TextInputType? keyboardType,
+    IconData? prefixIcon,
+    String? helperText,
+    String? Function(String?)? validator,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -278,17 +340,30 @@ class _EventFormScreenState extends State<EventFormScreen> {
         decoration: InputDecoration(
           labelText: label,
           labelStyle: const TextStyle(color: secondaryTextColor),
+          helperText: helperText,
+          helperStyle: TextStyle(color: secondaryTextColor.withOpacity(0.5)),
           filled: true,
           fillColor: cardColor,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          prefixIcon: prefixIcon != null
+              ? Icon(prefixIcon, color: primaryAmber)
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: primaryAmber),
+          ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.grey),
+            borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
           ),
         ),
         maxLines: maxLines,
         keyboardType: keyboardType,
-        validator: (v) => v!.isEmpty ? 'Este campo é obrigatório' : null,
+        validator: validator ??
+            (v) => v!.isEmpty ? 'Este campo é obrigatório' : null,
       ),
     );
   }
@@ -309,9 +384,13 @@ class _EventFormScreenState extends State<EventFormScreen> {
         filled: true,
         fillColor: cardColor,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: primaryAmber),
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.grey),
+          borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
         ),
       ),
       items: items,

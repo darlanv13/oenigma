@@ -64,6 +64,10 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
       _selectedEnigmaType = enigma.type;
       _selectedHintType = enigma.hintType;
     }
+
+    _imageUrlController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -178,6 +182,34 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
                     controller: _imageUrlController,
                     label: 'URL da Imagem (Opcional)',
                   ),
+                  if (_imageUrlController.text.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10.0),
+                      child: Center(
+                        child: Container(
+                          height: 150,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              _imageUrlController.text,
+                              fit: BoxFit.contain,
+                              errorBuilder:
+                                  (context, error, stackTrace) =>
+                                      const Center(
+                                        child: Icon(
+                                          Icons.broken_image,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   if (widget.eventType == 'find_and_win')
                     Padding(
                       padding: const EdgeInsets.only(top: 10.0),
@@ -225,6 +257,13 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
                             controller: _latitudeController,
                             label: 'Latitude',
                             keyboardType: TextInputType.number,
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return 'Obrigatório';
+                              final n = double.tryParse(v);
+                              if (n == null || n < -90 || n > 90)
+                                return '-90 a 90';
+                              return null;
+                            },
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -233,6 +272,13 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
                             controller: _longitudeController,
                             label: 'Longitude',
                             keyboardType: TextInputType.number,
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return 'Obrigatório';
+                              final n = double.tryParse(v);
+                              if (n == null || n < -180 || n > 180)
+                                return '-180 a 180';
+                              return null;
+                            },
                           ),
                         ),
                       ],
@@ -263,10 +309,43 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
                   if (_selectedHintType != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 10.0),
-                      child: _buildTextField(
-                        controller: _hintDataController,
-                        label: 'Conteúdo da Dica',
-                        maxLines: 3,
+                      child: Column(
+                        children: [
+                          _buildTextField(
+                            controller: _hintDataController,
+                            label: 'Conteúdo da Dica',
+                            maxLines: 3,
+                          ),
+                          if (_selectedHintType == 'photo' &&
+                              _hintDataController.text.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10.0),
+                              child: Center(
+                                child: Container(
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      _hintDataController.text,
+                                      fit: BoxFit.contain,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Center(
+                                                child: Icon(
+                                                  Icons.broken_image,
+                                                  color: Colors.red,
+                                                ),
+                                              ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                 ]),
@@ -277,10 +356,18 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
                     : ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.all(16),
+                          backgroundColor: primaryAmber,
+                          foregroundColor: darkBackground,
                         ),
                         onPressed: _saveEnigma,
                         icon: const Icon(Icons.save),
-                        label: const Text('Salvar Enigma'),
+                        label: const Text(
+                          'Salvar Enigma',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
               ],
             ),
@@ -293,7 +380,8 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
   Widget _buildCardSection(String title, List<Widget> children) {
     return Card(
       color: cardColor,
-      elevation: 2,
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -304,10 +392,10 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: primaryAmber,
               ),
             ),
-            const Divider(color: Colors.grey),
+            Divider(color: Colors.grey.withOpacity(0.3)),
             const SizedBox(height: 16),
             ...children,
           ],
@@ -321,6 +409,7 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
     required String label,
     int maxLines = 1,
     TextInputType? keyboardType,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
@@ -331,19 +420,29 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
         filled: true,
         fillColor: darkBackground,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: primaryAmber),
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.grey),
+          borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
         ),
         alignLabelWithHint: true,
       ),
       maxLines: maxLines,
       keyboardType: keyboardType,
-      validator: (v) {
-        if (label.contains('Instrução') || label.contains('Código')) {
-          if (v == null || v.isEmpty) return 'Este campo é obrigatório';
+      validator: validator ??
+          (v) {
+            if (label.contains('Instrução') || label.contains('Código')) {
+              if (v == null || v.isEmpty) return 'Este campo é obrigatório';
+            }
+            return null;
+          },
+      onChanged: (value) {
+        if (label.contains('URL') || label.contains('Dica')) {
+          setState(() {}); // Trigger rebuild for preview
         }
-        return null;
       },
     );
   }
@@ -364,9 +463,13 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
         filled: true,
         fillColor: darkBackground,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: primaryAmber),
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.grey),
+          borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
         ),
       ),
       items: items,
