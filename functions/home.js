@@ -11,16 +11,18 @@ const db = admin.firestore();
 // em uma única chamada.
 // =================================================================== //
 exports.getHomeScreenData = onCall(async (request) => {
-    // 1. Verificação de Segurança (Correção de Crash)
+    // 1. Verificação de Segurança
     if (!request.auth) {
         throw new HttpsError("unauthenticated", "Usuário não autenticado.");
     }
 
     const userId = request.auth.uid;
+    const userEmail = request.auth.token.email || "";
+    const userName = request.auth.token.name || "Novo Usuário";
+    const userPhoto = request.auth.token.picture || null;
 
     try {
         // 2. Executa leituras em paralelo
-        // REMOVIDO: A query específica para wonEvents que exigia índice composto
         const [
             eventsSnapshot,
             allPlayersSnapshot,
@@ -31,16 +33,35 @@ exports.getHomeScreenData = onCall(async (request) => {
             db.collection("players").doc(userId).get()
         ]);
 
+        let playerData;
+
+        // 3. AUTO-REPARO: Se o doc do jogador não existir, cria um padrão.
         if (!playerDoc.exists) {
-            throw new HttpsError("not-found", "Dados do jogador não encontrados.");
+            console.warn(`Jogador ${userId} não encontrado. Criando perfil padrão.`);
+
+            const newPlayerData = {
+                name: userName,
+                email: userEmail,
+                photoURL: userPhoto,
+                balance: 0,
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                role: 'user',
+                events: {}
+            };
+
+            // Salva no banco (Fire-and-forget ou await se for crucial)
+            await db.collection("players").doc(userId).set(newPlayerData);
+
+            playerData = newPlayerData;
+        } else {
+            playerData = playerDoc.data();
         }
 
-        // 3. Processa os dados
+        // 4. Processa os dados
         const allEvents = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const allPlayers = allPlayersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const playerData = playerDoc.data();
 
-        // 4. Lógica para o Ranking e Saldo
+        // 5. Lógica para o Ranking e Saldo
         let lastEventRank = null;
         let lastEventName = null;
         const playerEventIds = Object.keys(playerData.events || {});
@@ -63,11 +84,9 @@ exports.getHomeScreenData = onCall(async (request) => {
             }
         }
 
-        // 5. Lógica para Última Vitória (Em Memória - Sem Custo Adicional de Leitura)
-        // Filtra os eventos onde o usuário é o vencedor
+        // 6. Lógica para Última Vitória (Em Memória)
         const wonEvents = allEvents.filter(e => e.winnerId === userId);
 
-        // Ordena por data de finalização (mais recente primeiro)
         wonEvents.sort((a, b) => {
             const timeA = a.finishedAt && a.finishedAt.toMillis ? a.finishedAt.toMillis() : 0;
             const timeB = b.finishedAt && b.finishedAt.toMillis ? b.finishedAt.toMillis() : 0;
@@ -79,15 +98,15 @@ exports.getHomeScreenData = onCall(async (request) => {
             lastWonEventName = wonEvents[0].name;
         }
 
-        // 6. Retorna objeto consolidado
+        // 7. Retorna objeto consolidado
         return {
             events: allEvents,
             allPlayers: allPlayers,
             playerData: playerData,
             walletData: {
                 uid: userId,
-                name: playerData.name,
-                email: playerData.email,
+                name: playerData.name || userName,
+                email: playerData.email || userEmail,
                 photoURL: playerData.photoURL,
                 balance: playerData.balance || 0,
                 lastWonEventName: lastWonEventName,
@@ -98,10 +117,9 @@ exports.getHomeScreenData = onCall(async (request) => {
 
     } catch (error) {
         console.error("Erro em getHomeScreenData:", error);
-        // Retorna a mensagem original se for uma HttpsError conhecida, senão genérica
         if (error instanceof HttpsError) {
             throw error;
         }
-        throw new HttpsError("internal", "Não foi possível carregar os dados da tela inicial: " + error.message);
+        throw new HttpsError("internal", "Falha crítica na tela inicial: " + error.message);
     }
 });
