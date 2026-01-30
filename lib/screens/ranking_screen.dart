@@ -43,7 +43,6 @@ class _RankingScreenState extends State<RankingScreen> {
     final selectedEvent = widget.availableEvents.firstWhere(
       (e) => e.id == _selectedEventId,
     );
-    // AQUI ESTÁ A CORREÇÃO: agora 'phases' existe no modelo
     final totalPhases = selectedEvent.phases.length;
 
     var rankedPlayers = widget.allPlayers
@@ -79,12 +78,15 @@ class _RankingScreenState extends State<RankingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: darkBackground,
       appBar: AppBar(
         title: const Text(
           'Ranking Global',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        backgroundColor: darkBackground,
+        elevation: 0,
       ),
       body: Column(
         children: [
@@ -92,14 +94,28 @@ class _RankingScreenState extends State<RankingScreen> {
           Expanded(
             child: _currentRanking.isEmpty
                 ? const Center(
-                    child: Text('Nenhum jogador no ranking para este evento.'),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.leaderboard_outlined,
+                          size: 60,
+                          color: secondaryTextColor,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Nenhum jogador classificado ainda.',
+                          style: TextStyle(color: secondaryTextColor),
+                        ),
+                      ],
+                    ),
                   )
                 : ListView(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                     children: [
                       if (_currentRanking.isNotEmpty)
                         _buildPodium(_currentRanking.take(3).toList()),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 40),
                       if (_currentRanking.length > 3)
                         _buildRankingList(_currentRanking.skip(3).toList()),
                     ],
@@ -112,32 +128,42 @@ class _RankingScreenState extends State<RankingScreen> {
 
   Widget _buildEventSelector() {
     if (widget.availableEvents.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text(
-          "Nenhum evento ativo para exibir o ranking.",
+      return Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Text(
+          "Nenhum evento ativo para exibir.",
           textAlign: TextAlign.center,
+          style: TextStyle(color: secondaryTextColor),
         ),
       );
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: DropdownButtonFormField<String>(
         value: _selectedEventId,
         decoration: InputDecoration(
           filled: true,
           fillColor: cardColor,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
+            horizontal: 20,
+            vertical: 16,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
           ),
         ),
         dropdownColor: cardColor,
-        icon: const Icon(Icons.arrow_drop_down, color: primaryAmber),
+        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: primaryAmber),
         onChanged: (String? newValue) {
           if (newValue != null && newValue != _selectedEventId) {
             setState(() {
@@ -153,7 +179,10 @@ class _RankingScreenState extends State<RankingScreen> {
             value: event.id,
             child: Text(
               event.name,
-              style: const TextStyle(color: textColor),
+              style: const TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           );
@@ -163,33 +192,45 @@ class _RankingScreenState extends State<RankingScreen> {
   }
 
   Widget _buildPodium(List<RankingPlayerModel> top3) {
-    final podiumColors = {
-      1: Colors.amber[600],
-      2: Colors.grey[400],
-      3: Colors.brown[400],
+    // Definindo cores e estilos para os lugares
+    final podiumConfig = {
+      1: {'color': const Color(0xFFFFC107), 'height': 160.0}, // Ouro
+      2: {'color': const Color(0xFFE0E0E0), 'height': 120.0}, // Prata
+      3: {'color': const Color(0xFFA1887F), 'height': 90.0},  // Bronze
     };
 
-    final podiumHeights = {1: 150.0, 2: 110.0, 3: 80.0};
     final List<Widget> podiumPlaces = [];
 
+    // Ordem visual: 2º, 1º, 3º
     if (top3.length > 1) {
       podiumPlaces.add(
-        _buildPodiumPlace(top3[1], podiumHeights[2]!, podiumColors[2]!),
+        _buildPodiumPlace(
+          top3[1],
+          podiumConfig[2]!['height'] as double,
+          podiumConfig[2]!['color'] as Color,
+          place: 2,
+        ),
       );
     }
     if (top3.isNotEmpty) {
       podiumPlaces.add(
         _buildPodiumPlace(
           top3[0],
-          podiumHeights[1]!,
-          podiumColors[1]!,
+          podiumConfig[1]!['height'] as double,
+          podiumConfig[1]!['color'] as Color,
           isFirstPlace: true,
+          place: 1,
         ),
       );
     }
     if (top3.length > 2) {
       podiumPlaces.add(
-        _buildPodiumPlace(top3[2], podiumHeights[3]!, podiumColors[3]!),
+        _buildPodiumPlace(
+          top3[2],
+          podiumConfig[3]!['height'] as double,
+          podiumConfig[3]!['color'] as Color,
+          place: 3,
+        ),
       );
     }
 
@@ -205,78 +246,126 @@ class _RankingScreenState extends State<RankingScreen> {
     double height,
     Color color, {
     bool isFirstPlace = false,
+    required int place,
   }) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            CircleAvatar(
-              radius: isFirstPlace ? 45 : 35,
-              backgroundColor: color,
-              child: CircleAvatar(
-                radius: isFirstPlace ? 42 : 32,
-                backgroundImage: player.photoURL != null
-                    ? NetworkImage(player.photoURL!)
-                    : null,
-                child: player.photoURL == null
-                    ? const Icon(Icons.person, size: 30)
-                    : null,
-              ),
-            ),
-            if (isFirstPlace)
-              Positioned(
-                top: -60,
-                child: Lottie.asset(
-                  'assets/animations/trofel.json',
-                  width: 80,
-                  height: 80,
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: color, width: 3),
+                  boxShadow: isFirstPlace
+                      ? [
+                          BoxShadow(
+                            color: color.withOpacity(0.5),
+                            blurRadius: 20,
+                            spreadRadius: 2,
+                          )
+                        ]
+                      : [],
+                ),
+                child: CircleAvatar(
+                  radius: isFirstPlace ? 40 : 30,
+                  backgroundColor: darkBackground,
+                  backgroundImage: player.photoURL != null
+                      ? NetworkImage(player.photoURL!)
+                      : null,
+                  child: player.photoURL == null
+                      ? Icon(Icons.person, size: isFirstPlace ? 30 : 20, color: secondaryTextColor)
+                      : null,
                 ),
               ),
-            Positioned(
-              bottom: -10,
-              child: Icon(Icons.military_tech, color: color, size: 30),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          player.name.split(' ').first,
-          style: const TextStyle(fontWeight: FontWeight.bold, color: textColor),
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 4),
-        Container(
-          width: 90,
-          height: height,
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.8),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(10),
-              topRight: Radius.circular(10),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.5),
-                blurRadius: 15,
-                spreadRadius: 2,
+              if (isFirstPlace)
+                Positioned(
+                  top: -55,
+                  child: Lottie.asset(
+                    'assets/animations/trofel.json',
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              Positioned(
+                bottom: -12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    "$placeº",
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
-          child: Center(
-            child: Text(
-              '${player.position}º',
-              style: const TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-                color: darkBackground,
+          const SizedBox(height: 20),
+          Text(
+            player.name.split(' ').first,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: textColor,
+              fontSize: 14,
+            ),
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            height: height,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  color.withOpacity(0.8),
+                  color.withOpacity(0.3),
+                ],
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              border: Border(
+                top: BorderSide(color: color.withOpacity(0.5), width: 1),
+                left: BorderSide(color: color.withOpacity(0.2), width: 1),
+                right: BorderSide(color: color.withOpacity(0.2), width: 1),
               ),
             ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${player.phasesCompleted}',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const Text(
+                  'Fases',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -293,65 +382,90 @@ class _RankingScreenState extends State<RankingScreen> {
         final isCurrentUser = player.uid == currentUserId;
 
         return Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           decoration: BoxDecoration(
             color: cardColor,
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(20),
             border: isCurrentUser
                 ? Border.all(color: primaryAmber, width: 1.5)
-                : null,
+                : Border.all(color: Colors.white.withOpacity(0.05)),
             boxShadow: isCurrentUser
                 ? [
                     BoxShadow(
-                      color: primaryAmber.withOpacity(0.3),
-                      blurRadius: 8,
+                      color: primaryAmber.withOpacity(0.15),
+                      blurRadius: 10,
                     ),
                   ]
-                : null,
+                : [],
           ),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: isCurrentUser
-                    ? primaryAmber
-                    : secondaryTextColor,
+              SizedBox(
+                width: 30,
                 child: Text(
                   player.position.toString(),
-                  style: TextStyle(
-                    color: isCurrentUser ? darkBackground : textColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              CircleAvatar(
-                radius: 20,
-                backgroundImage: player.photoURL != null
-                    ? NetworkImage(player.photoURL!)
-                    : null,
-                child: player.photoURL == null
-                    ? const Icon(Icons.person, size: 20)
-                    : null,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  player.name,
                   style: const TextStyle(
+                    color: secondaryTextColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 12),
-              Text(
-                '${player.phasesCompleted} / ${player.totalPhases}',
-                style: const TextStyle(
-                  color: secondaryTextColor,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isCurrentUser ? primaryAmber : Colors.transparent,
+                    width: 2,
+                  ),
                 ),
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundImage: player.photoURL != null
+                      ? NetworkImage(player.photoURL!)
+                      : null,
+                  child: player.photoURL == null
+                      ? const Icon(Icons.person, size: 20, color: secondaryTextColor)
+                      : null,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      player.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: textColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${player.phasesCompleted}',
+                    style: const TextStyle(
+                      color: primaryAmber,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const Text(
+                    'Fases',
+                    style: TextStyle(
+                      color: secondaryTextColor,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

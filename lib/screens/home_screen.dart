@@ -14,14 +14,28 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   final FirebaseService _firebaseService = FirebaseService();
   late Future<Map<String, dynamic>> _dataFuture;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
     _dataFuture = _firebaseService.getHomeScreenData();
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
+    _fadeController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
   }
 
   Future<void> _reloadData() async {
@@ -48,20 +62,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+                    const SizedBox(height: 16),
                     const Text(
                       'Erro ao carregar dados.',
-                      style: TextStyle(color: Colors.red),
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      '${snapshot.error}',
-                      style: const TextStyle(color: Colors.grey),
-                      textAlign: TextAlign.center,
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                      child: Text(
+                        '${snapshot.error}',
+                        style: const TextStyle(color: Colors.grey),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
                       onPressed: _reloadData,
-                      child: const Text("Tentar Novamente"),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text("Tentar Novamente"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryAmber,
+                        foregroundColor: Colors.black,
+                      ),
                     ),
                   ],
                 ),
@@ -86,27 +110,34 @@ class _HomeScreenState extends State<HomeScreen> {
               color: primaryAmber,
               backgroundColor: cardColor,
               child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
                 slivers: [
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: _buildFinalProfileCard(
-                        context,
-                        playerData,
-                        walletData,
-                        events,
-                        allPlayers,
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: _buildFinalProfileCard(
+                          context,
+                          playerData,
+                          walletData,
+                          events,
+                          allPlayers,
+                        ),
                       ),
                     ),
                   ),
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0),
-                      child: _buildEventsSectionHeader(),
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 8.0),
+                        child: _buildEventsSectionHeader(),
+                      ),
                     ),
                   ),
-                  // CORREÇÃO APLICADA AQUI: Passando playerData como argumento
                   _buildEventsGrid(events, playerData),
+                  const SliverToBoxAdapter(child: SizedBox(height: 40)),
                 ],
               ),
             );
@@ -126,31 +157,54 @@ class _HomeScreenState extends State<HomeScreen> {
     final String firstName = wallet.name.split(' ').first;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        gradient: LinearGradient(
+          colors: [cardColor, cardColor.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 25,
-                backgroundColor: darkBackground,
-                backgroundImage:
-                    (wallet.photoURL != null && wallet.photoURL!.isNotEmpty)
-                    ? NetworkImage(wallet.photoURL!)
-                    : null,
-                child: (wallet.photoURL == null || wallet.photoURL!.isEmpty)
-                    ? const Icon(
-                        Icons.person_outline,
-                        color: secondaryTextColor,
-                        size: 28,
-                      )
-                    : null,
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: primaryAmber, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryAmber.withOpacity(0.2),
+                      blurRadius: 10,
+                    ),
+                  ],
+                ),
+                child: CircleAvatar(
+                  radius: 28,
+                  backgroundColor: darkBackground,
+                  backgroundImage:
+                      (wallet.photoURL != null && wallet.photoURL!.isNotEmpty)
+                      ? NetworkImage(wallet.photoURL!)
+                      : null,
+                  child: (wallet.photoURL == null || wallet.photoURL!.isEmpty)
+                      ? const Icon(
+                          Icons.person_outline,
+                          color: secondaryTextColor,
+                          size: 30,
+                        )
+                      : null,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -160,19 +214,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       'Olá, $firstName!',
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: textColor,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'Ranking: #${wallet.lastEventRank ?? '-'}',
-                      style: const TextStyle(
-                        color: secondaryTextColor,
-                        fontSize: 10,
-                      ),
+                    Row(
+                      children: [
+                        Icon(Icons.emoji_events, size: 14, color: primaryAmber),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Ranking: #${wallet.lastEventRank ?? '-'}',
+                          style: const TextStyle(
+                            color: secondaryTextColor,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -189,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
                     style: const TextStyle(
                       color: primaryAmber,
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -197,13 +257,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const Divider(height: 32, thickness: 0.4, color: secondaryTextColor),
+          const SizedBox(height: 24),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildActionButton(
                 context: context,
-                icon: Icons.account_balance_wallet_outlined,
+                icon: Icons.account_balance_wallet_rounded,
                 label: 'Carteira',
                 onTap: () {
                   Navigator.of(context).push(
@@ -215,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               _buildActionButton(
                 context: context,
-                icon: Icons.leaderboard_outlined,
+                icon: Icons.leaderboard_rounded,
                 label: 'Ranking',
                 onTap: () {
                   Navigator.of(context).push(
@@ -232,8 +292,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               _buildActionButton(
                 context: context,
-                icon: Icons.settings_outlined,
-                label: 'Perfil   ',
+                icon: Icons.person_rounded,
+                label: 'Perfil',
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -258,28 +318,55 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     required VoidCallback onTap,
   }) {
-    return TextButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-      style: TextButton.styleFrom(
-        foregroundColor: textColor,
-        backgroundColor: Colors.white.withOpacity(0.08),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 24, color: textColor),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: secondaryTextColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildEventsSectionHeader() {
-    return const Text(
-      "EVENTOS DISPONÍVEIS",
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: secondaryTextColor,
-        letterSpacing: 1.5,
-      ),
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            color: primaryAmber,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        const Text(
+          "EVENTOS DISPONÍVEIS",
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: secondaryTextColor,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
     );
   }
 
@@ -292,29 +379,41 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Center(
           child: Padding(
             padding: EdgeInsets.all(40.0),
-            child: Text(
-              'Nenhum evento encontrado no momento.',
-              style: TextStyle(color: secondaryTextColor),
+            child: Column(
+              children: [
+                Icon(Icons.event_busy, size: 40, color: secondaryTextColor),
+                SizedBox(height: 16),
+                Text(
+                  'Nenhum evento ativo no momento.',
+                  style: TextStyle(color: secondaryTextColor),
+                ),
+              ],
             ),
           ),
         ),
       );
     }
     return SliverPadding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       sliver: SliverGrid(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          childAspectRatio: 0.7,
+          childAspectRatio: 0.75, // Ajustado para melhor proporção
         ),
         delegate: SliverChildBuilderDelegate(
-          (context, index) => EventCard(
-            event: events[index],
-            playerData: playerData,
-            onReturn: _reloadData, // <-- PASSA A FUNÇÃO DE RECARREGAR AQUI
-          ),
+          (context, index) {
+            // Adiciona uma animação escalonada simples
+            return FadeTransition(
+              opacity: _fadeAnimation,
+              child: EventCard(
+                event: events[index],
+                playerData: playerData,
+                onReturn: _reloadData,
+              ),
+            );
+          },
           childCount: events.length,
         ),
       ),
