@@ -303,7 +303,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 if (!mounted) return;
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => WalletScreen(wallet: walletData),
+                    builder: (context) => WalletScreen(walletData: walletData),
                   ),
                 );
               } catch (e) {

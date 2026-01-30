@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/app_gamer/screens/profile_screen.dart';
 import 'package:oenigma/app_gamer/screens/wallet_screen.dart';
@@ -18,81 +19,84 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final FirebaseService _firebaseService = FirebaseService();
+  final AuthService _authService = AuthService();
 
   // Estado
   bool _isLoading = true;
-  String? _errorMessage; // Para mostrar na tela se der erro
+  String? _errorMessage;
 
   List<EventModel> _events = [];
   Map<String, dynamic> _playerData = {};
   UserWalletModel? _walletData;
   String _selectedFilter = 'Todos';
 
-  // Banner Control
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
   final PageController _bannerController = PageController();
-  int _currentBannerPage = 0;
   Timer? _bannerTimer;
 
   @override
   void initState() {
     super.initState();
-    _initData();
-    // Timer só inicia se não houver erro de build
+    _setupAnimations();
+    // Inicia carregamento após build para evitar travamento da UI
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startBannerTimer();
+      _initData();
+      _startBannerAutoScroll();
     });
+  }
+
+  void _setupAnimations() {
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOut,
+    );
   }
 
   @override
   void dispose() {
     _bannerTimer?.cancel();
-    if (_bannerController.hasClients) _bannerController.dispose();
+    _bannerController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
-  void _startBannerTimer() {
-    _bannerTimer = Timer.periodic(const Duration(seconds: 5), (Timer timer) {
-      if (mounted && _bannerController.hasClients) {
-        setState(() {
-          _currentBannerPage = (_currentBannerPage + 1) % 3;
-        });
+  void _startBannerAutoScroll() {
+    _bannerTimer = Timer.periodic(const Duration(seconds: 6), (Timer timer) {
+      if (_bannerController.hasClients) {
+        final nextPage = (_bannerController.page?.toInt() ?? 0) + 1;
         _bannerController.animateToPage(
-          _currentBannerPage,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeIn,
+          nextPage % 3,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
         );
       }
     });
   }
 
   Future<void> _initData() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      // Carregamento Seguro
-      final results = await Future.wait([
-        _firebaseService.getHomeScreenData(),
-        _firebaseService.getUserWalletData().catchError(
-          (e) => UserWalletModel(
-            balance: 0,
-            history: [],
-            uid: '',
-            name: '',
-            email: '',
-          ),
-        ), // Fallback
-      ]);
-
-      final homeData = results[0] as Map<String, dynamic>;
-      final walletData = results[1] as UserWalletModel;
+      // 1. Carrega Eventos (Prioridade)
+      final homeData = await _firebaseService.getHomeScreenData().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw TimeoutException("Timeout"),
+      );
 
       final List<dynamic> eventsData = homeData['events'] ?? [];
-      final List<EventModel> loadedEvents = eventsData
+      final loadedEvents = eventsData
           .map((e) => EventModel.fromMap(Map<String, dynamic>.from(e)))
           .toList();
 
@@ -100,75 +104,43 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _events = loadedEvents;
           _playerData = Map<String, dynamic>.from(homeData['player'] ?? {});
-          _walletData = walletData;
-          _isLoading = false;
+          _isLoading = false; // Libera UI aqui
         });
+        _fadeController.forward();
       }
+
+      // 2. Carrega Carteira (Segundo Plano - não trava se falhar)
+      _fetchWalletBackground();
     } catch (e) {
-      print("CRITICAL ERROR HOME: $e");
-      if (mounted) {
+      print("Erro Home: $e");
+      if (mounted)
         setState(() {
           _isLoading = false;
-          _errorMessage = e.toString();
+          _errorMessage = "Erro ao conectar.";
         });
-      }
     }
   }
 
-  List<EventModel> get _filteredEvents {
-    if (_selectedFilter == 'Todos') return _events;
-    if (_selectedFilter == 'Ao Vivo')
-      return _events.where((e) => e.status == 'open').toList();
-    if (_selectedFilter == 'Em Breve')
-      return _events
-          .where((e) => e.status == 'dev' || e.status == 'upcoming')
-          .toList();
-    if (_selectedFilter == 'Finalizados')
-      return _events.where((e) => e.status == 'closed').toList();
-    return _events;
+  Future<void> _fetchWalletBackground() async {
+    try {
+      final wallet = await _firebaseService.getUserWalletData();
+      if (mounted) setState(() => _walletData = wallet);
+    } catch (_) {
+      // Falha silenciosa na carteira (ProfileScreen buscará se necessário)
+    }
   }
+
+  // --- UI ---
 
   @override
   Widget build(BuildContext context) {
-    // 1. Tratamento de Erro Visual
-    if (_errorMessage != null) {
-      return Scaffold(
-        backgroundColor: darkBackground,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, color: Colors.red, size: 50),
-              const SizedBox(height: 16),
-              const Text(
-                "Erro ao carregar dados",
-                style: TextStyle(color: Colors.white),
-              ),
-              Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _initData,
-                child: const Text("Tentar Novamente"),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // 2. Loading Simples (Sem Shimmer para evitar bugs de layout)
-    if (_isLoading) {
+    if (_errorMessage != null) return _buildErrorState();
+    if (_isLoading && _events.isEmpty)
       return const Scaffold(
         backgroundColor: darkBackground,
         body: Center(child: CircularProgressIndicator(color: primaryAmber)),
       );
-    }
 
-    // 3. Tela Principal
     return Scaffold(
       backgroundColor: darkBackground,
       body: RefreshIndicator(
@@ -176,34 +148,30 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: cardColor,
         onRefresh: _initData,
         child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
           slivers: [
-            _buildSliverAppBar(),
-
+            _buildSlimAppBar(),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.only(top: 16, bottom: 24),
-                child: _buildBannerSection(),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: _buildBannerSection(),
+                ),
               ),
             ),
-
-            SliverToBoxAdapter(child: _buildFilterChips()),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
+            SliverToBoxAdapter(child: _buildFilters()),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              sliver: SliverToBoxAdapter(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "MISSÕES DISPONÍVEIS",
+                      "MISSÕES",
                       style: GoogleFonts.orbitron(
                         color: Colors.white,
-                        fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
                       ),
                     ),
                     Text(
@@ -214,25 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-
-            _filteredEvents.isEmpty
-                ? SliverToBoxAdapter(child: _buildEmptyState())
-                : SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        child: EventCard(
-                          event: _filteredEvents[index],
-                          playerData: _playerData,
-                          onReturn: _initData,
-                        ),
-                      );
-                    }, childCount: _filteredEvents.length),
-                  ),
-
+            _buildEventsGrid(),
             const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
           ],
         ),
@@ -240,71 +190,52 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSliverAppBar() {
+  Widget _buildSlimAppBar() {
     final photoUrl = _playerData['photoURL'];
     final name = _playerData['name']?.toString().split(' ').first ?? 'Agente';
-
-    // Proteção contra Null no saldo
-    double balanceVal = 0.0;
-    if (_walletData != null) {
-      balanceVal = _walletData!.balance;
-    } else if (_playerData['balance'] != null) {
-      balanceVal = double.tryParse(_playerData['balance'].toString()) ?? 0.0;
-    }
-    final balance = balanceVal.toStringAsFixed(2);
+    final balanceText = _walletData != null
+        ? "R\$ ${_walletData!.balance.toStringAsFixed(2)}"
+        : "...";
 
     return SliverAppBar(
-      backgroundColor: darkBackground,
+      backgroundColor: darkBackground.withOpacity(0.95),
       floating: true,
       pinned: true,
       elevation: 0,
       automaticallyImplyLeading: false,
-      expandedHeight: 80, // Aumentei um pouco para evitar overflow
+      toolbarHeight: 70,
       flexibleSpace: SafeArea(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.white10)),
+          ),
           child: Row(
             children: [
               GestureDetector(
-                onTap: () {
-                  // Navegação Segura
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ProfileScreen(
-                        playerData: _playerData,
-                        walletData:
-                            _walletData ??
-                            UserWalletModel(
-                              balance: 0,
-                              history: [],
-                              uid: '',
-                              name: '',
-                              email: '',
-                            ),
-                      ),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProfileScreen(
+                      playerData: _playerData,
+                      walletData: _walletData, // Agora é opcional, sem erro!
                     ),
-                  );
-                },
+                  ),
+                ),
                 child: Container(
-                  padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: primaryAmber, width: 2),
+                    border: Border.all(color: primaryAmber),
                   ),
                   child: CircleAvatar(
                     radius: 20,
                     backgroundColor: cardColor,
-                    // Validação de URL segura
                     backgroundImage:
-                        (photoUrl != null &&
-                            photoUrl.toString().startsWith('http'))
+                        (photoUrl != null && photoUrl.startsWith('http'))
                         ? CachedNetworkImageProvider(photoUrl)
                         : null,
-                    child:
-                        (photoUrl == null ||
-                            !photoUrl.toString().startsWith('http'))
-                        ? const Icon(Icons.person, color: secondaryTextColor)
+                    child: (photoUrl == null)
+                        ? const Icon(Icons.person, color: Colors.white54)
                         : null,
                   ),
                 ),
@@ -312,8 +243,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       "Olá, $name",
@@ -322,15 +253,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
-                      "Pronto para a caçada?",
-                      style: GoogleFonts.inter(
-                        color: secondaryTextColor,
-                        fontSize: 12,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                    const Text(
+                      "Online",
+                      style: TextStyle(color: Colors.greenAccent, fontSize: 10),
                     ),
                   ],
                 ),
@@ -338,14 +264,12 @@ class _HomeScreenState extends State<HomeScreen> {
               GestureDetector(
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => WalletScreen(wallet: _walletData!),
-                  ),
+                  MaterialPageRoute(builder: (_) => const WalletScreen()),
                 ),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 6,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
                     color: cardColor,
@@ -353,21 +277,18 @@ class _HomeScreenState extends State<HomeScreen> {
                     border: Border.all(color: primaryAmber.withOpacity(0.3)),
                   ),
                   child: Row(
-                    mainAxisSize:
-                        MainAxisSize.min, // Importante para não quebrar layout
                     children: [
-                      const Icon(
-                        Icons.account_balance_wallet_outlined,
+                      const FaIcon(
+                        FontAwesomeIcons.wallet,
                         color: primaryAmber,
-                        size: 16,
+                        size: 14,
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        "R\$ $balance",
+                        balanceText,
                         style: GoogleFonts.orbitron(
                           color: Colors.white,
                           fontSize: 12,
-                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
@@ -383,29 +304,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBannerSection() {
     return SizedBox(
-      height: 160,
+      height: 150,
       child: PageView(
         controller: _bannerController,
-        onPageChanged: (index) => setState(() => _currentBannerPage = index),
         children: [
           _buildBannerCard(
-            "NOVA TEMPORADA",
+            "NOVO",
             "O Tesouro Perdido",
-            "Jogue Agora",
-            Colors.purpleAccent,
-            Icons.explore,
+            Colors.deepPurple,
+            Icons.map,
           ),
           _buildBannerCard(
-            "CÓDIGO SECRETO",
-            "Use o cupom 'ENIGMA20'",
-            "Resgatar",
+            "PROMO",
+            "Pacote de Dicas",
             Colors.blueAccent,
-            Icons.qr_code,
+            Icons.lightbulb,
           ),
           _buildBannerCard(
-            "RANKING SEMANAL",
-            "Veja os top caçadores",
-            "Ver Líderes",
+            "TOP",
+            "Ranking Global",
             Colors.orangeAccent,
             Icons.emoji_events,
           ),
@@ -417,32 +334,29 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildBannerCard(
     String tag,
     String title,
-    String buttonText,
     Color color,
     IconData icon,
   ) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
-          colors: [color.withOpacity(0.8), Colors.black],
+          colors: [color.withOpacity(0.8), Colors.black87],
           begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Stack(
         children: [
           Positioned(
-            right: -20,
-            bottom: -20,
-            child: Icon(icon, size: 120, color: Colors.white.withOpacity(0.1)),
+            right: -10,
+            bottom: -10,
+            child: Icon(icon, size: 100, color: Colors.white10),
           ),
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -450,7 +364,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black26,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -471,25 +385,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    buttonText,
-                    style: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -498,57 +393,96 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFilterChips() {
+  Widget _buildFilters() {
     final filters = ['Todos', 'Ao Vivo', 'Em Breve', 'Finalizados'];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Row(
-        children: filters.map((filter) {
-          final isSelected = _selectedFilter == filter;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              selected: isSelected,
-              label: Text(filter),
-              onSelected: (_) => setState(() => _selectedFilter = filter),
-              backgroundColor: cardColor,
-              selectedColor: primaryAmber,
-              checkmarkColor: darkBackground,
-              labelStyle: TextStyle(
-                color: isSelected ? darkBackground : secondaryTextColor,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isSelected
-                      ? primaryAmber
-                      : Colors.white.withOpacity(0.1),
+        children: filters
+            .map(
+              (f) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(f),
+                  selected: _selectedFilter == f,
+                  onSelected: (b) => setState(() => _selectedFilter = f),
+                  backgroundColor: cardColor,
+                  selectedColor: primaryAmber,
+                  labelStyle: TextStyle(
+                    color: _selectedFilter == f ? Colors.black : Colors.white70,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide.none,
+                  ),
+                  showCheckmark: false,
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            )
+            .toList(),
       ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40.0),
-        child: Column(
-          children: [
-            Icon(
-              Icons.search_off_rounded,
-              size: 60,
-              color: secondaryTextColor.withOpacity(0.5),
-            ),
-            const SizedBox(height: 16),
-            const Text(
+  Widget _buildEventsGrid() {
+    if (_filteredEvents.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Center(
+            child: Text(
               "Nenhum evento encontrado.",
-              style: TextStyle(color: secondaryTextColor),
+              style: TextStyle(color: Colors.white54),
+            ),
+          ),
+        ),
+      );
+    }
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: EventCard(
+              event: _filteredEvents[index],
+              playerData: _playerData,
+              onReturn: _initData,
+            ),
+          ),
+          childCount: _filteredEvents.length,
+        ),
+      ),
+    );
+  }
+
+  List<EventModel> get _filteredEvents {
+    if (_selectedFilter == 'Todos') return _events;
+    if (_selectedFilter == 'Ao Vivo')
+      return _events.where((e) => e.status == 'open').toList();
+    if (_selectedFilter == 'Em Breve')
+      return _events
+          .where((e) => e.status == 'dev' || e.status == 'upcoming')
+          .toList();
+    if (_selectedFilter == 'Finalizados')
+      return _events.where((e) => e.status == 'closed').toList();
+    return _events;
+  }
+
+  Widget _buildErrorState() {
+    return Scaffold(
+      backgroundColor: darkBackground,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.cloud_off, size: 50, color: Colors.redAccent),
+            const SizedBox(height: 16),
+            Text(_errorMessage!, style: const TextStyle(color: Colors.white)),
+            TextButton(
+              onPressed: _initData,
+              child: const Text("Tentar Novamente"),
             ),
           ],
         ),

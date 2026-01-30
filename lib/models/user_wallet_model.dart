@@ -4,9 +4,10 @@ class UserWalletModel {
   final String email;
   final String? photoURL;
   final double balance;
-  final String? lastWonEventName; // Campo alterado
+  final String? lastWonEventName;
   final int? lastEventRank;
   final String? lastEventName;
+  final List<dynamic> history; // Adicionei o final aqui para consistência
 
   UserWalletModel({
     required this.uid,
@@ -14,10 +15,10 @@ class UserWalletModel {
     required this.email,
     this.photoURL,
     required this.balance,
-    this.lastWonEventName, // Campo alterado
+    this.lastWonEventName,
     this.lastEventRank,
     this.lastEventName,
-    required List<dynamic> history,
+    required this.history,
   });
 
   factory UserWalletModel.fromMap(Map<String, dynamic> map) {
@@ -26,12 +27,13 @@ class UserWalletModel {
       name: map['name'] ?? 'Utilizador',
       email: map['email'] ?? 'email@indisponivel.com',
       photoURL: map['photoURL'],
+      // Converte para num primeiro para aceitar tanto int quanto double do Firebase
       balance: (map['balance'] as num?)?.toDouble() ?? 0.0,
-      lastWonEventName:
-          map['lastWonEventName'] as String?, // Mapeia o novo campo
+      lastWonEventName: map['lastWonEventName'] as String?,
       lastEventRank: map['lastEventRank'] as int?,
       lastEventName: map['lastEventName'] as String?,
-      history: [],
+      // CORREÇÃO: Tenta ler a lista, se for nula, usa lista vazia
+      history: (map['history'] as List<dynamic>?) ?? [],
     );
   }
 }
