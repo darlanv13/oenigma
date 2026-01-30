@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:oenigma/models/event_model.dart';
 import 'package:oenigma/models/enigma_model.dart';
+import 'package:oenigma/models/phase_model.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
 import 'package:oenigma/models/withdrawal_model.dart';
 
@@ -21,9 +22,11 @@ class AdminService {
         .orderBy('startDate', descending: true)
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => EventModel.fromMap(doc.data()))
-              .toList(),
+          (snapshot) => snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return EventModel.fromMap(data);
+          }).toList(),
         );
   }
 
@@ -43,6 +46,22 @@ class AdminService {
         .map(
           (snap) =>
               snap.docs.map((d) => WithdrawalModel.fromMap(d.data())).toList(),
+        );
+  }
+
+  Stream<List<PhaseModel>> getPhases(String eventId) {
+    return _firestore
+        .collection('events')
+        .doc(eventId)
+        .collection('phases') // <--- AQUI: Entramos na gaveta das fases
+        .orderBy('order')
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id; // Garante o ID
+            return PhaseModel.fromMap(data);
+          }).toList(),
         );
   }
 
@@ -146,24 +165,32 @@ class AdminService {
     });
   }
 
-  /// Salva/Cria uma Fase (Apenas container, sem enigmas)
   Future<void> savePhase({
     required String eventId,
     String? phaseId,
     required int order,
   }) async {
+    // Verificação de segurança (DEBUG)
+    if (eventId.isEmpty) {
+      print("❌ ERRO CRÍTICO: Tentativa de salvar fase sem ID de evento!");
+      throw Exception("ID do evento não pode ser vazio");
+    }
+
     final HttpsCallable callable = _functions.httpsCallable(
       'createOrUpdatePhase',
     );
 
+    // Estrutura EXATA que seu back-end Node.js espera:
     await callable.call({
-      'eventId': eventId,
-      'phaseId': phaseId,
+      'eventId': eventId, // O back-end lê request.data.eventId
+      'phaseId': phaseId, // O back-end lê request.data.phaseId
       'data': {
+        // O back-end lê request.data.data
         'order': order,
-        // Você pode adicionar um campo 'title' ou 'description' futuramente
       },
     });
+
+    print("✅ Fase enviada com sucesso para o evento: $eventId");
   }
 
   // Chama a função 'listAllUsers' do management.js

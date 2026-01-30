@@ -338,51 +338,98 @@ class _EventStructureScreenState extends State<EventStructureScreen> {
 
   // ATUALIZE: _buildClassicPhasesList
   Widget _buildClassicPhasesList(EventModel event) {
-    final phases = event.phases..sort((a, b) => a.order.compareTo(b.order));
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: phases.length + 1,
-      itemBuilder: (ctx, index) {
-        if (index == phases.length) {
-          // ... Botão adicionar nova fase ...
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text("Nova Fase"),
-              onPressed: () => _addNewPhase(phases.length + 1),
-            ),
+    return StreamBuilder<List<PhaseModel>>(
+      stream: _adminService.getPhases(
+        event.id,
+      ), // <--- Usamos a nova função aqui
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: primaryAmber),
           );
         }
 
-        final phase = phases[index];
-        return Card(
-          color: cardColor,
-          margin: const EdgeInsets.only(bottom: 16),
-          child: ExpansionTile(
-            title: Text(
-              "Fase ${phase.order}",
-              style: const TextStyle(color: primaryAmber),
-            ),
+        if (snapshot.hasError) {
+          return Center(
+            child: Text("Erro ao carregar fases: ${snapshot.error}"),
+          );
+        }
 
-            // SÓ MOSTRA O ÍCONE DE DELETAR FASE SE TIVER PERMISSÃO
-            trailing: _canDelete
-                ? IconButton(
-                    icon: const Icon(
-                      Icons.delete_forever,
-                      color: Colors.redAccent,
+        final phases = snapshot.data ?? [];
+
+        // Lista com as Fases + Botão no final
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: phases.length + 1, // +1 para o botão de adicionar
+          itemBuilder: (ctx, index) {
+            // Se for o último item, desenha o botão "Nova Fase"
+            if (index == phases.length) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: const Text("Nova Fase"),
+                  onPressed: () => _addNewPhase(phases.length + 1),
+                ),
+              );
+            }
+
+            final phase = phases[index];
+
+            // Desenha o Card da Fase
+            return Card(
+              color: cardColor,
+              margin: const EdgeInsets.only(bottom: 16),
+              child: ExpansionTile(
+                title: Text(
+                  "Fase ${phase.order}",
+                  style: const TextStyle(
+                    color: primaryAmber,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text("${phase.enigmas.length} Enigmas"),
+                trailing: _canDelete
+                    ? IconButton(
+                        icon: const Icon(
+                          Icons.delete_forever,
+                          color: Colors.redAccent,
+                        ),
+                        onPressed: () => _deletePhase(phase.id),
+                      )
+                    : null,
+                children: [
+                  // Lista de Enigmas desta fase
+                  if (phase.enigmas.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        "Nenhum enigma nesta fase.",
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  else
+                    ...phase.enigmas.map((e) => _buildEnigmaTile(phase.id, e)),
+
+                  // Botão para adicionar enigma DENTRO da fase
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextButton.icon(
+                      icon: const Icon(
+                        Icons.add_circle_outline,
+                        color: Colors.blueAccent,
+                      ),
+                      label: const Text(
+                        "Adicionar Enigma aqui",
+                        style: TextStyle(color: Colors.blueAccent),
+                      ),
+                      onPressed: () => _addOrEditEnigma(phase.id, null),
                     ),
-                    tooltip: "Excluir Fase",
-                    onPressed: () => _deletePhase(phase.id),
-                  )
-                : null, // Se não tiver permissão, não mostra nada
-
-            children: [
-              ...phase.enigmas.map((e) => _buildEnigmaTile(phase.id, e)),
-              // ...
-            ],
-          ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
