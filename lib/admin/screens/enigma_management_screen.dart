@@ -1,11 +1,11 @@
 // lib/admin/screens/enigma_management_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/admin/screens/enigma_form_screen.dart';
 import 'package:oenigma/models/enigma_model.dart';
 import 'package:oenigma/services/firebase_service.dart';
-// Crie a tela EnigmaFormScreen a seguir
-// import 'enigma_form_screen.dart';
+import 'package:oenigma/utils/app_colors.dart';
 
 class EnigmaManagementScreen extends StatefulWidget {
   final String eventId;
@@ -52,7 +52,7 @@ class _EnigmaManagementScreenState extends State<EnigmaManagementScreen> {
         future: _enigmasFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
             return Center(
@@ -60,7 +60,12 @@ class _EnigmaManagementScreenState extends State<EnigmaManagementScreen> {
             );
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text("Nenhum enigma criado."));
+            return const Center(
+              child: Text(
+                "Nenhum enigma criado.",
+                style: TextStyle(color: secondaryTextColor),
+              ),
+            );
           }
 
           final enigmas = snapshot.data!;
@@ -70,19 +75,80 @@ class _EnigmaManagementScreenState extends State<EnigmaManagementScreen> {
             itemBuilder: (context, index) {
               final enigma = enigmas[index];
               return Card(
-                margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: cardColor,
+                elevation: 3,
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: ListTile(
-                  leading: CircleAvatar(child: Text(enigma.order.toString())),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  leading: CircleAvatar(
+                    backgroundColor: darkBackground,
+                    foregroundColor: primaryAmber,
+                    child: Text(
+                      enigma.order.toString(),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
                   title: Text(
                     enigma.instruction,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                  subtitle: Text(
-                    "Tipo: ${enigma.type} | Código: ${enigma.code}",
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            Chip(
+                              label: Text(
+                                enigma.type.toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: darkBackground,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              backgroundColor: primaryAmber,
+                              padding: EdgeInsets.zero,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.key,
+                              size: 14,
+                              color: secondaryTextColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              enigma.code,
+                              style: GoogleFonts.robotoMono(
+                                color: secondaryTextColor,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   trailing: IconButton(
-                    icon: Icon(Icons.delete, color: Colors.redAccent),
+                    icon: const Icon(Icons.delete, color: Colors.redAccent),
                     onPressed: () async {
                       await _firebaseService.deleteEnigma(
                         eventId: widget.eventId,
@@ -130,8 +196,10 @@ class _EnigmaManagementScreenState extends State<EnigmaManagementScreen> {
             _loadEnigmas();
           });
         },
-        icon: Icon(Icons.add),
-        label: Text("Novo Enigma"),
+        icon: const Icon(Icons.add),
+        label: const Text("Novo Enigma"),
+        backgroundColor: primaryAmber,
+        foregroundColor: darkBackground,
       ),
     );
   }
