@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../models/event_model.dart';
-import '../models/phase_model.dart';
+import '../../models/event_model.dart';
+import '../../models/phase_model.dart';
 import '../screens/enigma_screen.dart';
-import '../utils/app_colors.dart';
+import '../../utils/app_colors.dart';
 
 class PhaseCard extends StatelessWidget {
   final EventModel event;

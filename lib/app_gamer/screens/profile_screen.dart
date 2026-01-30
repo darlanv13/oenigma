@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
-import '../services/auth_service.dart';
-import '../utils/app_colors.dart';
+import 'package:oenigma/services/auth_service.dart';
+import 'package:oenigma/utils/app_colors.dart';
 
 class ProfileScreen extends StatefulWidget {
   final Map<String, dynamic> playerData;
@@ -175,8 +176,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               (_selectedImage == null &&
                                   (widget.walletData.photoURL == null ||
                                       widget.walletData.photoURL!.isEmpty))
-                              ? const Icon(
-                                  Icons.person,
+                              ? const FaIcon(
+                                  FontAwesomeIcons.user,
                                   size: 50,
                                   color: secondaryTextColor,
                                 )
@@ -191,8 +192,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: primaryAmber,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.camera_alt,
+                          child: const FaIcon(
+                            FontAwesomeIcons.camera,
                             size: 20,
                             color: darkBackground,
                           ),
@@ -247,7 +248,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: _buildStatCard(
             'Saldo',
             'R\$ ${wallet.balance.toStringAsFixed(2)}',
-            Icons.wallet,
+            FontAwesomeIcons.wallet,
             primaryAmber,
           ),
         ),
@@ -256,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: _buildStatCard(
             'Ranking',
             '#${wallet.lastEventRank ?? '-'}',
-            Icons.bar_chart,
+            FontAwesomeIcons.chartSimple,
             Colors.lightBlueAccent,
           ),
         ),
@@ -265,7 +266,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: _buildStatCard(
             'Vitórias',
             wallet.lastWonEventName != null ? "1" : "0",
-            Icons.emoji_events,
+            FontAwesomeIcons.trophy,
             Colors.orangeAccent,
           ),
         ),
@@ -283,12 +284,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 28),
+          FaIcon(icon, color: color, size: 28),
           const SizedBox(height: 12),
           Text(
             value,
@@ -325,21 +332,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildInfoRow(
               'Nome Completo',
               playerData['name'] ?? '',
-              Icons.badge_outlined,
+              FontAwesomeIcons.idCard,
             ),
             const Divider(height: 32, color: Colors.white10),
-            _buildInfoRow('CPF', playerData['cpf'] ?? '', Icons.credit_card),
+            _buildInfoRow(
+              'CPF',
+              playerData['cpf'] ?? '',
+              FontAwesomeIcons.creditCard,
+            ),
             const Divider(height: 32, color: Colors.white10),
             _buildInfoRow(
               'Data de Nascimento',
               playerData['birthDate'] ?? '',
-              Icons.calendar_month,
+              FontAwesomeIcons.calendar,
             ),
             const Divider(height: 32, color: Colors.white10),
             _buildTextFormField(
               controller: _phoneController,
               label: 'Telefone',
-              icon: Icons.phone_android,
+              icon: FontAwesomeIcons.mobile,
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -388,7 +399,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: Colors.white.withOpacity(0.05),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: secondaryTextColor, size: 20),
+          child: FaIcon(icon, color: secondaryTextColor, size: 20),
         ),
         const SizedBox(width: 16),
         Column(
@@ -415,7 +426,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       controller: controller,
       style: const TextStyle(color: textColor),
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: secondaryTextColor, size: 20),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: FaIcon(icon, color: secondaryTextColor, size: 20),
+        ),
         labelText: label,
         labelStyle: const TextStyle(color: secondaryTextColor),
         filled: true,
@@ -452,15 +466,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: Colors.white.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.lock_reset, color: textColor, size: 20),
+              child: const FaIcon(
+                FontAwesomeIcons.key,
+                color: textColor,
+                size: 20,
+              ),
             ),
             title: const Text(
               'Redefinir Senha',
               style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
             ),
-            trailing: const Icon(
-              Icons.chevron_right,
+            trailing: const FaIcon(
+              FontAwesomeIcons.chevronRight,
               color: secondaryTextColor,
+              size: 16,
             ),
             onTap: () => _resetPassword(email),
           ),
@@ -475,8 +494,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: Colors.redAccent.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
-                Icons.logout,
+              child: const FaIcon(
+                FontAwesomeIcons.rightFromBracket,
                 color: Colors.redAccent,
                 size: 20,
               ),

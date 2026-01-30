@@ -236,4 +236,31 @@ class FirebaseService {
       return event.enigmas;
     }
   }
+
+  // --- GERENCIAMENTO DE SAQUES (NOVO) ---
+
+  Future<List<Map<String, dynamic>>> getPendingWithdrawals() async {
+    final snapshot = await _firestore
+        .collection('withdrawals')
+        .where('status', isEqualTo: 'pending')
+        .orderBy('requestedAt', descending: true)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      data['id'] = doc.id;
+      return data;
+    }).toList();
+  }
+
+  Future<void> approveWithdrawal(String withdrawalId) {
+    return callFunction('approveWithdrawal', {'withdrawalId': withdrawalId});
+  }
+
+  Future<void> rejectWithdrawal(String withdrawalId, {String? reason}) {
+    return callFunction('rejectWithdrawal', {
+      'withdrawalId': withdrawalId,
+      'reason': reason,
+    });
+  }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart'; // Importe o pacote Lottie
-import '../../utils/app_colors.dart';
+import '../../../utils/app_colors.dart';
 
 void showErrorDialog(BuildContext context, {required String message}) {
   showDialog(

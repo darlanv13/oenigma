@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import necessário para os formatadores
-import '../services/auth_service.dart';
-import '../utils/app_colors.dart';
+import '../../services/auth_service.dart';
+import '../../utils/app_colors.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});

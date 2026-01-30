@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oenigma/services/auth_service.dart';
+import 'package:oenigma/utils/app_colors.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart'; // <-- 1. IMPORTE A NOVA TELA
 
@@ -109,7 +110,14 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Form(
         key: _formKey,
@@ -118,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
             _buildTextFormField(
               controller: _emailController,
               hintText: "Email",
-              icon: Icons.email_outlined,
+              icon: FontAwesomeIcons.envelope,
               validator: (val) =>
                   val!.isEmpty ? 'Por favor, insira um email' : null,
             ),
@@ -126,12 +134,15 @@ class _LoginScreenState extends State<LoginScreen> {
             _buildTextFormField(
               controller: _passwordController,
               hintText: "Senha",
-              icon: Icons.lock_outline,
+              icon: FontAwesomeIcons.lock,
               obscureText: !_isPasswordVisible,
               suffixIcon: IconButton(
-                icon: Icon(
-                  _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                icon: FaIcon(
+                  _isPasswordVisible
+                      ? FontAwesomeIcons.eyeSlash
+                      : FontAwesomeIcons.eye,
                   color: textColor.withOpacity(0.7),
+                  size: 20,
                 ),
                 onPressed: () =>
                     setState(() => _isPasswordVisible = !_isPasswordVisible),
@@ -168,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   foregroundColor: darkBackground,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(24),
                   ),
                 ),
                 child: _isLoading
@@ -236,12 +247,15 @@ class _LoginScreenState extends State<LoginScreen> {
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: TextStyle(color: textColor.withOpacity(0.7)),
-        prefixIcon: Icon(icon, color: textColor.withOpacity(0.7)),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: FaIcon(icon, color: textColor.withOpacity(0.7), size: 18),
+        ),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: darkBackground,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
         errorStyle: const TextStyle(color: primaryAmber),

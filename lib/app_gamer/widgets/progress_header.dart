@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
+import '../../utils/app_colors.dart';
 
 class ProgressHeader extends StatelessWidget {
   final int totalPhases;
@@ -14,7 +14,9 @@ class ProgressHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Evita divisão por zero se não houver fases
-    final double progress = totalPhases > 0 ? completedPhases / totalPhases : 0.0;
+    final double progress = totalPhases > 0
+        ? completedPhases / totalPhases
+        : 0.0;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -80,7 +82,7 @@ class ProgressHeader extends StatelessWidget {
                 ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );

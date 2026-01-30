@@ -1,9 +1,7 @@
-// lib/admin/screens/enigma_form_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:oenigma/models/enigma_model.dart';
 import 'package:oenigma/services/firebase_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:oenigma/utils/app_colors.dart';
 
 class EnigmaFormScreen extends StatefulWidget {
   final String eventId;
@@ -28,7 +26,6 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
   final FirebaseService _firebaseService = FirebaseService();
   bool _isLoading = false;
 
-  // Controladores
   late TextEditingController _instructionController;
   late TextEditingController _codeController;
   late TextEditingController _imageUrlController;
@@ -56,7 +53,6 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
     _orderController = TextEditingController(
       text: enigma?.order.toString() ?? '1',
     );
-
     _latitudeController = TextEditingController(
       text: enigma?.location?.latitude.toString(),
     );
@@ -72,7 +68,6 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
 
   @override
   void dispose() {
-    // Limpeza de todos os controladores
     _instructionController.dispose();
     _codeController.dispose();
     _imageUrlController.dispose();
@@ -88,18 +83,14 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // --- CORREÇÃO APLICADA AQUI ---
-      // Em vez de um objeto GeoPoint, criamos um Mapa simples que pode ser enviado.
       Map<String, double>? locationData;
       if (_selectedEnigmaType == 'qr_code_gps') {
         final lat = double.tryParse(_latitudeController.text);
         final lon = double.tryParse(_longitudeController.text);
         if (lat != null && lon != null) {
-          // Criamos um mapa com chaves que o backend irá reconhecer.
           locationData = {'_latitude': lat, '_longitude': lon};
         }
       }
-      // -----------------------------
 
       final data = {
         'instruction': _instructionController.text,
@@ -114,7 +105,7 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
         'hintData': _hintDataController.text.isNotEmpty
             ? _hintDataController.text
             : null,
-        'location': locationData, // Enviamos o mapa ou nulo
+        'location': locationData,
       };
 
       try {
@@ -160,38 +151,46 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildSectionTitle("Informações do Enigma"),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: [
+                _buildCardSection("Pergunta & Resposta", [
                   _buildTextField(
                     controller: _instructionController,
                     label: 'Instrução / Pergunta',
-                    maxLines: 5,
+                    maxLines: 3,
                   ),
+                  const SizedBox(height: 10),
                   _buildTextField(
                     controller: _codeController,
                     label: 'Código / Resposta Correta',
                   ),
+                  const SizedBox(height: 10),
                   _buildTextField(
                     controller: _orderController,
                     label: 'Ordem',
                     keyboardType: TextInputType.number,
                   ),
+                  const SizedBox(height: 10),
                   _buildTextField(
                     controller: _imageUrlController,
                     label: 'URL da Imagem (Opcional)',
                   ),
                   if (widget.eventType == 'find_and_win')
-                    _buildTextField(
-                      controller: _prizeController,
-                      label: 'Prêmio deste Enigma',
-                      keyboardType: TextInputType.number,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10.0),
+                      child: _buildTextField(
+                        controller: _prizeController,
+                        label: 'Prêmio deste Enigma',
+                        keyboardType: TextInputType.number,
+                      ),
                     ),
+                ]),
+                const SizedBox(height: 16),
+
+                _buildCardSection("Configuração do Enigma", [
                   _buildDropdown(
                     label: 'Tipo de Enigma',
                     value: _selectedEnigmaType,
@@ -211,20 +210,38 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
                   ),
                   if (_selectedEnigmaType == 'qr_code_gps') ...[
                     const SizedBox(height: 16),
-                    _buildSectionTitle("Coordenadas GPS"),
-                    _buildTextField(
-                      controller: _latitudeController,
-                      label: 'Latitude',
-                      keyboardType: TextInputType.number,
+                    const Text(
+                      "Coordenadas GPS",
+                      style: TextStyle(
+                        color: primaryAmber,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    _buildTextField(
-                      controller: _longitudeController,
-                      label: 'Longitude',
-                      keyboardType: TextInputType.number,
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTextField(
+                            controller: _latitudeController,
+                            label: 'Latitude',
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildTextField(
+                            controller: _longitudeController,
+                            label: 'Longitude',
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                  const SizedBox(height: 24),
-                  _buildSectionTitle("Dica (Opcional)"),
+                ]),
+                const SizedBox(height: 16),
+
+                _buildCardSection("Sistema de Dicas", [
                   _buildDropdown(
                     label: 'Tipo de Dica',
                     value: _selectedHintType,
@@ -244,22 +261,28 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
                         setState(() => _selectedHintType = value),
                   ),
                   if (_selectedHintType != null)
-                    _buildTextField(
-                      controller: _hintDataController,
-                      label: 'Conteúdo da Dica',
-                      maxLines: 3,
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10.0),
+                      child: _buildTextField(
+                        controller: _hintDataController,
+                        label: 'Conteúdo da Dica',
+                        maxLines: 3,
+                      ),
                     ),
+                ]),
 
-                  const SizedBox(height: 32),
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ElevatedButton.icon(
-                          onPressed: _saveEnigma,
-                          icon: const Icon(Icons.save),
-                          label: const Text('Salvar Enigma'),
+                const SizedBox(height: 32),
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.all(16),
                         ),
-                ],
-              ),
+                        onPressed: _saveEnigma,
+                        icon: const Icon(Icons.save),
+                        label: const Text('Salvar Enigma'),
+                      ),
+              ],
             ),
           ),
         ),
@@ -267,10 +290,29 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+  Widget _buildCardSection(String title, List<Widget> children) {
+    return Card(
+      color: cardColor,
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const Divider(color: Colors.grey),
+            const SizedBox(height: 16),
+            ...children,
+          ],
+        ),
+      ),
     );
   }
 
@@ -280,25 +322,29 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
     int maxLines = 1,
     TextInputType? keyboardType,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          alignLabelWithHint: true,
+    return TextFormField(
+      controller: controller,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: secondaryTextColor),
+        filled: true,
+        fillColor: darkBackground,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.grey),
         ),
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        validator: (v) {
-          // A instrução e o código são sempre obrigatórios
-          if (label.contains('Instrução') || label.contains('Código')) {
-            if (v == null || v.isEmpty) return 'Este campo é obrigatório';
-          }
-          return null;
-        },
+        alignLabelWithHint: true,
       ),
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      validator: (v) {
+        if (label.contains('Instrução') || label.contains('Código')) {
+          if (v == null || v.isEmpty) return 'Este campo é obrigatório';
+        }
+        return null;
+      },
     );
   }
 
@@ -308,17 +354,23 @@ class _EnigmaFormScreenState extends State<EnigmaFormScreen> {
     required List<DropdownMenuItem<String?>> items,
     required ValueChanged<String?> onChanged,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: DropdownButtonFormField<String?>(
-        value: value,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+    return DropdownButtonFormField<String?>(
+      value: value,
+      dropdownColor: cardColor,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: secondaryTextColor),
+        filled: true,
+        fillColor: darkBackground,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Colors.grey),
         ),
-        items: items,
-        onChanged: onChanged,
       ),
+      items: items,
+      onChanged: onChanged,
     );
   }
 }

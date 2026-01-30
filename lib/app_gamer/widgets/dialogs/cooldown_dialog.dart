@@ -3,7 +3,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import '../../utils/app_colors.dart';
+import '../../../utils/app_colors.dart';
 
 class CooldownDialog extends StatefulWidget {
   final DateTime cooldownUntil;

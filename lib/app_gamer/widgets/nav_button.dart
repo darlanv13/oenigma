@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/app_colors.dart';
+import '../../utils/app_colors.dart';
 
 class NavButton extends StatelessWidget {
   final IconData icon;
@@ -19,7 +19,9 @@ class NavButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12.0), // Raio para o efeito de ondulação
+        borderRadius: BorderRadius.circular(
+          12.0,
+        ), // Raio para o efeito de ondulação
         child: Padding(
           // Espaçamento interno para aumentar a área de toque
           padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),

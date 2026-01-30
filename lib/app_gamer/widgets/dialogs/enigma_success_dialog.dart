@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import '../../utils/app_colors.dart';
+import '../../../utils/app_colors.dart';
 
 // Diálogo para quando um enigma é resolvido, mas a fase ainda não acabou.
 void showEnigmaSuccessDialog(

@@ -8,9 +8,9 @@ import 'package:oenigma/models/enigma_model.dart';
 import 'package:oenigma/models/event_model.dart';
 import 'package:oenigma/services/firebase_service.dart';
 import 'package:oenigma/utils/app_colors.dart';
-import 'package:oenigma/widgets/dialogs/cooldown_dialog.dart';
-import 'package:oenigma/widgets/dialogs/enigma_success_dialog.dart';
-import 'package:oenigma/widgets/dialogs/error_dialog.dart';
+import 'package:oenigma/app_gamer/widgets/dialogs/cooldown_dialog.dart';
+import 'package:oenigma/app_gamer/widgets/dialogs/enigma_success_dialog.dart';
+import 'package:oenigma/app_gamer/widgets/dialogs/error_dialog.dart';
 import 'enigma_screen.dart'; // Para reutilizar o ScannerScreen
 
 class FindAndWinProgressScreen extends StatefulWidget {

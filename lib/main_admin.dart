@@ -1,50 +1,102 @@
-// lib/main_admin.dart
-
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:oenigma/admin/screens/admin_auth_wrapper.dart'; // Crie este arquivo a seguir
+import 'package:oenigma/admin/screens/admin_dashboard_screen.dart';
+import 'package:oenigma/admin/screens/withdrawal_requests_screen.dart';
+import 'package:oenigma/admin/screens/user_list_screen.dart';
+import 'package:oenigma/services/auth_service.dart';
 import 'package:oenigma/utils/app_colors.dart';
-import 'package:oenigma/firebase_options.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const AdminApp());
+class MainAdminScreen extends StatefulWidget {
+  const MainAdminScreen({super.key});
+
+  @override
+  State<MainAdminScreen> createState() => _MainAdminScreenState();
 }
 
-class AdminApp extends StatelessWidget {
-  const AdminApp({super.key});
+class _MainAdminScreenState extends State<MainAdminScreen> {
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Painel de Gerenciamento - OEnigma',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: primaryAmber,
-        scaffoldBackgroundColor: darkBackground,
-        fontFamily: 'Poppins',
-        cardColor: cardColor,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: cardColor,
-          elevation: 1,
-        ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: primaryAmber,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryAmber,
-            foregroundColor: darkBackground,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+    // Usaremos um IndexedStack para manter o estado das páginas
+    final List<Widget> screens = [
+      AdminDashboardScreen(),
+      const WithdrawalRequestsScreen(),
+      const UserListScreen(),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Painel Administrativo OEnigma"),
+        backgroundColor: cardColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await AuthService().signOut();
+            },
           ),
+        ],
+      ),
+      drawer: Drawer(
+        backgroundColor: darkBackground,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: primaryAmber),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.admin_panel_settings,
+                    size: 64,
+                    color: darkBackground,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    "OEnigma Admin",
+                    style: TextStyle(
+                      color: darkBackground,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            _buildDrawerItem(0, "Dashboard & Eventos", Icons.dashboard),
+            _buildDrawerItem(1, "Solicitações de Saque", Icons.attach_money),
+            _buildDrawerItem(2, "Gerenciar Usuários", Icons.people),
+          ],
         ),
       ),
-      home: const AdminAuthWrapper(),
+      body: screens[_selectedIndex],
+    );
+  }
+
+  Widget _buildDrawerItem(int index, String title, IconData icon) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: _selectedIndex == index ? primaryAmber : Colors.grey,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: _selectedIndex == index ? primaryAmber : Colors.white,
+          fontWeight: _selectedIndex == index
+              ? FontWeight.bold
+              : FontWeight.normal,
+        ),
+      ),
+      selected: _selectedIndex == index,
+      tileColor: _selectedIndex == index ? cardColor : null,
+      onTap: () {
+        setState(() {
+          _selectedIndex = index;
+        });
+        Navigator.pop(context); // Fecha o Drawer
+      },
     );
   }
 }

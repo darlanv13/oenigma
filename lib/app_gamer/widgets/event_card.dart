@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui';
 import 'package:lottie/lottie.dart';
-import '../models/event_model.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oenigma/models/event_model.dart';
+import 'package:oenigma/utils/app_colors.dart';
 import '../screens/event_details_screen.dart';
-import '../utils/app_colors.dart';
 
 class EventCard extends StatefulWidget {
   final EventModel event;
@@ -47,27 +48,37 @@ class _EventCardState extends State<EventCard> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => EventDetailsScreen(
-              event: widget.event,
-              playerData: widget.playerData,
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
-        );
-        widget.onReturn();
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(24),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EventDetailsScreen(
+                  event: widget.event,
+                  playerData: widget.playerData,
+                ),
+              ),
+            );
+            widget.onReturn();
+          },
+          splashColor: primaryAmber.withOpacity(0.2),
+          highlightColor: primaryAmber.withOpacity(0.1),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -123,6 +134,13 @@ class _EventCardState extends State<EventCard> {
                   decoration: BoxDecoration(
                     color: primaryAmber,
                     borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Text(
                     widget.event.prize,
@@ -171,8 +189,8 @@ class _EventCardState extends State<EventCard> {
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(
-                                    Icons.calendar_today,
+                                  const FaIcon(
+                                    FontAwesomeIcons.calendarDay,
                                     color: secondaryTextColor,
                                     size: 12,
                                   ),

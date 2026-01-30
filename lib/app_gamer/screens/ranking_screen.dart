@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oenigma/models/event_model.dart';
-import '../models/ranking_player_model.dart';
-import '../services/auth_service.dart';
-import '../utils/app_colors.dart';
+import '../../models/ranking_player_model.dart';
+import '../../services/auth_service.dart';
+import '../../utils/app_colors.dart';
 
 class RankingScreen extends StatefulWidget {
   final List<EventModel> availableEvents;

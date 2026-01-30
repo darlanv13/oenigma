@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-// Cores principais da aplicação, conforme solicitado.
+// Cores principais da aplicação
 const Color primaryAmber = Color(0xFFFFC107);
 const Color darkBackground = Color(0xFF121212); // Um preto suave
 const Color cardColor = Color(

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/event_model.dart';
-import '../models/phase_model.dart';
-import '../services/auth_service.dart';
-import '../services/firebase_service.dart';
-import '../utils/app_colors.dart';
+import '../../models/event_model.dart';
+import '../../models/phase_model.dart';
+import '../../services/auth_service.dart';
+import '../../services/firebase_service.dart';
+import '../../utils/app_colors.dart';
 import '../widgets/PhaseCard.dart';
 import '../widgets/progress_header.dart';
 
