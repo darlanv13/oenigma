@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:oenigma/models/event_model.dart';
 import 'package:oenigma/services/firebase_service.dart';
 import 'package:oenigma/utils/app_colors.dart';
+import 'package:oenigma/widgets/lottie_dialog.dart';
 
 class EventFormScreen extends StatefulWidget {
   final EventModel? event;
@@ -84,11 +85,10 @@ class _EventFormScreenState extends State<EventFormScreen> {
         );
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Evento salvo com sucesso!'),
-              backgroundColor: Colors.green,
-            ),
+          await LottieDialog.show(
+            context,
+            assetPath: 'assets/animations/check.json',
+            message: 'Evento Salvo!',
           );
           Navigator.of(context).pop(true);
         }

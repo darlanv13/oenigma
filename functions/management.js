@@ -2,14 +2,22 @@
 
 const { HttpsError, onCall } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
-// const functions = require("firebase-functions"); // Removido pois não é usado e pode causar conflitos
+const { logAdminAction } = require("./utils");
 
 const db = admin.firestore();
 
-// Função de verificação de permissão de administrador
-const ensureIsAdmin = (context) => {
-    if (!context.auth || context.auth.token.role !== 'admin') {
-        throw new HttpsError("permission-denied", "Acesso negado. Requer permissão de administrador.");
+// Helper to check permissions
+const hasRole = (request, roles) => {
+    if (!request.auth) return false;
+    const userRole = request.auth.token.role;
+    // 'admin' is for legacy compatibility, treated as 'super_admin'
+    if (userRole === 'admin') return true;
+    return roles.includes(userRole);
+};
+
+const ensureCanManageEvents = (request) => {
+    if (!hasRole(request, ['super_admin', 'editor'])) {
+        throw new HttpsError("permission-denied", "Acesso negado. Requer permissão de administrador ou editor.");
     }
 };
 
@@ -51,7 +59,7 @@ async function deleteQueryBatch(query, resolve) {
 // --- GERENCIAMENTO DE EVENTOS ---
 
 exports.createOrUpdateEvent = onCall(async (request) => {
-    ensureIsAdmin(request);
+    ensureCanManageEvents(request);
     const { eventId, data } = request.data;
     let currentEventId = eventId;
 
@@ -81,6 +89,8 @@ exports.createOrUpdateEvent = onCall(async (request) => {
             await eventRef.update({ currentEnigmaId: firstEnigmaId });
         }
 
+        await logAdminAction(request.auth.uid, 'create_or_update_event', currentEventId, { eventType: data.eventType });
+
         return { success: true, message: "Evento salvo com sucesso!", id: currentEventId };
 
     } catch (error) {
@@ -91,7 +101,7 @@ exports.createOrUpdateEvent = onCall(async (request) => {
 
 // ✅ FUNÇÃO ATUALIZADA COM A SOLUÇÃO ROBUSTA
 exports.deleteEvent = onCall(async (request) => {
-    ensureIsAdmin(request);
+    ensureCanManageEvents(request);
     const { eventId } = request.data;
     if (!eventId) throw new HttpsError("invalid-argument", "ID do evento é obrigatório.");
 
@@ -111,6 +121,8 @@ exports.deleteEvent = onCall(async (request) => {
     // Finalmente, deleta o documento principal do evento
     await db.collection('events').doc(eventId).delete();
 
+    await logAdminAction(request.auth.uid, 'delete_event', eventId, {});
+
     return { success: true, message: 'Evento e todas as suas subcoleções foram excluídos com sucesso.' };
 });
 
@@ -118,7 +130,7 @@ exports.deleteEvent = onCall(async (request) => {
 
 // CRIA ENIGMAS //
 exports.createOrUpdateEnigma = onCall(async (request) => {
-    ensureIsAdmin(request);
+    ensureCanManageEvents(request);
     const { eventId, phaseId, enigmaId, data } = request.data;
 
     const eventRef = db.collection("events").doc(eventId);
@@ -126,7 +138,9 @@ exports.createOrUpdateEnigma = onCall(async (request) => {
     if (!eventDoc.exists) {
         throw new HttpsError("not-found", "O evento pai não foi encontrado.");
     }
-    const eventType = eventDoc.data().eventType;
+    // Correctly accessing eventType from eventDoc.data()
+    const eventData = eventDoc.data();
+    const eventType = eventData ? eventData.eventType : 'classic';
 
     // --- CORREÇÃO APLICADA AQUI ---
     // Verifica se recebemos um mapa de localização do frontend.
@@ -141,18 +155,23 @@ exports.createOrUpdateEnigma = onCall(async (request) => {
         : eventRef.collection("enigmas");
 
     try {
+        let resultId;
         if (enigmaId) {
             await collectionRef.doc(enigmaId).update(data);
-            return { success: true, message: "Enigma atualizado.", id: enigmaId };
+            resultId = enigmaId;
         } else {
             data.status = 'open';
             const newEnigmaRef = await collectionRef.add(data);
+            resultId = newEnigmaRef.id;
             const currentEventData = (await eventRef.get()).data();
             if (eventType === 'find_and_win' && !currentEventData.currentEnigmaId) {
                 await eventRef.update({ currentEnigmaId: newEnigmaRef.id });
             }
-            return { success: true, message: "Enigma criado com sucesso.", id: newEnigmaRef.id };
         }
+
+        await logAdminAction(request.auth.uid, 'create_or_update_enigma', resultId, { eventId, phaseId });
+        return { success: true, message: enigmaId ? "Enigma atualizado." : "Enigma criado com sucesso.", id: resultId };
+
     } catch (error) {
         console.error("Erro ao salvar enigma:", error);
         throw new HttpsError("internal", "Erro ao salvar o enigma.");
@@ -162,7 +181,7 @@ exports.createOrUpdateEnigma = onCall(async (request) => {
 //DELETAR ENIGMA//
 
 exports.deleteEnigma = onCall(async (request) => {
-    ensureIsAdmin(request);
+    ensureCanManageEvents(request);
     const { eventId, phaseId, enigmaId } = request.data;
     if (!eventId || !enigmaId) throw new HttpsError("invalid-argument", "IDs são obrigatórios.");
 
@@ -196,24 +215,58 @@ exports.deleteEnigma = onCall(async (request) => {
     }
     // ------------------------------------
 
+    await logAdminAction(request.auth.uid, 'delete_enigma', enigmaId, { eventId, phaseId });
+
     return { success: true, message: 'Enigma excluído.' };
 });
 
 exports.deletePhase = onCall(async (request) => {
-    ensureIsAdmin(request);
+    ensureCanManageEvents(request);
     const { eventId, phaseId } = request.data;
     if (!eventId || !phaseId) throw new HttpsError("invalid-argument", "IDs são obrigatórios.");
 
     await deleteCollection(`events/${eventId}/phases/${phaseId}/enigmas`, 100);
     await db.collection('events').doc(eventId).collection('phases').doc(phaseId).delete();
 
+    await logAdminAction(request.auth.uid, 'delete_phase', phaseId, { eventId });
+
     return { success: true, message: 'Fase e seus enigmas foram excluídos.' };
 });
+
+exports.createOrUpdatePhase = onCall(async (request) => {
+    ensureCanManageEvents(request);
+    const { eventId, phaseId, data } = request.data;
+    if (!eventId || !data) throw new HttpsError("invalid-argument", "EventID e Data são obrigatórios.");
+
+    try {
+        let resultId;
+        const phasesRef = db.collection('events').doc(eventId).collection('phases');
+
+        if (phaseId) {
+            await phasesRef.doc(phaseId).update(data);
+            resultId = phaseId;
+        } else {
+            const newPhase = await phasesRef.add(data);
+            resultId = newPhase.id;
+        }
+
+        await logAdminAction(request.auth.uid, 'create_or_update_phase', resultId, { eventId });
+        return { success: true, message: 'Fase salva com sucesso.', id: resultId };
+    } catch (error) {
+        console.error("Erro ao salvar fase:", error);
+        throw new HttpsError("internal", "Erro ao salvar a fase.");
+    }
+});
+
 
 // --- GERENCIAMENTO DE USUÁRIOS/ADMINS ---
 
 exports.listAllUsers = onCall(async (request) => {
-    ensureIsAdmin(request);
+    // Only super_admin (or admin legacy) can list users
+    if (!hasRole(request, ['super_admin'])) {
+        throw new HttpsError("permission-denied", "Acesso negado.");
+    }
+
     const users = [];
     let pageToken;
     do {
@@ -232,15 +285,17 @@ exports.listAllUsers = onCall(async (request) => {
 });
 
 exports.grantAdminRole = onCall(async (request) => {
-    ensureIsAdmin(request);
+    if (!hasRole(request, ['super_admin'])) throw new HttpsError("permission-denied", "Acesso negado.");
     const { uid } = request.data;
     await admin.auth().setCustomUserClaims(uid, { role: 'admin' });
+    await logAdminAction(request.auth.uid, 'grant_admin_role', uid, {});
     return { success: true, message: 'Permissão de administrador concedida.' };
 });
 
 exports.revokeAdminRole = onCall(async (request) => {
-    ensureIsAdmin(request);
+    if (!hasRole(request, ['super_admin'])) throw new HttpsError("permission-denied", "Acesso negado.");
     const { uid } = request.data;
     await admin.auth().setCustomUserClaims(uid, { role: null });
+    await logAdminAction(request.auth.uid, 'revoke_admin_role', uid, {});
     return { success: true, message: 'Permissão de administrador revogada.' };
 });
