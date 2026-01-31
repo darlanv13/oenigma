@@ -1,24 +1,43 @@
 import 'dart:convert';
-
-import 'package:cloud_functions/cloud_functions.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/user_wallet_model.dart';
 import '../../utils/app_colors.dart';
+import '../stores/wallet_store.dart';
 
-class WalletScreen extends StatelessWidget {
+class WalletScreen extends StatefulWidget {
   final UserWalletModel wallet;
 
   const WalletScreen({super.key, required this.wallet});
 
+  @override
+  State<WalletScreen> createState() => _WalletScreenState();
+}
+
+class _WalletScreenState extends State<WalletScreen> {
+  final WalletStore _store = WalletStore();
+
+  @override
+  void initState() {
+    super.initState();
+    _store.setBalance(widget.wallet.balance);
+    _store.initBalanceStream(widget.wallet.uid);
+  }
+
+  @override
+  void dispose() {
+    _store.dispose();
+    super.dispose();
+  }
+
   void _buyCredits(BuildContext context, double amount) async {
-    // Exibe o BottomSheet imediatamente com estado de carregamento
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => _PaymentBottomSheet(amount: amount, wallet: wallet),
+      builder: (ctx) => _PaymentBottomSheet(amount: amount, wallet: widget.wallet),
     );
   }
 
@@ -54,9 +73,9 @@ class WalletScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildProfileHeader(wallet),
+          _buildProfileHeader(widget.wallet),
           const SizedBox(height: 24),
-          _buildBalanceCard(context, wallet.balance),
+          _buildBalanceCard(context),
           const SizedBox(height: 24),
           _buildSectionTitle('ADICIONAR SALDO'),
           const SizedBox(height: 12),
@@ -64,11 +83,11 @@ class WalletScreen extends StatelessWidget {
           const SizedBox(height: 24),
           _buildSectionTitle('ÚLTIMO PRÉMIO'),
           const SizedBox(height: 12),
-          _buildPrizesCard(wallet.lastWonEventName),
+          _buildPrizesCard(widget.wallet.lastWonEventName),
           const SizedBox(height: 24),
           _buildSectionTitle('ESTATÍSTICAS'),
           const SizedBox(height: 12),
-          _buildStatsCard(wallet.lastEventRank, wallet.lastEventName),
+          _buildStatsCard(widget.wallet.lastEventRank, widget.wallet.lastEventName),
           const SizedBox(height: 40),
         ],
       ),
@@ -114,74 +133,59 @@ class WalletScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBalanceCard(BuildContext context, double initialBalance) {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('players')
-          .doc(wallet.uid)
-          .snapshots(),
-      builder: (context, snapshot) {
-        double currentBalance = initialBalance;
-
-        if (snapshot.hasData && snapshot.data!.exists) {
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-          if (data['balance'] != null) {
-            currentBalance = (data['balance'] as num).toDouble();
-          }
-        }
-
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [cardColor, cardColor.withOpacity(0.8)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+  Widget _buildBalanceCard(BuildContext context) {
+    return Observer(
+      builder: (_) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [cardColor, cardColor.withOpacity(0.8)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Saldo Disponível',
-                    style: TextStyle(color: secondaryTextColor, fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'R\$ ${currentBalance.toStringAsFixed(2).replaceAll('.', ',')}',
-                    style: const TextStyle(
-                      color: primaryAmber,
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              IconButton(
-                onPressed: () => _showWithdrawDialog(context),
-                icon: const Icon(Icons.arrow_upward_rounded),
-                style: IconButton.styleFrom(
-                  backgroundColor: primaryAmber.withOpacity(0.1),
-                  foregroundColor: primaryAmber,
-                  padding: const EdgeInsets.all(12),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Saldo Disponível',
+                  style: TextStyle(color: secondaryTextColor, fontSize: 14),
                 ),
-                tooltip: 'Sacar',
+                const SizedBox(height: 8),
+                Text(
+                  'R\$ ${_store.balance.toStringAsFixed(2).replaceAll('.', ',')}',
+                  style: const TextStyle(
+                    color: primaryAmber,
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            IconButton(
+              onPressed: () => _showWithdrawDialog(context),
+              icon: const Icon(Icons.arrow_upward_rounded),
+              style: IconButton.styleFrom(
+                backgroundColor: primaryAmber.withOpacity(0.1),
+                foregroundColor: primaryAmber,
+                padding: const EdgeInsets.all(12),
               ),
-            ],
-          ),
-        );
-      },
+              tooltip: 'Sacar',
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -355,9 +359,6 @@ class WalletScreen extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// WIDGET DO BOTTOM SHEET DE PAGAMENTO
-// ============================================================================
 class _PaymentBottomSheet extends StatefulWidget {
   final double amount;
   final UserWalletModel wallet;
@@ -369,82 +370,53 @@ class _PaymentBottomSheet extends StatefulWidget {
 }
 
 class _PaymentBottomSheetState extends State<_PaymentBottomSheet> {
-  bool _isLoading = true;
-  String? _error;
-  String? _qrCodeBase64;
-  String? _copiaCola;
-  String? _txid;
+  final WalletStore _store = WalletStore();
 
   @override
   void initState() {
     super.initState();
-    _initiatePayment();
-  }
-
-  Future<void> _initiatePayment() async {
-    try {
-      final result = await FirebaseFunctions.instanceFor(
-        region: 'southamerica-east1',
-      ).httpsCallable('createPixCharge').call({'amount': widget.amount});
-
-      final data = result.data as Map<dynamic, dynamic>;
-
-      if (mounted) {
-        setState(() {
-          _qrCodeBase64 = data['qrCodeImage'];
-          _copiaCola = data['copiaCola'];
-          _txid = data['txid'];
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
+    _store.initiatePayment(widget.amount);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle Bar
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[700],
-              borderRadius: BorderRadius.circular(2),
+    return Observer(
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[700],
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          if (_isLoading)
-            _buildLoadingState()
-          else if (_error != null)
-            _buildErrorState()
-          else
-            _buildPaymentState(),
+            if (_store.paymentLoading)
+              _buildLoadingState()
+            else if (_store.paymentError != null)
+              _buildErrorState()
+            else
+              _buildPaymentState(),
 
-          const SizedBox(height: 20),
-        ],
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildLoadingState() {
-    return Column(
-      children: const [
+    return const Column(
+      children: [
         CircularProgressIndicator(color: primaryAmber),
         SizedBox(height: 16),
         Text(
@@ -460,9 +432,9 @@ class _PaymentBottomSheetState extends State<_PaymentBottomSheet> {
       children: [
         const Icon(Icons.error_outline, color: Colors.redAccent, size: 50),
         const SizedBox(height: 16),
-        Text(
+        const Text(
           "Erro ao gerar Pix",
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -470,7 +442,7 @@ class _PaymentBottomSheetState extends State<_PaymentBottomSheet> {
         ),
         const SizedBox(height: 8),
         Text(
-          _error ?? "Erro desconhecido",
+          _store.paymentError ?? "Erro desconhecido",
           style: const TextStyle(color: Colors.grey),
           textAlign: TextAlign.center,
         ),
@@ -494,7 +466,7 @@ class _PaymentBottomSheetState extends State<_PaymentBottomSheet> {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
           .collection('transactions')
-          .doc(_txid)
+          .doc(_store.txid)
           .snapshots(),
       builder: (context, snapshot) {
         String status = 'pending';
@@ -527,7 +499,7 @@ class _PaymentBottomSheetState extends State<_PaymentBottomSheet> {
               ),
             ),
             const SizedBox(height: 24),
-            if (_qrCodeBase64 != null)
+            if (_store.qrCodeBase64 != null)
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -535,7 +507,7 @@ class _PaymentBottomSheetState extends State<_PaymentBottomSheet> {
                 ),
                 padding: const EdgeInsets.all(12),
                 child: Image.memory(
-                  base64Decode(_qrCodeBase64!.split(',').last),
+                  base64Decode(_store.qrCodeBase64!.split(',').last),
                   height: 200,
                   width: 200,
                 ),
@@ -579,8 +551,8 @@ class _PaymentBottomSheetState extends State<_PaymentBottomSheet> {
                   ),
                 ),
                 onPressed: () async {
-                  if (_copiaCola != null) {
-                    await Clipboard.setData(ClipboardData(text: _copiaCola!));
+                  if (_store.copiaCola != null) {
+                    await Clipboard.setData(ClipboardData(text: _store.copiaCola!));
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
