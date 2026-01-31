@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
 import 'package:oenigma/app_gamer/screens/profile_screen.dart';
 import 'package:oenigma/app_gamer/screens/ranking_screen.dart';
 import 'package:oenigma/app_gamer/screens/wallet_screen.dart';
 import 'package:oenigma/models/event_model.dart';
-import 'package:oenigma/services/firebase_service.dart';
 import 'package:oenigma/utils/app_colors.dart';
 import '../widgets/event_card.dart';
+import '../stores/home_store.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,15 +18,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  final FirebaseService _firebaseService = FirebaseService();
-  late Future<Map<String, dynamic>> _dataFuture;
+  final HomeStore _store = HomeStore();
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    _dataFuture = _firebaseService.getHomeScreenData();
+    _store.loadData();
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -43,26 +43,19 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
-  Future<void> _reloadData() async {
-    setState(() {
-      _dataFuture = _firebaseService.getHomeScreenData();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: darkBackground,
       body: SafeArea(
-        child: FutureBuilder<Map<String, dynamic>>(
-          future: _dataFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
+        child: Observer(
+          builder: (context) {
+            if (_store.isLoading) {
               return const Center(
                 child: CircularProgressIndicator(color: primaryAmber),
               );
             }
-            if (snapshot.hasError || !snapshot.hasData) {
+            if (_store.errorMessage != null) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -81,14 +74,14 @@ class _HomeScreenState extends State<HomeScreen>
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 32.0),
                       child: Text(
-                        '${snapshot.error}',
+                        '${_store.errorMessage}',
                         style: const TextStyle(color: Colors.grey),
                         textAlign: TextAlign.center,
                       ),
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton.icon(
-                      onPressed: _reloadData,
+                      onPressed: _store.loadData,
                       icon: const Icon(Icons.refresh),
                       label: const Text("Tentar Novamente"),
                       style: ElevatedButton.styleFrom(
@@ -101,7 +94,11 @@ class _HomeScreenState extends State<HomeScreen>
               );
             }
 
-            final allData = snapshot.data!;
+            if (_store.data == null) {
+               return const SizedBox.shrink();
+            }
+
+            final allData = _store.data!;
             final List<EventModel> events = (allData['events'] as List)
                 .map((e) => EventModel.fromMap(Map<String, dynamic>.from(e)))
                 .toList();
@@ -115,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen>
             final List<dynamic> allPlayers = allData['allPlayers'] ?? [];
 
             return RefreshIndicator(
-              onRefresh: _reloadData,
+              onRefresh: _store.loadData,
               color: primaryAmber,
               backgroundColor: cardColor,
               child: CustomScrollView(
@@ -431,7 +428,7 @@ class _HomeScreenState extends State<HomeScreen>
             child: EventCard(
               event: events[index],
               playerData: playerData,
-              onReturn: _reloadData,
+              onReturn: _store.loadData,
             ),
           );
         }, childCount: events.length),
