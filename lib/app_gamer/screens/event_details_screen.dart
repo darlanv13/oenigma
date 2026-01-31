@@ -192,8 +192,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   // 5. Navega para a tela da carteira
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) =>
-                          WalletScreen(walletData: walletData),
+                      builder: (context) => WalletScreen(wallet: walletData),
                     ),
                   );
                 }
