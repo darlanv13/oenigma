@@ -20,12 +20,10 @@ exports.getHomeScreenData = onCall(async (request) => {
         // 1. Executa todas as leituras necessárias em paralelo
         const [
             eventsSnapshot,
-            allPlayersSnapshot,
             playerDoc,
             wonEventsSnapshot,
         ] = await Promise.all([
             db.collection("events").get(),
-            db.collection("players").get(),
             db.collection("players").doc(userId).get(),
             db.collection("events").where("winnerId", "==", userId).get()
         ]);
@@ -36,10 +34,10 @@ exports.getHomeScreenData = onCall(async (request) => {
 
         // 2. Processa os dados
         const allEvents = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const allPlayers = allPlayersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         const playerData = playerDoc.data();
 
         // 3. Lógica para o Ranking e Saldo (similar ao que estava em wallet.js)
+        // OBS: Ranking desativado para evitar leitura de toda a coleção de players
         let lastEventRank = null;
         let lastEventName = null;
         const playerEventIds = Object.keys(playerData.events || {});
@@ -49,15 +47,8 @@ exports.getHomeScreenData = onCall(async (request) => {
 
         if (lastActiveEvent) {
             lastEventName = lastActiveEvent.name;
-            const ranking = allPlayers
-                .filter(p => p.events && p.events[lastActiveEvent.id])
-                .map(p => ({ uid: p.id, progress: (p.events[lastActiveEvent.id].currentPhase - 1) }))
-                .sort((a, b) => b.progress - a.progress);
-
-            const userRankIndex = ranking.findIndex(p => p.uid === userId);
-            if (userRankIndex !== -1) {
-                lastEventRank = userRankIndex + 1;
-            }
+            // Ranking removido por performance
+            lastEventRank = null;
         }
 
         let lastWonEventName = null;
