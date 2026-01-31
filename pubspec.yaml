@@ -54,6 +54,7 @@ dev_dependencies:
   # MOVIDO PARA CÁ (Lugar correto)
   flutter_launcher_icons: ^0.14.2
 
+
 flutter:
   uses-material-design: true
   assets:
@@ -77,8 +78,8 @@ flutter_launcher_icons:
   web:
     generate: true
     image_path: "assets/icon/icon.png"
-    background_color: "#000000"
-    theme_color: "#000000"
+    background_color: "#121212"
+    theme_color: "#FFC107"
   windows:
     generate: true
     icon_size: 48

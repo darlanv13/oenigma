@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:oenigma/admin/screens/event_studio_screen.dart';
@@ -125,45 +126,110 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildKPIGrid() {
-    // Valores seguros com fallback
-    final activePlayers = _dashboardData['activePlayers'] ?? 0;
-    final totalRevenue = _dashboardData['totalRevenue'] ?? 0.0;
-    final activeEvents = _dashboardData['activeEvents'] ?? 0;
-    final completionRate = _dashboardData['completionRate'] ?? 0;
+    final stats = [
+      {
+        'label': 'Jogadores',
+        'value': '1,240',
+        'icon': FontAwesomeIcons.users,
+        'color': Colors.blueAccent,
+      },
+      {
+        'label': 'Eventos',
+        'value': '3',
+        'icon': FontAwesomeIcons.gamepad,
+        'color': Colors.purpleAccent,
+      },
+      {
+        'label': 'Receita',
+        'value': '15k',
+        'icon': FontAwesomeIcons.sackDollar,
+        'color': Colors.greenAccent,
+      },
+      {
+        'label': 'Saques',
+        'value': '12',
+        'icon': FontAwesomeIcons.clock,
+        'color': primaryAmber,
+      },
+    ];
 
-    return GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.3,
-      children: [
-        _buildPremiumCard(
-          "Jogadores",
-          activePlayers.toString(),
-          Icons.people_alt_rounded,
-          Colors.blueAccent,
-        ),
-        _buildPremiumCard(
-          "Receita",
-          "R\$ ${totalRevenue.toStringAsFixed(0)}",
-          Icons.attach_money_rounded,
-          Colors.greenAccent,
-        ),
-        _buildPremiumCard(
-          "Eventos Ativos",
-          activeEvents.toString(),
-          Icons.local_activity_rounded,
-          Colors.purpleAccent,
-        ),
-        _buildPremiumCard(
-          "Conclusão",
-          "$completionRate%",
-          Icons.flag_rounded,
-          Colors.orangeAccent,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        int crossAxisCount = constraints.maxWidth > 1100
+            ? 4
+            : (constraints.maxWidth > 600 ? 2 : 1);
+        // Aumentei o ratio para 3.5 (cards mais achatados/compactos)
+        double childAspectRatio = constraints.maxWidth > 1100 ? 3.5 : 2.5;
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 12, // Espaçamento menor
+            mainAxisSpacing: 12,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemCount: stats.length,
+          itemBuilder: (context, index) {
+            final item = stats[index];
+            return _buildCompactStatCard(
+              item['label'] as String,
+              item['value'] as String,
+              item['icon'] as IconData,
+              item['color'] as Color,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Card redesenhado para ser menor
+  Widget _buildCompactStatCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8), // Icone menor
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: FaIcon(icon, color: color, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(color: secondaryTextColor, fontSize: 11),
+              ),
+              Text(
+                value,
+                style: GoogleFonts.orbitron(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

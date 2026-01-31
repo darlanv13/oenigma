@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -21,7 +23,8 @@ class EnigmaCityApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Enigma City',
+      title: 'O Enigma - Admin Console',
+      scrollBehavior: CustomScrollBehavior(),
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
@@ -50,4 +53,13 @@ class EnigmaCityApp extends StatelessWidget {
       home: const SplashScreen(),
     );
   }
+}
+
+//arquivo main.dart ou num arquivo separado
+class CustomScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse, // Habilita arrastar com mouse (opcional)
+  };
 }

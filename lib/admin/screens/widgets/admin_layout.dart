@@ -8,164 +8,191 @@ import 'package:oenigma/admin/screens/user_list_screen.dart';
 import 'package:oenigma/admin/screens/withdrawal_requests_screen.dart';
 import 'package:oenigma/app_gamer/screens/login_screen.dart';
 
-// Definição das rotas para identificar a tela ativa
 enum AdminRoute { dashboard, users, events, finance, enigmas }
 
 class AdminLayout extends StatelessWidget {
   final Widget body;
   final String title;
   final AdminRoute currentRoute;
-  final Widget? floatingActionButton;
   final List<Widget>? actions;
+  final Widget? floatingActionButton;
 
   const AdminLayout({
     super.key,
     required this.body,
     required this.title,
     required this.currentRoute,
-    this.floatingActionButton,
     this.actions,
+    this.floatingActionButton,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: darkBackground,
-      appBar: AppBar(
-        backgroundColor: cardColor,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          title.toUpperCase(),
-          style: GoogleFonts.orbitron(
-            color: primaryAmber,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
-            fontSize: 16,
+    // Usa LayoutBuilder para detectar se é Desktop (> 800px) ou Mobile
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth > 800;
+
+        return Scaffold(
+          backgroundColor: darkBackground,
+          appBar:
+              !isDesktop // AppBar só aparece no Mobile
+              ? AppBar(
+                  backgroundColor: cardColor,
+                  title: Text(
+                    title,
+                    style: GoogleFonts.orbitron(color: primaryAmber),
+                  ),
+                  actions: actions,
+                )
+              : null, // No Desktop não tem AppBar padrão
+          drawer: !isDesktop ? _AdminDrawer(currentRoute: currentRoute) : null,
+          body: Row(
+            children: [
+              // MENU LATERAL FIXO (Só Desktop)
+              if (isDesktop)
+                Container(
+                  width: 280,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF151515),
+                    border: Border(
+                      right: BorderSide(color: Colors.white.withOpacity(0.05)),
+                    ),
+                  ),
+                  child: _AdminDrawer(
+                    currentRoute: currentRoute,
+                    isDesktop: true,
+                  ),
+                ),
+
+              // ÁREA DE CONTEÚDO
+              Expanded(
+                child: Column(
+                  children: [
+                    // Header Customizado para Desktop (Substitui AppBar)
+                    if (isDesktop)
+                      Container(
+                        height: 80,
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        decoration: BoxDecoration(
+                          color: darkBackground,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.white.withOpacity(0.05),
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              title.toUpperCase(),
+                              style: GoogleFonts.orbitron(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 2,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (actions != null) ...actions!,
+                          ],
+                        ),
+                      ),
+
+                    // O Conteúdo da Página
+                    Expanded(child: ClipRect(child: body)),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: actions,
-      ),
-      drawer: _AdminDrawer(currentRoute: currentRoute),
-      body: SafeArea(child: body),
-      floatingActionButton: floatingActionButton,
+          floatingActionButton: floatingActionButton,
+        );
+      },
     );
   }
 }
 
 class _AdminDrawer extends StatelessWidget {
   final AdminRoute currentRoute;
+  final bool isDesktop;
   final AuthService _authService = AuthService();
 
-  _AdminDrawer({required this.currentRoute});
+  _AdminDrawer({required this.currentRoute, this.isDesktop = false});
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: const Color(
-        0xFF1E1E1E,
-      ), // Um pouco mais claro que o darkBackground
+      elevation: 0,
+      backgroundColor:
+          Colors.transparent, // Transparente pois o Container pai já tem cor
       child: Column(
         children: [
-          // --- HEADER DO DRAWER ---
+          // Logo Area
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [primaryAmber.withOpacity(0.15), Colors.transparent],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              border: const Border(bottom: BorderSide(color: Colors.white10)),
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 40),
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: primaryAmber, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryAmber.withOpacity(0.2),
-                        blurRadius: 15,
-                      ),
-                    ],
-                  ),
-                  child: const FaIcon(
-                    FontAwesomeIcons.shieldHalved,
-                    color: primaryAmber,
-                    size: 30,
-                  ),
+                const FaIcon(
+                  FontAwesomeIcons.shieldHalved,
+                  color: primaryAmber,
+                  size: 40,
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  "ADMINISTRAÇÃO",
+                  "OENIGMA",
                   style: GoogleFonts.orbitron(
-                    color: Colors.white,
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
+                    color: Colors.white,
+                    letterSpacing: 4,
                   ),
                 ),
-                const SizedBox(height: 4),
-                const Text(
-                  "Acesso Restrito",
-                  style: TextStyle(color: secondaryTextColor, fontSize: 10),
+                Text(
+                  "ADMIN CONSOLE",
+                  style: GoogleFonts.orbitron(
+                    fontSize: 10,
+                    color: primaryAmber,
+                    letterSpacing: 2,
+                  ),
                 ),
               ],
             ),
           ),
 
-          // --- ITENS DE NAVEGAÇÃO ---
+          const Divider(color: Colors.white10),
+
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               children: [
-                _buildDrawerItem(
+                _buildMenuItem(
                   context,
-                  icon: FontAwesomeIcons.chartLine,
-                  label: "Dashboard",
-                  route: AdminRoute.dashboard,
-                  onTap: () => _navigate(context, const AdminDashboardScreen()),
+                  "Dashboard",
+                  FontAwesomeIcons.chartLine,
+                  AdminRoute.dashboard,
+                  const AdminDashboardScreen(),
                 ),
-                _buildDrawerItem(
+                _buildMenuItem(
                   context,
-                  icon: FontAwesomeIcons.users,
-                  label: "Usuários",
-                  route: AdminRoute.users,
-                  // Nota: UserListScreen precisa ser envolvida num Scaffold ou AdminLayout na sua implementação
-                  onTap: () => _navigate(
-                    context,
-                    const _ScaffoldWrapper(
-                      title: "Usuários",
-                      route: AdminRoute.users,
-                      child: UserListScreen(),
-                    ),
-                  ),
+                  "Usuários",
+                  FontAwesomeIcons.users,
+                  AdminRoute.users,
+                  const UserListScreenWrapper(),
                 ),
-                _buildDrawerItem(
+                _buildMenuItem(
                   context,
-                  icon: FontAwesomeIcons.moneyBillTransfer,
-                  label: "Financeiro",
-                  route: AdminRoute.finance,
-                  // Nota: Mesmo caso, envolvendo a tela de saques
-                  onTap: () => _navigate(
-                    context,
-                    const _ScaffoldWrapper(
-                      title: "Solicitações de Saque",
-                      route: AdminRoute.finance,
-                      child: WithdrawalRequestsScreen(),
-                    ),
-                  ),
+                  "Financeiro",
+                  FontAwesomeIcons.moneyBillTransfer,
+                  AdminRoute.finance,
+                  const WithdrawalRequestsWrapper(),
                 ),
-                // Adicione mais itens conforme necessário (Eventos, Enigmas, etc)
+                // Adicione outras rotas aqui
               ],
             ),
           ),
 
-          // --- BOTÃO DE LOGOUT ---
+          // Footer / Logout
           Padding(
             padding: const EdgeInsets.all(20),
             child: _buildLogoutButton(context),
@@ -175,66 +202,52 @@ class _AdminDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required AdminRoute route,
-    required VoidCallback onTap,
-  }) {
-    final bool isActive = currentRoute == route;
-
+  Widget _buildMenuItem(
+    BuildContext context,
+    String title,
+    IconData icon,
+    AdminRoute route,
+    Widget page,
+  ) {
+    final isActive = currentRoute == route;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isActive ? primaryAmber.withOpacity(0.1) : Colors.transparent,
+        color: isActive ? primaryAmber.withOpacity(0.15) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: isActive
-            ? Border.all(color: primaryAmber.withOpacity(0.3))
-            : Border.all(color: Colors.transparent),
+            ? Border.all(color: primaryAmber.withOpacity(0.5))
+            : null,
       ),
       child: ListTile(
         leading: FaIcon(
           icon,
-          color: isActive ? primaryAmber : secondaryTextColor,
-          size: 20,
+          color: isActive ? primaryAmber : Colors.grey,
+          size: 18,
         ),
         title: Text(
-          label,
+          title,
           style: TextStyle(
-            color: isActive ? Colors.white : Colors.white70,
+            color: isActive ? Colors.white : Colors.grey,
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            fontSize: 14,
           ),
         ),
-        onTap: isActive ? () => Navigator.pop(context) : onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
-  Widget _buildLogoutButton(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.redAccent.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
-      ),
-      child: ListTile(
-        leading: const Icon(Icons.logout, color: Colors.redAccent),
-        title: const Text(
-          "Sair",
-          style: TextStyle(
-            color: Colors.redAccent,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        onTap: () async {
-          await _authService.signOut();
-          if (context.mounted) {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
-              (route) => false,
+        onTap: () {
+          if (isDesktop) {
+            // Em desktop, usamos pushReplacement sem animação de transição lateral para parecer web
+            Navigator.pushReplacement(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) => page,
+                transitionDuration: Duration.zero,
+                reverseTransitionDuration: Duration.zero,
+              ),
+            );
+          } else {
+            Navigator.pop(context);
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => page),
             );
           }
         },
@@ -242,30 +255,45 @@ class _AdminDrawer extends StatelessWidget {
     );
   }
 
-  void _navigate(BuildContext context, Widget screen) {
-    Navigator.pop(context); // Fecha o drawer
-    // PushReplacement para evitar pilha infinita no Admin
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => screen),
+  Widget _buildLogoutButton(BuildContext context) {
+    return OutlinedButton.icon(
+      icon: const Icon(Icons.logout, size: 18),
+      label: const Text("SAIR DO SISTEMA"),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.redAccent,
+        side: BorderSide(color: Colors.redAccent.withOpacity(0.3)),
+        padding: const EdgeInsets.symmetric(vertical: 18),
+      ),
+      onPressed: () async {
+        await _authService.signOut();
+        if (context.mounted)
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (r) => false,
+          );
+      },
     );
   }
 }
 
-// Wrapper auxiliar para telas que não têm Scaffold próprio ou para padronizar
-class _ScaffoldWrapper extends StatelessWidget {
-  final String title;
-  final Widget child;
-  final AdminRoute route;
-
-  const _ScaffoldWrapper({
-    required this.title,
-    required this.child,
-    required this.route,
-  });
-
+// Wrappers simples para manter a navegação funcionando
+class UserListScreenWrapper extends StatelessWidget {
+  const UserListScreenWrapper({super.key});
   @override
-  Widget build(BuildContext context) {
-    return AdminLayout(title: title, currentRoute: route, body: child);
-  }
+  Widget build(BuildContext context) => const AdminLayout(
+    title: "Usuários",
+    currentRoute: AdminRoute.users,
+    body: UserListScreen(),
+  );
+}
+
+class WithdrawalRequestsWrapper extends StatelessWidget {
+  const WithdrawalRequestsWrapper({super.key});
+  @override
+  Widget build(BuildContext context) => const AdminLayout(
+    title: "Financeiro",
+    currentRoute: AdminRoute.finance,
+    body: WithdrawalRequestsScreen(),
+  );
 }
