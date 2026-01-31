@@ -33,31 +33,8 @@ exports.getUserWalletData = onCall(async (request) => {
 
     if (lastActiveEvent) {
         lastEventName = lastActiveEvent.name;
-        const eventId = lastActiveEvent.id;
-
-        // Calcular o ranking para esse evento específico
-        const allPlayersSnapshot = await db.collection("players").get();
-        const phasesSnapshot = await db.collection("events").doc(eventId).collection("phases").get();
-        const totalPhases = phasesSnapshot.size > 0 ? phasesSnapshot.size : 1;
-
-        let eventRanking = [];
-        allPlayersSnapshot.forEach(doc => {
-            const pData = doc.data();
-            if (pData.events && pData.events[eventId]) {
-                const progress = pData.events[eventId];
-                const phasesCompleted = progress.currentPhase ? progress.currentPhase - 1 : 0;
-                eventRanking.push({
-                    uid: doc.id,
-                    progress: phasesCompleted / totalPhases,
-                });
-            }
-        });
-
-        eventRanking.sort((a, b) => b.progress - a.progress);
-        const userRankIndex = eventRanking.findIndex(p => p.uid === userId);
-        if (userRankIndex !== -1) {
-            lastEventRank = userRankIndex + 1;
-        }
+        // Ranking removido por performance
+        lastEventRank = null;
     }
 
     // Lógica de último prémio (inalterada)
