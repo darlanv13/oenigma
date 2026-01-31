@@ -36,14 +36,12 @@ class _UserListScreenState extends State<UserListScreen> {
         .catchError((e) {
           print("Erro carregando usuarios: $e");
         });
-    setState(() {}); // Trigger rebuild to show loading from FutureBuilder
+    setState(() {});
   }
 
   void _filterUsers(String query) {
     if (query.isEmpty) {
-      setState(() {
-        _filteredUsers = _allUsers;
-      });
+      setState(() => _filteredUsers = _allUsers);
     } else {
       setState(() {
         _filteredUsers = _allUsers.where((user) {
@@ -58,44 +56,35 @@ class _UserListScreenState extends State<UserListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // REMOVIDO: O cabeçalho manual. Agora focamos apenas na busca e lista.
     return Column(
       children: [
+        // Barra de Busca Estilizada
         Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              const Icon(Icons.people, color: primaryAmber, size: 28),
-              const SizedBox(width: 8),
-              Text(
-                "Gerenciar Usuários",
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+          child: TextField(
+            controller: _searchController,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: "Buscar Usuário...",
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+              prefixIcon: const Icon(Icons.search, color: primaryAmber),
+              filled: true,
+              fillColor: cardColor,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
               ),
-              const Spacer(),
-              SizedBox(
-                width: 300,
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: "Buscar por nome ou email...",
-                    hintStyle: const TextStyle(color: Colors.grey),
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                    filled: true,
-                    fillColor: cardColor,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  onChanged: _filterUsers,
-                  style: const TextStyle(color: Colors.white),
-                ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: primaryAmber),
               ),
-            ],
+            ),
+            onChanged: _filterUsers,
           ),
         ),
+
+        // Lista de Usuários
         Expanded(
           child: FutureBuilder<List<dynamic>>(
             future: _futureUsers,
@@ -108,39 +97,40 @@ class _UserListScreenState extends State<UserListScreen> {
               if (snapshot.hasError) {
                 return Center(
                   child: Text(
-                    "Erro ao carregar usuários: ${snapshot.error}",
+                    "Erro: ${snapshot.error}",
                     style: const TextStyle(color: Colors.red),
                   ),
                 );
               }
 
-              // Sincroniza dados se o Future completou mas o .then ainda não atualizou o estado (race condition fix)
+              // Sincronização segura
               if (snapshot.hasData && _allUsers.isEmpty) {
                 _allUsers = snapshot.data!;
-                if (_searchController.text.isEmpty) {
-                  _filteredUsers = _allUsers;
-                }
+                if (_searchController.text.isEmpty) _filteredUsers = _allUsers;
               }
 
               if (_filteredUsers.isEmpty) {
-                // Se filtered estiver vazio mas allUsers nao, é filtro. Se ambos vazios, é nada encontrado.
-                if (_allUsers.isNotEmpty) {
-                  return const Center(
-                    child: Text(
-                      "Nenhum usuário encontrado com esse termo.",
-                      style: TextStyle(color: secondaryTextColor),
-                    ),
-                  );
-                }
                 return const Center(
-                  child: Text(
-                    "Nenhum usuário cadastrado.",
-                    style: TextStyle(color: secondaryTextColor),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.person_off,
+                        size: 48,
+                        color: secondaryTextColor,
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        "Nenhum usuário encontrado.",
+                        style: TextStyle(color: secondaryTextColor),
+                      ),
+                    ],
                   ),
                 );
               }
 
               return ListView.builder(
+                padding: const EdgeInsets.only(bottom: 20),
                 itemCount: _filteredUsers.length,
                 itemBuilder: (context, index) {
                   final user = _filteredUsers[index];
@@ -160,15 +150,26 @@ class _UserListScreenState extends State<UserListScreen> {
     final String name = user['name'] ?? 'Sem nome';
     final String email = user['email'] ?? 'Sem email';
 
-    return Card(
-      color: cardColor,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isAdmin
+              ? primaryAmber.withOpacity(0.3)
+              : Colors.white.withOpacity(0.05),
+        ),
+      ),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
-          backgroundColor: isAdmin ? primaryAmber : Colors.grey.shade800,
+          backgroundColor: isAdmin
+              ? primaryAmber.withOpacity(0.2)
+              : Colors.white10,
           child: Icon(
-            isAdmin ? Icons.admin_panel_settings : Icons.person,
-            color: isAdmin ? darkBackground : Colors.white,
+            isAdmin ? Icons.security : Icons.person,
+            color: isAdmin ? primaryAmber : Colors.white70,
           ),
         ),
         title: Text(
@@ -180,13 +181,22 @@ class _UserListScreenState extends State<UserListScreen> {
         ),
         subtitle: Text(
           email,
-          style: const TextStyle(color: secondaryTextColor),
+          style: const TextStyle(color: secondaryTextColor, fontSize: 12),
         ),
-        trailing: Switch(
-          value: isAdmin,
-          activeColor: primaryAmber,
-          onChanged: (val) => _toggleAdmin(uid, val, name),
+        trailing: Transform.scale(
+          scale: 0.8,
+          child: Switch(
+            value: isAdmin,
+            activeColor: primaryAmber,
+            activeTrackColor: primaryAmber.withOpacity(0.3),
+            inactiveThumbColor: Colors.grey,
+            inactiveTrackColor: Colors.grey.withOpacity(0.3),
+            onChanged: (val) => _toggleAdmin(uid, val, name),
+          ),
         ),
+        onTap: () {
+          // TODO: Adicionar aqui a chamada para o Modal de Detalhes (Passo 3 do plano anterior)
+        },
       ),
     );
   }

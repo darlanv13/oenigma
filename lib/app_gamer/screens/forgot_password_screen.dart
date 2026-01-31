@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
-import '../../services/auth_service.dart';
-import '../../utils/app_colors.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oenigma/utils/app_colors.dart';
+import '../stores/forgot_password_store.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -11,10 +12,15 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final ForgotPasswordStore _store = ForgotPasswordStore();
   final _emailController = TextEditingController();
-  final AuthService _authService = AuthService();
-  bool _isLoading = false;
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(() => _store.setEmail(_emailController.text));
+  }
 
   @override
   void dispose() {
@@ -22,31 +28,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  Future<void> _sendResetEmail() async {
+  Future<void> _handleResetPassword() async {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-
-      final error = await _authService.sendPasswordResetEmail(
-        _emailController.text.trim(),
-      );
-
+      await _store.resetPassword();
       if (mounted) {
-        if (error == null) {
+        if (_store.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Email de recuperação enviado com sucesso! Verifique a sua caixa de entrada.',
+            SnackBar(content: Text(_store.errorMessage!), backgroundColor: Colors.red),
+          );
+        } else if (_store.success) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              backgroundColor: cardColor,
+              title: const Text("Email Enviado", style: TextStyle(color: primaryAmber)),
+              content: const Text(
+                "Verifique sua caixa de entrada para redefinir sua senha.",
+                style: TextStyle(color: Colors.white70),
               ),
-              backgroundColor: Colors.green,
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close dialog
+                    Navigator.of(context).pop(); // Back to login
+                  },
+                  child: const Text("OK", style: TextStyle(color: primaryAmber)),
+                ),
+              ],
             ),
           );
-          Navigator.of(context).pop();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error), backgroundColor: Colors.red),
-          );
         }
-        setState(() => _isLoading = false);
       }
     }
   }
@@ -56,106 +67,78 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Scaffold(
       backgroundColor: darkBackground,
       appBar: AppBar(
-        title: const Text('Recuperar Senha'),
-        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Form(
+          key: _formKey,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Animação Lottie
-              Lottie.asset(
-                'assets/animations/reset_senha.json', // Animação de "dúvida" ou "problema"
-                height: 300,
-                width: 300,
-              ),
-              const SizedBox(height: 10),
               const Text(
-                'Perdeu a sua senha?',
+                "Esqueceu a Senha?",
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: textColor,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               const Text(
-                'Não se preocupe! Insira o seu email abaixo e nós enviaremos um link para redefinir a sua senha.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: secondaryTextColor),
+                "Digite seu email abaixo para receber instruções de recuperação.",
+                style: TextStyle(color: secondaryTextColor, fontSize: 16),
               ),
               const SizedBox(height: 32),
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(color: textColor),
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          Icons.email_outlined,
-                          color: secondaryTextColor,
-                        ),
-                        labelText: 'Email',
-                        labelStyle: const TextStyle(color: secondaryTextColor),
-                        filled: true,
-                        fillColor: cardColor,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: primaryAmber),
-                        ),
+              TextFormField(
+                controller: _emailController,
+                style: const TextStyle(color: textColor),
+                validator: (val) => val!.isEmpty ? 'Digite seu email' : null,
+                decoration: InputDecoration(
+                  hintText: "Seu email cadastrado",
+                  hintStyle: TextStyle(color: textColor.withOpacity(0.5)),
+                  prefixIcon: const Icon(FontAwesomeIcons.envelope, color: secondaryTextColor, size: 20),
+                  filled: true,
+                  fillColor: cardColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              Observer(
+                builder: (_) => SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _store.isLoading ? null : _handleResetPassword,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryAmber,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      validator: (val) {
-                        if (val == null || val.isEmpty) {
-                          return 'Por favor, insira um email.';
-                        }
-                        if (!val.contains('@')) {
-                          return 'Por favor, insira um email válido.';
-                        }
-                        return null;
-                      },
                     ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _sendResetEmail,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryAmber,
-                          foregroundColor: darkBackground,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                    child: _store.isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(color: darkBackground),
+                          )
+                        : const Text(
+                            "ENVIAR LINK",
+                            style: TextStyle(
+                              color: darkBackground,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(
-                                  color: darkBackground,
-                                ),
-                              )
-                            : const Text(
-                                'Enviar Email',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],

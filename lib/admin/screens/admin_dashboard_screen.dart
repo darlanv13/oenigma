@@ -2,9 +2,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:oenigma/admin/screens/enigma_management_screen.dart';
-import 'package:oenigma/admin/screens/event_form_screen.dart';
+import 'package:oenigma/admin/screens/event_studio_screen.dart';
 import 'package:oenigma/admin/screens/user_list_screen.dart';
+import 'package:oenigma/admin/screens/widgets/admin_layout.dart';
 import 'package:oenigma/admin/screens/withdrawal_requests_screen.dart';
 import 'package:oenigma/services/firebase_service.dart';
 import 'package:oenigma/utils/app_colors.dart';
@@ -63,27 +63,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: darkBackground,
-      appBar: AppBar(
-        backgroundColor: darkBackground,
-        elevation: 0,
-        title: Text(
-          'CENTRO DE COMANDO',
-          style: GoogleFonts.orbitron(
-            color: primaryAmber,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
-          ),
+    return AdminLayout(
+      title: 'Centro de Comando',
+      currentRoute: AdminRoute.dashboard, // Define qual item do menu fica aceso
+      // Adicione a ação de refresh aqui
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh, color: secondaryTextColor),
+          onPressed: _loadDashboardData,
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: secondaryTextColor),
-            onPressed: _loadDashboardData,
-          ),
-          const SizedBox(width: 10),
-        ],
-      ),
+        const SizedBox(width: 10),
+      ],
       body: _isLoading
           ? _buildLoadingSkeleton()
           : RefreshIndicator(
@@ -468,7 +458,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               primaryAmber,
               () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const EventFormScreen()),
+                MaterialPageRoute(builder: (_) => const EventStudioScreen()),
               ),
             ),
             _buildActionButton(

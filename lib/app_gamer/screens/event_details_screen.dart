@@ -1,5 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oenigma/app_gamer/screens/find_and_win_progress_screen.dart';
 import 'package:oenigma/app_gamer/screens/wallet_screen.dart';
@@ -8,6 +9,7 @@ import '../../models/event_model.dart';
 import 'event_progress_screen.dart';
 import '../../services/firebase_service.dart';
 import '../../utils/app_colors.dart';
+import '../stores/event_store.dart';
 
 class EventDetailsScreen extends StatefulWidget {
   final EventModel event;
@@ -24,92 +26,51 @@ class EventDetailsScreen extends StatefulWidget {
 }
 
 class _EventDetailsScreenState extends State<EventDetailsScreen> {
-  final FirebaseService _firebaseService = FirebaseService();
+  final EventStore _store = EventStore();
   late final Future<LottieComposition> _composition;
-  Future<Map<String, int>>? _statsFuture;
-
-  bool _isSubscribed = false;
-  bool _isLoading = false;
+  final FirebaseService _firebaseService = FirebaseService();
 
   @override
   void initState() {
     super.initState();
-    _isSubscribed = widget.playerData['events']?[widget.event.id] != null;
+    _store.checkSubscription(widget.playerData, widget.event.id);
+    _store.loadStats(widget.event.id, widget.event.eventType);
 
-    // Carrega a animação do header
     if (widget.event.icon.isNotEmpty &&
         Uri.tryParse(widget.event.icon)?.isAbsolute == true) {
       _composition = NetworkLottie(widget.event.icon).load();
     } else {
       _composition = AssetLottie('assets/animations/no_enigma.json').load();
     }
-
-    // --- LÓGICA DE CARREGAMENTO CONDICIONAL ---
-    if (widget.event.eventType == 'find_and_win') {
-      _statsFuture = _getFindAndWinStats();
-    } else {
-      _statsFuture = _getClassicEventStats();
-    }
   }
 
-  Future<Map<String, int>> _getFindAndWinStats() async {
-    final stats = await _firebaseService.getFindAndWinStats(widget.event.id);
-    return {
-      'total': stats['totalEnigmas'] ?? 0,
-      'solved': stats['solvedEnigmas'] ?? 0,
-    };
-  }
-
-  Future<Map<String, int>> _getClassicEventStats() async {
-    final count = await _firebaseService.getChallengeCountForEvent(
-      widget.event.id,
-    );
-    return {
-      'total': count,
-      'solved': 0,
-    }; // O progresso é individual no modo clássico
-  }
-
-  // Função para lidar com a inscrição
   Future<void> _handleSubscription() async {
     final confirmed = await _showSubscriptionConfirmationDialog();
     if (confirmed != true) return;
 
-    setState(() => _isLoading = true);
-
-    try {
-      await _firebaseService.subscribeToEvent(widget.event.id);
-
-      if (mounted) {
+    final success = await _store.subscribeToEvent(widget.event.id);
+    
+    if (mounted) {
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Inscrição realizada com sucesso!"),
             backgroundColor: Colors.green,
           ),
         );
-        setState(() => _isSubscribed = true);
-      }
-    } on FirebaseFunctionsException catch (e) {
-      if (mounted) {
-        if (e.code == 'failed-precondition') {
-          _showInsufficientFundsDialog();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.message ?? "Ocorreu um erro."),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
+      } else if (_store.insufficientFunds) {
+        _showInsufficientFundsDialog();
+      } else if (_store.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_store.errorMessage!),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
 
-  // Dialog de confirmação
   Future<bool?> _showSubscriptionConfirmationDialog() {
     return showDialog<bool>(
       context: context,
@@ -143,12 +104,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     );
   }
 
-  // Dialog de saldo insuficiente CORRIGIDO
   void _showInsufficientFundsDialog() {
     showDialog(
-      context: context, // Usa o contexto da TELA (State)
+      context: context,
       builder: (dialogContext) => AlertDialog(
-        // Renomeado para dialogContext
         backgroundColor: cardColor,
         title: const Text(
           'Saldo Insuficiente',
@@ -167,12 +126,9 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              // 1. Fecha o dialog de "Saldo Insuficiente" usando o contexto DELE
               Navigator.of(dialogContext).pop();
-
               if (!mounted) return;
 
-              // 2. Mostra o loading usando o contexto da TELA (que ainda existe)
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -182,14 +138,9 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               );
 
               try {
-                // 3. Busca os dados da carteira
                 final walletData = await _firebaseService.getUserWalletData();
-
                 if (mounted) {
-                  // 4. Fecha o loading (usando context da tela, que é o pai do loading agora)
                   Navigator.of(context).pop();
-
-                  // 5. Navega para a tela da carteira
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => WalletScreen(wallet: walletData),
@@ -197,9 +148,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   );
                 }
               } catch (e) {
-                // Caso ocorra erro, fecha o loading e avisa
                 if (mounted) {
-                  Navigator.of(context).pop(); // Fecha loading
+                  Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text("Erro ao carregar carteira: $e"),
@@ -224,19 +174,13 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: darkBackground,
-      // Usamos uma Stack para sobrepor o conteúdo sobre a imagem de header
       body: Stack(
         children: [
-          // 1. HEADER IMERSIVO
           _buildHeaderImage(),
-
-          // 2. CONTEÚDO ROLÁVEL
           SingleChildScrollView(
             child: Column(
               children: [
-                // Espaçador para o conteúdo começar abaixo do header
                 const SizedBox(height: 280),
-                // Container principal com cantos arredondados
                 Container(
                   decoration: const BoxDecoration(
                     color: darkBackground,
@@ -252,7 +196,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                       _buildInfoGrid(),
                       const SizedBox(height: 24),
                       _buildDescriptionSection(),
-                      // Espaço extra para não ser coberto pelo botão fixo
                       const SizedBox(height: 120),
                     ],
                   ),
@@ -260,16 +203,12 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               ],
             ),
           ),
-
-          // 3. BOTÃO DE VOLTAR E BOTÃO DE AÇÃO FIXO
           _buildBackButton(context),
           _buildBottomCtaButton(context),
         ],
       ),
     );
   }
-
-  // --- WIDGETS AUXILIARES PARA O NOVO DESIGN ---
 
   Widget _buildHeaderImage() {
     return Positioned(
@@ -305,7 +244,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               )
             else
               const Icon(Icons.help_outline, size: 150, color: primaryAmber),
-            // O gradiente continua o mesmo
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -343,14 +281,13 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
-              // --- ÍCONE SUBSTITUÍDO PELA ANIMAÇÃO LOTTIE ---
               Lottie.asset(
-                'assets/animations/trofel.json', // Animação de "check"
+                'assets/animations/trofel.json',
                 height: 60,
                 width: 60,
                 repeat: true,
               ),
-              const SizedBox(width: 4), // Espaçamento ajustado
+              const SizedBox(width: 4),
               const Text(
                 'Prêmio:',
                 style: TextStyle(color: secondaryTextColor, fontSize: 16),
@@ -371,60 +308,65 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     );
   }
 
-  // --- WIDGET DE INFORMAÇÕES ATUALIZADO ---
   Widget _buildInfoGrid() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 2.5,
-        children: [
-          _buildInfoPill(
-            Icons.location_on_outlined,
-            'Local',
-            widget.event.location,
-          ),
-          _buildInfoPill(
-            Icons.calendar_today_outlined,
-            'Data',
-            widget.event.startDate,
-          ),
+    return Observer(
+      builder: (_) {
+        String solvedText = '...';
+        String totalText = '...';
+        
+        if (_store.stats != null) {
+             final solved = _store.stats!['solved'] ?? 0;
+             final total = _store.stats!['total'] ?? 0;
+             if (widget.event.eventType == 'find_and_win') {
+                solvedText = '$solved / $total';
+             } else {
+                totalText = total.toString();
+             }
+        }
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 2.5,
+            children: [
+              _buildInfoPill(
+                Icons.location_on_outlined,
+                'Local',
+                widget.event.location,
+              ),
+              _buildInfoPill(
+                Icons.calendar_today_outlined,
+                'Data',
+                widget.event.startDate,
+              ),
 
-          // --- WIDGET DE ESTATÍSTICAS CONDICIONAL ---
-          FutureBuilder<Map<String, int>>(
-            future: _statsFuture,
-            builder: (context, snapshot) {
-              if (widget.event.eventType == 'find_and_win') {
-                final solved = snapshot.data?['solved'] ?? 0;
-                final total = snapshot.data?['total'] ?? 0;
-                return _buildInfoPill(
+              if (widget.event.eventType == 'find_and_win')
+                _buildInfoPill(
                   Icons.track_changes,
                   'Enigmas Resolvidos',
-                  '$solved / $total',
-                );
-              } else {
-                // Modo Clássico
-                final total = snapshot.data?['total'] ?? 0;
-                return _buildInfoPill(
+                  solvedText,
+                )
+              else
+                _buildInfoPill(
                   Icons.filter_alt_outlined,
                   'Fases',
-                  total.toString(),
-                );
-              }
-            },
-          ),
+                  _store.stats == null ? '...' : totalText,
+                ),
 
-          _buildInfoPill(
-            Icons.monetization_on_outlined,
-            'Inscrição',
-            'R\$ ${widget.event.price.toStringAsFixed(2)}',
+              _buildInfoPill(
+                Icons.monetization_on_outlined,
+                'Inscrição',
+                'R\$ ${widget.event.price.toStringAsFixed(2)}',
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -486,7 +428,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            // A descrição completa do evento pode ser usada aqui
             widget.event.fullDescription,
             style: TextStyle(
               color: textColor.withOpacity(0.8),
@@ -539,83 +480,81 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       );
     }
 
-    // Lógica principal: Jogar ou Inscrever-se
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [darkBackground, darkBackground.withOpacity(0.0)],
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-          ),
-        ),
-        child: ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _isSubscribed ? Colors.green : primaryAmber,
-            foregroundColor: darkBackground,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+    return Observer(
+      builder: (_) => Positioned(
+        bottom: 0,
+        left: 0,
+        right: 0,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [darkBackground, darkBackground.withOpacity(0.0)],
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
             ),
           ),
-          onPressed: _isLoading
-              ? null
-              : () {
-                  if (_isSubscribed) {
-                    // Verifica o tipo de evento para decidir para onde navegar
-                    if (widget.event.eventType == 'find_and_win') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              FindAndWinProgressScreen(event: widget.event),
-                        ),
-                      );
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _store.isSubscribed ? Colors.green : primaryAmber,
+              foregroundColor: darkBackground,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+            onPressed: _store.isLoading
+                ? null
+                : () {
+                    if (_store.isSubscribed) {
+                      if (widget.event.eventType == 'find_and_win') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                FindAndWinProgressScreen(event: widget.event),
+                          ),
+                        );
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                EventProgressScreen(event: widget.event),
+                          ),
+                        );
+                      }
                     } else {
-                      // Navegação padrão para o modo clássico
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              EventProgressScreen(event: widget.event),
-                        ),
-                      );
+                      _handleSubscription();
                     }
-                  } else {
-                    _handleSubscription();
-                  }
-                },
-          icon: _isLoading
-              ? Container(
-                  width: 24,
-                  height: 24,
-                  child: const CircularProgressIndicator(
-                    color: darkBackground,
-                    strokeWidth: 2,
+                  },
+            icon: _store.isLoading
+                ? Container(
+                    width: 24,
+                    height: 24,
+                    child: const CircularProgressIndicator(
+                      color: darkBackground,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Icon(
+                    _store.isSubscribed
+                        ? Icons.play_arrow_rounded
+                        : Icons.login_rounded,
+                    size: 28,
                   ),
-                )
-              : Icon(
-                  _isSubscribed
-                      ? Icons.play_arrow_rounded
-                      : Icons.login_rounded,
-                  size: 28,
-                ),
-          label: Text(
-            _isSubscribed
-                ? 'Jogar'
-                : 'Inscreva-se (R\$ ${widget.event.price.toStringAsFixed(2)})',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            label: Text(
+              _store.isSubscribed
+                  ? 'Jogar'
+                  : 'Inscreva-se (R\$ ${widget.event.price.toStringAsFixed(2)})',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       ),
     );
   }
 
-  // Widget auxiliar para botões desabilitados
   Widget _buildDisabledButton({required IconData icon, required String label}) {
     return Positioned(
       bottom: 0,

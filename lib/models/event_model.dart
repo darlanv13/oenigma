@@ -17,7 +17,7 @@ class EventModel {
   final String? winnerPhotoURL;
   final int playerCount;
   final List<PhaseModel> phases;
-  final String eventType; // <-- NOVO CAMPO: 'classic' ou 'find_and_win'
+  final String eventType; // 'classic' ou 'find_and_win'
   final List<EnigmaModel> enigmas; // Para o modo Find & Win
 
   EventModel({
@@ -34,12 +34,14 @@ class EventModel {
     this.winnerPhotoURL,
     this.phases = const [],
     this.playerCount = 0,
-    this.eventType = 'classic', // <-- NOVO CAMPO
-    this.enigmas = const [], // Valor padrão
+    this.eventType = 'classic',
+    this.enigmas = const [],
   });
+
   factory EventModel.fromMap(Map<String, dynamic> map) {
-    var phasesList = <PhaseModel>[];
-    if (map['phases'] is List) {
+    // Conversão segura da Lista de Fases
+    List<PhaseModel> phasesList = [];
+    if (map['phases'] != null) {
       phasesList = (map['phases'] as List)
           .map(
             (phaseData) =>
@@ -48,8 +50,9 @@ class EventModel {
           .toList();
     }
 
-    var enigmasList = <EnigmaModel>[];
-    if (map['enigmas'] is List) {
+    // Conversão segura da Lista de Enigmas (Modo Find & Win)
+    List<EnigmaModel> enigmasList = [];
+    if (map['enigmas'] != null) {
       enigmasList = (map['enigmas'] as List)
           .map(
             (enigmaData) =>
@@ -67,17 +70,17 @@ class EventModel {
       startDate: map['startDate'] ?? 'Data não definida',
       location: map['location'] ?? 'Local não definido',
       fullDescription: map['fullDescription'] ?? 'Nenhuma descrição.',
-      status: map['status'] ?? 'open',
+      status: map['status'] ?? 'dev',
       winnerName: map['winnerName'],
-      winnerPhotoURL: map['winnerPhotoURL'], // <-- 3. LEIA O DADO DO MAPA
+      winnerPhotoURL: map['winnerPhotoURL'],
       phases: phasesList,
       playerCount: map['playerCount'] ?? 0,
-      eventType: map['eventType'] ?? 'classic', // <-- Lendo o novo campo
+      eventType: map['eventType'] ?? 'classic',
       enigmas: enigmasList,
     );
   }
 
-  // Adicione este método dentro da classe EventModel
+  // --- CORREÇÃO IMPORTANTE AQUI ---
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -93,9 +96,20 @@ class EventModel {
       'winnerPhotoURL': winnerPhotoURL,
       'playerCount': playerCount,
       'eventType': eventType,
-      // Precisamos converter as listas de objetos para listas de Maps
+      // Converte os objetos para Map antes de enviar ao Firebase
       'phases': phases.map((x) => x.toMap()).toList(),
       'enigmas': enigmas.map((x) => x.toMap()).toList(),
     };
   }
+
+  // --- NOVOS GETTERS AUXILIARES ---
+  // Use estes getters na UI para deixar o código mais limpo:
+  // Ex: if (event.isFindAndWin) { ... }
+
+  bool get isFindAndWin => eventType == 'find_and_win';
+  bool get isClassic => eventType == 'classic';
+
+  bool get isOpen => status == 'open';
+  bool get isDev => status == 'dev';
+  bool get isClosed => status == 'closed';
 }

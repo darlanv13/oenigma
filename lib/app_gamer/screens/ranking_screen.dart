@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oenigma/models/event_model.dart';
 import '../../models/ranking_player_model.dart';
 import '../../services/auth_service.dart';
 import '../../utils/app_colors.dart';
+import '../stores/ranking_store.dart';
 
 class RankingScreen extends StatefulWidget {
   final List<EventModel> availableEvents;
@@ -21,69 +23,12 @@ class RankingScreen extends StatefulWidget {
 
 class _RankingScreenState extends State<RankingScreen> {
   final AuthService _authService = AuthService();
-
-  String? _selectedEventId;
-  late List<RankingPlayerModel> _currentRanking;
+  final RankingStore _store = RankingStore();
 
   @override
   void initState() {
     super.initState();
-    // Inicia com o primeiro ID válido se houver eventos, senão null
-    if (widget.availableEvents.isNotEmpty) {
-      _selectedEventId = widget.availableEvents.first.id;
-    } else {
-      _selectedEventId = null;
-    }
-    _calculateRankingForSelectedEvent();
-  }
-
-  void _calculateRankingForSelectedEvent() {
-    if (_selectedEventId == null || _selectedEventId!.isEmpty) {
-      setState(() => _currentRanking = []);
-      return;
-    }
-
-    // Tenta encontrar o evento. Se não achar, não quebra.
-    EventModel selectedEvent;
-    try {
-      selectedEvent = widget.availableEvents.firstWhere(
-        (e) => e.id == _selectedEventId,
-      );
-    } catch (e) {
-      setState(() => _currentRanking = []);
-      return;
-    }
-
-    final totalPhases = selectedEvent.phases.length;
-
-    var rankedPlayers = widget.allPlayers
-        .where(
-          (p) => p['events'] != null && p['events'][_selectedEventId] != null,
-        )
-        .map((p) {
-          final progress = p['events'][_selectedEventId];
-          return RankingPlayerModel(
-            uid: p['id'],
-            name: p['name'] ?? 'Anônimo',
-            photoURL: p['photoURL'],
-            phasesCompleted: progress['currentPhase'] != null
-                ? progress['currentPhase'] - 1
-                : 0,
-            totalPhases: totalPhases,
-          );
-        })
-        .toList();
-
-    rankedPlayers.sort(
-      (a, b) => b.phasesCompleted.compareTo(a.phasesCompleted),
-    );
-
-    setState(() {
-      _currentRanking = rankedPlayers.asMap().entries.map((entry) {
-        entry.value.position = entry.key + 1;
-        return entry.value;
-      }).toList();
-    });
+    _store.init(widget.availableEvents, widget.allPlayers);
   }
 
   @override
@@ -103,8 +48,10 @@ class _RankingScreenState extends State<RankingScreen> {
         children: [
           _buildEventSelector(),
           Expanded(
-            child: _currentRanking.isEmpty
-                ? const Center(
+            child: Observer(
+              builder: (_) {
+                if (_store.currentRanking.isEmpty) {
+                  return const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -120,17 +67,20 @@ class _RankingScreenState extends State<RankingScreen> {
                         ),
                       ],
                     ),
-                  )
-                : ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                    children: [
-                      if (_currentRanking.isNotEmpty)
-                        _buildPodium(_currentRanking.take(3).toList()),
-                      const SizedBox(height: 40),
-                      if (_currentRanking.length > 3)
-                        _buildRankingList(_currentRanking.skip(3).toList()),
-                    ],
-                  ),
+                  );
+                }
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                  children: [
+                    if (_store.currentRanking.isNotEmpty)
+                      _buildPodium(_store.currentRanking.take(3).toList()),
+                    const SizedBox(height: 40),
+                    if (_store.currentRanking.length > 3)
+                      _buildRankingList(_store.currentRanking.skip(3).toList()),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -153,54 +103,51 @@ class _RankingScreenState extends State<RankingScreen> {
         ),
       );
     }
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: DropdownButtonFormField<String>(
-        value: _selectedEventId,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: cardColor,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-        ),
-        dropdownColor: cardColor,
-        icon: const Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: primaryAmber,
-        ),
-        onChanged: (String? newValue) {
-          if (newValue != null && newValue != _selectedEventId) {
-            setState(() {
-              _selectedEventId = newValue;
-              _calculateRankingForSelectedEvent();
-            });
-          }
-        },
-        items: widget.availableEvents.map<DropdownMenuItem<String>>((
-          EventModel event,
-        ) {
-          return DropdownMenuItem<String>(
-            value: event.id,
-            child: Text(
-              event.name,
-              style: const TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.bold,
-              ),
-              overflow: TextOverflow.ellipsis,
+    return Observer(
+      builder: (_) => Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: DropdownButtonFormField<String>(
+          value: _store.selectedEventId,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: cardColor,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 16,
             ),
-          );
-        }).toList(),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          dropdownColor: cardColor,
+          icon: const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: primaryAmber,
+          ),
+          onChanged: (String? newValue) {
+            _store.setSelectedEventId(newValue);
+          },
+          items: widget.availableEvents.map<DropdownMenuItem<String>>((
+            EventModel event,
+          ) {
+            return DropdownMenuItem<String>(
+              value: event.id,
+              child: Text(
+                event.name,
+                style: const TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }

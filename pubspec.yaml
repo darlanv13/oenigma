@@ -42,6 +42,10 @@ dependencies:
   vibration: ^3.1.5                  # Feedback tátil (vibrar ao acertar/errar)
   firebase_crashlytics: ^5.0.7       # Monitoramento de erros em produção
   connectivity_plus: ^7.0.0          # Verificar conexão (Modo Offline)
+  mobx: ^2.6.0
+  flutter_mobx: ^2.3.0
+  build_runner: ^2.4.8
+  mobx_codegen: ^2.3.0
 
 dev_dependencies:
   flutter_test:
