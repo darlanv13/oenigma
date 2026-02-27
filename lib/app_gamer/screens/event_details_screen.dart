@@ -1,9 +1,11 @@
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oenigma/app_gamer/screens/find_and_win_progress_screen.dart';
 import 'package:oenigma/app_gamer/screens/wallet_screen.dart';
+import 'package:oenigma/app_gamer/widgets/event_details/header_image.dart';
+import 'package:oenigma/app_gamer/widgets/event_details/info_grid.dart';
+import 'package:oenigma/app_gamer/widgets/event_details/title_section.dart';
 import 'dart:ui';
 import '../../models/event_model.dart';
 import 'event_progress_screen.dart';
@@ -176,7 +178,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       backgroundColor: darkBackground,
       body: Stack(
         children: [
-          _buildHeaderImage(),
+          HeaderImage(
+            iconUrl: widget.event.icon,
+            composition: _composition,
+          ),
           SingleChildScrollView(
             child: Column(
               children: [
@@ -191,9 +196,9 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildTitleSection(),
+                      TitleSection(event: widget.event),
                       const SizedBox(height: 24),
-                      _buildInfoGrid(),
+                      InfoGrid(event: widget.event, store: _store),
                       const SizedBox(height: 24),
                       _buildDescriptionSection(),
                       const SizedBox(height: 120),
@@ -205,207 +210,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           ),
           _buildBackButton(context),
           _buildBottomCtaButton(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeaderImage() {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        height: 320,
-        decoration: const BoxDecoration(color: cardColor),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (widget.event.icon.isNotEmpty)
-              FutureBuilder<LottieComposition>(
-                future: _composition,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return Lottie(
-                      composition: snapshot.data!,
-                      fit: BoxFit.scaleDown,
-                    );
-                  } else if (snapshot.hasError) {
-                    return Lottie.asset('assets/animations/no_enigma.json');
-                  }
-
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: primaryAmber,
-                    ),
-                  );
-                },
-              )
-            else
-              const Icon(Icons.help_outline, size: 150, color: primaryAmber),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    darkBackground.withOpacity(0.8),
-                    darkBackground.withOpacity(0.4),
-                    Colors.transparent,
-                  ],
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  stops: const [0.0, 0.5, 1.0],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTitleSection() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.event.name,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Lottie.asset(
-                'assets/animations/trofel.json',
-                height: 60,
-                width: 60,
-                repeat: true,
-              ),
-              const SizedBox(width: 4),
-              const Text(
-                'Prêmio:',
-                style: TextStyle(color: secondaryTextColor, fontSize: 16),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                widget.event.prize,
-                style: const TextStyle(
-                  color: primaryAmber,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoGrid() {
-    return Observer(
-      builder: (_) {
-        String solvedText = '...';
-        String totalText = '...';
-        
-        if (_store.stats != null) {
-             final solved = _store.stats!['solved'] ?? 0;
-             final total = _store.stats!['total'] ?? 0;
-             if (widget.event.eventType == 'find_and_win') {
-                solvedText = '$solved / $total';
-             } else {
-                totalText = total.toString();
-             }
-        }
-        
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 2.5,
-            children: [
-              _buildInfoPill(
-                Icons.location_on_outlined,
-                'Local',
-                widget.event.location,
-              ),
-              _buildInfoPill(
-                Icons.calendar_today_outlined,
-                'Data',
-                widget.event.startDate,
-              ),
-
-              if (widget.event.eventType == 'find_and_win')
-                _buildInfoPill(
-                  Icons.track_changes,
-                  'Enigmas Resolvidos',
-                  solvedText,
-                )
-              else
-                _buildInfoPill(
-                  Icons.filter_alt_outlined,
-                  'Fases',
-                  _store.stats == null ? '...' : totalText,
-                ),
-
-              _buildInfoPill(
-                Icons.monetization_on_outlined,
-                'Inscrição',
-                'R\$ ${widget.event.price.toStringAsFixed(2)}',
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildInfoPill(IconData icon, String label, String value) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cardColor.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: secondaryTextColor, size: 24),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: secondaryTextColor,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
