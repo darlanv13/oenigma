@@ -53,4 +53,23 @@ abstract class _LoginStore with Store {
       isLoading = false;
     }
   }
+
+  @action
+  Future<bool> loginAnonymously() async {
+    isLoading = true;
+    errorMessage = null;
+    try {
+      final error = await _authService.signInAnonymously();
+      if (error != null) {
+        errorMessage = error;
+        return false;
+      }
+      return true;
+    } catch (e) {
+      errorMessage = e.toString();
+      return false;
+    } finally {
+      isLoading = false;
+    }
+  }
 }

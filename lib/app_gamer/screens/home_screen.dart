@@ -9,6 +9,7 @@ import 'package:oenigma/models/event_model.dart';
 import 'package:oenigma/utils/app_colors.dart';
 import '../widgets/event_card.dart';
 import '../stores/home_store.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -41,6 +42,34 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     _fadeController.dispose();
     super.dispose();
+  }
+
+  void _showLoginDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: cardColor,
+        title: const Text("Acesso Restrito", style: TextStyle(color: primaryAmber)),
+        content: const Text("Faça login ou crie uma conta para acessar esta funcionalidade."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancelar", style: TextStyle(color: secondaryTextColor)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: primaryAmber),
+            child: const Text("Login / Cadastro", style: TextStyle(color: darkBackground)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -102,9 +131,10 @@ class _HomeScreenState extends State<HomeScreen>
             final List<EventModel> events = (allData['events'] as List)
                 .map((e) => EventModel.fromMap(Map<String, dynamic>.from(e)))
                 .toList();
-            final UserWalletModel walletData = UserWalletModel.fromMap(
-              Map<String, dynamic>.from(allData['walletData']),
-            );
+            final UserWalletModel walletData = allData['walletData'] != null
+                ? UserWalletModel.fromMap(Map<String, dynamic>.from(allData['walletData']))
+                : UserWalletModel(uid: '', name: 'Visitante', email: '', balance: 0.0);
+
             final Map<String, dynamic> playerData =
                 allData['playerData'] != null
                 ? Map<String, dynamic>.from(allData['playerData'])
@@ -147,6 +177,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ),
                   ),
+                  // SUBSTITUIÇÃO: Grid mais adequado com 2 colunas e espaçamento
                   _buildEventsGrid(events, playerData),
                   const SliverToBoxAdapter(child: SizedBox(height: 40)),
                 ],
@@ -165,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen>
     List<EventModel> events,
     List<dynamic> allPlayers,
   ) {
-    final String firstName = wallet.name.split(' ').first;
+    final String firstName = _store.isGuest ? 'Visitante' : wallet.name.split(' ').first;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -205,10 +236,10 @@ class _HomeScreenState extends State<HomeScreen>
                   radius: 28,
                   backgroundColor: darkBackground,
                   backgroundImage:
-                      (wallet.photoURL != null && wallet.photoURL!.isNotEmpty)
+                      (!_store.isGuest && wallet.photoURL != null && wallet.photoURL!.isNotEmpty)
                       ? NetworkImage(wallet.photoURL!)
                       : null,
-                  child: (wallet.photoURL == null || wallet.photoURL!.isEmpty)
+                  child: (_store.isGuest || wallet.photoURL == null || wallet.photoURL!.isEmpty)
                       ? const FaIcon(
                           FontAwesomeIcons.user,
                           color: secondaryTextColor,
@@ -232,44 +263,51 @@ class _HomeScreenState extends State<HomeScreen>
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        FaIcon(
-                          FontAwesomeIcons.rankingStar,
-                          size: 14,
-                          color: primaryAmber,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Ranking: #${wallet.lastEventRank ?? '-'}',
-                          style: const TextStyle(
-                            color: secondaryTextColor,
-                            fontSize: 12,
+                    if (!_store.isGuest)
+                      Row(
+                        children: [
+                          FaIcon(
+                            FontAwesomeIcons.rankingStar,
+                            size: 14,
+                            color: primaryAmber,
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Ranking: #${wallet.lastEventRank ?? '-'}',
+                            style: const TextStyle(
+                              color: secondaryTextColor,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      const Text(
+                        'Faça login para ver seu progresso',
+                        style: TextStyle(color: secondaryTextColor, fontSize: 12),
+                      ),
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Text(
-                    'Saldo',
-                    style: TextStyle(color: secondaryTextColor, fontSize: 12),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
-                    style: const TextStyle(
-                      color: primaryAmber,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+              if (!_store.isGuest)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text(
+                      'Saldo',
+                      style: TextStyle(color: secondaryTextColor, fontSize: 12),
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
+                      style: const TextStyle(
+                        color: primaryAmber,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
           const SizedBox(height: 24),
@@ -281,11 +319,15 @@ class _HomeScreenState extends State<HomeScreen>
                 icon: FontAwesomeIcons.wallet,
                 label: 'Carteira',
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => WalletScreen(wallet: wallet),
-                    ),
-                  );
+                  if (_store.isGuest) {
+                    _showLoginDialog();
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => WalletScreen(wallet: wallet),
+                      ),
+                    );
+                  }
                 },
               ),
               _buildActionButton(
@@ -293,16 +335,20 @@ class _HomeScreenState extends State<HomeScreen>
                 icon: FontAwesomeIcons.trophy,
                 label: 'Ranking',
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => RankingScreen(
-                        availableEvents: events
-                            .where((e) => e.status != 'closed')
-                            .toList(),
-                        allPlayers: allPlayers,
+                  if (_store.isGuest) {
+                    _showLoginDialog();
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => RankingScreen(
+                          availableEvents: events
+                              .where((e) => e.status != 'closed')
+                              .toList(),
+                          allPlayers: allPlayers,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  }
                 },
               ),
               _buildActionButton(
@@ -310,14 +356,18 @@ class _HomeScreenState extends State<HomeScreen>
                 icon: FontAwesomeIcons.idCard,
                 label: 'Perfil',
                 onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ProfileScreen(
-                        playerData: playerData,
-                        walletData: wallet,
+                  if (_store.isGuest) {
+                    _showLoginDialog();
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ProfileScreen(
+                          playerData: playerData,
+                          walletData: wallet,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  }
                 },
               ),
             ],
@@ -412,23 +462,25 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       );
     }
+    // CORREÇÃO: Utilizando SliverGrid corretamente para layout em grade
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       sliver: SliverGrid(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+          crossAxisCount: 2, // Define 2 colunas para o Grid
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           childAspectRatio: 0.75, // Ajustado para melhor proporção
         ),
         delegate: SliverChildBuilderDelegate((context, index) {
-          // Adiciona uma animação escalonada simples
           return FadeTransition(
             opacity: _fadeAnimation,
             child: EventCard(
               event: events[index],
               playerData: playerData,
               onReturn: _store.loadData,
+              isGuest: _store.isGuest,
+              onGuestAction: _showLoginDialog,
             ),
           );
         }, childCount: events.length),

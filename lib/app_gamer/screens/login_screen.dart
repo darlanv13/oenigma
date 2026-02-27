@@ -49,6 +49,15 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleGuestLogin() async {
+    final success = await _store.loginAnonymously();
+    if (!success && mounted && _store.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_store.errorMessage!), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,6 +72,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 _buildHeader(),
                 const SizedBox(height: 48),
                 _buildLoginForm(),
+                const SizedBox(height: 24),
+                _buildGuestButton(),
               ],
             ),
           ),
@@ -232,6 +243,20 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGuestButton() {
+    return TextButton(
+      onPressed: _store.isLoading ? null : _handleGuestLogin,
+      child: const Text(
+        "Entrar como Visitante",
+        style: TextStyle(
+          color: secondaryTextColor,
+          fontSize: 16,
+          decoration: TextDecoration.underline,
         ),
       ),
     );
