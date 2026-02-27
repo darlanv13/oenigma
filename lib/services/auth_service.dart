@@ -27,10 +27,22 @@ class AuthService {
     }
   }
 
+  // Função para login anônimo (visitante)
+  Future<String?> signInAnonymously() async {
+    try {
+      await _auth.signInAnonymously();
+      return null;
+    } on FirebaseAuthException catch (e) {
+      return e.message ?? "Erro ao entrar como visitante.";
+    }
+  }
+
   // --- GET USER ROLE ---
   Future<String?> getUserRole() async {
     final user = _auth.currentUser;
     if (user == null) return null;
+    if (user.isAnonymous) return 'guest'; // Retorna 'guest' se for anônimo
+
     final idTokenResult = await user.getIdTokenResult(true); // force refresh
     return idTokenResult.claims?['role'] as String?;
   }

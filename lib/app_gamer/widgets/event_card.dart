@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart'; // NOVO IMPORT
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui';
 import 'package:lottie/lottie.dart';
-import 'package:shimmer/shimmer.dart'; // NOVO IMPORT
+import 'package:shimmer/shimmer.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oenigma/models/event_model.dart';
 import 'package:oenigma/utils/app_colors.dart';
@@ -13,12 +13,16 @@ class EventCard extends StatefulWidget {
   final EventModel event;
   final Map<String, dynamic> playerData;
   final VoidCallback onReturn;
+  final bool isGuest;
+  final VoidCallback? onGuestAction;
 
   const EventCard({
     super.key,
     required this.event,
     required this.playerData,
     required this.onReturn,
+    this.isGuest = false,
+    this.onGuestAction,
   });
 
   @override
@@ -26,8 +30,6 @@ class EventCard extends StatefulWidget {
 }
 
 class _EventCardState extends State<EventCard> {
-  // LottieComposition não é mais tão crítico para cache se usarmos o próprio Lottie.asset com frameBuilder
-  // mas mantive a lógica original, apenas otimizando a UI.
   late final Future<LottieComposition> _composition;
 
   @override
@@ -50,7 +52,6 @@ class _EventCardState extends State<EventCard> {
     }
   }
 
-  // Widget para Skeleton Loading
   Widget _buildShimmerLoading() {
     return Shimmer.fromColors(
       baseColor: Colors.grey[800]!,
@@ -79,6 +80,10 @@ class _EventCardState extends State<EventCard> {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () async {
+            if (widget.isGuest && widget.onGuestAction != null) {
+              widget.onGuestAction!();
+              return;
+            }
             await Navigator.push(
               context,
               MaterialPageRoute(
@@ -95,7 +100,6 @@ class _EventCardState extends State<EventCard> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Design base do card
               Positioned.fill(
                 child: Container(
                   color: darkBackground,
@@ -109,7 +113,6 @@ class _EventCardState extends State<EventCard> {
                                 fit: BoxFit.scaleDown,
                               );
                             }
-                            // Usando Shimmer enquanto carrega
                             return _buildShimmerLoading();
                           },
                         )
@@ -132,7 +135,6 @@ class _EventCardState extends State<EventCard> {
                   ),
                 ),
               ),
-              // ... (Preço e labels mantidos igual) ...
               Positioned(
                 top: 12,
                 left: 12,
@@ -300,7 +302,6 @@ class _EventCardState extends State<EventCard> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // USANDO CACHED IMAGE AQUI
                           CircleAvatar(
                             radius: 16,
                             backgroundColor: darkBackground,

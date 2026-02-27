@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oenigma/utils/app_colors.dart';
+import '../widgets/custom_text_form_field.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 import '../stores/login_store.dart';
@@ -48,6 +49,15 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleGuestLogin() async {
+    final success = await _store.loginAnonymously();
+    if (!success && mounted && _store.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_store.errorMessage!), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,6 +72,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 _buildHeader(),
                 const SizedBox(height: 48),
                 _buildLoginForm(),
+                const SizedBox(height: 24),
+                _buildGuestButton(),
               ],
             ),
           ),
@@ -129,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Observer(
           builder: (_) => Column(
             children: [
-              _buildTextFormField(
+              CustomTextFormField(
                 controller: _emailController,
                 hintText: "Email",
                 icon: FontAwesomeIcons.envelope,
@@ -137,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     val!.isEmpty ? 'Por favor, insira um email' : null,
               ),
               const SizedBox(height: 16),
-              _buildTextFormField(
+              CustomTextFormField(
                 controller: _passwordController,
                 hintText: "Senha",
                 icon: FontAwesomeIcons.lock,
@@ -236,34 +248,16 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildTextFormField({
-    required TextEditingController controller,
-    required String hintText,
-    required IconData icon,
-    bool obscureText = false,
-    Widget? suffixIcon,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      validator: validator,
-      style: const TextStyle(color: textColor),
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(color: textColor.withOpacity(0.7)),
-        prefixIcon: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: FaIcon(icon, color: textColor.withOpacity(0.7), size: 18),
+  Widget _buildGuestButton() {
+    return TextButton(
+      onPressed: _store.isLoading ? null : _handleGuestLogin,
+      child: const Text(
+        "Entrar como Visitante",
+        style: TextStyle(
+          color: secondaryTextColor,
+          fontSize: 16,
+          decoration: TextDecoration.underline,
         ),
-        suffixIcon: suffixIcon,
-        filled: true,
-        fillColor: darkBackground,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        errorStyle: const TextStyle(color: primaryAmber),
       ),
     );
   }

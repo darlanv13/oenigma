@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oenigma/utils/app_colors.dart';
+import '../widgets/custom_text_form_field.dart';
 import '../stores/signup_store.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -73,14 +74,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
               key: _formKey,
               child: Column(
                 children: [
-                  _buildTextFormField(
+                  CustomTextFormField(
                     controller: _nameController,
                     hintText: "Nome Completo",
                     icon: FontAwesomeIcons.user,
                     validator: (val) => val!.isEmpty ? 'Insira seu nome' : null,
                   ),
                   const SizedBox(height: 16),
-                  _buildTextFormField(
+                  CustomTextFormField(
                     controller: _emailController,
                     hintText: "Email",
                     icon: FontAwesomeIcons.envelope,
@@ -88,7 +89,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(height: 16),
                   Observer(
-                    builder: (_) => _buildTextFormField(
+                    builder: (_) => CustomTextFormField(
                       controller: _passwordController,
                       hintText: "Senha",
                       icon: FontAwesomeIcons.lock,
@@ -110,7 +111,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(height: 16),
                   Observer(
-                    builder: (_) => _buildTextFormField(
+                    builder: (_) => CustomTextFormField(
                       controller: _confirmPasswordController,
                       hintText: "Confirmar Senha",
                       icon: FontAwesomeIcons.lock,
@@ -169,38 +170,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTextFormField({
-    required TextEditingController controller,
-    required String hintText,
-    required IconData icon,
-    bool obscureText = false,
-    Widget? suffixIcon,
-    String? Function(String?)? validator,
-  }) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      validator: validator,
-      style: const TextStyle(color: textColor),
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(color: textColor.withOpacity(0.7)),
-        prefixIcon: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: FaIcon(icon, color: textColor.withOpacity(0.7), size: 18),
-        ),
-        suffixIcon: suffixIcon,
-        filled: true,
-        fillColor: cardColor,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        errorStyle: const TextStyle(color: primaryAmber),
       ),
     );
   }
