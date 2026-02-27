@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oenigma/app_gamer/screens/find_and_win_progress_screen.dart';
 import 'package:oenigma/app_gamer/screens/wallet_screen.dart';
+import 'package:oenigma/app_gamer/widgets/event_details/bottom_cta_button.dart';
+import 'package:oenigma/app_gamer/widgets/event_details/description_section.dart';
 import 'package:oenigma/app_gamer/widgets/event_details/header_image.dart';
 import 'package:oenigma/app_gamer/widgets/event_details/info_grid.dart';
 import 'package:oenigma/app_gamer/widgets/event_details/title_section.dart';
@@ -200,7 +201,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                       const SizedBox(height: 24),
                       InfoGrid(event: widget.event, store: _store),
                       const SizedBox(height: 24),
-                      _buildDescriptionSection(),
+                      DescriptionSection(event: widget.event),
                       const SizedBox(height: 120),
                     ],
                   ),
@@ -209,35 +210,29 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             ),
           ),
           _buildBackButton(context),
-          _buildBottomCtaButton(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDescriptionSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'SOBRE O EVENTO',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: secondaryTextColor,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            widget.event.fullDescription,
-            style: TextStyle(
-              color: textColor.withOpacity(0.8),
-              fontSize: 16,
-              height: 1.5,
-            ),
+          BottomCtaButton(
+            event: widget.event,
+            store: _store,
+            onSubscribe: _handleSubscription,
+            onPlay: () {
+              if (widget.event.eventType == 'find_and_win') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        FindAndWinProgressScreen(event: widget.event),
+                  ),
+                );
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        EventProgressScreen(event: widget.event),
+                  ),
+                );
+              }
+            },
           ),
         ],
       ),
@@ -264,129 +259,6 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomCtaButton(BuildContext context) {
-    if (widget.event.status == 'closed') {
-      return _buildDisabledButton(
-        icon: Icons.flag_outlined,
-        label: 'Evento Finalizado',
-      );
-    }
-    if (widget.event.status == 'dev') {
-      return _buildDisabledButton(
-        icon: Icons.hourglass_top_rounded,
-        label: 'Em Breve',
-      );
-    }
-
-    return Observer(
-      builder: (_) => Positioned(
-        bottom: 0,
-        left: 0,
-        right: 0,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [darkBackground, darkBackground.withOpacity(0.0)],
-              begin: Alignment.bottomCenter,
-              end: Alignment.topCenter,
-            ),
-          ),
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _store.isSubscribed ? Colors.green : primaryAmber,
-              foregroundColor: darkBackground,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-            ),
-            onPressed: _store.isLoading
-                ? null
-                : () {
-                    if (_store.isSubscribed) {
-                      if (widget.event.eventType == 'find_and_win') {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                FindAndWinProgressScreen(event: widget.event),
-                          ),
-                        );
-                      } else {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                EventProgressScreen(event: widget.event),
-                          ),
-                        );
-                      }
-                    } else {
-                      _handleSubscription();
-                    }
-                  },
-            icon: _store.isLoading
-                ? Container(
-                    width: 24,
-                    height: 24,
-                    child: const CircularProgressIndicator(
-                      color: darkBackground,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : Icon(
-                    _store.isSubscribed
-                        ? Icons.play_arrow_rounded
-                        : Icons.login_rounded,
-                    size: 28,
-                  ),
-            label: Text(
-              _store.isSubscribed
-                  ? 'Jogar'
-                  : 'Inscreva-se (R\$ ${widget.event.price.toStringAsFixed(2)})',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDisabledButton({required IconData icon, required String label}) {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [darkBackground, darkBackground.withOpacity(0.0)],
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-          ),
-        ),
-        child: ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey.shade800,
-            foregroundColor: Colors.grey.shade500,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-          ),
-          onPressed: null,
-          icon: Icon(icon, size: 28),
-          label: Text(
-            label,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
       ),
