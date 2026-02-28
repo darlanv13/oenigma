@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'screens/splash_screen.dart'; // <-- 1. IMPORTE A NOVA TELA
-import 'utils/app_colors.dart';
+import 'app_gamer/screens/splash_screen.dart';
+import 'app_gamer/utils/app_colors.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {

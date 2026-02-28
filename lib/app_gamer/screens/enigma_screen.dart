@@ -11,20 +11,20 @@ import 'package:lottie/lottie.dart' hide Marker;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:location/location.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
-import 'package:oenigma/screens/winner_certificate_screen.dart';
-import 'package:oenigma/widgets/dialogs/completion_dialog.dart';
-import 'package:oenigma/widgets/dialogs/cooldown_dialog.dart';
 import 'package:permission_handler/permission_handler.dart'
     hide PermissionStatus;
 import 'package:saver_gallery/saver_gallery.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../models/enigma_model.dart';
-import '../models/event_model.dart';
-import '../models/phase_model.dart';
-import '../services/firebase_service.dart';
+import '../../models/enigma_model.dart';
+import '../../models/event_model.dart';
+import '../../models/phase_model.dart';
+import '../../services/firebase_service.dart';
 import '../utils/app_colors.dart';
+import '../widgets/dialogs/completion_dialog.dart';
+import '../widgets/dialogs/cooldown_dialog.dart';
 import '../widgets/dialogs/error_dialog.dart';
 import 'wallet_screen.dart';
+import 'winner_certificate_screen.dart';
 
 // --- TELA DE SCANNER (sem alterações) ---
 class ScannerScreen extends StatefulWidget {

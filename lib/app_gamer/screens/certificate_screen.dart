@@ -2,7 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:oenigma/utils/app_colors.dart';
+
+import '../utils/app_colors.dart';
 // Importe o plugin de compartilhamento (você precisará adicioná-lo ao pubspec.yaml)
 // import 'package:share_plus/share_plus.dart';
 

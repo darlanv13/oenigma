@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui';
 import 'package:lottie/lottie.dart';
-import '../models/event_model.dart';
+import '../../models/event_model.dart';
 import '../screens/event_details_screen.dart';
 import '../utils/app_colors.dart';
 
