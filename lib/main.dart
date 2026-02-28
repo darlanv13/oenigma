@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'screens/splash_screen.dart'; // <-- 1. IMPORTE A NOVA TELA
-import 'utils/app_colors.dart';
+import 'package:oenigma/features/auth/screens/splash_screen.dart'; // <-- 1. IMPORTE A NOVA TELA
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -11,7 +12,11 @@ Future<void> main() async {
 
   await initializeDateFormatting('pt_BR', null);
 
-  runApp(const EnigmaCityApp());
+  runApp(
+    const ProviderScope(
+      child: EnigmaCityApp(),
+    ),
+  );
 }
 
 class EnigmaCityApp extends StatelessWidget {

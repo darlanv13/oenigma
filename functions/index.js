@@ -12,10 +12,10 @@ setGlobalOptions({ region: "southamerica-east1" });
 // e copia todas as funções exportadas por eles para o 'exports' principal do projeto.
 // Isso faz com que o Firebase reconheça todas as suas funções.
 Object.assign(exports,
-    require("./events"),
-    require("./gameplay"),
-    require("./admin"),
-    require("./wallet"),
-    require("./home"),
-    require("./management")
+    require("./src/features/events"),
+    require("./src/features/gameplay"),
+    require("./src/features/admin"),
+    require("./src/features/wallet"),
+    require("./src/features/home"),
+    require("./src/features/management")
 );

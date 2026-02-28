@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:oenigma/admin/screens/admin_auth_wrapper.dart'; // Crie este arquivo a seguir
-import 'package:oenigma/utils/app_colors.dart';
+import 'package:oenigma/features/admin/screens/admin_auth_wrapper.dart'; // Crie este arquivo a seguir
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/firebase_options.dart';
 
 Future<void> main() async {
