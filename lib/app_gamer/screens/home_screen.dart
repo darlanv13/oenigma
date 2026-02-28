@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
-import 'package:oenigma/screens/profile_screen.dart';
-import 'package:oenigma/screens/ranking_screen.dart';
-import 'package:oenigma/screens/wallet_screen.dart';
-import '../models/event_model.dart';
-import '../services/firebase_service.dart';
+import '../../models/event_model.dart';
+import '../../services/firebase_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/event_card.dart';
+import 'profile_screen.dart';
+import 'ranking_screen.dart';
+import 'wallet_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

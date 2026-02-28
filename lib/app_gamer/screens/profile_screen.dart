@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:oenigma/models/user_wallet_model.dart';
-import '../services/auth_service.dart';
+import '../../services/auth_service.dart';
 import '../utils/app_colors.dart';
 
 class ProfileScreen extends StatefulWidget {

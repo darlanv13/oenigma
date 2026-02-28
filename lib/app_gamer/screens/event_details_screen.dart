@@ -1,13 +1,13 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:oenigma/screens/find_and_win_progress_screen.dart';
-import 'package:oenigma/screens/wallet_screen.dart';
 import 'dart:ui';
-import '../models/event_model.dart';
+import '../../models/event_model.dart';
+import '../../services/firebase_service.dart';
 import '../screens/event_progress_screen.dart';
-import '../services/firebase_service.dart';
 import '../utils/app_colors.dart';
+import 'find_and_win_progress_screen.dart';
+import 'wallet_screen.dart';
 
 class EventDetailsScreen extends StatefulWidget {
   final EventModel event;

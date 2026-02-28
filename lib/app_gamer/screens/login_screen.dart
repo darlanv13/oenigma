@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
+import '../../services/auth_service.dart';
 import '../utils/app_colors.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart'; // <-- 1. IMPORTE A NOVA TELA

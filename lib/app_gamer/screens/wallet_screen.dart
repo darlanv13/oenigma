@@ -4,7 +4,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../models/user_wallet_model.dart';
+import '../../models/user_wallet_model.dart';
 import '../utils/app_colors.dart';
 
 class WalletScreen extends StatelessWidget {

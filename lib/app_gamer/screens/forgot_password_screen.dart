@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import '../services/auth_service.dart';
+import '../../services/auth_service.dart';
 import '../utils/app_colors.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
