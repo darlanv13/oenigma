@@ -1,3 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' hide GeoPoint;
+import 'package:cloud_firestore/cloud_firestore.dart' as firestore show GeoPoint;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -624,6 +627,18 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             duration: Duration(seconds: 5),
           ),
         );
+                // Log to Admin Fraud Monitor
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          FirebaseFirestore.instance.collection('fraud_logs').add({
+            'uid': user.uid,
+            'eventId': widget.event.id,
+            'enigmaId': _currentEnigma.id,
+            'reason': 'Fake GPS Detectado',
+            'timestamp': FieldValue.serverTimestamp(),
+            'location': firestore.GeoPoint(currentLocation.latitude!, currentLocation.longitude!),
+          });
+        }
         return;
       }
       final distanceInMeters = _calculateDistance(

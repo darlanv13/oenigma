@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -18,13 +19,45 @@ class AdminDashboardScreen extends StatelessWidget {
           const SizedBox(height: 24),
           Row(
             children: [
-              Expanded(child: _buildStatCard('Usuários Ativos', '1.240', Icons.people, Colors.blue)),
+              Expanded(
+                child: StreamBuilder<AggregateQuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('users').count().get().asStream(),
+                  builder: (context, snapshot) {
+                    final count = snapshot.data?.count?.toString() ?? '...';
+                    return _buildStatCard('Usuários Ativos', count, Icons.people, Colors.blue);
+                  },
+                ),
+              ),
               const SizedBox(width: 16),
-              Expanded(child: _buildStatCard('Eventos em Andamento', '3', Icons.event_available, Colors.green)),
+              Expanded(
+                child: StreamBuilder<AggregateQuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('events').where('status', isEqualTo: 'published').count().get().asStream(),
+                  builder: (context, snapshot) {
+                    final count = snapshot.data?.count?.toString() ?? '...';
+                    return _buildStatCard('Eventos Ativos', count, Icons.event_available, Colors.green);
+                  },
+                ),
+              ),
               const SizedBox(width: 16),
-              Expanded(child: _buildStatCard('Receita (Mês)', 'R\$ 15.420', Icons.attach_money, primaryAmber)),
+              Expanded(
+                child: StreamBuilder<AggregateQuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('transactions').where('type', isEqualTo: 'deposit').count().get().asStream(),
+                  builder: (context, snapshot) {
+                     final count = snapshot.data?.count?.toString() ?? '...';
+                    return _buildStatCard('Depósitos Totais', count, Icons.attach_money, primaryAmber);
+                  },
+                ),
+              ),
               const SizedBox(width: 16),
-              Expanded(child: _buildStatCard('Saques Pendentes', '12', Icons.money_off, Colors.redAccent)),
+              Expanded(
+                child: StreamBuilder<AggregateQuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('withdrawals').where('status', isEqualTo: 'pending').count().get().asStream(),
+                  builder: (context, snapshot) {
+                    final count = snapshot.data?.count?.toString() ?? '...';
+                    return _buildStatCard('Saques Pendentes', count, Icons.money_off, Colors.redAccent);
+                  },
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 32),
