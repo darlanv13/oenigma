@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
-import 'package:oenigma/features/home/screens/home_screen.dart';
+import 'package:oenigma/features/home/screens/main_navigation_screen.dart';
 import 'package:oenigma/features/auth/screens/login_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
@@ -15,7 +15,7 @@ class AuthWrapper extends ConsumerWidget {
     return authState.when(
       data: (user) {
         if (user != null) {
-          return const HomeScreen();
+          return const MainNavigationScreen();
         } else {
           return const LoginScreen();
         }

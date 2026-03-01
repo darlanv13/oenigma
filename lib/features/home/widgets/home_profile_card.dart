@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
-import 'package:oenigma/features/profile/screens/profile_screen.dart';
-import 'package:oenigma/features/ranking/screens/ranking_screen.dart';
-import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
-import 'home_action_button.dart';
 
 class HomeProfileCard extends StatelessWidget {
   final Map<String, dynamic> playerData;
@@ -123,56 +119,6 @@ class HomeProfileCard extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              HomeActionButton(
-                icon: Icons.account_balance_wallet_rounded,
-                label: 'Carteira',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const WalletScreen(),
-                    ),
-                  );
-                },
-              ),
-              HomeActionButton(
-                icon: Icons.leaderboard_rounded,
-                label: 'Ranking',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => RankingScreen(
-                        availableEvents: events
-                            .where((e) => e.status != 'closed')
-                            .toList(),
-                        allPlayers: allPlayers,
-                      ),
-                    ),
-                  );
-                },
-              ),
-              HomeActionButton(
-                icon: Icons.person_rounded,
-                label: 'Perfil',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfileScreen(
-                        playerData: playerData,
-                        walletData: wallet,
-                      ),
-                    ),
-                  );
-                },
               ),
             ],
           ),
