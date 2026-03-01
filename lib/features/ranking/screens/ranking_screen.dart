@@ -23,6 +23,7 @@ class RankingScreen extends ConsumerStatefulWidget {
 
 class _RankingScreenState extends ConsumerState<RankingScreen> {
   String? _selectedEventId;
+  String _selectedTimeFilter = 'all_time'; // 'all_time' or 'monthly'
   List<RankingPlayerModel> _currentRanking = [];
 
   @override
@@ -38,19 +39,27 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
     if (_selectedEventId == null) return;
 
     List<RankingPlayerModel> ranking = [];
+    final now = DateTime.now();
 
     for (var playerMap in widget.allPlayers) {
       if (playerMap is Map<String, dynamic>) {
         final events = playerMap['events'];
         int phasesCompleted = 0;
-          // Se quiser desempatar por tempo no futuro
+        int latestCompletionTime = 0;
 
         if (events is Map && events.containsKey(_selectedEventId)) {
           final eventProgress = events[_selectedEventId] as Map<String, dynamic>;
-          // A lógica atual conta currentPhase como fases completadas
+
           phasesCompleted = (eventProgress['currentPhase'] as num?)?.toInt() ?? 0;
-          // latestCompletionTime =
-              (eventProgress['lastUpdateTime'] as num?)?.toInt() ?? 0;
+          latestCompletionTime = (eventProgress['lastUpdateTime'] as num?)?.toInt() ?? 0;
+
+          // Apply Time Filter
+          if (_selectedTimeFilter == 'monthly' && latestCompletionTime > 0) {
+            final completionDate = DateTime.fromMillisecondsSinceEpoch(latestCompletionTime);
+            if (completionDate.year != now.year || completionDate.month != now.month) {
+              phasesCompleted = 0; // Does not count for this month
+            }
+          }
         }
 
         if (phasesCompleted > 0) {
@@ -60,7 +69,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
               name: playerMap['name'] ?? 'Jogador',
               photoURL: playerMap['photoURL'],
               phasesCompleted: phasesCompleted,
-              totalPhases: 10, // Default mock value if not available
+              totalPhases: 10,
               position: 0,
             ),
           );
@@ -68,14 +77,13 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
       }
     }
 
-    // Ordenação simples por fases concluídas
+    // Sort by phases completed (descending)
     ranking.sort((a, b) => b.phasesCompleted.compareTo(a.phasesCompleted));
 
-    // Atribuir posições considerando empates simples
+    // Assign positions with tie-breaking logic based on simple equal phases
     int currentPosition = 1;
     for (int i = 0; i < ranking.length; i++) {
-      if (i > 0 &&
-          ranking[i].phasesCompleted == ranking[i - 1].phasesCompleted) {
+      if (i > 0 && ranking[i].phasesCompleted == ranking[i - 1].phasesCompleted) {
         ranking[i].position = ranking[i - 1].position;
       } else {
         ranking[i].position = currentPosition;
@@ -121,7 +129,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
       backgroundColor: darkBackground,
       appBar: AppBar(
         title: const Text(
-          'Ranking Global',
+          'Tabela de Classificação',
           style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
         ),
         centerTitle: true,
@@ -137,6 +145,70 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Time Filter Segmented Control
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedTimeFilter = 'all_time';
+                                _calculateRankingForSelectedEvent();
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: _selectedTimeFilter == 'all_time' ? primaryAmber : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                'Global',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: _selectedTimeFilter == 'all_time' ? Colors.black : secondaryTextColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedTimeFilter = 'monthly';
+                                _calculateRankingForSelectedEvent();
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: _selectedTimeFilter == 'monthly' ? primaryAmber : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                'Mensal',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: _selectedTimeFilter == 'monthly' ? Colors.black : secondaryTextColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
                   const Text(
                     'Selecione o Evento',
                     style: TextStyle(
@@ -174,7 +246,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                             ),
                             const SizedBox(height: 16),
                             const Text(
-                              'Nenhum jogador pontuou neste evento ainda.',
+                              'Nenhum jogador pontuou neste período.',
                               style: TextStyle(color: secondaryTextColor),
                             ),
                           ],

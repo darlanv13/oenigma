@@ -609,10 +609,23 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       permissionGranted = await _location.requestPermission();
       if (permissionGranted != PermissionStatus.granted) return;
     }
-    _locationSubscription = _location.onLocationChanged.listen((
-      currentLocation,
-    ) {
+    _locationSubscription = _location.onLocationChanged.listen((currentLocation) {
       if (!mounted || _currentEnigma.location == null) return;
+
+      if (currentLocation.isMock == true) {
+        setState(() {
+          _distance = null;
+          _isNear = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ Localização falsa (Fake GPS) detectada! Por favor, desative para jogar.'),
+            backgroundColor: Colors.redAccent,
+            duration: Duration(seconds: 5),
+          ),
+        );
+        return;
+      }
       final distanceInMeters = _calculateDistance(
         currentLocation.latitude!,
         currentLocation.longitude!,
