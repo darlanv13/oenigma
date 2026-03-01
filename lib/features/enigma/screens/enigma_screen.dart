@@ -21,6 +21,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
+import 'package:oenigma/features/enigma/widgets/compass_widget.dart';
+import 'package:oenigma/features/enigma/widgets/map_radius_widget.dart';
 import 'package:oenigma/features/enigma/repositories/enigma_repository.dart';
 
 import 'package:oenigma/features/event/repositories/event_repository.dart';
@@ -168,6 +170,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   bool _isBlocked = false;
   Timer? _statusPollTimer;
   late EnigmaModel _currentEnigma;
+  bool _hasCompass = false;
+  bool _hasMap = false;
+  Map<String, double>? _destinationLocation;
 
   // Animation Controller for Shake Effect
   late AnimationController _shakeController;
@@ -265,6 +270,14 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           _isHintVisible = statusData['isHintVisible'] ?? false;
           _canBuyHint = statusData['canBuyHint'] ?? false;
           _isBlocked = statusData['isBlocked'] ?? false;
+          _hasCompass = statusData['hasCompass'] ?? false;
+          _hasMap = statusData['hasMap'] ?? false;
+          if (statusData['destinationLocation'] != null) {
+            _destinationLocation = {
+              'latitude': (statusData['destinationLocation']['latitude'] as num).toDouble(),
+              'longitude': (statusData['destinationLocation']['longitude'] as num).toDouble(),
+            };
+          }
         });
         if (_isBlocked && statusData['cooldownUntil'] != null) {
           _handleCooldown(statusData['cooldownUntil']);
@@ -917,58 +930,152 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   Widget _buildHintSection() {
-    if (_isHintVisible) {
-      if (_hintData != null) {
-        return _buildCard(title: 'PISTA', child: _buildHintContent());
-      }
-      return const SizedBox.shrink();
-    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_isHintVisible && _hintData != null)
+           _buildCard(title: 'PISTA', child: _buildHintContent()),
 
-    if (_canBuyHint) {
-      final hintCosts = {1: 5, 2: 10, 3: 15};
-      final cost = hintCosts[widget.phase.order];
+        if (_hasCompass && _destinationLocation != null)
+           Padding(
+             padding: const EdgeInsets.only(bottom: 16.0),
+             child: CompassWidget(
+               destinationLatitude: _destinationLocation!['latitude']!,
+               destinationLongitude: _destinationLocation!['longitude']!
+             ),
+           ),
 
-      return AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        child: TextButton.icon(
-          onPressed: _isLoading
-              ? null
-              : () async {
-                  if (cost == null) return;
-                  final bool? confirmed = await _showPurchaseConfirmationDialog(cost.toDouble(), type: 'Dica');
-                  if (confirmed == true) {
-                    _handleAction('purchaseHint');
-                  }
-                },
-          icon: const Icon(Icons.lightbulb, color: primaryAmber),
-          label: RichText(
-            text: TextSpan(
-              children: [
-                const TextSpan(
-                  text: 'Precisa de ajuda? ',
-                  style: TextStyle(color: Colors.white70),
+        if (_hasMap && _destinationLocation != null)
+           Padding(
+             padding: const EdgeInsets.only(bottom: 16.0),
+             child: MapRadiusWidget(
+               destinationLatitude: _destinationLocation!['latitude']!,
+               destinationLongitude: _destinationLocation!['longitude']!
+             ),
+           ),
+
+        if (!_isHintVisible && _canBuyHint)
+          _buildHintPurchaseButton(),
+
+        if (!_hasCompass || !_hasMap)
+          _buildToolsPurchaseButtons(),
+      ],
+    );
+  }
+
+  Widget _buildHintPurchaseButton() {
+    final hintCosts = {1: 5, 2: 10, 3: 15};
+    final cost = hintCosts[widget.phase.order];
+
+    if (cost == null) return const SizedBox.shrink();
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: TextButton.icon(
+        onPressed: _isLoading
+            ? null
+            : () async {
+                final bool? confirmed = await _showPurchaseConfirmationDialog(
+                  cost.toDouble(),
+                  type: 'Dica'
+                );
+                if (confirmed == true) {
+                  _handleAction('purchaseHint');
+                }
+              },
+        icon: const Icon(Icons.lightbulb, color: primaryAmber),
+        label: RichText(
+          text: TextSpan(
+            children: [
+              const TextSpan(
+                text: 'Precisa de ajuda? ',
+                style: TextStyle(color: Colors.white70),
+              ),
+              TextSpan(
+                text: 'Ver Dica (R\$ ${cost.toStringAsFixed(2)})',
+                style: const TextStyle(
+                  color: primaryAmber,
+                  fontWeight: FontWeight.bold,
                 ),
-                TextSpan(
-                  text: 'Ver Dica (R\$ ${cost?.toStringAsFixed(2)})',
-                  style: const TextStyle(
-                    color: primaryAmber,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            backgroundColor: primaryAmber.withValues(alpha: 0.08),
+              ),
+            ],
           ),
         ),
-      );
-    }
-    return const SizedBox.shrink();
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          backgroundColor: primaryAmber.withValues(alpha: 0.08),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToolsPurchaseButtons() {
+    if (_currentEnigma.type != 'qr_code_gps' && _currentEnigma.type != 'gps') return const SizedBox.shrink();
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (!_hasMap)
+            TextButton.icon(
+              onPressed: _isLoading
+                  ? null
+                  : () async {
+                      final bool? confirmed = await _showPurchaseConfirmationDialog(
+                        20.0,
+                        type: 'Mapa'
+                      );
+                      if (confirmed == true) {
+                        _handleToolPurchase('map');
+                      }
+                    },
+              icon: const Icon(Icons.map, color: Colors.blueAccent),
+              label: const Text(
+                'Comprar Mapa (R\$ 20)',
+                style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
+              ),
+            ),
+          if (!_hasMap && !_hasCompass) const SizedBox(width: 8),
+          if (!_hasCompass)
+            TextButton.icon(
+              onPressed: _isLoading
+                  ? null
+                  : () async {
+                      final bool? confirmed = await _showPurchaseConfirmationDialog(
+                        15.0,
+                        type: 'Bússola'
+                      );
+                      if (confirmed == true) {
+                        _handleToolPurchase('compass');
+                      }
+                    },
+              icon: const Icon(Icons.explore, color: Colors.greenAccent),
+              label: const Text(
+                'Comprar Bússola (R\$ 15)',
+                style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                backgroundColor: Colors.greenAccent.withValues(alpha: 0.1),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   Widget _buildHintContent() {
