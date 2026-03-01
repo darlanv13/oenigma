@@ -1,0 +1,152 @@
+--- a/lib/features/enigma/screens/enigma_screen.dart
++++ b/lib/features/enigma/screens/enigma_screen.dart
+@@ -928,43 +928,103 @@
+       final hintCosts = {1: 5, 2: 10, 3: 15};
+       final cost = hintCosts[widget.phase.order];
+
+-      return AnimatedContainer(
+-        duration: const Duration(milliseconds: 300),
+-        child: TextButton.icon(
+-          onPressed: _isLoading
+-              ? null
+-              : () async {
+-                  if (cost == null) return;
+-                  final bool? confirmed = await _showPurchaseConfirmationDialog(cost.toDouble(), type: 'Dica');
+-                  if (confirmed == true) {
+-                    _handleAction('purchaseHint');
+-                  }
+-                },
+-          icon: const Icon(Icons.lightbulb, color: primaryAmber),
+-          label: RichText(
+-            text: TextSpan(
+-              children: [
+-                const TextSpan(
+-                  text: 'Precisa de ajuda? ',
+-                  style: TextStyle(color: Colors.white70),
+-                ),
+-                TextSpan(
+-                  text: 'Ver Dica (R\$ ${cost?.toStringAsFixed(2)})',
+-                  style: const TextStyle(
+-                    color: primaryAmber,
+-                    fontWeight: FontWeight.bold,
+-                  ),
+-                ),
+-              ],
+-            ),
+-          ),
+-          style: TextButton.styleFrom(
+-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+-            shape: RoundedRectangleBorder(
+-              borderRadius: BorderRadius.circular(16),
+-            ),
+-            backgroundColor: primaryAmber.withValues(alpha: 0.08),
+-          ),
+-        ),
+-      );
++      return Column(
++        children: [
++          AnimatedContainer(
++            duration: const Duration(milliseconds: 300),
++            child: TextButton.icon(
++              onPressed: _isLoading
++                  ? null
++                  : () async {
++                      if (cost == null) return;
++                      final bool? confirmed = await _showPurchaseConfirmationDialog(
++                        cost.toDouble(),
++                        type: 'Dica'
++                      );
++                      if (confirmed == true) {
++                        _handleAction('purchaseHint');
++                      }
++                    },
++              icon: const Icon(Icons.lightbulb, color: primaryAmber),
++              label: RichText(
++                text: TextSpan(
++                  children: [
++                    const TextSpan(
++                      text: 'Precisa de ajuda? ',
++                      style: TextStyle(color: Colors.white70),
++                    ),
++                    TextSpan(
++                      text: 'Ver Dica (R\$ ${cost?.toStringAsFixed(2)})',
++                      style: const TextStyle(
++                        color: primaryAmber,
++                        fontWeight: FontWeight.bold,
++                      ),
++                    ),
++                  ],
++                ),
++              ),
++              style: TextButton.styleFrom(
++                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
++                shape: RoundedRectangleBorder(
++                  borderRadius: BorderRadius.circular(16),
++                ),
++                backgroundColor: primaryAmber.withValues(alpha: 0.08),
++              ),
++            ),
++          ),
++          const SizedBox(height: 12),
++          SingleChildScrollView(
++            scrollDirection: Axis.horizontal,
++            child: Row(
++              mainAxisAlignment: MainAxisAlignment.center,
++              children: [
++                TextButton.icon(
++                  onPressed: _isLoading
++                      ? null
++                      : () async {
++                          final bool? confirmed = await _showPurchaseConfirmationDialog(
++                            20.0,
++                            type: 'Mapa'
++                          );
++                          if (confirmed == true) {
++                            _handleToolPurchase('map');
++                          }
++                        },
++                  icon: const Icon(Icons.map, color: Colors.blueAccent),
++                  label: const Text(
++                    'Comprar Mapa (R\$ 20)',
++                    style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold),
++                  ),
++                  style: TextButton.styleFrom(
++                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
++                    shape: RoundedRectangleBorder(
++                      borderRadius: BorderRadius.circular(12),
++                    ),
++                    backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
++                  ),
++                ),
++                const SizedBox(width: 8),
++                TextButton.icon(
++                  onPressed: _isLoading
++                      ? null
++                      : () async {
++                          final bool? confirmed = await _showPurchaseConfirmationDialog(
++                            15.0,
++                            type: 'Bússola'
++                          );
++                          if (confirmed == true) {
++                            _handleToolPurchase('compass');
++                          }
++                        },
++                  icon: const Icon(Icons.explore, color: Colors.greenAccent),
++                  label: const Text(
++                    'Comprar Bússola (R\$ 15)',
++                    style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold),
++                  ),
++                  style: TextButton.styleFrom(
++                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
++                    shape: RoundedRectangleBorder(
++                      borderRadius: BorderRadius.circular(12),
++                    ),
++                    backgroundColor: Colors.greenAccent.withValues(alpha: 0.1),
++                  ),
++                ),
++              ],
++            ),
++          ),
++        ],
++      );
+     }

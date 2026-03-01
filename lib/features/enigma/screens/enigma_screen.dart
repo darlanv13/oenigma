@@ -337,7 +337,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     );
   }
 
-  Future<bool?> _showPurchaseConfirmationDialog(int cost) {
+  Future<bool?> _showPurchaseConfirmationDialog(double cost, {String type = 'Dica'}) {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -348,7 +348,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           style: TextStyle(color: primaryAmber),
         ),
         content: Text(
-          'Comprar dica por R\$ $cost,00?\n\nEste valor será deduzido do seu saldo.',
+          'Comprar $type por R\$ ${cost.toStringAsFixed(2)}?\n\nEste valor será deduzido do seu saldo.',
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
@@ -370,6 +370,52 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         ],
       ),
     );
+  }
+
+  Future<void> _handleToolPurchase(String toolType) async {
+    setState(() => _isLoading = true);
+    try {
+      final result = await _enigmaRepository.callEnigmaFunction('purchaseTool', {
+        'eventId': widget.event.id,
+        'toolType': toolType,
+      });
+
+      if (!mounted) return;
+
+      final data = Map<String, dynamic>.from(result.data);
+      final success = data['success'] ?? false;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['message'] ?? "Ferramenta comprada com sucesso!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } on FirebaseFunctionsException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message ?? "Ocorreu um erro."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Ocorreu um erro ao processar: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   Future<void> _handleAction(String action, {String? code}) async {
@@ -889,9 +935,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               ? null
               : () async {
                   if (cost == null) return;
-                  final bool? confirmed = await _showPurchaseConfirmationDialog(
-                    cost,
-                  );
+                  final bool? confirmed = await _showPurchaseConfirmationDialog(cost.toDouble(), type: 'Dica');
                   if (confirmed == true) {
                     _handleAction('purchaseHint');
                   }
