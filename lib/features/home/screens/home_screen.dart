@@ -5,9 +5,8 @@ import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/event/widgets/event_card.dart';
 import 'package:oenigma/features/home/providers/home_events_provider.dart';
-import 'package:oenigma/features/profile/screens/profile_screen.dart';
-import 'package:oenigma/features/ranking/screens/ranking_screen.dart';
-import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
+import '../widgets/home_profile_card.dart';
+import '../widgets/events_section_header.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -117,12 +116,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       opacity: _fadeAnimation,
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
-                        child: _buildFinalProfileCard(
-                          context,
-                          playerData,
-                          walletData,
-                          events,
-                          allPlayers,
+                        child: HomeProfileCard(
+                          playerData: playerData,
+                          wallet: walletData,
+                          events: events,
+                          allPlayers: allPlayers,
                         ),
                       ),
                     ),
@@ -130,14 +128,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   SliverToBoxAdapter(
                     child: FadeTransition(
                       opacity: _fadeAnimation,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
+                      child: const Padding(
+                        padding: EdgeInsets.fromLTRB(
                           20.0,
                           16.0,
                           20.0,
                           8.0,
                         ),
-                        child: _buildEventsSectionHeader(),
+                        child: EventsSectionHeader(),
                       ),
                     ),
                   ),
@@ -149,232 +147,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           },
         ),
       ),
-    );
-  }
-
-  Widget _buildFinalProfileCard(
-    BuildContext context,
-    Map<String, dynamic> playerData,
-    UserWalletModel wallet,
-    List<EventModel> events,
-    List<dynamic> allPlayers,
-  ) {
-    final String firstName = wallet.name.split(' ').first;
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [cardColor, cardColor.withValues(alpha: 0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: primaryAmber, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: primaryAmber.withValues(alpha: 0.2),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: CircleAvatar(
-                  radius: 28,
-                  backgroundColor: darkBackground,
-                  backgroundImage:
-                      (wallet.photoURL != null && wallet.photoURL!.isNotEmpty)
-                      ? NetworkImage(wallet.photoURL!)
-                      : null,
-                  child: (wallet.photoURL == null || wallet.photoURL!.isEmpty)
-                      ? const Icon(
-                          Icons.person_outline,
-                          color: secondaryTextColor,
-                          size: 30,
-                        )
-                      : null,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Olá, $firstName!',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.emoji_events, size: 14, color: primaryAmber),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Ranking: #${wallet.lastEventRank ?? '-'}',
-                          style: const TextStyle(
-                            color: secondaryTextColor,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Text(
-                    'Saldo',
-                    style: TextStyle(color: secondaryTextColor, fontSize: 12),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
-                    style: const TextStyle(
-                      color: primaryAmber,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildActionButton(
-                context: context,
-                icon: Icons.account_balance_wallet_rounded,
-                label: 'Carteira',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const WalletScreen(),
-                    ),
-                  );
-                },
-              ),
-              _buildActionButton(
-                context: context,
-                icon: Icons.leaderboard_rounded,
-                label: 'Ranking',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => RankingScreen(
-                        availableEvents: events
-                            .where((e) => e.status != 'closed')
-                            .toList(),
-                        allPlayers: allPlayers,
-                      ),
-                    ),
-                  );
-                },
-              ),
-              _buildActionButton(
-                context: context,
-                icon: Icons.person_rounded,
-                label: 'Perfil',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfileScreen(
-                        playerData: playerData,
-                        walletData: wallet,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 24, color: textColor),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: secondaryTextColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEventsSectionHeader() {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 18,
-          decoration: BoxDecoration(
-            color: primaryAmber,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 8),
-        const Text(
-          "EVENTOS DISPONÍVEIS",
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: secondaryTextColor,
-            letterSpacing: 1.2,
-          ),
-        ),
-      ],
     );
   }
 

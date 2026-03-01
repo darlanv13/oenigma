@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lottie/lottie.dart';
 import 'package:oenigma/core/models/ranking_player_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
-import 'package:oenigma/features/auth/providers/auth_provider.dart';
-
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:oenigma/features/ranking/widgets/ranking_event_selector.dart';
+import 'package:oenigma/features/ranking/widgets/ranking_list.dart';
+import 'package:oenigma/features/ranking/widgets/ranking_podium.dart';
 
 class RankingScreen extends ConsumerStatefulWidget {
   final List<EventModel> availableEvents;
@@ -147,7 +147,18 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  _buildEventSelector(),
+                  RankingEventSelector(
+                    selectedEventId: _selectedEventId,
+                    availableEvents: widget.availableEvents,
+                    onChanged: (String? newValue) {
+                      if (newValue != null && newValue != _selectedEventId) {
+                        setState(() {
+                          _selectedEventId = newValue;
+                          _calculateRankingForSelectedEvent();
+                        });
+                      }
+                    },
+                  ),
                   const SizedBox(height: 40),
 
                   if (_currentRanking.isEmpty)
@@ -171,7 +182,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                       ),
                     )
                   else ...[
-                    _buildPodium(top3),
+                    RankingPodium(top3: top3),
                     const SizedBox(height: 40),
                     if (others.isNotEmpty) ...[
                       const Text(
@@ -184,7 +195,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      _buildRankingList(others),
+                      RankingList(players: others),
                     ],
                   ],
                 ],
@@ -193,334 +204,6 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildEventSelector() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: DropdownButton<String>(
-        value: _selectedEventId,
-        isExpanded: true,
-        dropdownColor: cardColor,
-        icon: const Icon(Icons.keyboard_arrow_down, color: primaryAmber),
-        underline: const SizedBox(),
-        onChanged: (String? newValue) {
-          if (newValue != null && newValue != _selectedEventId) {
-            setState(() {
-              _selectedEventId = newValue;
-              _calculateRankingForSelectedEvent();
-            });
-          }
-        },
-        items: widget.availableEvents.map<DropdownMenuItem<String>>((
-          EventModel event,
-        ) {
-          return DropdownMenuItem<String>(
-            value: event.id,
-            child: Text(
-              event.name,
-              style: const TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.bold,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildPodium(List<RankingPlayerModel> top3) {
-    // Definindo cores e estilos para os lugares
-    final podiumConfig = {
-      1: {'color': const Color(0xFFFFC107), 'height': 160.0}, // Ouro
-      2: {'color': const Color(0xFFE0E0E0), 'height': 120.0}, // Prata
-      3: {'color': const Color(0xFFA1887F), 'height': 90.0}, // Bronze
-    };
-
-    final List<Widget> podiumPlaces = [];
-
-    // Ordem visual: 2º, 1º, 3º
-    if (top3.length > 1) {
-      podiumPlaces.add(
-        _buildPodiumPlace(
-          top3[1],
-          podiumConfig[2]!['height'] as double,
-          podiumConfig[2]!['color'] as Color,
-          place: 2,
-        ),
-      );
-    }
-    if (top3.isNotEmpty) {
-      podiumPlaces.add(
-        _buildPodiumPlace(
-          top3[0],
-          podiumConfig[1]!['height'] as double,
-          podiumConfig[1]!['color'] as Color,
-          isFirstPlace: true,
-          place: 1,
-        ),
-      );
-    }
-    if (top3.length > 2) {
-      podiumPlaces.add(
-        _buildPodiumPlace(
-          top3[2],
-          podiumConfig[3]!['height'] as double,
-          podiumConfig[3]!['color'] as Color,
-          place: 3,
-        ),
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: podiumPlaces,
-    );
-  }
-
-  Widget _buildPodiumPlace(
-    RankingPlayerModel player,
-    double height,
-    Color color, {
-    bool isFirstPlace = false,
-    required int place,
-  }) {
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: color, width: 3),
-                  boxShadow: isFirstPlace
-                      ? [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.5),
-                            blurRadius: 20,
-                            spreadRadius: 2,
-                          ),
-                        ]
-                      : [],
-                ),
-                child: CircleAvatar(
-                  radius: isFirstPlace ? 40 : 30,
-                  backgroundColor: darkBackground,
-                  backgroundImage: player.photoURL != null
-                      ? NetworkImage(player.photoURL!)
-                      : null,
-                  child: player.photoURL == null
-                      ? Icon(
-                          Icons.person,
-                          size: isFirstPlace ? 30 : 20,
-                          color: secondaryTextColor,
-                        )
-                      : null,
-                ),
-              ),
-              if (isFirstPlace)
-                Positioned(
-                  top: -55,
-                  child: Lottie.asset(
-                    'assets/animations/trofel.json',
-                    width: 70,
-                    height: 70,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              Positioned(
-                bottom: -12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    "$placeº",
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            player.name.split(' ').first,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: textColor,
-              fontSize: 14,
-            ),
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            height: height,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [color.withValues(alpha: 0.8), color.withValues(alpha: 0.3)],
-              ),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-              border: Border(
-                top: BorderSide(color: color.withValues(alpha: 0.5), width: 1),
-                left: BorderSide(color: color.withValues(alpha: 0.2), width: 1),
-                right: BorderSide(color: color.withValues(alpha: 0.2), width: 1),
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '${player.phasesCompleted}',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const Text(
-                  'Fases',
-                  style: TextStyle(fontSize: 10, color: Colors.white70),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRankingList(List<RankingPlayerModel> players) {
-    final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid;
-
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: players.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final player = players[index];
-        final isCurrentUser = player.uid == currentUserId;
-
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-          decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(20),
-            border: isCurrentUser
-                ? Border.all(color: primaryAmber, width: 1.5)
-                : Border.all(color: Colors.white.withValues(alpha: 0.05)),
-            boxShadow: isCurrentUser
-                ? [
-                    BoxShadow(
-                      color: primaryAmber.withValues(alpha: 0.15),
-                      blurRadius: 10,
-                    ),
-                  ]
-                : [],
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 30,
-                child: Text(
-                  player.position.toString(),
-                  style: const TextStyle(
-                    color: secondaryTextColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isCurrentUser ? primaryAmber : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundImage: player.photoURL != null
-                      ? NetworkImage(player.photoURL!)
-                      : null,
-                  child: player.photoURL == null
-                      ? const Icon(
-                          Icons.person,
-                          size: 20,
-                          color: secondaryTextColor,
-                        )
-                      : null,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      player.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: textColor,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${player.phasesCompleted}',
-                    style: const TextStyle(
-                      color: primaryAmber,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const Text(
-                    'Fases',
-                    style: TextStyle(color: secondaryTextColor, fontSize: 10),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }
