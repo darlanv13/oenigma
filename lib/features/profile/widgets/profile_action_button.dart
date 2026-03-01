@@ -19,7 +19,7 @@ class ProfileActionButton extends StatelessWidget {
       message: tooltip,
       preferBelow: false,
       child: Material(
-        color: primaryAmber.withOpacity(0.15),
+        color: primaryAmber.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(50),
         child: InkWell(
           borderRadius: BorderRadius.circular(50),

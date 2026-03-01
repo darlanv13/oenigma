@@ -64,7 +64,7 @@ class _EventCardState extends State<EventCard> {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
@@ -101,8 +101,8 @@ class _EventCardState extends State<EventCard> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.black.withOpacity(0.8),
-                        Colors.black.withOpacity(0.2),
+                        Colors.black.withValues(alpha: 0.8),
+                        Colors.black.withValues(alpha: 0.2),
                         Colors.transparent,
                       ],
                       begin: Alignment.bottomCenter,
@@ -153,7 +153,7 @@ class _EventCardState extends State<EventCard> {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.25),
+                            color: Colors.black.withValues(alpha: 0.25),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +244,7 @@ class _EventCardState extends State<EventCard> {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
           child: Container(
-            decoration: BoxDecoration(color: Colors.black.withOpacity(0.6)),
+            decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6)),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -309,7 +309,7 @@ class _EventCardState extends State<EventCard> {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.75),
+          color: Colors.black.withValues(alpha: 0.75),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Center(

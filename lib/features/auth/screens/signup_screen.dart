@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Import necessário para os formatadores
-import 'package:oenigma/core/services/auth_service.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
-class SignUpScreen extends StatefulWidget {
+class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
-  final _authService = AuthService();
+class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   int _currentStep = 0;
 
   // Controladores para os campos de texto
@@ -46,7 +47,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         setState(() => _currentStep++);
       }
     } else {
-      _handleSignUp();
+      _submitForm();
     }
   }
 
@@ -56,14 +57,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  Future<void> _handleSignUp() async {
+  Future<void> _submitForm() async {
     if (_formKeyStep2.currentState!.validate()) {
       setState(() => _isLoading = true);
-      // Remove a formatação antes de enviar para o backend (opcional, dependendo de como você quer salvar)
-      // Aqui estou enviando formatado mesmo, conforme seu código original sugeria,
-      // mas você pode usar .replaceAll(RegExp(r'\D'), '') se quiser apenas números.
 
-      final error = await _authService.signUpWithEmailAndPassword(
+      final authRepository = ref.read(authRepositoryProvider);
+      final error = await authRepository.signUpWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         fullName: _fullNameController.text.trim(),
@@ -77,7 +76,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             SnackBar(content: Text(error), backgroundColor: Colors.red),
           );
         } else {
-          // Se o cadastro for bem-sucedido, volta para a tela de login
           Navigator.of(context).pop();
         }
         setState(() => _isLoading = false);
@@ -297,9 +295,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       textCapitalization: textCapitalization,
       style: const TextStyle(color: textColor),
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: textColor.withOpacity(0.7)),
+        prefixIcon: Icon(icon, color: textColor.withValues(alpha: 0.7)),
         hintText: hintText,
-        hintStyle: TextStyle(color: textColor.withOpacity(0.7)),
+        hintStyle: TextStyle(color: textColor.withValues(alpha: 0.7)),
         filled: true,
         fillColor: cardColor,
         border: OutlineInputBorder(

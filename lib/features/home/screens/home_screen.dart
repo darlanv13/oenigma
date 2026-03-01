@@ -1,39 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
-import 'package:oenigma/core/services/firebase_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/event/widgets/event_card.dart';
+import 'package:oenigma/features/home/providers/home_events_provider.dart';
 import 'package:oenigma/features/profile/screens/profile_screen.dart';
 import 'package:oenigma/features/ranking/screens/ranking_screen.dart';
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
+class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
-  final FirebaseService _firebaseService = FirebaseService();
-  late Future<Map<String, dynamic>> _dataFuture;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    _dataFuture = _firebaseService.getHomeScreenData();
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
     _fadeAnimation = CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeOut,
+      curve: Curves.easeIn,
     );
-    _fadeController.forward();
   }
 
   @override
@@ -43,75 +40,70 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _reloadData() async {
-    setState(() {
-      _dataFuture = _firebaseService.getHomeScreenData();
-    });
+    return await ref.refresh(homeEventsProvider.future);
   }
 
   @override
   Widget build(BuildContext context) {
+    final homeDataAsync = ref.watch(homeEventsProvider);
+
     return Scaffold(
       backgroundColor: darkBackground,
       body: SafeArea(
-        child: FutureBuilder<Map<String, dynamic>>(
-          future: _dataFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: primaryAmber),
-              );
-            }
-            if (snapshot.hasError || !snapshot.hasData) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: Colors.redAccent,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Erro ao carregar dados.',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                      child: Text(
-                        '${snapshot.error}',
-                        style: const TextStyle(color: Colors.grey),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: _reloadData,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text("Tentar Novamente"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryAmber,
-                        foregroundColor: Colors.black,
-                      ),
-                    ),
-                  ],
+        child: homeDataAsync.when(
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: primaryAmber),
+          ),
+          error: (error, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: Colors.redAccent,
                 ),
-              );
-            }
-
-            final allData = snapshot.data!;
-            final List<EventModel> events = (allData['events'] as List)
+                const SizedBox(height: 16),
+                const Text(
+                  'Erro ao carregar dados.',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Text(
+                    '$error',
+                    style: const TextStyle(color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: _reloadData,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text("Tentar Novamente"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryAmber,
+                    foregroundColor: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          data: (data) {
+            final List<EventModel> events = (data['events'] as List)
                 .map((e) => EventModel.fromMap(Map<String, dynamic>.from(e)))
                 .toList();
             final UserWalletModel walletData = UserWalletModel.fromMap(
-              Map<String, dynamic>.from(allData['walletData']),
+              Map<String, dynamic>.from(data['walletData']),
             );
             final Map<String, dynamic> playerData =
-                allData['playerData'] != null
-                ? Map<String, dynamic>.from(allData['playerData'])
+                data['playerData'] != null
+                ? Map<String, dynamic>.from(data['playerData'])
                 : {};
-            final List<dynamic> allPlayers = allData['allPlayers'] ?? [];
+            final List<dynamic> allPlayers = data['allPlayers'] ?? [];
+
+            _fadeController.forward();
 
             return RefreshIndicator(
               onRefresh: _reloadData,
@@ -173,15 +165,15 @@ class _HomeScreenState extends State<HomeScreen>
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [cardColor, cardColor.withOpacity(0.8)],
+          colors: [cardColor, cardColor.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -198,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen>
                   border: Border.all(color: primaryAmber, width: 2),
                   boxShadow: [
                     BoxShadow(
-                      color: primaryAmber.withOpacity(0.2),
+                      color: primaryAmber.withValues(alpha: 0.2),
                       blurRadius: 10,
                     ),
                   ],
@@ -279,9 +271,10 @@ class _HomeScreenState extends State<HomeScreen>
                 icon: Icons.account_balance_wallet_rounded,
                 label: 'Carteira',
                 onTap: () {
-                  Navigator.of(context).push(
+                  Navigator.push(
+                    context,
                     MaterialPageRoute(
-                      builder: (context) => WalletScreen(wallet: wallet),
+                      builder: (context) => const WalletScreen(),
                     ),
                   );
                 },
@@ -291,7 +284,8 @@ class _HomeScreenState extends State<HomeScreen>
                 icon: Icons.leaderboard_rounded,
                 label: 'Ranking',
                 onTap: () {
-                  Navigator.of(context).push(
+                  Navigator.push(
+                    context,
                     MaterialPageRoute(
                       builder: (context) => RankingScreen(
                         availableEvents: events
@@ -308,9 +302,10 @@ class _HomeScreenState extends State<HomeScreen>
                 icon: Icons.person_rounded,
                 label: 'Perfil',
                 onTap: () {
-                  Navigator.of(context).push(
+                  Navigator.push(
+                    context,
                     MaterialPageRoute(
-                      builder: (_) => ProfileScreen(
+                      builder: (context) => ProfileScreen(
                         playerData: playerData,
                         walletData: wallet,
                       ),
@@ -337,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(

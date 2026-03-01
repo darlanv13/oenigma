@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:oenigma/features/auth/screens/splash_screen.dart'; // <-- 1. IMPORTE A NOVA TELA
+import 'package:oenigma/features/auth/screens/splash_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'firebase_options.dart';
 
@@ -19,11 +19,11 @@ Future<void> main() async {
   );
 }
 
-class EnigmaCityApp extends StatelessWidget {
+class EnigmaCityApp extends ConsumerWidget {
   const EnigmaCityApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'Enigma City',
       debugShowCheckedModeBanner: false,
@@ -42,8 +42,6 @@ class EnigmaCityApp extends StatelessWidget {
           bodyMedium: TextStyle(color: textColor),
         ),
       ),
-      // --- 2. ALTERE A TELA INICIAL ---
-      // A tela inicial agora é a SplashScreen.
       home: const SplashScreen(),
     );
   }

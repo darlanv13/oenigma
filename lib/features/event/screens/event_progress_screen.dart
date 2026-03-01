@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oenigma/features/event/providers/event_repository_provider.dart';
+import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
-import 'package:oenigma/core/services/auth_service.dart';
-import 'package:oenigma/core/services/firebase_service.dart';
+
+
 import 'package:oenigma/core/utils/app_colors.dart';
 import '../widgets/PhaseCard.dart';
 import '../widgets/progress_header.dart';
 
-class EventProgressScreen extends StatefulWidget {
+class EventProgressScreen extends ConsumerStatefulWidget {
   final EventModel event;
   const EventProgressScreen({super.key, required this.event});
   @override
-  State<EventProgressScreen> createState() => _EventProgressScreenState();
+  ConsumerState<EventProgressScreen> createState() => _EventProgressScreenState();
 }
 
-class _EventProgressScreenState extends State<EventProgressScreen> {
-  final FirebaseService _firebaseService = FirebaseService();
-  final AuthService _authService = AuthService();
+class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
+
+
   late Future<void> _dataFuture;
 
   List<PhaseModel> _phases = [];
@@ -30,13 +33,13 @@ class _EventProgressScreenState extends State<EventProgressScreen> {
   }
 
   Future<void> _loadEventData() async {
-    final phases = await _firebaseService.getPhasesForEvent(widget.event.id);
+    final phases = await ref.read(eventRepositoryProvider).getPhasesForEvent(widget.event.id);
     if (!mounted) return;
 
-    final userId = _authService.currentUser?.uid;
+    final userId = ref.read(authRepositoryProvider).currentUser?.uid;
     if (userId == null) throw Exception("Usuário não autenticado.");
 
-    final progress = await _firebaseService.getPlayerProgress(
+    final progress = await ref.read(eventRepositoryProvider).getPlayerProgress(
       userId,
       widget.event.id,
     );

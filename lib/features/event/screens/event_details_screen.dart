@@ -1,15 +1,19 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oenigma/features/event/providers/event_repository_provider.dart';
+
 import 'package:lottie/lottie.dart';
 import 'dart:ui';
 import 'package:oenigma/core/models/event_model.dart';
-import 'package:oenigma/core/services/firebase_service.dart';
+
+
 import '../screens/event_progress_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'find_and_win_progress_screen.dart';
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
 
-class EventDetailsScreen extends StatefulWidget {
+class EventDetailsScreen extends ConsumerStatefulWidget {
   final EventModel event;
   final Map<String, dynamic> playerData;
 
@@ -20,11 +24,12 @@ class EventDetailsScreen extends StatefulWidget {
   });
 
   @override
-  State<EventDetailsScreen> createState() => _EventDetailsScreenState();
+  ConsumerState<EventDetailsScreen> createState() => _EventDetailsScreenState();
 }
 
-class _EventDetailsScreenState extends State<EventDetailsScreen> {
-  final FirebaseService _firebaseService = FirebaseService();
+class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
+
+
   late final Future<LottieComposition> _composition;
   Future<Map<String, int>>? _statsFuture;
 
@@ -53,7 +58,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   Future<Map<String, int>> _getFindAndWinStats() async {
-    final stats = await _firebaseService.getFindAndWinStats(widget.event.id);
+    final stats = await ref.read(eventRepositoryProvider).getFindAndWinStats(widget.event.id);
     return {
       'total': stats['totalEnigmas'] ?? 0,
       'solved': stats['solvedEnigmas'] ?? 0,
@@ -61,7 +66,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   Future<Map<String, int>> _getClassicEventStats() async {
-    final count = await _firebaseService.getChallengeCountForEvent(
+    final count = await ref.read(eventRepositoryProvider).getChallengeCountForEvent(
       widget.event.id,
     );
     return {
@@ -78,7 +83,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await _firebaseService.subscribeToEvent(widget.event.id);
+      await ref.read(eventRepositoryProvider).subscribeToEvent(widget.event.id);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -183,7 +188,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
               try {
                 // 3. Busca os dados da carteira
-                final walletData = await _firebaseService.getUserWalletData();
+
 
                 if (mounted) {
                   // 4. Fecha o loading (usando context da tela, que é o pai do loading agora)
@@ -192,7 +197,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                   // 5. Navega para a tela da carteira
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => WalletScreen(wallet: walletData),
+                      builder: (context) => WalletScreen( ),
                     ),
                   );
                 }
@@ -310,8 +315,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    darkBackground.withOpacity(0.8),
-                    darkBackground.withOpacity(0.4),
+                    darkBackground.withValues(alpha: 0.8),
+                    darkBackground.withValues(alpha: 0.4),
                     Colors.transparent,
                   ],
                   begin: Alignment.bottomCenter,
@@ -432,7 +437,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: cardColor.withOpacity(0.8),
+        color: cardColor.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Row(
@@ -489,7 +494,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             // A descrição completa do evento pode ser usada aqui
             widget.event.fullDescription,
             style: TextStyle(
-              color: textColor.withOpacity(0.8),
+              color: textColor.withValues(alpha: 0.8),
               fontSize: 16,
               height: 1.5,
             ),
@@ -509,7 +514,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: IconButton(
@@ -548,7 +553,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [darkBackground, darkBackground.withOpacity(0.0)],
+            colors: [darkBackground, darkBackground.withValues(alpha: 0.0)],
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
           ),
@@ -625,7 +630,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [darkBackground, darkBackground.withOpacity(0.0)],
+            colors: [darkBackground, darkBackground.withValues(alpha: 0.0)],
             begin: Alignment.bottomCenter,
             end: Alignment.topCenter,
           ),

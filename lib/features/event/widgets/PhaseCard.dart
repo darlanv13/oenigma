@@ -109,12 +109,12 @@ class PhaseCard extends StatelessWidget {
       iconColor = darkBackground;
     } else if (isActive) {
       iconData = Icons.explore_outlined;
-      backgroundColor = primaryAmber.withOpacity(0.2);
+      backgroundColor = primaryAmber.withValues(alpha: 0.2);
       iconColor = primaryAmber;
     } else {
       // isLocked
       iconData = Icons.lock;
-      backgroundColor = Colors.black.withOpacity(0.3);
+      backgroundColor = Colors.black.withValues(alpha: 0.3);
       iconColor = secondaryTextColor;
     }
 

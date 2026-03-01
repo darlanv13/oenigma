@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:oenigma/core/services/auth_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
-class ForgotPasswordScreen extends StatefulWidget {
+class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final AuthService _authService = AuthService();
   bool _isLoading = false;
 
   @override
@@ -26,7 +27,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      final error = await _authService.sendPasswordResetEmail(
+      final authRepository = ref.read(authRepositoryProvider);
+      final error = await authRepository.sendPasswordResetEmail(
         _emailController.text.trim(),
       );
 

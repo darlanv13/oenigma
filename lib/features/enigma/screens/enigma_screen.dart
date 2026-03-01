@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart' hide Marker;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:location/location.dart';
-import 'package:oenigma/core/models/user_wallet_model.dart';
+
 import 'package:oenigma/features/certificate/screens/winner_certificate_screen.dart';
 import 'package:oenigma/core/widgets/dialogs/completion_dialog.dart';
 import 'package:oenigma/core/widgets/dialogs/cooldown_dialog.dart';
@@ -21,9 +21,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
-import 'package:oenigma/core/services/firebase_service.dart';
+import 'package:oenigma/features/enigma/repositories/enigma_repository.dart';
+
+import 'package:oenigma/features/event/repositories/event_repository.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
-import 'package:oenigma/core/widgets/dialogs/error_dialog.dart';
+
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
 
 // --- TELA DE SCANNER (sem alterações) ---
@@ -81,7 +83,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
           padding: const EdgeInsets.all(24),
           width: MediaQuery.of(context).size.width * 0.8,
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: primaryAmber),
           ),
@@ -152,7 +154,9 @@ class EnigmaScreen extends StatefulWidget {
 class _EnigmaScreenState extends State<EnigmaScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _codeController = TextEditingController();
-  final FirebaseService _firebaseService = FirebaseService();
+  final EnigmaRepository _enigmaRepository = EnigmaRepository();
+  final EventRepository _firebaseService = EventRepository();
+
   bool _isLoading = false;
   bool _canBuyHint = false;
   final Location _location = Location();
@@ -250,7 +254,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
 
   Future<void> _fetchInitialStatus() async {
     try {
-      final result = await _firebaseService.callEnigmaFunction('getStatus', {
+      final result = await _enigmaRepository.callEnigmaFunction('getStatus', {
         'eventId': widget.event.id,
         'phaseOrder': widget.phase.order,
         'enigmaId': _currentEnigma.id,
@@ -298,12 +302,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               Navigator.of(dialogContext).pop();
               setState(() => _isLoading = true);
               try {
-                final UserWalletModel walletData = await _firebaseService
-                    .getUserWalletData();
                 if (!mounted) return;
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => WalletScreen(wallet: walletData),
+                    builder: (context) => const WalletScreen(),
                   ),
                 );
               } catch (e) {
@@ -373,7 +375,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   Future<void> _handleAction(String action, {String? code}) async {
     setState(() => _isLoading = true);
     try {
-      final result = await _firebaseService.callEnigmaFunction(action, {
+      final result = await _enigmaRepository.callEnigmaFunction(action, {
         'eventId': widget.event.id,
         'phaseOrder': widget.phase.order,
         'enigmaId': _currentEnigma.id,
@@ -679,10 +681,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -917,7 +919,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            backgroundColor: primaryAmber.withOpacity(0.08),
+            backgroundColor: primaryAmber.withValues(alpha: 0.08),
           ),
         ),
       );
@@ -1042,7 +1044,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               decoration: InputDecoration(
                 hintText: 'CÓDIGO',
                 hintStyle: TextStyle(
-                  color: secondaryTextColor.withOpacity(0.3),
+                  color: secondaryTextColor.withValues(alpha: 0.3),
                   letterSpacing: 2,
                   fontFamily: 'Poppins',
                   fontSize: 24,
@@ -1079,7 +1081,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 5,
-                shadowColor: primaryAmber.withOpacity(0.4),
+                shadowColor: primaryAmber.withValues(alpha: 0.4),
               ),
               child: _isLoading
                   ? const SizedBox(

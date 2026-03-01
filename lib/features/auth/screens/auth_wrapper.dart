@@ -15,10 +15,8 @@ class AuthWrapper extends ConsumerWidget {
     return authState.when(
       data: (user) {
         if (user != null) {
-          // Se o usuário está logado, mostra a tela principal
           return const HomeScreen();
         } else {
-          // Se não, mostra a tela de login
           return const LoginScreen();
         }
       },

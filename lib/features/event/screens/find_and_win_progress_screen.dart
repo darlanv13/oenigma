@@ -3,28 +3,31 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:oenigma/features/enigma/providers/enigma_repository_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
-import 'package:oenigma/core/services/firebase_service.dart';
+
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/core/widgets/dialogs/cooldown_dialog.dart';
 import 'package:oenigma/core/widgets/dialogs/enigma_success_dialog.dart';
 import 'package:oenigma/core/widgets/dialogs/error_dialog.dart';
 import 'package:oenigma/features/enigma/screens/enigma_screen.dart'; // Para reutilizar o ScannerScreen
 
-class FindAndWinProgressScreen extends StatefulWidget {
+class FindAndWinProgressScreen extends ConsumerStatefulWidget {
   final EventModel event;
 
   const FindAndWinProgressScreen({super.key, required this.event});
 
   @override
-  State<FindAndWinProgressScreen> createState() =>
+  ConsumerState<FindAndWinProgressScreen> createState() =>
       _FindAndWinProgressScreenState();
 }
 
-class _FindAndWinProgressScreenState extends State<FindAndWinProgressScreen> {
-  final FirebaseService _firebaseService = FirebaseService();
+class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScreen> {
+
   final TextEditingController _codeController = TextEditingController();
   bool _isLoading = false;
   bool _isBlocked = false; // <-- Adicionado para controlar o cooldown
@@ -71,7 +74,7 @@ class _FindAndWinProgressScreenState extends State<FindAndWinProgressScreen> {
     if (code.isEmpty) return;
     setState(() => _isLoading = true);
     try {
-      final result = await _firebaseService.callFunction('handleEnigmaAction', {
+      final result = await ref.read(enigmaRepositoryProvider).callEnigmaFunction('scan_enigma', {
         'eventId': widget.event.id,
         'enigmaId': enigmaId,
         'code': code,

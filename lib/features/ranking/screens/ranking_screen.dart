@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
-import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/ranking_player_model.dart';
-import 'package:oenigma/core/services/auth_service.dart';
+import 'package:oenigma/core/models/event_model.dart';
+import 'package:oenigma/features/auth/providers/auth_provider.dart';
+
 import 'package:oenigma/core/utils/app_colors.dart';
 
-class RankingScreen extends StatefulWidget {
+class RankingScreen extends ConsumerStatefulWidget {
   final List<EventModel> availableEvents;
   final List<dynamic> allPlayers;
 
@@ -16,121 +18,178 @@ class RankingScreen extends StatefulWidget {
   });
 
   @override
-  State<RankingScreen> createState() => _RankingScreenState();
+  ConsumerState<RankingScreen> createState() => _RankingScreenState();
 }
 
-class _RankingScreenState extends State<RankingScreen> {
-  final AuthService _authService = AuthService();
-
+class _RankingScreenState extends ConsumerState<RankingScreen> {
   String? _selectedEventId;
-  late List<RankingPlayerModel> _currentRanking;
+  List<RankingPlayerModel> _currentRanking = [];
 
   @override
   void initState() {
     super.initState();
-    // Inicia com o primeiro ID válido se houver eventos, senão null
     if (widget.availableEvents.isNotEmpty) {
       _selectedEventId = widget.availableEvents.first.id;
-    } else {
-      _selectedEventId = null;
+      _calculateRankingForSelectedEvent();
     }
-    _calculateRankingForSelectedEvent();
   }
 
   void _calculateRankingForSelectedEvent() {
-    if (_selectedEventId == null || _selectedEventId!.isEmpty) {
-      setState(() => _currentRanking = []);
-      return;
-    }
+    if (_selectedEventId == null) return;
 
-    // Tenta encontrar o evento. Se não achar, não quebra.
-    EventModel selectedEvent;
-    try {
-      selectedEvent = widget.availableEvents.firstWhere(
-        (e) => e.id == _selectedEventId,
-      );
-    } catch (e) {
-      setState(() => _currentRanking = []);
-      return;
-    }
+    List<RankingPlayerModel> ranking = [];
 
-    final totalPhases = selectedEvent.phases.length;
+    for (var playerMap in widget.allPlayers) {
+      if (playerMap is Map<String, dynamic>) {
+        final events = playerMap['events'];
+        int phasesCompleted = 0;
+          // Se quiser desempatar por tempo no futuro
 
-    var rankedPlayers = widget.allPlayers
-        .where(
-          (p) => p['events'] != null && p['events'][_selectedEventId] != null,
-        )
-        .map((p) {
-          final progress = p['events'][_selectedEventId];
-          return RankingPlayerModel(
-            uid: p['id'],
-            name: p['name'] ?? 'Anônimo',
-            photoURL: p['photoURL'],
-            phasesCompleted: progress['currentPhase'] != null
-                ? progress['currentPhase'] - 1
-                : 0,
-            totalPhases: totalPhases,
+        if (events is Map && events.containsKey(_selectedEventId)) {
+          final eventProgress = events[_selectedEventId] as Map<String, dynamic>;
+          // A lógica atual conta currentPhase como fases completadas
+          phasesCompleted = (eventProgress['currentPhase'] as num?)?.toInt() ?? 0;
+          // latestCompletionTime =
+              (eventProgress['lastUpdateTime'] as num?)?.toInt() ?? 0;
+        }
+
+        if (phasesCompleted > 0) {
+          ranking.add(
+            RankingPlayerModel(
+              uid: playerMap['uid'] ?? '',
+              name: playerMap['name'] ?? 'Jogador',
+              photoURL: playerMap['photoURL'],
+              phasesCompleted: phasesCompleted,
+              totalPhases: 10, // Default mock value if not available
+              position: 0,
+            ),
           );
-        })
-        .toList();
+        }
+      }
+    }
 
-    rankedPlayers.sort(
-      (a, b) => b.phasesCompleted.compareTo(a.phasesCompleted),
-    );
+    // Ordenação simples por fases concluídas
+    ranking.sort((a, b) => b.phasesCompleted.compareTo(a.phasesCompleted));
+
+    // Atribuir posições considerando empates simples
+    int currentPosition = 1;
+    for (int i = 0; i < ranking.length; i++) {
+      if (i > 0 &&
+          ranking[i].phasesCompleted == ranking[i - 1].phasesCompleted) {
+        ranking[i].position = ranking[i - 1].position;
+      } else {
+        ranking[i].position = currentPosition;
+      }
+      currentPosition++;
+    }
 
     setState(() {
-      _currentRanking = rankedPlayers.asMap().entries.map((entry) {
-        entry.value.position = entry.key + 1;
-        return entry.value;
-      }).toList();
+      _currentRanking = ranking;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.availableEvents.isEmpty) {
+      return Scaffold(
+        backgroundColor: darkBackground,
+        appBar: AppBar(
+          title: const Text('Ranking Global'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+        body: const Center(
+          child: Text(
+            'Nenhum evento disponível.',
+            style: TextStyle(color: secondaryTextColor),
+          ),
+        ),
+      );
+    }
+
+    List<RankingPlayerModel> top3 = [];
+    List<RankingPlayerModel> others = [];
+
+    if (_currentRanking.isNotEmpty) {
+      top3 = _currentRanking.take(3).toList();
+      if (_currentRanking.length > 3) {
+        others = _currentRanking.skip(3).toList();
+      }
+    }
+
     return Scaffold(
       backgroundColor: darkBackground,
       appBar: AppBar(
         title: const Text(
           'Ranking Global',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
         ),
         centerTitle: true,
-        backgroundColor: darkBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Column(
-        children: [
-          _buildEventSelector(),
-          Expanded(
-            child: _currentRanking.isEmpty
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.leaderboard_outlined,
-                          size: 60,
-                          color: secondaryTextColor,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'Nenhum jogador classificado ainda.',
-                          style: TextStyle(color: secondaryTextColor),
-                        ),
-                      ],
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Selecione o Evento',
+                    style: TextStyle(
+                      color: secondaryTextColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
                     ),
-                  )
-                : ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                    children: [
-                      if (_currentRanking.isNotEmpty)
-                        _buildPodium(_currentRanking.take(3).toList()),
-                      const SizedBox(height: 40),
-                      if (_currentRanking.length > 3)
-                        _buildRankingList(_currentRanking.skip(3).toList()),
-                    ],
                   ),
+                  const SizedBox(height: 8),
+                  _buildEventSelector(),
+                  const SizedBox(height: 40),
+
+                  if (_currentRanking.isEmpty)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 40.0),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.emoji_events_outlined,
+                              size: 64,
+                              color: secondaryTextColor.withValues(alpha: 0.5),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Nenhum jogador pontuou neste evento ainda.',
+                              style: TextStyle(color: secondaryTextColor),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else ...[
+                    _buildPodium(top3),
+                    const SizedBox(height: 40),
+                    if (others.isNotEmpty) ...[
+                      const Text(
+                        'DEMAIS COLOCAÇÕES',
+                        style: TextStyle(
+                          color: secondaryTextColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildRankingList(others),
+                    ],
+                  ],
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -138,46 +197,19 @@ class _RankingScreenState extends State<RankingScreen> {
   }
 
   Widget _buildEventSelector() {
-    if (widget.availableEvents.isEmpty) {
-      return Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Text(
-          "Nenhum evento ativo para exibir.",
-          textAlign: TextAlign.center,
-          style: TextStyle(color: secondaryTextColor),
-        ),
-      );
-    }
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: DropdownButtonFormField<String>(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: DropdownButton<String>(
         value: _selectedEventId,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: cardColor,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-        ),
+        isExpanded: true,
         dropdownColor: cardColor,
-        icon: const Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: primaryAmber,
-        ),
+        icon: const Icon(Icons.keyboard_arrow_down, color: primaryAmber),
+        underline: const SizedBox(),
         onChanged: (String? newValue) {
           if (newValue != null && newValue != _selectedEventId) {
             setState(() {
@@ -277,7 +309,7 @@ class _RankingScreenState extends State<RankingScreen> {
                   boxShadow: isFirstPlace
                       ? [
                           BoxShadow(
-                            color: color.withOpacity(0.5),
+                            color: color.withValues(alpha: 0.5),
                             blurRadius: 20,
                             spreadRadius: 2,
                           ),
@@ -352,15 +384,15 @@ class _RankingScreenState extends State<RankingScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [color.withOpacity(0.8), color.withOpacity(0.3)],
+                colors: [color.withValues(alpha: 0.8), color.withValues(alpha: 0.3)],
               ),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
               border: Border(
-                top: BorderSide(color: color.withOpacity(0.5), width: 1),
-                left: BorderSide(color: color.withOpacity(0.2), width: 1),
-                right: BorderSide(color: color.withOpacity(0.2), width: 1),
+                top: BorderSide(color: color.withValues(alpha: 0.5), width: 1),
+                left: BorderSide(color: color.withValues(alpha: 0.2), width: 1),
+                right: BorderSide(color: color.withValues(alpha: 0.2), width: 1),
               ),
             ),
             child: Column(
@@ -387,7 +419,7 @@ class _RankingScreenState extends State<RankingScreen> {
   }
 
   Widget _buildRankingList(List<RankingPlayerModel> players) {
-    final currentUserId = _authService.currentUser?.uid;
+    final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid;
 
     return ListView.separated(
       shrinkWrap: true,
@@ -405,11 +437,11 @@ class _RankingScreenState extends State<RankingScreen> {
             borderRadius: BorderRadius.circular(20),
             border: isCurrentUser
                 ? Border.all(color: primaryAmber, width: 1.5)
-                : Border.all(color: Colors.white.withOpacity(0.05)),
+                : Border.all(color: Colors.white.withValues(alpha: 0.05)),
             boxShadow: isCurrentUser
                 ? [
                     BoxShadow(
-                      color: primaryAmber.withOpacity(0.15),
+                      color: primaryAmber.withValues(alpha: 0.15),
                       blurRadius: 10,
                     ),
                   ]

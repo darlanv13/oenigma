@@ -30,7 +30,7 @@ class ProgressHeader extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: textColor.withOpacity(0.9),
+              color: textColor.withValues(alpha: 0.9),
             ),
           ),
           const SizedBox(height: 16),

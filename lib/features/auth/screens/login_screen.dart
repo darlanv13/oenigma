@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:oenigma/core/services/auth_service.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
-import 'signup_screen.dart';
-import 'forgot_password_screen.dart'; // <-- 1. IMPORTE A NOVA TELA
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class LoginScreen extends StatefulWidget {
+import 'package:oenigma/features/auth/providers/auth_provider.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:oenigma/features/auth/screens/signup_screen.dart';
+import 'package:oenigma/features/auth/screens/forgot_password_screen.dart';
+
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
 
   bool _isLoading = false;
   bool _isPasswordVisible = false;
@@ -30,7 +31,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      final error = await _authService.signInWithEmailAndPassword(
+      final authRepository = ref.read(authRepositoryProvider);
+      final error = await authRepository.signInWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
@@ -131,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
               suffixIcon: IconButton(
                 icon: Icon(
                   _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                  color: textColor.withOpacity(0.7),
+                  color: textColor.withValues(alpha: 0.7),
                 ),
                 onPressed: () =>
                     setState(() => _isPasswordVisible = !_isPasswordVisible),
@@ -144,7 +146,6 @@ class _LoginScreenState extends State<LoginScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                // --- 2. ATUALIZE O onPressed PARA NAVEGAR ---
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -235,8 +236,8 @@ class _LoginScreenState extends State<LoginScreen> {
       style: const TextStyle(color: textColor),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: TextStyle(color: textColor.withOpacity(0.7)),
-        prefixIcon: Icon(icon, color: textColor.withOpacity(0.7)),
+        hintStyle: TextStyle(color: textColor.withValues(alpha: 0.7)),
+        prefixIcon: Icon(icon, color: textColor.withValues(alpha: 0.7)),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: darkBackground,

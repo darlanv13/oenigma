@@ -77,7 +77,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                   color: cardColor,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: primaryAmber.withOpacity(0.5),
+                    color: primaryAmber.withValues(alpha: 0.5),
                     width: 2,
                   ),
                 ),

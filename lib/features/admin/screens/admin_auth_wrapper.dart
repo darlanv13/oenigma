@@ -5,9 +5,8 @@ class AdminAuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Admin Panel')),
-      body: const Center(child: Text('Admin Dashboard Placeholder')),
+    return const Scaffold(
+      body: Center(child: Text('Admin Placeholder')),
     );
   }
 }

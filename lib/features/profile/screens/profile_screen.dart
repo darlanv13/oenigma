@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oenigma/features/auth/providers/auth_provider.dart';
+import 'package:oenigma/features/profile/providers/profile_repository_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
-import 'package:oenigma/core/services/auth_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> playerData;
   final UserWalletModel walletData;
 
@@ -16,13 +18,11 @@ class ProfileScreen extends StatefulWidget {
   });
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  final _authService = AuthService();
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-
   final _phoneController = TextEditingController();
 
   bool _isLoading = false;
@@ -54,38 +54,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      final userId = _authService.currentUser!.uid;
+      final authRepository = ref.read(authRepositoryProvider);
+      final userId = authRepository.currentUser!.uid;
 
-      final error = await _authService.updateUserProfile(
-        userId: userId,
-        imageFile: _selectedImage,
-        phone: _phoneController.text,
-        birthDate: widget.playerData['birthDate'] ?? '',
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              error == null ? 'Perfil atualizado com sucesso!' : 'Erro: $error',
-            ),
-            backgroundColor: error == null ? Colors.green : Colors.red,
-          ),
-        );
-        if (error == null) {
-          Navigator.of(context).pop();
-        }
+      String? photoURL;
+      if (_selectedImage != null) {
+        photoURL = await ref.read(profileRepositoryProvider).uploadFile('profile_pictures/$userId/profile_image.jpg', await _selectedImage!.readAsBytes());
       }
-      setState(() => _isLoading = false);
+      final dataToUpdate = {
+        'phone': _phoneController.text,
+        'birthDate': widget.playerData['birthDate'] ?? '',
+      };
+      if (photoURL != null) dataToUpdate['photoURL'] = photoURL;
+
+      try {
+        await ref.read(profileRepositoryProvider).updateUserProfile(userId, dataToUpdate);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Perfil atualizado com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _resetPassword(String email) async {
-    final error = await _authService.sendPasswordResetEmail(email);
+    if (email.isEmpty) return;
+
+    final authRepository = ref.read(authRepositoryProvider);
+    final error = await authRepository.sendPasswordResetEmail(email);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error ?? 'Email de recuperação enviado!'),
+          content: Text(
+            error ?? 'E-mail de recuperação enviado para $email',
+          ),
           backgroundColor: error == null ? Colors.green : Colors.red,
         ),
       );
@@ -94,130 +111,136 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final String email = widget.playerData['email'] ?? widget.walletData.email;
+
     return Scaffold(
       backgroundColor: darkBackground,
-      body: CustomScrollView(
-        slivers: [
-          _buildSliverAppBar(),
-          SliverPadding(
-            padding: const EdgeInsets.all(16.0),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                _buildSectionHeader("ESTATÍSTICAS"),
-                _buildStatsSection(widget.walletData),
-                const SizedBox(height: 24),
-                _buildSectionHeader("DADOS PESSOAIS"),
-                _buildEditableInfoCard(widget.playerData),
-                const SizedBox(height: 24),
-                _buildSectionHeader("SEGURANÇA"),
-                _buildAccountActions(widget.walletData.email),
-                const SizedBox(height: 30),
-              ]),
+      appBar: AppBar(
+        title: const Text(
+          'Meu Perfil',
+          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          children: [
+            _buildProfileHeader(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 32),
+                  _buildSectionHeader('ESTATÍSTICAS GERAIS'),
+                  _buildStatsSection(widget.walletData),
+                  const SizedBox(height: 32),
+                  _buildSectionHeader('INFORMAÇÕES PESSOAIS'),
+                  _buildEditableInfoCard(widget.playerData),
+                  const SizedBox(height: 32),
+                  _buildSectionHeader('CONTA'),
+                  _buildAccountActions(email),
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSliverAppBar() {
-    return SliverAppBar(
-      expandedHeight: 250.0,
-      floating: false,
-      pinned: true,
-      backgroundColor: darkBackground,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
-          alignment: Alignment.center,
-          fit: StackFit.expand,
+  Widget _buildProfileHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(bottom: 32, top: 16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Column(
           children: [
-            // Background decorativo
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [primaryAmber.withOpacity(0.1), darkBackground],
-                ),
-              ),
-            ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Stack(
+              alignment: Alignment.bottomRight,
               children: [
-                const SizedBox(height: 40),
-                Hero(
-                  tag: 'profile-avatar', // Hero tag para animação
-                  child: Stack(
-                    alignment: Alignment.bottomRight,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: primaryAmber, width: 2),
-                        ),
-                        child: CircleAvatar(
-                          radius: 50,
-                          backgroundColor: cardColor,
-                          backgroundImage: _selectedImage != null
-                              ? FileImage(_selectedImage!)
-                              : (widget.walletData.photoURL != null &&
-                                            widget
-                                                .walletData
-                                                .photoURL!
-                                                .isNotEmpty
-                                        ? NetworkImage(
-                                            widget.walletData.photoURL!,
-                                          )
-                                        : null)
-                                    as ImageProvider?,
-                          child:
-                              (_selectedImage == null &&
-                                  (widget.walletData.photoURL == null ||
-                                      widget.walletData.photoURL!.isEmpty))
-                              ? const Icon(
-                                  Icons.person,
-                                  size: 50,
-                                  color: secondaryTextColor,
-                                )
-                              : null,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: _pickImage,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: primaryAmber,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            size: 20,
-                            color: darkBackground,
-                          ),
-                        ),
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: primaryAmber, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryAmber.withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        spreadRadius: 2,
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  widget.walletData.name,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: darkBackground,
+                    backgroundImage: _selectedImage != null
+                        ? FileImage(_selectedImage!)
+                        : (widget.playerData['photoURL'] != null &&
+                                widget.playerData['photoURL'].isNotEmpty
+                            ? NetworkImage(widget.playerData['photoURL'])
+                            : null) as ImageProvider?,
+                    child: _selectedImage == null &&
+                            (widget.playerData['photoURL'] == null ||
+                                widget.playerData['photoURL'].isEmpty)
+                        ? const Icon(
+                            Icons.person,
+                            size: 50,
+                            color: secondaryTextColor,
+                          )
+                        : null,
                   ),
                 ),
-                Text(
-                  widget.walletData.email,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: secondaryTextColor,
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: primaryAmber,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt,
+                      size: 20,
+                      color: darkBackground,
+                    ),
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              widget.walletData.name,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
+            Text(
+              widget.walletData.email,
+              style: const TextStyle(
+                fontSize: 14,
+                color: secondaryTextColor,
+              ),
             ),
           ],
         ),
@@ -284,7 +307,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         children: [
@@ -316,7 +339,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Form(
         key: _formKey,
@@ -385,7 +408,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: secondaryTextColor, size: 20),
@@ -441,7 +464,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         children: [
@@ -449,7 +472,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(Icons.lock_reset, color: textColor, size: 20),
@@ -466,13 +489,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Divider(height: 1, color: Colors.white.withOpacity(0.1)),
+            child: Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
           ),
           ListTile(
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withOpacity(0.1),
+                color: Colors.redAccent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -489,7 +512,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             onTap: () async {
-              await _authService.signOut();
+              final authRepository = ref.read(authRepositoryProvider);
+              await authRepository.signOut();
             },
           ),
         ],
