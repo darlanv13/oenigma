@@ -326,7 +326,7 @@ async function sendCompletionNotifications(eventId, eventName, winnerId, winnerN
     };
     await admin.messaging().sendToDevice(tokens, payload);
   }
-};
+}
 
 
 // =================================================================== //
@@ -394,4 +394,58 @@ exports.subscribeToEvent = onCall(async (request) => {
     console.error("Erro na transação de inscrição:", error);
     throw new HttpsError("internal", "Não foi possível concluir a inscrição.");
   }
+});
+
+// =================================================================== //
+// NOVA FUNÇÃO: purchaseTool
+// DESCRIÇÃO: Permite ao jogador comprar Mapa ou Bússola.
+// =================================================================== //
+exports.purchaseTool = onCall(async (request) => {
+  const userId = request.auth?.uid;
+  if (!userId) throw new HttpsError("unauthenticated", "Usuário não autenticado.");
+
+  const { eventId, enigmaId, toolType } = request.data;
+  if (!eventId || !enigmaId || !toolType) {
+    throw new HttpsError("invalid-argument", "Dados incompletos.");
+  }
+
+  const toolCosts = { compass: 15, map: 20 };
+  const cost = toolCosts[toolType];
+  if (!cost) throw new HttpsError("invalid-argument", "Tipo de ferramenta inválido.");
+
+  const playerRef = db.collection("players").doc(userId);
+  const eventRef = db.collection("events").doc(eventId);
+
+  return await db.runTransaction(async (t) => {
+    const playerDoc = await t.get(playerRef);
+    if (!playerDoc.exists) throw new HttpsError("not-found", "Jogador não encontrado.");
+
+    const balance = playerDoc.data().balance || 0;
+    if (balance < cost) throw new HttpsError("failed-precondition", "Saldo insuficiente.");
+
+    const eventDoc = await t.get(eventRef);
+    if (!eventDoc.exists) throw new HttpsError("not-found", "Evento não encontrado.");
+
+    // Localizar o enigma (para eventos clássicos ou find_and_win)
+    // Para simplificar, consideramos find_and_win (sem fase) ou clássico com pesquisa ampla
+    let destinationLocation = null;
+    if (eventDoc.data().eventType === "find_and_win") {
+      const enigmaDoc = await t.get(eventRef.collection("enigmas").doc(enigmaId));
+      if (enigmaDoc.exists) destinationLocation = enigmaDoc.data().location;
+    } else {
+      // Busca simplificada (em produção, o phaseId deveria ser passado)
+      // Aqui assumimos que o client fará o merge se necessário
+    }
+
+    t.update(playerRef, {
+      balance: admin.firestore.FieldValue.increment(-cost),
+      [`events.${eventId}.tools.${toolType}`]: true
+    });
+
+    return {
+      success: true,
+      message: `${toolType} comprada com sucesso!`,
+      destinationLocation: destinationLocation
+    };
+  });
 });

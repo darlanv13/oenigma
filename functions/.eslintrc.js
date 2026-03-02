@@ -1,17 +1,32 @@
 module.exports = {
-  root: true,
   env: {
-    es2021: true,
+    es2022: true, // Updated to allow modern JS (optional chaining ?.)
     node: true,
   },
-  extends: ["google"],
   parserOptions: {
-    ecmaVersion: 12,
+    "ecmaVersion": 2022,
   },
+  extends: [
+    "eslint:recommended",
+    "google",
+  ],
   rules: {
-    "quotes": ["error", "double"],
-    "require-jsdoc": 0,
-    "max-len": ["error", {"code": 120}],
-    "camelcase": "off",
+    "no-restricted-globals": ["error", "name", "length"],
+    "prefer-arrow-callback": "error",
+    "quotes": ["error", "double", {"allowTemplateLiterals": true}],
+    "max-len": "off",
+    "object-curly-spacing": "off",
+    "comma-dangle": "off",
+    "require-jsdoc": "off",
   },
+  overrides: [
+    {
+      files: ["**/*.spec.*"],
+      env: {
+        mocha: true,
+      },
+      rules: {},
+    },
+  ],
+  globals: {},
 };

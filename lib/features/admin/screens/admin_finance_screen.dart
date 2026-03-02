@@ -98,7 +98,7 @@ class AdminFinanceScreen extends StatelessWidget {
     );
 
     try {
-      await FirebaseFunctions.instance.httpsCallable('payments-processWithdrawal').call({
+      await FirebaseFunctions.instance.httpsCallable('processWithdrawal').call({
         'withdrawalId': withdrawalId,
         'uid': uid,
         'action': action, // 'approve' fires Pix API, 'reject' refunds wallet
