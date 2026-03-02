@@ -368,50 +368,117 @@ class AdminEnigmasList extends StatelessWidget {
     );
   }
 
-  void _showEnigmaDialog(BuildContext context, {String? docId, Map<String, dynamic>? initialData}) {
+    void _showEnigmaDialog(BuildContext context, {String? docId, Map<String, dynamic>? initialData}) {
     final titleCtrl = TextEditingController(text: initialData?['title'] ?? '');
     final typeCtrl = TextEditingController(text: initialData?['type'] ?? 'qr_code_gps');
     final codeCtrl = TextEditingController(text: initialData?['correctCode'] ?? '');
     final orderCtrl = TextEditingController(text: initialData?['order']?.toString() ?? '1');
+    bool allowHints = initialData?['allowHints'] ?? true;
+    bool allowTools = initialData?['allowTools'] ?? true;
+    List<String> linkedHints = List<String>.from(initialData?['linkedHints'] ?? []);
 
     showDialog(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: cardColor,
-          title: const Text('Configurar Enigma', style: TextStyle(color: Colors.white)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: titleCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Título da Pista/Enigma')),
-                TextField(controller: typeCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Tipo (qr_code_gps, password, image)')),
-                TextField(controller: codeCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Código/Senha Correta')),
-                TextField(controller: orderCtrl, style: const TextStyle(color: Colors.white), keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Ordem')),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: cardColor,
+              title: const Text('Configurar Enigma', style: TextStyle(color: Colors.white)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(controller: titleCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Título da Pista/Enigma')),
+                    TextField(controller: typeCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Tipo (qr_code_gps, password, image)')),
+                    TextField(controller: codeCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Código/Senha Correta')),
+                    TextField(controller: orderCtrl, style: const TextStyle(color: Colors.white), keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Ordem')),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      title: const Text('Habilitar Dicas', style: TextStyle(color: Colors.white)),
+                      value: allowHints,
+                      activeTrackColor: primaryAmber.withValues(alpha: 0.5),
+                      activeThumbColor: primaryAmber,
+                      onChanged: (val) => setState(() => allowHints = val),
+                    ),
+                    SwitchListTile(
+                      title: const Text('Habilitar Ferramentas (Mapa/Bússola)', style: TextStyle(color: Colors.white)),
+                      value: allowTools,
+                      activeTrackColor: primaryAmber.withValues(alpha: 0.5),
+                      activeThumbColor: primaryAmber,
+                      onChanged: (val) => setState(() => allowTools = val),
+                    ),
+                    const Divider(color: Colors.white24),
+                    const Text('Caixa de Dicas (Sorteio)', style: TextStyle(color: primaryAmber, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance.collection('hints_pool').snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) return const CircularProgressIndicator();
+                        final allHints = snapshot.data!.docs;
+                        return Column(
+                          children: allHints.map((doc) {
+                            final hintData = doc.data() as Map<String, dynamic>;
+                            final isSelected = linkedHints.contains(doc.id);
+                            return CheckboxListTile(
+                              title: Text(hintData['title'] ?? 'Dica', style: const TextStyle(color: Colors.white, fontSize: 14)),
+                              subtitle: Text(hintData['type'] ?? 'text', style: const TextStyle(color: secondaryTextColor, fontSize: 12)),
+                              value: isSelected,
+                              activeColor: primaryAmber,
+                              checkColor: Colors.black,
+                              onChanged: (val) {
+                                setState(() {
+                                  if (val == true) {
+                                    linkedHints.add(doc.id);
+                                  } else {
+                                    linkedHints.remove(doc.id);
+                                  }
+                                });
+                              },
+                            );
+                          }).toList(),
+                        );
+                      }
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.red))),
+                ElevatedButton(
+                  onPressed: () async {
+                    final data = {
+                      'title': titleCtrl.text,
+                      'type': typeCtrl.text,
+                      'correctCode': codeCtrl.text,
+                      'order': int.tryParse(orderCtrl.text) ?? 1,
+                      'allowHints': allowHints,
+                      'allowTools': allowTools,
+                      'linkedHints': linkedHints,
+                    };
+
+                    if (docId == null) {
+                       FirebaseFunctions.instance.httpsCallable('createOrUpdateEnigma').call({
+                          'eventId': eventId,
+                          'phaseId': phaseId,
+                          'data': data
+                       });
+                    } else {
+                       FirebaseFunctions.instance.httpsCallable('createOrUpdateEnigma').call({
+                          'eventId': eventId,
+                          'phaseId': phaseId,
+                          'enigmaId': docId,
+                          'data': data
+                       });
+                    }
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
+                  child: const Text('Salvar'),
+                ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-            ElevatedButton(
-              onPressed: () async {
-                final data = {
-                  'title': titleCtrl.text,
-                  'type': typeCtrl.text,
-                  'correctCode': codeCtrl.text,
-                  'order': int.tryParse(orderCtrl.text) ?? 1,
-                };
-                final ref = FirebaseFirestore.instance.collection('events').doc(eventId).collection('phases').doc(phaseId).collection('enigmas');
-                if (docId == null) {
-                  await ref.add(data);
-                } else {
-                  await ref.doc(docId).update(data);
-                }
-                if (ctx.mounted) Navigator.pop(ctx);
-              },
-              child: const Text('Salvar'),
-            ),
-          ],
+            );
+          },
         );
       },
     );

@@ -124,16 +124,15 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
     // --- Ação: purchaseHint ---
     if (action === "purchaseHint") {
       const hintCosts = {1: 5, 2: 10, 3: 15};
-      const hintCost = hintCosts[phaseOrder];
-      if (!hintCost) throw new HttpsError("failed-precondition", "Dicas não estão disponíveis para esta fase.");
+      const hintCost = hintCosts[phaseOrder] || 5;
 
       try {
-        const phaseDocRef = await getPhaseDocRefByOrder(phaseOrder); // <-- Usa a nova busca
+        const phaseDocRef = await getPhaseDocRefByOrder(phaseOrder);
         const enigmaDocRef = phaseDocRef.collection("enigmas").doc(enigmaId);
 
-        await db.runTransaction(async (transaction) => {
+        return await db.runTransaction(async (transaction) => {
           const playerDoc = await transaction.get(playerRef);
-          const enigmaDoc = await transaction.get(enigmaDocRef); // <-- Pega o enigma dentro da transação
+          const enigmaDoc = await transaction.get(enigmaDocRef);
 
           if (!playerDoc.exists) throw new HttpsError("not-found", "Jogador não encontrado.");
           if (!enigmaDoc.exists) throw new HttpsError("not-found", "Enigma não encontrado.");
@@ -141,36 +140,61 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
           const playerData = playerDoc.data();
           const enigmaData = enigmaDoc.data();
 
-          // A verificação de dica agora funcionará corretamente
-          if (!enigmaData.hintType || !enigmaData.hintData) {
-            throw new HttpsError("not-found", "Nenhuma dica disponível para este enigma.");
+          if (enigmaData.allowHints === false) {
+            throw new HttpsError("failed-precondition", "Dicas estão desativadas para este enigma.");
+          }
+
+          // Fetch linked hints instead of the hardcoded old ones
+          let randomHintData = null;
+          const linkedHints = enigmaData.linkedHints || [];
+
+          if (linkedHints.length > 0) {
+            const randomHintId = linkedHints[Math.floor(Math.random() * linkedHints.length)];
+            const hintDoc = await transaction.get(db.collection("hints_pool").doc(randomHintId));
+            if (hintDoc.exists) {
+              randomHintData = hintDoc.data();
+            }
+          }
+
+          // Se a caixa de dicas estiver vazia, tenta cair na dica hardcoded se existir (para retrocompatibilidade)
+          const legacyHintType = enigmaData.hintType;
+          const legacyHintData = enigmaData.hintData;
+
+          if (!randomHintData && (!legacyHintType || !legacyHintData)) {
+            throw new HttpsError("not-found", "Nenhuma dica disponível ou caixa de dicas vazia.");
           }
 
           const currentBalance = playerData.balance || 0;
           if (currentBalance < hintCost) throw new HttpsError("failed-precondition", "Saldo insuficiente.");
 
+          // Check if already purchased
           const hintsPurchased = (playerData.events?.[eventId]?.hintsPurchased) || [];
-          if (hintsPurchased.includes(phaseOrder)) throw new HttpsError("already-exists", "Você já comprou a dica para esta fase.");
+          if (hintsPurchased.includes(phaseOrder)) {
+            throw new HttpsError("already-exists", "Você já comprou a dica para esta fase.");
+          }
+
+          const finalHintType = randomHintData ? randomHintData.type : legacyHintType;
+          const finalHintContent = randomHintData ? randomHintData.content : legacyHintData;
 
           const newBalance = currentBalance - hintCost;
           const newProgress = {
             ...playerData.events?.[eventId],
             hintsPurchased: admin.firestore.FieldValue.arrayUnion(phaseOrder),
+            // Salvamos a dica sorteada para o jogador não perder se fechar o app
+            [`hint_${phaseOrder}`]: { type: finalHintType, data: finalHintContent }
           };
 
           transaction.update(playerRef, {
             balance: newBalance,
-            [`events.${eventId}`]: newProgress, // Atualiza o sub-campo de forma segura
+            [`events.${eventId}`]: newProgress,
           });
-        });
 
-        const updatedEnigmaDoc = await enigmaDocRef.get();
-        const updatedEnigmaData = updatedEnigmaDoc.data();
-        return {
-          success: true,
-          message: "Dica comprada com sucesso!",
-          hint: {type: updatedEnigmaData.hintType, data: updatedEnigmaData.hintData},
-        };
+          return {
+            success: true,
+            message: "Dica comprada com sucesso!",
+            hint: { type: finalHintType, data: finalHintContent },
+          };
+        });
       } catch (error) {
         if (error instanceof HttpsError) throw error;
         console.error("Erro na transação de compra de dica:", error);
@@ -178,7 +202,6 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
       }
     }
 
-    // --- CORREÇÃO PRINCIPAL APLICADA AQUI ---
     if (action === "validateCode") {
       const eventDoc = await eventRef.get();
       if (!eventDoc.exists || eventDoc.data().status !== "open") {

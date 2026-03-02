@@ -53,6 +53,34 @@ exports.createOrUpdateEvent = onCall(async (request) => {
     } else {
       const newEventRef = await db.collection("events").add(data);
       currentEventId = newEventRef.id;
+
+      // --- AUTO-GENERATE 5 PHASES x 3 ENIGMAS ---
+      const batch = db.batch();
+      for (let p = 1; p <= 5; p++) {
+        const phaseRef = newEventRef.collection("phases").doc(`phase_${p}`);
+        batch.set(phaseRef, {
+          order: p,
+          isBlocked: p > 1, // Only first phase is unblocked by default
+          createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        for (let e = 1; e <= 3; e++) {
+          const enigmaRef = phaseRef.collection("enigmas").doc(`enigma_${e}`);
+          batch.set(enigmaRef, {
+            title: `Enigma ${e} (Fase ${p})`,
+            order: e,
+            type: "qr_code_gps",
+            status: "open",
+            correctCode: "EDIT_ME",
+            allowHints: true,
+            allowTools: true,
+            linkedHints: [], // Array of Hint IDs from the hints_pool
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      }
+      await batch.commit();
+      // ------------------------------------------
     }
     return {success: true, message: "Evento salvo com sucesso!", id: currentEventId};
   } catch (error) {
