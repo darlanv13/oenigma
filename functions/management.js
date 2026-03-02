@@ -7,11 +7,12 @@ const functions = require("firebase-functions"); // Necessário para o path
 const db = admin.firestore();
 
 // Função de verificação de permissão de administrador
+/*
 const ensureIsAdmin = (context) => {
     if (!context.auth || context.auth.token.role !== 'admin') {
         throw new HttpsError("permission-denied", "Acesso negado. Requer permissão de administrador.");
     }
-};
+};*/
 
 /**
  * Função recursiva para deletar uma coleção e todas as suas subcoleções.
