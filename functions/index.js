@@ -1,25 +1,28 @@
 const admin = require("firebase-admin");
 const {setGlobalOptions} = require("firebase-functions/v2");
 
-// Inicializa o Firebase Admin SDK uma única vez.
+// Initialize Firebase Admin SDK once.
 admin.initializeApp();
 
-// Define a região global para todas as funções de 2ª geração.
-// Isso evita ter que declarar a região em cada função individualmente.
+// Set global region to avoid repeating it.
 setGlobalOptions({region: "southamerica-east1"});
 
-// O código abaixo carrega os módulos 'events', 'gameplay', 'admin', e 'wallet',
-// e copia todas as funções exportadas por eles para o 'exports' principal do projeto.
-// Isso faz com que o Firebase reconheça todas as suas funções.
-Object.assign(exports,
-    require("./events"),
-    require("./gameplay"),
-    require("./admin"),
-    require("./wallet"),
-    require("./home"),
-    require("./management"),
-);
+// Import domains (Feature-First Architecture)
+const adminFeatures = require("./src/features/admin");
+const eventsFeatures = require("./src/features/events");
+const gameplayFeatures = require("./src/features/gameplay");
+const paymentFeatures = require("./src/features/payments");
+const homeFeatures = require("./src/features/users/home");
+const walletFeatures = require("./src/features/users/wallet");
+const notificationFeatures = require("./src/features/notifications");
 
-const notifications = require("./notifications");
-exports.notifyNewEvent = notifications.notifyNewEvent;
-exports.notifyWithdrawalApproved = notifications.notifyWithdrawalApproved;
+// Export all functions cleanly
+Object.assign(exports,
+    adminFeatures,
+    eventsFeatures,
+    gameplayFeatures,
+    paymentFeatures,
+    homeFeatures,
+    walletFeatures,
+    notificationFeatures,
+);

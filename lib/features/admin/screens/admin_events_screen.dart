@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -89,7 +90,7 @@ class AdminEventsScreen extends StatelessWidget {
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.redAccent),
                             onPressed: () {
-                               FirebaseFirestore.instance.collection('events').doc(eventId).delete();
+                               FirebaseFunctions.instance.httpsCallable('deleteEvent').call({'eventId': eventId});
                             },
                             tooltip: 'Excluir Evento',
                           ),
@@ -355,7 +356,7 @@ class AdminEnigmasList extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(icon: const Icon(Icons.edit, size: 18, color: Colors.blue), onPressed: () => _showEnigmaDialog(context, docId: doc.id, initialData: data)),
-                      IconButton(icon: const Icon(Icons.delete, size: 18, color: Colors.red), onPressed: () => doc.reference.delete()),
+                      IconButton(icon: const Icon(Icons.delete, size: 18, color: Colors.red), onPressed: () => FirebaseFunctions.instance.httpsCallable('deleteEnigma').call({'eventId': eventId, 'phaseId': phaseId, 'enigmaId': doc.id})),
                     ],
                   ),
                 );
