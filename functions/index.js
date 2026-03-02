@@ -1,12 +1,12 @@
 const admin = require("firebase-admin");
-const { setGlobalOptions } = require("firebase-functions/v2");
+const {setGlobalOptions} = require("firebase-functions/v2");
 
 // Inicializa o Firebase Admin SDK uma única vez.
 admin.initializeApp();
 
 // Define a região global para todas as funções de 2ª geração.
 // Isso evita ter que declarar a região em cada função individualmente.
-setGlobalOptions({ region: "southamerica-east1" });
+setGlobalOptions({region: "southamerica-east1"});
 
 // O código abaixo carrega os módulos 'events', 'gameplay', 'admin', e 'wallet',
 // e copia todas as funções exportadas por eles para o 'exports' principal do projeto.
@@ -17,5 +17,9 @@ Object.assign(exports,
     require("./admin"),
     require("./wallet"),
     require("./home"),
-    require("./management")
+    require("./management"),
 );
+
+const notifications = require("./notifications");
+exports.notifyNewEvent = notifications.notifyNewEvent;
+exports.notifyWithdrawalApproved = notifications.notifyWithdrawalApproved;
