@@ -1,20 +1,14 @@
-const {HttpsError, onCall} = require("firebase-functions/v2/https");
+const { HttpsError, onCall } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 // Esta linha é essencial e deve estar no topo do arquivo.
 const db = admin.firestore();
-
-// =================================================================== //
-// FUNÇÃO: handleEnigmaAction (CORRIGIDA)
-// DESCRIÇÃO: Processa ações do enigma com a lógica de busca de fase corrigida.
-// =================================================================== //
-// =================================================================== //
 // FUNÇÃO UNIFICADA: handleEnigmaAction
 // DESCRIÇÃO: Processa ações para AMBOS os modos de jogo, 'classic' e 'find_and_win'.
 // =================================================================== //
-exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) => {
+exports.handleEnigmaAction = onCall({ enforceAppCheck: false }, async (request) => {
   const playerId = request.auth.uid;
-  const {eventId, enigmaId, code, action, phaseOrder} = request.data;
+  const { eventId, enigmaId, code, action, phaseOrder } = request.data;
   const playerRef = db.collection("players").doc(playerId);
   const eventRef = db.collection("events").doc(eventId);
 
@@ -38,18 +32,18 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
     const attemptRef = playerRef.collection("eventAttempts").doc(enigmaId);
     const attemptDoc = await attemptRef.get();
     if (attemptDoc.exists && attemptDoc.data().cooldownUntil?.toDate() > new Date()) {
-      return {success: false, message: "Aguarde o fim do tempo de espera.", cooldownUntil: attemptDoc.data().cooldownUntil.toDate().toISOString()};
+      return { success: false, message: "Aguarde o fim do tempo de espera.", cooldownUntil: attemptDoc.data().cooldownUntil.toDate().toISOString() };
     }
 
     if (currentEnigmaDoc.data().code.toUpperCase() !== code.toUpperCase()) {
       const attempts = (attemptDoc.data()?.attempts || 0) + 1;
       if (attempts >= 3) {
         const cooldownTime = new Date(Date.now() + 10 * 60 * 1000);
-        await attemptRef.set({attempts, cooldownUntil: admin.firestore.Timestamp.fromDate(cooldownTime)});
-        return {success: false, message: "Tentativas esgotadas. Aguarde 10 minutos.", cooldownUntil: cooldownTime.toISOString()};
+        await attemptRef.set({ attempts, cooldownUntil: admin.firestore.Timestamp.fromDate(cooldownTime) });
+        return { success: false, message: "Tentativas esgotadas. Aguarde 10 minutos.", cooldownUntil: cooldownTime.toISOString() };
       } else {
-        await attemptRef.set({attempts}, {merge: true});
-        return {success: false, message: `Código incorreto. Você tem mais ${3 - attempts} tentativa(s).`};
+        await attemptRef.set({ attempts }, { merge: true });
+        return { success: false, message: `Código incorreto. Você tem mais ${3 - attempts} tentativa(s).` };
       }
     }
 
@@ -64,8 +58,8 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
         const prize = enigmaToSolve.data().prize || 0;
         const newBalance = (playerDoc.data().balance || 0) + prize;
 
-        transaction.update(playerRef, {balance: newBalance});
-        transaction.update(enigmaRef, {status: "closed", winnerId: playerId, winnerName: playerDoc.data().name, winnerPhotoURL: playerDoc.data().photoURL});
+        transaction.update(playerRef, { balance: newBalance });
+        transaction.update(enigmaRef, { status: "closed", winnerId: playerId, winnerName: playerDoc.data().name, winnerPhotoURL: playerDoc.data().photoURL });
       });
 
       // --- LÓGICA DE SELEÇÃO ALEATÓRIA ---
@@ -81,10 +75,10 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
       }
 
       // Atualiza o evento com o próximo enigma (ou nulo se não houver mais).
-      await eventRef.update({currentEnigmaId: nextEnigmaId});
+      await eventRef.update({ currentEnigmaId: nextEnigmaId });
 
       const prizeValue = currentEnigmaDoc.data().prize || 0;
-      return {success: true, message: `Parabéns! Você ganhou R$ ${prizeValue.toFixed(2)}!`};
+      return { success: true, message: `Parabéns! Você ganhou R$ ${prizeValue.toFixed(2)}!` };
     } catch (error) {
       console.error("Erro na transação Find & Win:", error);
       if (error instanceof HttpsError) throw error;
@@ -103,7 +97,7 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
     if (action === "getStatus") {
       const playerDoc = await playerRef.get();
       const playerData = playerDoc.data() || {};
-      const eventProgress = {currentPhase: 1, currentEnigma: 1, ...(playerData.events || {})[eventId]};
+      const eventProgress = { currentPhase: 1, currentEnigma: 1, ...(playerData.events || {})[eventId] };
       const hintsPurchased = eventProgress.hintsPurchased || [];
       const attemptRef = playerRef.collection("eventAttempts").doc(enigmaId);
       const attemptDoc = await attemptRef.get();
@@ -123,7 +117,7 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
 
     // --- Ação: purchaseHint ---
     if (action === "purchaseHint") {
-      const hintCosts = {1: 5, 2: 10, 3: 15};
+      const hintCosts = { 1: 5, 2: 10, 3: 15 };
       const hintCost = hintCosts[phaseOrder];
       if (!hintCost) throw new HttpsError("failed-precondition", "Dicas não estão disponíveis para esta fase.");
 
@@ -169,7 +163,7 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
         return {
           success: true,
           message: "Dica comprada com sucesso!",
-          hint: {type: updatedEnigmaData.hintType, data: updatedEnigmaData.hintData},
+          hint: { type: updatedEnigmaData.hintType, data: updatedEnigmaData.hintData },
         };
       } catch (error) {
         if (error instanceof HttpsError) throw error;
@@ -195,7 +189,7 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
       const attemptRef = playerRef.collection("eventAttempts").doc(enigmaId);
       const attemptDoc = await attemptRef.get();
       if (attemptDoc.exists && attemptDoc.data().cooldownUntil?.toDate() > new Date()) {
-        return {success: false, message: "Aguarde o fim do tempo de espera.", cooldownUntil: attemptDoc.data().cooldownUntil.toDate().toISOString()};
+        return { success: false, message: "Aguarde o fim do tempo de espera.", cooldownUntil: attemptDoc.data().cooldownUntil.toDate().toISOString() };
       }
 
       const enigmaDoc = await enigmaDocRef.get();
@@ -208,11 +202,11 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
         const attempts = (attemptDoc.data()?.attempts || 0) + 1;
         if (attempts >= 3) {
           const cooldownTime = new Date(Date.now() + 10 * 60 * 1000);
-          await attemptRef.set({attempts, cooldownUntil: admin.firestore.Timestamp.fromDate(cooldownTime)});
-          return {success: false, message: "Tentativas esgotadas. Aguarde 10 minutos.", cooldownUntil: cooldownTime.toISOString()};
+          await attemptRef.set({ attempts, cooldownUntil: admin.firestore.Timestamp.fromDate(cooldownTime) });
+          return { success: false, message: "Tentativas esgotadas. Aguarde 10 minutos.", cooldownUntil: cooldownTime.toISOString() };
         } else {
-          await attemptRef.set({attempts}, {merge: true});
-          return {success: false, message: `Código incorreto. Você tem mais ${3 - attempts} tentativa(s).`};
+          await attemptRef.set({ attempts }, { merge: true });
+          return { success: false, message: `Código incorreto. Você tem mais ${3 - attempts} tentativa(s).` };
         }
       }
 
@@ -235,7 +229,7 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
           const eventDoc = await transaction.get(eventRef);
           const eventData = eventDoc.data(); // <- E os dados do evento aqui
           const playerEvents = playerData.events || {};
-          const eventProgress = {currentPhase: 1, currentEnigma: 1, ...playerEvents[eventId]};
+          const eventProgress = { currentPhase: 1, currentEnigma: 1, ...playerEvents[eventId] };
 
           if (phaseOrder !== eventProgress.currentPhase) {
             throw new HttpsError("failed-precondition", "Você está tentando resolver um enigma de uma fase que não é a sua fase atual.");
@@ -255,7 +249,7 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
             const currentBalance = playerData.balance || 0;
             const newBalance = currentBalance + prizeValue;
 
-            transaction.update(playerRef, {balance: newBalance}); // Atualiza o saldo
+            transaction.update(playerRef, { balance: newBalance }); // Atualiza o saldo
 
             transaction.update(eventRef, {
               status: "closed",
@@ -273,16 +267,16 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
           } else if (isLastEnigma) {
             eventProgress.currentPhase += 1;
             eventProgress.currentEnigma = 1;
-            nextStepForClient = {type: "phase_complete"};
+            nextStepForClient = { type: "phase_complete" };
           } else {
             eventProgress.currentEnigma += 1;
             const enigmaDocs = enigmasInPhaseSnapshot.docs;
             const nextEnigmaDoc = enigmaDocs[eventProgress.currentEnigma - 1];
-            nextStepForClient = {type: "next_enigma", enigmaData: {id: nextEnigmaDoc.id, ...nextEnigmaDoc.data()}};
+            nextStepForClient = { type: "next_enigma", enigmaData: { id: nextEnigmaDoc.id, ...nextEnigmaDoc.data() } };
           }
 
-          const newPlayerEvents = {...playerEvents, [eventId]: eventProgress};
-          transaction.update(playerRef, {events: newPlayerEvents});
+          const newPlayerEvents = { ...playerEvents, [eventId]: eventProgress };
+          transaction.update(playerRef, { events: newPlayerEvents });
         });
       } catch (error) {
         if (error instanceof HttpsError) throw error;
@@ -295,7 +289,7 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
         await sendCompletionNotifications(eventId, eventData.name, playerId, playerData.name);
       }
 
-      return {success: true, message: "Parabéns!", nextStep: nextStepForClient};
+      return { success: true, message: "Parabéns!", nextStep: nextStepForClient };
     }
 
     throw new HttpsError("invalid-argument", "Ação não suportada.");
@@ -337,7 +331,7 @@ exports.subscribeToEvent = onCall(async (request) => {
   if (!userId) {
     throw new HttpsError("unauthenticated", "Usuário não autenticado.");
   }
-  const {eventId} = request.data;
+  const { eventId } = request.data;
   if (!eventId) {
     throw new HttpsError("invalid-argument", "O ID do evento é obrigatório.");
   }
@@ -386,7 +380,7 @@ exports.subscribeToEvent = onCall(async (request) => {
       });
     });
 
-    return {success: true, message: "Inscrição realizada com sucesso!"};
+    return { success: true, message: "Inscrição realizada com sucesso!" };
   } catch (error) {
     if (error instanceof HttpsError) {
       throw error;
