@@ -11,6 +11,7 @@ import 'package:oenigma/features/profile/widgets/profile_editable_info_card.dart
 import 'package:oenigma/features/profile/widgets/profile_header.dart';
 import 'package:oenigma/features/profile/widgets/profile_section_header.dart';
 import 'package:oenigma/features/profile/widgets/profile_stats_section.dart';
+import 'package:oenigma/features/profile/widgets/profile_badges_section.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> playerData;
@@ -147,6 +148,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: 32),
                   const ProfileSectionHeader(title: 'ESTATÍSTICAS GERAIS'),
                   ProfileStatsSection(wallet: widget.walletData),
+                  const SizedBox(height: 32),
+                  ProfileBadgesSection(playerData: widget.playerData),
                   const SizedBox(height: 32),
                   const ProfileSectionHeader(title: 'INFORMAÇÕES PESSOAIS'),
                   ProfileEditableInfoCard(

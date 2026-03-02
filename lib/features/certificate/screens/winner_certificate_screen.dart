@@ -6,6 +6,7 @@ import 'package:lottie/lottie.dart';
 import 'package:oenigma/core/models/phase_model.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
+import 'package:confetti/confetti.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -29,6 +30,20 @@ class WinnerCertificateScreen extends StatefulWidget {
 
 class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
   final ScreenshotController _screenshotController = ScreenshotController();
+  late ConfettiController _confettiController;
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 5));
+    _confettiController.play();
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
 
   Future<void> _shareCertificate() async {
     final Uint8List? image = await _screenshotController.capture();
@@ -40,13 +55,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
     ).create();
     await imagePath.writeAsBytes(image);
 
-    await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(imagePath.path)],
-        text:
-            'Eu venci o evento "${widget.event.name}" no OEnigma! #OEnigmaApp #CaçadorDeEnigmas',
-      ),
-    );
+    await Share.shareXFiles([XFile(imagePath.path)], text: 'Eu venci o evento "${widget.event.name}" no OEnigma! #OEnigmaApp #CaçadorDeEnigmas'); // ignore: deprecated_member_use
   }
 
   @override
@@ -65,145 +74,166 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            Screenshot(
-              controller: _screenshotController,
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: primaryAmber.withValues(alpha: 0.5),
-                    width: 2,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    // --- 1. LOGO ADICIONADA AQUI ---
-                    _buildEnigmaCityLogo(),
-                    const SizedBox(height: 10),
-                    Lottie.asset('assets/animations/trofel.json', height: 120),
-                    const Text(
-                      "CERTIFICADO DE CONQUISTA",
-                      style: TextStyle(
-                        color: primaryAmber,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              children: [
+                Screenshot(
+                  controller: _screenshotController,
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: primaryAmber.withValues(alpha: 0.5),
+                        width: 2,
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Stack(
-                      alignment: Alignment.center,
+                    child: Column(
                       children: [
-                        CircleAvatar(
-                          radius: 47, // Um pouco maior para a borda
-                          backgroundColor: Colors.amber.shade400, // Cor dourada
-                        ),
-                        CircleAvatar(
-                          radius: 45,
-                          backgroundColor: darkBackground,
-                          backgroundImage: winnerPhotoURL != null
-                              ? NetworkImage(winnerPhotoURL)
-                              : null,
-                          child: winnerPhotoURL == null
-                              ? const Icon(Icons.person, size: 45)
-                              : null,
-                        ),
-                        Positioned(
-                          top: -1,
-                          child: Icon(
-                            Icons.military_tech,
+                        _buildEnigmaCityLogo(),
+                        const SizedBox(height: 10),
+                        Lottie.asset('assets/animations/trofel.json', height: 120),
+                        const Text(
+                          "CERTIFICADO DE CONQUISTA",
+                          style: TextStyle(
                             color: primaryAmber,
-                            size: 30,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            CircleAvatar(
+                              radius: 47,
+                              backgroundColor: Colors.amber.shade400,
+                            ),
+                            CircleAvatar(
+                              radius: 45,
+                              backgroundColor: darkBackground,
+                              backgroundImage: winnerPhotoURL != null
+                                  ? NetworkImage(winnerPhotoURL)
+                                  : null,
+                              child: winnerPhotoURL == null
+                                  ? const Icon(Icons.person, size: 45)
+                                  : null,
+                            ),
+                            Positioned(
+                              top: -1,
+                              child: Icon(
+                                Icons.military_tech,
+                                color: primaryAmber,
+                                size: 30,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          winnerFirstName.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          "O CAÇADOR Nº 1",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: primaryAmber,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const Divider(height: 30, color: secondaryTextColor),
+                        _buildStatItem(
+                          "Prêmio Recebido",
+                          currencyFormat.format(widget.prizeWon),
+                          Icons.emoji_events_outlined,
+                        ),
+                        _buildStatItem(
+                          "Posição Final",
+                          "#1",
+                          Icons.leaderboard_outlined,
+                        ),
+                        _buildStatItem(
+                          "Fases Concluídas",
+                          "${widget.allPhases.length}",
+                          Icons.check_circle_outline,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Evento: "${widget.event.name}"',
+                          style: const TextStyle(
+                            color: secondaryTextColor,
+                            fontStyle: FontStyle.italic,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      winnerFirstName.toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      "O CAÇADOR Nº 1",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: primaryAmber,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Divider(height: 30, color: secondaryTextColor),
-                    _buildStatItem(
-                      "Prêmio Recebido",
-                      currencyFormat.format(widget.prizeWon),
-                      Icons.emoji_events_outlined,
-                    ),
-                    _buildStatItem(
-                      "Posição Final",
-                      "#1",
-                      Icons.leaderboard_outlined,
-                    ),
-                    _buildStatItem(
-                      "Fases Concluídas",
-                      "${widget.allPhases.length}",
-                      Icons.check_circle_outline,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Evento: "${widget.event.name}"',
-                      style: const TextStyle(
-                        color: secondaryTextColor,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE1306C), // Cor do Instagram
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE1306C), // Instagram color
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  onPressed: _shareCertificate,
+                  icon: const Icon(Icons.share),
+                  label: const Text(
+                    "Compartilhar Conquista",
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
-              ),
-              onPressed: _shareCertificate,
-              icon: const Icon(Icons.share),
-              label: const Text(
-                "Compartilhar Conquista",
-                style: TextStyle(fontSize: 16),
-              ),
+                const SizedBox(height: 32),
+                _buildInstructionsCard(),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text(
+                    "Voltar para o Início",
+                    style: TextStyle(color: primaryAmber),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 32),
-            _buildInstructionsCard(),
-            const SizedBox(height: 20),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                "Voltar para o Início",
-                style: TextStyle(color: primaryAmber),
-              ),
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              emissionFrequency: 0.05,
+              numberOfParticles: 50,
+              maxBlastForce: 100,
+              minBlastForce: 80,
+              gravity: 0.1,
+              colors: const [
+                Colors.green,
+                Colors.blue,
+                Colors.pink,
+                Colors.orange,
+                Colors.purple
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  // --- 2. NOVO WIDGET PARA A LOGO ---
   Widget _buildEnigmaCityLogo() {
     return RichText(
       textAlign: TextAlign.center,
@@ -212,7 +242,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
           fontSize: 28,
           fontWeight: FontWeight.bold,
           letterSpacing: 2,
-          fontFamily: 'Montserrat', // Sinta-se à vontade para trocar a fonte
+          fontFamily: 'Montserrat',
         ),
         children: <TextSpan>[
           TextSpan(
