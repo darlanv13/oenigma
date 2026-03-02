@@ -1,48 +1,50 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:oenigma/features/auth/screens/splash_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oenigma/firebase_options.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
-import 'firebase_options.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:oenigma/features/auth/screens/auth_wrapper.dart';
+import 'package:oenigma/features/auth/screens/onboarding_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('pt_BR', null);
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  await initializeDateFormatting('pt_BR', null);
+  final prefs = await SharedPreferences.getInstance();
+  final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
 
-  runApp(
-    const ProviderScope(
-      child: EnigmaCityApp(),
-    ),
-  );
+  runApp(ProviderScope(child: EnigmaCityApp(hasSeenOnboarding: hasSeenOnboarding)));
 }
 
-class EnigmaCityApp extends ConsumerWidget {
-  const EnigmaCityApp({super.key});
+class EnigmaCityApp extends StatelessWidget {
+  final bool hasSeenOnboarding;
+  const EnigmaCityApp({super.key, required this.hasSeenOnboarding});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Enigma City',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: const Color(0xFFFFC107),
-        scaffoldBackgroundColor: const Color(0xFF121212),
-        fontFamily: 'Poppins',
-        appBarTheme: const AppBarTheme(
+      title: 'O Enigma',
+      theme: ThemeData.dark().copyWith(
+        primaryColor: primaryAmber,
+        scaffoldBackgroundColor: darkBackground,
+        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+        appBarTheme: AppBarTheme(
+          backgroundColor: darkBackground,
           elevation: 0,
-          backgroundColor: Colors.transparent,
-          iconTheme: IconThemeData(color: Color(0xFFFFFFFF)),
-        ),
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: textColor),
-          bodyMedium: TextStyle(color: textColor),
+          centerTitle: true,
+          titleTextStyle: GoogleFonts.orbitron(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
       ),
-      home: const SplashScreen(),
+      home: hasSeenOnboarding ? const AuthWrapper() : const OnboardingScreen(),
     );
   }
 }

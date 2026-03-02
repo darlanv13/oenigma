@@ -7,6 +7,7 @@ import 'package:oenigma/features/event/widgets/event_card.dart';
 import 'package:oenigma/features/home/providers/home_events_provider.dart';
 import '../widgets/home_profile_card.dart';
 import '../widgets/events_section_header.dart';
+import 'package:oenigma/features/home/widgets/home_banner_carousel.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -111,6 +112,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
+                  SliverToBoxAdapter(child: FadeTransition(opacity: _fadeAnimation, child: const HomeBannerCarousel())),
                   SliverToBoxAdapter(
                     child: FadeTransition(
                       opacity: _fadeAnimation,
