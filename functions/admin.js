@@ -28,3 +28,13 @@ exports.toggleEventStatus = onCall(async (request) => {
         throw new HttpsError("internal", "Não foi possível atualizar o status do evento.");
     }
 });
+// Middleware function pattern to check admin claims
+exports.requireAdmin = (request) => {
+    if (!request.auth) {
+        throw new HttpsError("unauthenticated", "User must be logged in.");
+    }
+    const isAdmin = request.auth.token.super_admin === true || request.auth.token.editor === true;
+    if (!isAdmin) {
+        throw new HttpsError("permission-denied", "User does not have admin privileges.");
+    }
+};
