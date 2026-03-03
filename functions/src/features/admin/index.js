@@ -31,6 +31,82 @@ async function deleteQueryBatch(query, resolve) {
   process.nextTick(() => deleteQueryBatch(query, resolve));
 }
 
+
+// ---------------------------------------------------------------------------
+// ENIGMAS & PHASES CRUD OPERATIONS
+// ---------------------------------------------------------------------------
+
+exports.createOrUpdateEnigma = onCall(async (request) => {
+  requireAdmin(request);
+  const { eventId, phaseId, enigmaId, data } = request.data;
+
+  const eventRef = db.collection("events").doc(eventId);
+  const eventDoc = await eventRef.get();
+  if (!eventDoc.exists) throw new HttpsError("not-found", "O evento pai não foi encontrado.");
+
+  const eventType = eventDoc.data().eventType;
+
+  if (data.location && typeof data.location === "object" && data.location.latitude != null && data.location.longitude != null) {
+    data.location = new admin.firestore.GeoPoint(data.location.latitude, data.location.longitude);
+  }
+
+  const collectionRef = phaseId ?
+    eventRef.collection("phases").doc(phaseId).collection("enigmas") :
+    eventRef.collection("enigmas");
+
+  try {
+    if (enigmaId) {
+      await collectionRef.doc(enigmaId).update(data);
+      return { success: true, message: "Enigma atualizado.", id: enigmaId };
+    } else {
+      data.status = "open";
+      data.createdAt = admin.firestore.FieldValue.serverTimestamp();
+      const newEnigmaRef = await collectionRef.add(data);
+      if (eventType === "find_and_win" && !eventDoc.data().currentEnigmaId) {
+        await eventRef.update({ currentEnigmaId: newEnigmaRef.id });
+      }
+      return { success: true, message: "Enigma criado com sucesso.", id: newEnigmaRef.id };
+    }
+  } catch (error) {
+    console.error("Erro ao salvar enigma:", error);
+    throw new HttpsError("internal", "Erro ao salvar o enigma.");
+  }
+});
+
+exports.deleteEnigma = onCall(async (request) => {
+  requireAdmin(request);
+  const { eventId, phaseId, enigmaId } = request.data;
+  if (!eventId || !enigmaId) throw new HttpsError("invalid-argument", "IDs são obrigatórios.");
+
+  const eventRef = db.collection("events").doc(eventId);
+  const eventDoc = await eventRef.get();
+
+  const collectionRef = phaseId ?
+    eventRef.collection("phases").doc(phaseId).collection("enigmas") :
+    eventRef.collection("enigmas");
+
+  await collectionRef.doc(enigmaId).delete();
+
+  if (eventDoc.data().eventType === "find_and_win" && eventDoc.data().currentEnigmaId === enigmaId) {
+    const remaining = await collectionRef.where("status", "==", "open").get();
+    let nextEnigmaId = null;
+    if (!remaining.empty) {
+      nextEnigmaId = remaining.docs[Math.floor(Math.random() * remaining.docs.length)].id;
+    }
+    await eventRef.update({ currentEnigmaId: nextEnigmaId });
+  }
+  return { success: true, message: "Enigma excluído." };
+});
+
+exports.deletePhase = onCall(async (request) => {
+  requireAdmin(request);
+  const { eventId, phaseId } = request.data;
+  if (!eventId || !phaseId) throw new HttpsError("invalid-argument", "IDs são obrigatórios.");
+  await deleteCollection(`events/${eventId}/phases/${phaseId}/enigmas`, 100);
+  await db.collection("events").doc(eventId).collection("phases").doc(phaseId).delete();
+  return { success: true, message: "Fase excluída." };
+});
+
 // ---------------------------------------------------------------------------
 // ADMIN EVENT CRUD OPERATIONS
 // ---------------------------------------------------------------------------

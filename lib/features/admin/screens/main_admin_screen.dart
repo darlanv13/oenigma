@@ -6,19 +6,11 @@ import 'package:oenigma/features/admin/screens/admin_events_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_users_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_finance_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_fraud_screen.dart';
+import 'package:oenigma/features/admin/screens/admin_tools_screen.dart';
+import 'package:oenigma/features/admin/screens/admin_banners_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// Placeholder for tools
-class AdminToolsScreen extends StatelessWidget {
-  const AdminToolsScreen({super.key});
-  @override Widget build(BuildContext context) => const Center(child: Text('Gestão de Dicas e Ferramentas', style: TextStyle(color: Colors.white, fontSize: 24)));
-}
 
-// Placeholder for banners
-class AdminBannersScreen extends StatelessWidget {
-  const AdminBannersScreen({super.key});
-  @override Widget build(BuildContext context) => const Center(child: Text('Gestão de Banners', style: TextStyle(color: Colors.white, fontSize: 24)));
-}
 
 class MainAdminScreen extends StatefulWidget {
   const MainAdminScreen({super.key});
