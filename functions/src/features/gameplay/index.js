@@ -107,15 +107,31 @@ exports.handleEnigmaAction = onCall({enforceAppCheck: false}, async (request) =>
       const hintsPurchased = eventProgress.hintsPurchased || [];
       const attemptRef = playerRef.collection("eventAttempts").doc(enigmaId);
       const attemptDoc = await attemptRef.get();
+
       let cooldownUntil = null;
       let isBlocked = false;
       if (attemptDoc.exists && attemptDoc.data().cooldownUntil?.toDate() > new Date()) {
         cooldownUntil = attemptDoc.data().cooldownUntil.toDate().toISOString();
         isBlocked = true;
       }
+
+      const phaseDocRef = await getPhaseDocRefByOrder(phaseOrder);
+      const enigmaDocRef = phaseDocRef.collection("enigmas").doc(enigmaId);
+      const enigmaDoc = await enigmaDocRef.get();
+      const enigmaData = enigmaDoc.exists ? enigmaDoc.data() : {};
+
+      const hasHint = hintsPurchased.includes(phaseOrder);
+      const savedHint = hasHint ? eventProgress[`hint_${phaseOrder}`] || {type: enigmaData.hintType, data: enigmaData.hintData} : null;
+
+      const tools = eventProgress.tools || {};
+
       return {
-        isHintVisible: hintsPurchased.includes(phaseOrder),
-        canBuyHint: phaseOrder < 4 && !hintsPurchased.includes(phaseOrder),
+        isHintVisible: hasHint,
+        canBuyHint: !hasHint && enigmaData.allowHints !== false,
+        hintData: savedHint,
+        hasCompass: tools.compass || false,
+        hasMap: tools.map || false,
+        destinationLocation: enigmaData.location || null,
         isBlocked: isBlocked,
         cooldownUntil: cooldownUntil,
       };

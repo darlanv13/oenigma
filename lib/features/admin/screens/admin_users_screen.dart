@@ -17,7 +17,7 @@ class AdminUsersScreen extends StatelessWidget {
         const SizedBox(height: 24),
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('users').limit(50).snapshots(),
+            stream: FirebaseFirestore.instance.collection('players').limit(50).snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -34,7 +34,7 @@ class AdminUsersScreen extends StatelessWidget {
                 itemCount: users.length,
                 itemBuilder: (context, index) {
                   final user = users[index].data() as Map<String, dynamic>;
-                  final name = user['displayName'] ?? 'Sem Nome';
+                  final name = user['name'] ?? user['displayName'] ?? 'Sem Nome';
                   final email = user['email'] ?? 'Sem Email';
                   final photoURL = user['photoURL'] as String?;
 

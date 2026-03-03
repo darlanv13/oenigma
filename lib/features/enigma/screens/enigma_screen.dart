@@ -271,6 +271,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         final statusData = Map<String, dynamic>.from(result.data);
         setState(() {
           _isHintVisible = statusData['isHintVisible'] ?? false;
+          _hintData = statusData['hintData'] != null ? Map<String, dynamic>.from(statusData['hintData']) : null;
           _canBuyHint = statusData['canBuyHint'] ?? false;
           _isBlocked = statusData['isBlocked'] ?? false;
           _hasCompass = statusData['hasCompass'] ?? false;

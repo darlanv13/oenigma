@@ -164,11 +164,23 @@ class AdminEventsScreen extends StatelessWidget {
                   'updatedAt': FieldValue.serverTimestamp(),
                 };
 
-                if (docId == null) {
-                  data['createdAt'] = FieldValue.serverTimestamp();
-                  await FirebaseFirestore.instance.collection('events').add(data);
-                } else {
-                  await FirebaseFirestore.instance.collection('events').doc(docId).update(data);
+                try {
+                  // Cannot send FieldValue to Cloud Function, remove it
+                  data.remove('updatedAt');
+                  if (docId == null) {
+                    await FirebaseFunctions.instance.httpsCallable('createOrUpdateEvent').call({
+                      'data': data
+                    });
+                  } else {
+                    await FirebaseFunctions.instance.httpsCallable('createOrUpdateEvent').call({
+                      'eventId': docId,
+                      'data': data
+                    });
+                  }
+                } catch (e) {
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Erro ao salvar evento: $e')));
+                  }
                 }
                 if (ctx.mounted) Navigator.pop(ctx);
               },
