@@ -72,6 +72,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 itemCount: users.length,
                 itemBuilder: (context, index) {
                   final user = users[index] as Map<String, dynamic>;
+                  final uid = user['uid'] as String;
                   final name = user['name'] ?? user['displayName'] ?? 'Sem Nome';
                   final email = user['email'] ?? 'Sem Email';
                   final photoURL = user['photoURL'] as String?;
@@ -97,6 +98,32 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               // Action to view/edit wallet
                             },
                             tooltip: 'Ver Carteira',
+                          ),
+                          IconButton(
+                            icon: Icon(isAdmin ? Icons.admin_panel_settings : Icons.person, color: isAdmin ? Colors.blueAccent : Colors.grey),
+                            onPressed: () async {
+                              final functionName = isAdmin ? 'revokeAdminRole' : 'grantAdminRole';
+                              try {
+                                await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+                                    .httpsCallable(functionName)
+                                    .call({'uid': uid});
+                                setState(() {
+                                  _usersFuture = _fetchUsers();
+                                });
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(isAdmin ? 'Admin revogado.' : 'Admin concedido.')),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Erro ao atualizar admin: \$e')),
+                                  );
+                                }
+                              }
+                            },
+                            tooltip: isAdmin ? 'Revogar Admin' : 'Tornar Admin',
                           ),
                           IconButton(
                             icon: const Icon(Icons.block, color: Colors.redAccent),
