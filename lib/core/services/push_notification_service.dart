@@ -30,8 +30,10 @@ class PushNotificationService {
       // Registra o token no Firestore para o usuário atual
       await _saveDeviceToken();
 
-      // Subscreve ao tópico geral para avisos em massa (ex: Novo Evento)
-      await _fcm.subscribeToTopic('all_players');
+      if (!kIsWeb) {
+        // Subscreve ao tópico geral para avisos em massa (ex: Novo Evento)
+        await _fcm.subscribeToTopic('all_players');
+      }
 
       // Escuta tokens atualizados
       _fcm.onTokenRefresh.listen((newToken) {
@@ -39,7 +41,9 @@ class PushNotificationService {
       });
 
       // Configura handlers de mensagens
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      if (!kIsWeb) {
+        FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      }
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         print('Mensagem recebida em foreground: \${message.notification?.title}');

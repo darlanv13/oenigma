@@ -162,13 +162,22 @@ class AdminBannersScreen extends StatelessWidget {
                       'updatedAt': FieldValue.serverTimestamp(),
                     };
 
-                    if (docId == null) {
-                      data['createdAt'] = FieldValue.serverTimestamp();
-                      await FirebaseFirestore.instance.collection('banners').add(data);
-                    } else {
-                      await FirebaseFirestore.instance.collection('banners').doc(docId).update(data);
+                    try {
+                      if (docId == null) {
+                        data['createdAt'] = FieldValue.serverTimestamp();
+                        await FirebaseFirestore.instance.collection('banners').add(data);
+                      } else {
+                        await FirebaseFirestore.instance.collection('banners').doc(docId).update(data);
+                      }
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    } catch (e) {
+                      print("Erro: $e");
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(content: Text('Erro ao salvar banner: $e')),
+                        );
+                      }
                     }
-                    if (ctx.mounted) Navigator.pop(ctx);
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
                   child: const Text('Salvar'),

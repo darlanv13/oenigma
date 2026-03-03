@@ -1,54 +1,93 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
-class AdminUsersScreen extends StatelessWidget {
+class AdminUsersScreen extends StatefulWidget {
   const AdminUsersScreen({super.key});
+
+  @override
+  State<AdminUsersScreen> createState() => _AdminUsersScreenState();
+}
+
+class _AdminUsersScreenState extends State<AdminUsersScreen> {
+  late Future<List<dynamic>> _usersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _usersFuture = _fetchUsers();
+  }
+
+  Future<List<dynamic>> _fetchUsers() async {
+    final result = await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+        .httpsCallable('listAllUsers')
+        .call();
+    return result.data as List<dynamic>;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Gestão de Usuários e Carteira',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Gestão de Usuários e Carteira',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              onPressed: () {
+                setState(() {
+                  _usersFuture = _fetchUsers();
+                });
+              },
+            )
+          ],
         ),
         const SizedBox(height: 24),
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('players').limit(50).snapshots(),
+          child: FutureBuilder<List<dynamic>>(
+            future: _usersFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Erro ao carregar usuários: \${snapshot.error}', style: const TextStyle(color: Colors.redAccent)),
+                );
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return const Center(
                   child: Text('Nenhum usuário encontrado.', style: TextStyle(color: secondaryTextColor)),
                 );
               }
 
-              final users = snapshot.data!.docs;
+              final users = snapshot.data!;
 
               return ListView.builder(
                 itemCount: users.length,
                 itemBuilder: (context, index) {
-                  final user = users[index].data() as Map<String, dynamic>;
+                  final user = users[index] as Map<String, dynamic>;
                   final name = user['name'] ?? user['displayName'] ?? 'Sem Nome';
                   final email = user['email'] ?? 'Sem Email';
                   final photoURL = user['photoURL'] as String?;
+                  final isAdmin = user['isAdmin'] ?? false;
 
                   return Card(
                     color: cardColor,
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: primaryAmber,
+                        backgroundColor: isAdmin ? Colors.blueAccent : primaryAmber,
                         backgroundImage: photoURL != null ? NetworkImage(photoURL) : null,
-                        child: photoURL == null ? Text(name[0], style: const TextStyle(color: Colors.black)) : null,
+                        child: photoURL == null ? Text(name[0].toUpperCase(), style: const TextStyle(color: Colors.black)) : null,
                       ),
                       title: Text(name, style: const TextStyle(color: Colors.white)),
-                      subtitle: Text(email, style: const TextStyle(color: secondaryTextColor)),
+                      subtitle: Text('$email${isAdmin ? " • Admin" : ""}', style: const TextStyle(color: secondaryTextColor)),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
