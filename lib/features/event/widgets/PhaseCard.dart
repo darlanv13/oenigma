@@ -28,23 +28,45 @@ class PhaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Define a opacidade para fases bloqueadas
-    final double opacity = isLocked ? 0.5 : 1.0;
+    // Fases bloqueadas ficam acinzentadas, Fases ativas brilham
+    final bool isPlayable = !isLocked && !isCompleted;
+    final double scale = isActive ? 1.02 : 1.0;
 
-    return Opacity(
-      opacity: opacity,
-      child: Material(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+      transform: Matrix4.diagonal3Values(scale, scale, 1.0),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(20),
+        border: isActive ? Border.all(color: primaryAmber.withValues(alpha: 0.5), width: 2) : null,
+        boxShadow: isActive
+            ? [
+                BoxShadow(
+                  color: primaryAmber.withValues(alpha: 0.15),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                )
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                )
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(15),
-          onTap: isLocked || isCompleted
-              ? null // Impede o clique em fases bloqueadas
-              : () {
+          borderRadius: BorderRadius.circular(20),
+          splashColor: primaryAmber.withValues(alpha: 0.2),
+          onTap: isPlayable
+              ? () {
                   if (phase.enigmas.isNotEmpty) {
                     int enigmaIndex = currentEnigma - 1;
-                    if (enigmaIndex < 0 ||
-                        enigmaIndex >= phase.enigmas.length) {
+                    if (enigmaIndex < 0 || enigmaIndex >= phase.enigmas.length) {
                       enigmaIndex = 0;
                     }
                     Navigator.push(
@@ -53,48 +75,72 @@ class PhaseCard extends StatelessWidget {
                         builder: (context) => EnigmaScreen(
                           event: event,
                           phase: phase,
-                          // --- CORREÇÃO ESTÁ AQUI ---
-                          // Trocado 'enigma:' por 'initialEnigma:'
                           initialEnigma: phase.enigmas[enigmaIndex],
                           onEnigmaSolved: onPhaseCompleted,
                         ),
                       ),
                     );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Esta fase não possui enigmas cadastrados.')),
+                    );
                   }
-                },
+                }
+              : null,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            padding: const EdgeInsets.all(20.0),
             child: Row(
               children: [
                 _buildLeftIcon(),
-                const SizedBox(width: 16),
+                const SizedBox(width: 20),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        "Nivel ${phase.order}",
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Nivel \${phase.order}',
+                            style: TextStyle(
+                              color: isLocked ? secondaryTextColor : Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                          if (isPlayable)
+                            const Icon(FontAwesomeIcons.chevronRight, color: primaryAmber, size: 16),
+                        ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 12),
                       _buildStars(),
+                      const SizedBox(height: 12),
+                      _buildProgressBar(),
                     ],
                   ),
                 ),
-                if (!isLocked)
-                  const Icon(
-                    FontAwesomeIcons.chevronRight,
-                    color: secondaryTextColor,
-                    size: 28,
-                  ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // Barra de progresso linear fina
+  Widget _buildProgressBar() {
+    int total = phase.enigmas.length;
+    int completed = isCompleted ? total : (isActive ? currentEnigma - 1 : 0);
+    double progress = total == 0 ? 0 : completed / total;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: LinearProgressIndicator(
+        value: progress,
+        backgroundColor: Colors.black.withValues(alpha: 0.3),
+        color: isCompleted ? Colors.greenAccent : primaryAmber,
+        minHeight: 6,
       ),
     );
   }
@@ -107,28 +153,31 @@ class PhaseCard extends StatelessWidget {
 
     if (isCompleted) {
       iconData = FontAwesomeIcons.check;
-      backgroundColor = primaryAmber;
-      iconColor = darkBackground;
+      backgroundColor = Colors.green.withValues(alpha: 0.2);
+      iconColor = Colors.greenAccent;
     } else if (isActive) {
       iconData = FontAwesomeIcons.compass;
       backgroundColor = primaryAmber.withValues(alpha: 0.2);
       iconColor = primaryAmber;
     } else {
-      // isLocked
       iconData = FontAwesomeIcons.lock;
       backgroundColor = Colors.black.withValues(alpha: 0.3);
       iconColor = secondaryTextColor;
     }
 
     return Container(
-      width: 50,
-      height: 50,
+      width: 60,
+      height: 60,
       decoration: BoxDecoration(
         color: backgroundColor,
         shape: BoxShape.circle,
-        border: isActive ? Border.all(color: primaryAmber, width: 1.5) : null,
+        boxShadow: isActive ? [
+          BoxShadow(color: primaryAmber.withValues(alpha: 0.3), blurRadius: 10, spreadRadius: 2)
+        ] : [],
       ),
-      child: Icon(iconData, color: iconColor, size: 26),
+      child: Center(
+        child: Icon(iconData, color: iconColor, size: 28),
+      ),
     );
   }
 
@@ -140,10 +189,8 @@ class PhaseCard extends StatelessWidget {
     if (isCompleted) {
       completedEnigmas = totalEnigmas;
     } else if (isActive) {
-      // currentEnigma é 1-based, então subtraímos 1
       completedEnigmas = currentEnigma - 1;
     }
-    // Para fases bloqueadas, completedEnigmas continua 0
 
     if (totalEnigmas == 0) {
       return const Text(
@@ -154,10 +201,14 @@ class PhaseCard extends StatelessWidget {
 
     return Row(
       children: List.generate(totalEnigmas, (index) {
-        return Icon(
-          index < completedEnigmas ? FontAwesomeIcons.solidStar : FontAwesomeIcons.star,
-          color: primaryAmber,
-          size: 20,
+        bool isSolved = index < completedEnigmas;
+        return Padding(
+          padding: const EdgeInsets.only(right: 6.0),
+          child: Icon(
+            isSolved ? FontAwesomeIcons.solidStar : FontAwesomeIcons.star,
+            color: isSolved ? primaryAmber : secondaryTextColor.withValues(alpha: 0.5),
+            size: 16,
+          ),
         );
       }),
     );

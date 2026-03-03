@@ -231,48 +231,45 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: darkBackground,
-      // Usamos uma Stack para sobrepor o conteúdo sobre a imagem de header
-      body: Stack(
-        children: [
-          // 1. HEADER IMERSIVO
-          _buildHeaderImage(),
-
-          // 2. CONTEÚDO ROLÁVEL
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                // Espaçador para o conteúdo começar abaixo do header
-                const SizedBox(height: 280),
-                // Container principal com cantos arredondados
-                Container(
-                  decoration: const BoxDecoration(
-                    color: darkBackground,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(30),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTitleSection(),
-                      const SizedBox(height: 24),
-                      _buildInfoGrid(),
-                      const SizedBox(height: 24),
-                      _buildDescriptionSection(),
-                      // Espaço extra para não ser coberto pelo botão fixo
-                      const SizedBox(height: 120),
-                    ],
-                  ),
-                ),
-              ],
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 320.0,
+            floating: false,
+            pinned: true,
+            backgroundColor: darkBackground,
+            elevation: 0,
+            leading: _buildBackButton(context),
+            flexibleSpace: FlexibleSpaceBar(
+              background: _buildHeaderImage(),
             ),
           ),
-
-          // 3. BOTÃO DE VOLTAR E BOTÃO DE AÇÃO FIXO
-          _buildBackButton(context),
-          _buildBottomCtaButton(context),
+          SliverToBoxAdapter(
+            child: Container(
+              transform: Matrix4.translationValues(0.0, -30.0, 0.0),
+              decoration: const BoxDecoration(
+                color: darkBackground,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(30),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  _buildTitleSection(),
+                  const SizedBox(height: 24),
+                  _buildInfoGrid(),
+                  const SizedBox(height: 32),
+                  _buildDescriptionSection(),
+                  const SizedBox(height: 120),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
+      bottomSheet: _buildBottomCtaButton(context),
     );
   }
 
@@ -507,22 +504,25 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 
   Widget _buildBackButton(BuildContext context) {
-    return Positioned(
-      top: MediaQuery.of(context).padding.top + 10,
-      left: 10,
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(50),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.2),
+              color: Colors.black.withValues(alpha: 0.4),
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              icon: const Icon(
-                FontAwesomeIcons.angleLeft,
-                color: textColor,
+              icon: const Padding(
+                padding: EdgeInsets.only(right: 2.0),
+                child: Icon(
+                  FontAwesomeIcons.angleLeft,
+                  color: Colors.white,
+                  size: 20,
+                ),
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
@@ -547,26 +547,30 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     }
 
     // Lógica principal: Jogar ou Inscrever-se
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
+    return Container(
+      color: darkBackground,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [darkBackground, darkBackground.withValues(alpha: 0.0)],
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-          ),
+          color: cardColor.withValues(alpha: 0.95),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          boxShadow: [
+            BoxShadow(
+              color: primaryAmber.withValues(alpha: _isSubscribed ? 0.05 : 0.15),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            )
+          ]
         ),
         child: ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
             backgroundColor: _isSubscribed ? Colors.green : primaryAmber,
-            foregroundColor: darkBackground,
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            foregroundColor: _isSubscribed ? Colors.white : Colors.black,
+            elevation: 8,
+            shadowColor: _isSubscribed ? Colors.greenAccent : primaryAmber,
+            padding: const EdgeInsets.symmetric(vertical: 18),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
           onPressed: _isLoading
@@ -624,33 +628,29 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
 
   // Widget auxiliar para botões desabilitados
   Widget _buildDisabledButton({required IconData icon, required String label}) {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
+    return Container(
+      color: darkBackground,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [darkBackground, darkBackground.withValues(alpha: 0.0)],
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-          ),
+          color: cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
         ),
         child: ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.grey.shade800,
             foregroundColor: Colors.grey.shade500,
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: 18),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
           onPressed: null,
-          icon: Icon(icon, size: 28),
+          icon: Icon(icon, size: 24),
           label: Text(
             label,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.1),
           ),
         ),
       ),
