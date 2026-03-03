@@ -39,6 +39,12 @@ class AdminEventsScreen extends StatelessWidget {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
+              if (snapshot.hasError) {
+                print("Erro no stream de eventos: \${snapshot.error}");
+                return Center(
+                  child: Text('Erro ao carregar eventos: \n\${snapshot.error}', textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent)),
+                );
+              }
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const Center(
                   child: Text('Nenhum evento encontrado.', style: TextStyle(color: secondaryTextColor)),
@@ -161,12 +167,9 @@ class AdminEventsScreen extends StatelessWidget {
                   'prizePool': num.tryParse(prizeCtrl.text) ?? 0,
                   'city': cityCtrl.text,
                   'status': status,
-                  'updatedAt': FieldValue.serverTimestamp(),
                 };
 
                 try {
-                  // Cannot send FieldValue to Cloud Function, remove it
-                  data.remove('updatedAt');
                   if (docId == null) {
                     await FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEvent').call({
                       'data': data

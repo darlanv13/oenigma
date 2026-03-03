@@ -56,8 +56,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
+                print("Erro no FutureBuilder de usuários: \${snapshot.error}");
                 return Center(
-                  child: Text('Erro ao carregar usuários: \${snapshot.error}', style: const TextStyle(color: Colors.redAccent)),
+                  child: Text('Erro ao carregar usuários: \n\${snapshot.error}', textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent)),
                 );
               }
               if (!snapshot.hasData || snapshot.data!.isEmpty) {

@@ -167,12 +167,9 @@ class AdminToolsScreen extends StatelessWidget {
                       'title': titleCtrl.text,
                       'type': type,
                       'content': contentCtrl.text,
-                      'updatedAt': FieldValue.serverTimestamp(),
                     };
 
                     try {
-                      data.remove('createdAt');
-                      data.remove('updatedAt');
                       await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
                           .httpsCallable('createOrUpdateHint')
                           .call({

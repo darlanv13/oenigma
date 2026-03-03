@@ -166,12 +166,9 @@ class AdminBannersScreen extends StatelessWidget {
                       'actionUrl': actionCtrl.text,
                       'order': int.tryParse(orderCtrl.text) ?? 1,
                       'isActive': isActive,
-                      'updatedAt': FieldValue.serverTimestamp(),
                     };
 
                     try {
-                      data.remove('createdAt');
-                      data.remove('updatedAt');
                       await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
                           .httpsCallable('createOrUpdateBanner')
                           .call({
