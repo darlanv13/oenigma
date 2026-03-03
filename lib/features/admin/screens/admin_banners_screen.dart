@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -80,8 +81,14 @@ class AdminBannersScreen extends StatelessWidget {
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.redAccent),
-                            onPressed: () {
-                               FirebaseFirestore.instance.collection('banners').doc(bannerId).delete();
+                            onPressed: () async {
+                               try {
+                                 await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+                                    .httpsCallable('deleteBanner')
+                                    .call({'bannerId': bannerId});
+                               } catch (e) {
+                                 print("Erro ao excluir banner: $e");
+                               }
                             },
                             tooltip: 'Excluir Banner',
                           ),
@@ -159,16 +166,24 @@ class AdminBannersScreen extends StatelessWidget {
                       'actionUrl': actionCtrl.text,
                       'order': int.tryParse(orderCtrl.text) ?? 1,
                       'isActive': isActive,
-                      'updatedAt': FieldValue.serverTimestamp(),
                     };
 
-                    if (docId == null) {
-                      data['createdAt'] = FieldValue.serverTimestamp();
-                      await FirebaseFirestore.instance.collection('banners').add(data);
-                    } else {
-                      await FirebaseFirestore.instance.collection('banners').doc(docId).update(data);
+                    try {
+                      await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+                          .httpsCallable('createOrUpdateBanner')
+                          .call({
+                            'bannerId': docId,
+                            'data': data,
+                          });
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    } catch (e) {
+                      print("Erro: $e");
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(content: Text('Erro ao salvar banner via Cloud Function: $e')),
+                        );
+                      }
                     }
-                    if (ctx.mounted) Navigator.pop(ctx);
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
                   child: const Text('Salvar'),

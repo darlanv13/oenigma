@@ -39,6 +39,12 @@ class AdminEventsScreen extends StatelessWidget {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
+              if (snapshot.hasError) {
+                print("Erro no stream de eventos: \${snapshot.error}");
+                return Center(
+                  child: Text('Erro ao carregar eventos: \n\${snapshot.error}', textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent)),
+                );
+              }
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const Center(
                   child: Text('Nenhum evento encontrado.', style: TextStyle(color: secondaryTextColor)),
@@ -90,7 +96,7 @@ class AdminEventsScreen extends StatelessWidget {
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.redAccent),
                             onPressed: () {
-                               FirebaseFunctions.instance.httpsCallable('deleteEvent').call({'eventId': eventId});
+                               FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('deleteEvent').call({'eventId': eventId});
                             },
                             tooltip: 'Excluir Evento',
                           ),
@@ -161,18 +167,15 @@ class AdminEventsScreen extends StatelessWidget {
                   'prizePool': num.tryParse(prizeCtrl.text) ?? 0,
                   'city': cityCtrl.text,
                   'status': status,
-                  'updatedAt': FieldValue.serverTimestamp(),
                 };
 
                 try {
-                  // Cannot send FieldValue to Cloud Function, remove it
-                  data.remove('updatedAt');
                   if (docId == null) {
-                    await FirebaseFunctions.instance.httpsCallable('createOrUpdateEvent').call({
+                    await FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEvent').call({
                       'data': data
                     });
                   } else {
-                    await FirebaseFunctions.instance.httpsCallable('createOrUpdateEvent').call({
+                    await FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEvent').call({
                       'eventId': docId,
                       'data': data
                     });
@@ -368,7 +371,7 @@ class AdminEnigmasList extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(icon: const Icon(Icons.edit, size: 18, color: Colors.blue), onPressed: () => _showEnigmaDialog(context, docId: doc.id, initialData: data)),
-                      IconButton(icon: const Icon(Icons.delete, size: 18, color: Colors.red), onPressed: () => FirebaseFunctions.instance.httpsCallable('deleteEnigma').call({'eventId': eventId, 'phaseId': phaseId, 'enigmaId': doc.id})),
+                      IconButton(icon: const Icon(Icons.delete, size: 18, color: Colors.red), onPressed: () => FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('deleteEnigma').call({'eventId': eventId, 'phaseId': phaseId, 'enigmaId': doc.id})),
                     ],
                   ),
                 );
@@ -470,13 +473,13 @@ class AdminEnigmasList extends StatelessWidget {
                     };
 
                     if (docId == null) {
-                       FirebaseFunctions.instance.httpsCallable('createOrUpdateEnigma').call({
+                       FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEnigma').call({
                           'eventId': eventId,
                           'phaseId': phaseId,
                           'data': data
                        });
                     } else {
-                       FirebaseFunctions.instance.httpsCallable('createOrUpdateEnigma').call({
+                       FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEnigma').call({
                           'eventId': eventId,
                           'phaseId': phaseId,
                           'enigmaId': docId,

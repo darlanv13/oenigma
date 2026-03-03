@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -79,8 +80,14 @@ class AdminToolsScreen extends StatelessWidget {
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.redAccent),
-                            onPressed: () {
-                               FirebaseFirestore.instance.collection('hints_pool').doc(hintId).delete();
+                            onPressed: () async {
+                               try {
+                                 await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+                                    .httpsCallable('deleteHint')
+                                    .call({'hintId': hintId});
+                               } catch (e) {
+                                 print("Erro ao excluir dica: $e");
+                               }
                             },
                             tooltip: 'Excluir Dica',
                           ),
@@ -160,16 +167,24 @@ class AdminToolsScreen extends StatelessWidget {
                       'title': titleCtrl.text,
                       'type': type,
                       'content': contentCtrl.text,
-                      'updatedAt': FieldValue.serverTimestamp(),
                     };
 
-                    if (docId == null) {
-                      data['createdAt'] = FieldValue.serverTimestamp();
-                      await FirebaseFirestore.instance.collection('hints_pool').add(data);
-                    } else {
-                      await FirebaseFirestore.instance.collection('hints_pool').doc(docId).update(data);
+                    try {
+                      await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+                          .httpsCallable('createOrUpdateHint')
+                          .call({
+                            'hintId': docId,
+                            'data': data,
+                          });
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    } catch (e) {
+                      print("Erro: $e");
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(content: Text('Erro ao salvar dica via Cloud Function: $e')),
+                        );
+                      }
                     }
-                    if (ctx.mounted) Navigator.pop(ctx);
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
                   child: const Text('Salvar'),
