@@ -5,6 +5,8 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'dart:convert';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class CreditOptionsSheet extends StatelessWidget {
   final UserWalletModel wallet;
@@ -194,7 +196,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   Widget _buildErrorState() {
     return Column(
       children: [
-        const Icon(Icons.error_outline, color: Colors.redAccent, size: 50),
+        const Icon(FontAwesomeIcons.circleExclamation, color: Colors.redAccent, size: 50),
         const SizedBox(height: 16),
         const Text(
           "Erro ao gerar Pix",
@@ -299,7 +301,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                icon: const Icon(Icons.copy, color: Colors.black),
+                icon: const Icon(FontAwesomeIcons.copy, color: Colors.black),
                 label: const Text(
                   "COPIAR CÓDIGO PIX",
                   style: TextStyle(
@@ -338,7 +340,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   Widget _buildSuccessState() {
     return Column(
       children: [
-        const Icon(Icons.check_circle_rounded, color: Colors.green, size: 80),
+        const Icon(FontAwesomeIcons.circleCheck, color: Colors.green, size: 80),
         const SizedBox(height: 16),
         const Text(
           "Pagamento Confirmado!",

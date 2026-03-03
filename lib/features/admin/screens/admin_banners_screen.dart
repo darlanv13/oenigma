@@ -2,6 +2,8 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class AdminBannersScreen extends StatelessWidget {
   const AdminBannersScreen({super.key});
@@ -22,7 +24,7 @@ class AdminBannersScreen extends StatelessWidget {
               onPressed: () {
                 _showBannerDialog(context);
               },
-              icon: const Icon(Icons.add_photo_alternate),
+              icon: const Icon(FontAwesomeIcons.image),
               label: const Text('Novo Banner'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryAmber,
@@ -64,8 +66,8 @@ class AdminBannersScreen extends StatelessWidget {
                       leading: SizedBox(
                         width: 80,
                         child: imageUrl.isNotEmpty
-                            ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image))
-                            : const Icon(Icons.image, color: Colors.grey),
+                            ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Icon(FontAwesomeIcons.image))
+                            : const Icon(FontAwesomeIcons.image, color: Colors.grey),
                       ),
                       title: Text('Ordem: $order - ${isActive ? "Ativo" : "Inativo"}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       subtitle: Text('Link: $actionUrl', style: const TextStyle(color: secondaryTextColor), maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -73,14 +75,14 @@ class AdminBannersScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.edit, color: primaryAmber),
+                            icon: const Icon(FontAwesomeIcons.pen, color: primaryAmber),
                             onPressed: () {
                               _showBannerDialog(context, docId: bannerId, initialData: banner);
                             },
                             tooltip: 'Editar Banner',
                           ),
                           IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.redAccent),
+                            icon: const Icon(FontAwesomeIcons.trashCan, color: Colors.redAccent),
                             onPressed: () async {
                                try {
                                  await FirebaseFunctions.instanceFor(region: 'southamerica-east1')

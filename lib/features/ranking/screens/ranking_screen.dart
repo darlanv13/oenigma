@@ -6,6 +6,8 @@ import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/ranking/widgets/ranking_event_selector.dart';
 import 'package:oenigma/features/ranking/widgets/ranking_list.dart';
 import 'package:oenigma/features/ranking/widgets/ranking_podium.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class RankingScreen extends ConsumerStatefulWidget {
   final List<EventModel> availableEvents;
@@ -240,7 +242,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                         child: Column(
                           children: [
                             Icon(
-                              Icons.emoji_events_outlined,
+                              FontAwesomeIcons.trophy,
                               size: 64,
                               color: secondaryTextColor.withValues(alpha: 0.5),
                             ),

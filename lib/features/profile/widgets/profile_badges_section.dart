@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class ProfileBadgesSection extends StatelessWidget {
   final Map<String, dynamic> playerData;
@@ -15,14 +17,14 @@ class ProfileBadgesSection extends StatelessWidget {
     if (events.isNotEmpty) {
       badges.add({
         'title': 'Desbravador',
-        'icon': Icons.explore,
+        'icon': FontAwesomeIcons.compass,
         'color': Colors.blueAccent,
         'description': 'Entrou em um evento pela primeira vez.'
       });
     } else {
       badges.add({
         'title': 'Desbravador',
-        'icon': Icons.explore_off,
+        'icon': FontAwesomeIcons.compass,
         'color': Colors.grey,
         'description': 'Ainda não participou de nenhum evento.',
         'locked': true
@@ -33,14 +35,14 @@ class ProfileBadgesSection extends StatelessWidget {
     if (winnerEvents.isNotEmpty) {
       badges.add({
         'title': 'Primeiro Sangue',
-        'icon': Icons.military_tech,
+        'icon': FontAwesomeIcons.medal,
         'color': primaryAmber,
         'description': 'Venceu um evento em 1º lugar.'
       });
     } else {
       badges.add({
         'title': 'Primeiro Sangue',
-        'icon': Icons.military_tech,
+        'icon': FontAwesomeIcons.medal,
         'color': Colors.grey,
         'description': 'Ainda não venceu nenhum evento.',
         'locked': true
@@ -51,14 +53,14 @@ class ProfileBadgesSection extends StatelessWidget {
     if (events.length >= 5) {
       badges.add({
         'title': 'Veterano',
-        'icon': Icons.local_fire_department,
+        'icon': FontAwesomeIcons.fire,
         'color': Colors.deepOrangeAccent,
         'description': 'Participou de 5 ou mais eventos.'
       });
     } else {
       badges.add({
         'title': 'Veterano',
-        'icon': Icons.local_fire_department,
+        'icon': FontAwesomeIcons.fire,
         'color': Colors.grey,
         'description': 'Participe de 5 eventos para desbloquear.',
         'locked': true

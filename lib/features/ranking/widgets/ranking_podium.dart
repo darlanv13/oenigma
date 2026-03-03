@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oenigma/core/models/ranking_player_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class RankingPodium extends StatelessWidget {
   final List<RankingPlayerModel> top3;
@@ -107,7 +109,7 @@ class _PodiumPlace extends StatelessWidget {
                       : null,
                   child: player.photoURL == null
                       ? Icon(
-                          Icons.person,
+                          FontAwesomeIcons.solidUser,
                           size: isFirstPlace ? 30 : 20,
                           color: secondaryTextColor,
                         )

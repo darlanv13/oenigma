@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class HomeProfileCard extends StatelessWidget {
   final Map<String, dynamic> playerData;
@@ -64,7 +66,7 @@ class HomeProfileCard extends StatelessWidget {
                       : null,
                   child: (wallet.photoURL == null || wallet.photoURL!.isEmpty)
                       ? const Icon(
-                          Icons.person_outline,
+                          FontAwesomeIcons.user,
                           color: secondaryTextColor,
                           size: 30,
                         )
@@ -88,7 +90,7 @@ class HomeProfileCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.emoji_events, size: 14, color: primaryAmber),
+                        const Icon(FontAwesomeIcons.trophy, size: 14, color: primaryAmber),
                         const SizedBox(width: 4),
                         Text(
                           'Ranking: #${wallet.lastEventRank ?? '-'}',

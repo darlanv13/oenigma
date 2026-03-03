@@ -5,6 +5,8 @@ import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/auth/screens/signup_screen.dart';
 import 'package:oenigma/features/auth/screens/forgot_password_screen.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -120,7 +122,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _buildTextFormField(
               controller: _emailController,
               hintText: "Email",
-              icon: Icons.email_outlined,
+              icon: FontAwesomeIcons.envelope,
               validator: (val) =>
                   val!.isEmpty ? 'Por favor, insira um email' : null,
             ),
@@ -128,11 +130,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _buildTextFormField(
               controller: _passwordController,
               hintText: "Senha",
-              icon: Icons.lock_outline,
+              icon: FontAwesomeIcons.lock,
               obscureText: !_isPasswordVisible,
               suffixIcon: IconButton(
                 icon: Icon(
-                  _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                  _isPasswordVisible ? FontAwesomeIcons.solidEyeSlash : FontAwesomeIcons.solidEye,
                   color: textColor.withValues(alpha: 0.7),
                 ),
                 onPressed: () =>

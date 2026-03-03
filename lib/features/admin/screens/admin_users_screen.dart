@@ -1,6 +1,8 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class AdminUsersScreen extends StatefulWidget {
   const AdminUsersScreen({super.key});
@@ -38,7 +40,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             IconButton(
-              icon: const Icon(Icons.refresh, color: Colors.white),
+              icon: const Icon(FontAwesomeIcons.rotateRight, color: Colors.white),
               onPressed: () {
                 setState(() {
                   _usersFuture = _fetchUsers();
@@ -94,14 +96,14 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.account_balance_wallet, color: Colors.greenAccent),
+                            icon: const Icon(FontAwesomeIcons.wallet, color: Colors.greenAccent),
                             onPressed: () {
                               // Action to view/edit wallet
                             },
                             tooltip: 'Ver Carteira',
                           ),
                           IconButton(
-                            icon: Icon(isAdmin ? Icons.admin_panel_settings : Icons.person, color: isAdmin ? Colors.blueAccent : Colors.grey),
+                            icon: Icon(isAdmin ? FontAwesomeIcons.userShield : FontAwesomeIcons.solidUser, color: isAdmin ? Colors.blueAccent : Colors.grey),
                             onPressed: () async {
                               final functionName = isAdmin ? 'revokeAdminRole' : 'grantAdminRole';
                               try {
@@ -127,7 +129,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             tooltip: isAdmin ? 'Revogar Admin' : 'Tornar Admin',
                           ),
                           IconButton(
-                            icon: const Icon(Icons.block, color: Colors.redAccent),
+                            icon: const Icon(FontAwesomeIcons.ban, color: Colors.redAccent),
                             onPressed: () {
                               // Action to ban/suspend
                             },

@@ -3,6 +3,8 @@ import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
 import 'package:oenigma/features/enigma/screens/enigma_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class PhaseCard extends StatelessWidget {
   final EventModel event;
@@ -85,7 +87,7 @@ class PhaseCard extends StatelessWidget {
                 ),
                 if (!isLocked)
                   const Icon(
-                    Icons.chevron_right,
+                    FontAwesomeIcons.chevronRight,
                     color: secondaryTextColor,
                     size: 28,
                   ),
@@ -104,16 +106,16 @@ class PhaseCard extends StatelessWidget {
     Color iconColor = Colors.white;
 
     if (isCompleted) {
-      iconData = Icons.check;
+      iconData = FontAwesomeIcons.check;
       backgroundColor = primaryAmber;
       iconColor = darkBackground;
     } else if (isActive) {
-      iconData = Icons.explore_outlined;
+      iconData = FontAwesomeIcons.compass;
       backgroundColor = primaryAmber.withValues(alpha: 0.2);
       iconColor = primaryAmber;
     } else {
       // isLocked
-      iconData = Icons.lock;
+      iconData = FontAwesomeIcons.lock;
       backgroundColor = Colors.black.withValues(alpha: 0.3);
       iconColor = secondaryTextColor;
     }
@@ -153,7 +155,7 @@ class PhaseCard extends StatelessWidget {
     return Row(
       children: List.generate(totalEnigmas, (index) {
         return Icon(
-          index < completedEnigmas ? Icons.star : Icons.star_border,
+          index < completedEnigmas ? FontAwesomeIcons.solidStar : FontAwesomeIcons.star,
           color: primaryAmber,
           size: 20,
         );

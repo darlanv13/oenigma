@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class ProfileAccountActions extends ConsumerWidget {
   final String email;
@@ -30,14 +32,14 @@ class ProfileAccountActions extends ConsumerWidget {
                 color: Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.lock_reset, color: textColor, size: 20),
+              child: const Icon(FontAwesomeIcons.unlock, color: textColor, size: 20),
             ),
             title: const Text(
               'Redefinir Senha',
               style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
             ),
             trailing: const Icon(
-              Icons.chevron_right,
+              FontAwesomeIcons.chevronRight,
               color: secondaryTextColor,
             ),
             onTap: () => onResetPassword(email),
@@ -54,7 +56,7 @@ class ProfileAccountActions extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
-                Icons.logout,
+                FontAwesomeIcons.arrowRightFromBracket,
                 color: Colors.redAccent,
                 size: 20,
               ),

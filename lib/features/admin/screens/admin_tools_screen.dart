@@ -2,6 +2,8 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class AdminToolsScreen extends StatelessWidget {
   const AdminToolsScreen({super.key});
@@ -22,7 +24,7 @@ class AdminToolsScreen extends StatelessWidget {
               onPressed: () {
                 _showHintDialog(context);
               },
-              icon: const Icon(Icons.add),
+              icon: const Icon(FontAwesomeIcons.plus),
               label: const Text('Nova Dica'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryAmber,
@@ -61,7 +63,7 @@ class AdminToolsScreen extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
                       leading: Icon(
-                        type == 'image_url' ? Icons.image : type == 'audio_url' ? Icons.audiotrack : Icons.text_snippet,
+                        type == 'image_url' ? FontAwesomeIcons.image : type == 'audio_url' ? FontAwesomeIcons.music : FontAwesomeIcons.fileLines,
                         color: primaryAmber,
                         size: 40,
                       ),
@@ -72,14 +74,14 @@ class AdminToolsScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blueAccent),
+                            icon: const Icon(FontAwesomeIcons.pen, color: Colors.blueAccent),
                             onPressed: () {
                               _showHintDialog(context, docId: hintId, initialData: hint);
                             },
                             tooltip: 'Editar Dica',
                           ),
                           IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.redAccent),
+                            icon: const Icon(FontAwesomeIcons.trashCan, color: Colors.redAccent),
                             onPressed: () async {
                                try {
                                  await FirebaseFunctions.instanceFor(region: 'southamerica-east1')

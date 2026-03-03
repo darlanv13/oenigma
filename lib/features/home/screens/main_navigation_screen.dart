@@ -41,7 +41,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
-                Icons.error_outline,
+                FontAwesomeIcons.circleExclamation,
                 size: 48,
                 color: Colors.redAccent,
               ),
@@ -62,7 +62,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: () => ref.refresh(homeEventsProvider.future),
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(FontAwesomeIcons.rotateRight),
                 label: const Text("Tentar Novamente"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryAmber,

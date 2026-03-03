@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class ProfileStatsSection extends StatelessWidget {
   final UserWalletModel wallet;
@@ -15,7 +17,7 @@ class ProfileStatsSection extends StatelessWidget {
           child: _StatCard(
             label: 'Saldo',
             value: 'R\$ ${wallet.balance.toStringAsFixed(2)}',
-            icon: Icons.wallet,
+            icon: FontAwesomeIcons.wallet,
             color: primaryAmber,
           ),
         ),
@@ -24,7 +26,7 @@ class ProfileStatsSection extends StatelessWidget {
           child: _StatCard(
             label: 'Ranking',
             value: '#${wallet.lastEventRank ?? '-'}',
-            icon: Icons.bar_chart,
+            icon: FontAwesomeIcons.chartBar,
             color: Colors.lightBlueAccent,
           ),
         ),
@@ -33,7 +35,7 @@ class ProfileStatsSection extends StatelessWidget {
           child: _StatCard(
             label: 'Vitórias',
             value: wallet.lastWonEventName != null ? "1" : "0",
-            icon: Icons.emoji_events,
+            icon: FontAwesomeIcons.trophy,
             color: Colors.orangeAccent,
           ),
         ),

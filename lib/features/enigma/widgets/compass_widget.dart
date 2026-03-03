@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class CompassWidget extends StatefulWidget {
   final double destinationLatitude;
@@ -218,7 +220,7 @@ class _CompassWidgetState extends State<CompassWidget> with SingleTickerProvider
 
                     // O JOGADOR (Triângulo Vermelho no Centro)
                     const Icon(
-                      Icons.navigation, // Um ícone que parece um triângulo
+                      FontAwesomeIcons.locationArrow, // Um ícone que parece um triângulo
                       color: Colors.redAccent,
                       size: 24,
                     ),

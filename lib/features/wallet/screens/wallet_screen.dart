@@ -9,6 +9,8 @@ import 'package:oenigma/features/wallet/widgets/wallet_history_list.dart';
 import 'package:oenigma/features/wallet/widgets/wallet_profile_header.dart';
 import 'package:oenigma/features/wallet/widgets/wallet_prizes_section.dart';
 import 'package:oenigma/features/wallet/widgets/wallet_section_header.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class WalletScreen extends ConsumerStatefulWidget {
   const WalletScreen({super.key});
@@ -81,7 +83,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+              const Icon(FontAwesomeIcons.circleExclamation, size: 48, color: Colors.redAccent),
               const SizedBox(height: 16),
               const Text(
                 'Erro ao carregar carteira',
@@ -143,7 +145,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
         Expanded(
           child: ElevatedButton.icon(
             onPressed: () => _showAddFundsDialog(wallet),
-            icon: const Icon(Icons.add_circle_outline),
+            icon: const Icon(FontAwesomeIcons.circlePlus),
             label: const Text('Adicionar\nSaldo'),
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryAmber,

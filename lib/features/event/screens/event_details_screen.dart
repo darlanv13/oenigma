@@ -12,6 +12,8 @@ import '../screens/event_progress_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'find_and_win_progress_screen.dart';
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class EventDetailsScreen extends ConsumerStatefulWidget {
   final EventModel event;
@@ -309,7 +311,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 },
               )
             else
-              const Icon(Icons.help_outline, size: 150, color: primaryAmber),
+              const Icon(FontAwesomeIcons.circleQuestion, size: 150, color: primaryAmber),
             // O gradiente continua o mesmo
             Container(
               decoration: BoxDecoration(
@@ -389,12 +391,12 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         childAspectRatio: 2.5,
         children: [
           _buildInfoPill(
-            Icons.location_on_outlined,
+            FontAwesomeIcons.locationDot,
             'Local',
             widget.event.location,
           ),
           _buildInfoPill(
-            Icons.calendar_today_outlined,
+            FontAwesomeIcons.calendarDay,
             'Data',
             widget.event.startDate,
           ),
@@ -407,7 +409,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 final solved = snapshot.data?['solved'] ?? 0;
                 final total = snapshot.data?['total'] ?? 0;
                 return _buildInfoPill(
-                  Icons.track_changes,
+                  FontAwesomeIcons.bullseye,
                   'Enigmas Resolvidos',
                   '$solved / $total',
                 );
@@ -415,7 +417,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 // Modo Clássico
                 final total = snapshot.data?['total'] ?? 0;
                 return _buildInfoPill(
-                  Icons.filter_alt_outlined,
+                  FontAwesomeIcons.filter,
                   'Fases',
                   total.toString(),
                 );
@@ -424,7 +426,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           ),
 
           _buildInfoPill(
-            Icons.monetization_on_outlined,
+            FontAwesomeIcons.coins,
             'Inscrição',
             'R\$ ${widget.event.price.toStringAsFixed(2)}',
           ),
@@ -519,7 +521,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             ),
             child: IconButton(
               icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
+                FontAwesomeIcons.angleLeft,
                 color: textColor,
               ),
               onPressed: () => Navigator.of(context).pop(),
@@ -533,13 +535,13 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   Widget _buildBottomCtaButton(BuildContext context) {
     if (widget.event.status == 'closed') {
       return _buildDisabledButton(
-        icon: Icons.flag_outlined,
+        icon: FontAwesomeIcons.flag,
         label: 'Evento Finalizado',
       );
     }
     if (widget.event.status == 'dev') {
       return _buildDisabledButton(
-        icon: Icons.hourglass_top_rounded,
+        icon: FontAwesomeIcons.hourglassHalf,
         label: 'Em Breve',
       );
     }
@@ -605,8 +607,8 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 )
               : Icon(
                   _isSubscribed
-                      ? Icons.play_arrow_rounded
-                      : Icons.login_rounded,
+                      ? FontAwesomeIcons.play
+                      : FontAwesomeIcons.rightToBracket,
                   size: 28,
                 ),
           label: Text(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class WalletHistoryList extends StatelessWidget {
   final UserWalletModel wallet;
@@ -25,7 +27,7 @@ class WalletHistoryList extends StatelessWidget {
       children: [
         if (wallet.lastEventRank != null)
           _HistoryItem(
-            icon: Icons.bar_chart,
+            icon: FontAwesomeIcons.chartBar,
             title: 'Classificação em Evento',
             subtitle: 'Você ficou em #${wallet.lastEventRank}',
             color: Colors.lightBlueAccent,

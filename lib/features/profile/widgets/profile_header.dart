@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class ProfileHeader extends StatelessWidget {
   final UserWalletModel walletData;
@@ -67,7 +69,7 @@ class ProfileHeader extends StatelessWidget {
                             (playerData['photoURL'] == null ||
                                 playerData['photoURL'].isEmpty)
                         ? const Icon(
-                            Icons.person,
+                            FontAwesomeIcons.solidUser,
                             size: 50,
                             color: secondaryTextColor,
                           )
@@ -83,7 +85,7 @@ class ProfileHeader extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
-                      Icons.camera_alt,
+                      FontAwesomeIcons.camera,
                       size: 20,
                       color: darkBackground,
                     ),

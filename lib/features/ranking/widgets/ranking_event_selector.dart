@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class RankingEventSelector extends StatelessWidget {
   final String? selectedEventId;
@@ -27,7 +29,7 @@ class RankingEventSelector extends StatelessWidget {
         value: selectedEventId,
         isExpanded: true,
         dropdownColor: cardColor,
-        icon: const Icon(Icons.keyboard_arrow_down, color: primaryAmber),
+        icon: const Icon(FontAwesomeIcons.chevronDown, color: primaryAmber),
         underline: const SizedBox(),
         onChanged: onChanged,
         items: availableEvents.map<DropdownMenuItem<String>>((EventModel event) {

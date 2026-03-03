@@ -2,6 +2,8 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class AdminEventsScreen extends StatelessWidget {
   const AdminEventsScreen({super.key});
@@ -22,7 +24,7 @@ class AdminEventsScreen extends StatelessWidget {
               onPressed: () {
                 _showEventDialog(context);
               },
-              icon: const Icon(Icons.add),
+              icon: const Icon(FontAwesomeIcons.plus),
               label: const Text('Novo Evento'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryAmber,
@@ -67,7 +69,7 @@ class AdminEventsScreen extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
                       leading: Icon(
-                        status == 'published' ? Icons.play_circle_fill : Icons.pause_circle_filled,
+                        status == 'published' ? FontAwesomeIcons.solidCirclePlay : FontAwesomeIcons.solidCirclePause,
                         color: status == 'published' ? Colors.green : Colors.orange,
                         size: 40,
                       ),
@@ -77,7 +79,7 @@ class AdminEventsScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.list, color: Colors.blueAccent),
+                            icon: const Icon(FontAwesomeIcons.list, color: Colors.blueAccent),
                             onPressed: () {
                                Navigator.push(
                                   context,
@@ -87,14 +89,14 @@ class AdminEventsScreen extends StatelessWidget {
                             tooltip: 'Gerenciar Fases/Enigmas',
                           ),
                           IconButton(
-                            icon: const Icon(Icons.edit, color: primaryAmber),
+                            icon: const Icon(FontAwesomeIcons.pen, color: primaryAmber),
                             onPressed: () {
                               _showEventDialog(context, docId: eventId, initialData: event);
                             },
                             tooltip: 'Editar Evento',
                           ),
                           IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.redAccent),
+                            icon: const Icon(FontAwesomeIcons.trashCan, color: Colors.redAccent),
                             onPressed: () {
                                FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('deleteEvent').call({'eventId': eventId});
                             },
@@ -220,7 +222,7 @@ class AdminPhasesScreen extends StatelessWidget {
               onPressed: () {
                 _showPhaseDialog(context);
               },
-              icon: const Icon(Icons.add),
+              icon: const Icon(FontAwesomeIcons.plus),
               label: const Text('Nova Fase'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryAmber,
@@ -254,7 +256,7 @@ class AdminPhasesScreen extends StatelessWidget {
                           title: Text('Fase $order', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                           subtitle: Text('Status: ${isBlocked ? "Bloqueada" : "Ativa"}', style: const TextStyle(color: secondaryTextColor)),
                           trailing: IconButton(
-                            icon: const Icon(Icons.edit, color: primaryAmber),
+                            icon: const Icon(FontAwesomeIcons.pen, color: primaryAmber),
                             onPressed: () => _showPhaseDialog(context, docId: phaseId, initialData: phase),
                           ),
                           children: [
@@ -342,7 +344,7 @@ class AdminEnigmasList extends StatelessWidget {
       children: [
         ElevatedButton.icon(
           onPressed: () => _showEnigmaDialog(context),
-          icon: const Icon(Icons.add_task, size: 16),
+          icon: const Icon(FontAwesomeIcons.listCheck, size: 16),
           label: const Text('Adicionar Enigma/Desafio'),
           style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, foregroundColor: Colors.white),
         ),
@@ -370,8 +372,8 @@ class AdminEnigmasList extends StatelessWidget {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(icon: const Icon(Icons.edit, size: 18, color: Colors.blue), onPressed: () => _showEnigmaDialog(context, docId: doc.id, initialData: data)),
-                      IconButton(icon: const Icon(Icons.delete, size: 18, color: Colors.red), onPressed: () => FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('deleteEnigma').call({'eventId': eventId, 'phaseId': phaseId, 'enigmaId': doc.id})),
+                      IconButton(icon: const Icon(FontAwesomeIcons.pen, size: 18, color: Colors.blue), onPressed: () => _showEnigmaDialog(context, docId: doc.id, initialData: data)),
+                      IconButton(icon: const Icon(FontAwesomeIcons.trashCan, size: 18, color: Colors.red), onPressed: () => FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('deleteEnigma').call({'eventId': eventId, 'phaseId': phaseId, 'enigmaId': doc.id})),
                     ],
                   ),
                 );
