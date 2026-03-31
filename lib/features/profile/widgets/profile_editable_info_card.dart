@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class ProfileEditableInfoCard extends StatelessWidget {
   final Map<String, dynamic> playerData;
@@ -33,25 +35,25 @@ class ProfileEditableInfoCard extends StatelessWidget {
             _InfoRow(
               label: 'Nome Completo',
               value: playerData['name'] ?? '',
-              icon: Icons.badge_outlined,
+              icon: FontAwesomeIcons.idBadge,
             ),
             const Divider(height: 32, color: Colors.white10),
             _InfoRow(
               label: 'CPF',
               value: playerData['cpf'] ?? '',
-              icon: Icons.credit_card,
+              icon: FontAwesomeIcons.creditCard,
             ),
             const Divider(height: 32, color: Colors.white10),
             _InfoRow(
               label: 'Data de Nascimento',
               value: playerData['birthDate'] ?? '',
-              icon: Icons.calendar_month,
+              icon: FontAwesomeIcons.calendarDays,
             ),
             const Divider(height: 32, color: Colors.white10),
             _TextFormField(
               controller: phoneController,
               label: 'Telefone',
-              icon: Icons.phone_android,
+              icon: FontAwesomeIcons.mobileScreenButton,
             ),
             const SizedBox(height: 24),
             SizedBox(

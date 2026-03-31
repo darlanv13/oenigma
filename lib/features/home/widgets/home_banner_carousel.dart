@@ -4,6 +4,8 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class HomeBannerCarousel extends StatelessWidget {
   const HomeBannerCarousel({super.key});
@@ -67,9 +69,9 @@ class HomeBannerCarousel extends StatelessWidget {
                             imageUrl: imageUrl,
                             fit: BoxFit.cover,
                             placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: primaryAmber)),
-                            errorWidget: (context, url, error) => const Icon(Icons.error),
+                            errorWidget: (context, url, error) => const Icon(FontAwesomeIcons.circleExclamation),
                           )
-                        : const Center(child: Icon(Icons.image_not_supported, color: secondaryTextColor)),
+                        : const Center(child: Icon(FontAwesomeIcons.image, color: secondaryTextColor)),
                   ),
                 ),
               );

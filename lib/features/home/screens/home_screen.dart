@@ -8,6 +8,8 @@ import 'package:oenigma/features/home/providers/home_events_provider.dart';
 import '../widgets/home_profile_card.dart';
 import '../widgets/events_section_header.dart';
 import 'package:oenigma/features/home/widgets/home_banner_carousel.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -59,7 +61,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(
-                  Icons.error_outline,
+                  FontAwesomeIcons.circleExclamation,
                   size: 48,
                   color: Colors.redAccent,
                 ),
@@ -80,7 +82,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: _reloadData,
-                  icon: const Icon(Icons.refresh),
+                  icon: const Icon(FontAwesomeIcons.rotateRight),
                   label: const Text("Tentar Novamente"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryAmber,
@@ -163,7 +165,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             padding: EdgeInsets.all(40.0),
             child: Column(
               children: [
-                Icon(Icons.event_busy, size: 40, color: secondaryTextColor),
+                Icon(FontAwesomeIcons.calendarXmark, size: 40, color: secondaryTextColor),
                 SizedBox(height: 16),
                 Text(
                   'Nenhum evento ativo no momento.',

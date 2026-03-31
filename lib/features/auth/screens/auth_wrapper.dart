@@ -7,6 +7,8 @@ import 'package:oenigma/features/home/screens/main_navigation_screen.dart';
 import 'package:oenigma/features/auth/screens/login_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_auth_wrapper.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class AuthWrapper extends ConsumerWidget {
   const AuthWrapper({super.key});
@@ -71,7 +73,7 @@ class AuthWrapper extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.desktop_windows, size: 80, color: primaryAmber),
+              const Icon(FontAwesomeIcons.desktop, size: 80, color: primaryAmber),
               const SizedBox(height: 24),
               const Text(
                 'Acesso Restrito',
@@ -88,7 +90,7 @@ class AuthWrapper extends ConsumerWidget {
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
                 },
-                icon: const Icon(Icons.logout),
+                icon: const Icon(FontAwesomeIcons.arrowRightFromBracket),
                 label: const Text('Sair e Trocar de Conta'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryAmber,

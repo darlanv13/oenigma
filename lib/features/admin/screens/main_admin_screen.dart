@@ -86,7 +86,7 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
         elevation: 0,
         leading: isDesktop
             ? IconButton(
-                icon: const Icon(Icons.menu),
+                icon: const Icon(FontAwesomeIcons.bars),
                 onPressed: () {
                   setState(() {
                     _isExpanded = !_isExpanded;

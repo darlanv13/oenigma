@@ -10,6 +10,8 @@ import 'package:confetti/confetti.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class WinnerCertificateScreen extends StatefulWidget {
   final EventModel event;
@@ -121,13 +123,13 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                                   ? NetworkImage(winnerPhotoURL)
                                   : null,
                               child: winnerPhotoURL == null
-                                  ? const Icon(Icons.person, size: 45)
+                                  ? const Icon(FontAwesomeIcons.solidUser, size: 45)
                                   : null,
                             ),
                             Positioned(
                               top: -1,
                               child: Icon(
-                                Icons.military_tech,
+                                FontAwesomeIcons.medal,
                                 color: primaryAmber,
                                 size: 30,
                               ),
@@ -156,17 +158,17 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                         _buildStatItem(
                           "Prêmio Recebido",
                           currencyFormat.format(widget.prizeWon),
-                          Icons.emoji_events_outlined,
+                          FontAwesomeIcons.trophy,
                         ),
                         _buildStatItem(
                           "Posição Final",
                           "#1",
-                          Icons.leaderboard_outlined,
+                          FontAwesomeIcons.chartBar,
                         ),
                         _buildStatItem(
                           "Fases Concluídas",
                           "${widget.allPhases.length}",
-                          Icons.check_circle_outline,
+                          FontAwesomeIcons.circleCheck,
                         ),
                         const SizedBox(height: 10),
                         Text(
@@ -191,7 +193,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                     ),
                   ),
                   onPressed: _shareCertificate,
-                  icon: const Icon(Icons.share),
+                  icon: const Icon(FontAwesomeIcons.shareNodes),
                   label: const Text(
                     "Compartilhar Conquista",
                     style: TextStyle(fontSize: 16),
@@ -296,7 +298,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
         children: [
           const Row(
             children: [
-              Icon(Icons.help_outline, color: primaryAmber),
+              Icon(FontAwesomeIcons.circleQuestion, color: primaryAmber),
               SizedBox(width: 10),
               Text(
                 "Como Receber seu Prêmio",

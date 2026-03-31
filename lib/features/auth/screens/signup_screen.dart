@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -146,7 +148,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 if (_currentStep > 0)
                   ElevatedButton.icon(
                     onPressed: details.onStepCancel,
-                    icon: const Icon(Icons.arrow_back),
+                    icon: const Icon(FontAwesomeIcons.arrowLeft),
                     label: const Text('Voltar'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: cardColor,
@@ -166,7 +168,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           ),
                         )
                       : Icon(
-                          _currentStep == 0 ? Icons.arrow_forward : Icons.check,
+                          _currentStep == 0 ? FontAwesomeIcons.arrowRight : FontAwesomeIcons.check,
                         ),
                   label: Text(_currentStep == 0 ? 'Avançar' : 'Concluir'),
                   style: ElevatedButton.styleFrom(
@@ -195,7 +197,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             _buildTextFormField(
               controller: _emailController,
               hintText: 'E-mail',
-              icon: Icons.email_outlined,
+              icon: FontAwesomeIcons.envelope,
               validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
               keyboardType: TextInputType.emailAddress,
             ),
@@ -203,7 +205,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             _buildTextFormField(
               controller: _passwordController,
               hintText: 'Senha',
-              icon: Icons.lock_outline,
+              icon: FontAwesomeIcons.lock,
               obscureText: true,
               validator: (v) => v!.length < 6 ? 'Mínimo de 6 caracteres' : null,
             ),
@@ -211,7 +213,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             _buildTextFormField(
               controller: _confirmPasswordController,
               hintText: 'Confirmar Senha',
-              icon: Icons.lock_outline,
+              icon: FontAwesomeIcons.lock,
               obscureText: true,
               validator: (v) => v != _passwordController.text
                   ? 'As senhas não coincidem'
@@ -234,7 +236,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             _buildTextFormField(
               controller: _fullNameController,
               hintText: 'Nome Completo',
-              icon: Icons.person_outline,
+              icon: FontAwesomeIcons.user,
               validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
               textCapitalization: TextCapitalization.words,
             ),
@@ -242,7 +244,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             _buildTextFormField(
               controller: _cpfController,
               hintText: 'CPF',
-              icon: Icons.badge_outlined,
+              icon: FontAwesomeIcons.idBadge,
               validator: _validateCpf, // Validador customizado
               keyboardType: TextInputType.number,
               inputFormatters: [
@@ -254,7 +256,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             _buildTextFormField(
               controller: _birthDateController,
               hintText: 'Data de Nascimento',
-              icon: Icons.calendar_today_outlined,
+              icon: FontAwesomeIcons.calendarDay,
               validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
               keyboardType: TextInputType.datetime,
             ),
@@ -262,7 +264,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             _buildTextFormField(
               controller: _phoneController,
               hintText: 'Telefone',
-              icon: Icons.phone_outlined,
+              icon: FontAwesomeIcons.phone,
               validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
               keyboardType: TextInputType.phone,
               inputFormatters: [

@@ -5,6 +5,8 @@ import 'package:lottie/lottie.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import '../screens/event_details_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class EventCard extends StatefulWidget {
   final EventModel event;
@@ -172,7 +174,7 @@ class _EventCardState extends State<EventCard> {
                               Row(
                                 children: [
                                   const Icon(
-                                    Icons.calendar_today,
+                                    FontAwesomeIcons.calendarDay,
                                     color: secondaryTextColor,
                                     size: 12,
                                   ),
@@ -281,7 +283,7 @@ class _EventCardState extends State<EventCard> {
                                 ? NetworkImage(event.winnerPhotoURL!)
                                 : null,
                             child: event.winnerPhotoURL == null
-                                ? const Icon(Icons.person, size: 16)
+                                ? const Icon(FontAwesomeIcons.solidUser, size: 16)
                                 : null,
                           ),
                           const SizedBox(width: 8),
@@ -317,7 +319,7 @@ class _EventCardState extends State<EventCard> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
-                Icons.hourglass_top_rounded,
+                FontAwesomeIcons.hourglassHalf,
                 color: secondaryTextColor,
                 size: 50,
               ),

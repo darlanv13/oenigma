@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 void showSuccessDialog(
   BuildContext context, {
@@ -25,7 +27,7 @@ void showSuccessDialog(
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.green, width: 3),
                 ),
-                child: const Icon(Icons.check, color: Colors.green, size: 50),
+                child: const Icon(FontAwesomeIcons.check, color: Colors.green, size: 50),
               ),
               const SizedBox(height: 24),
               const Text(

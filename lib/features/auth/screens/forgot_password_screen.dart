@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -101,7 +103,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       style: const TextStyle(color: textColor),
                       decoration: InputDecoration(
                         prefixIcon: const Icon(
-                          Icons.email_outlined,
+                          FontAwesomeIcons.envelope,
                           color: secondaryTextColor,
                         ),
                         labelText: 'Email',

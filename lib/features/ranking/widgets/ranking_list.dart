@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/core/models/ranking_player_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class RankingList extends ConsumerWidget {
   final List<RankingPlayerModel> players;
@@ -68,7 +70,7 @@ class RankingList extends ConsumerWidget {
                       : null,
                   child: player.photoURL == null
                       ? const Icon(
-                          Icons.person,
+                          FontAwesomeIcons.solidUser,
                           size: 20,
                           color: secondaryTextColor,
                         )

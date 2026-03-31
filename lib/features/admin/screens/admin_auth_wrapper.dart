@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:oenigma/features/admin/screens/main_admin_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class AdminAuthWrapper extends StatelessWidget {
   const AdminAuthWrapper({super.key});
@@ -54,7 +56,7 @@ class AdminAuthWrapper extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.security, size: 80, color: Colors.redAccent),
+            const Icon(FontAwesomeIcons.shieldHalved, size: 80, color: Colors.redAccent),
             const SizedBox(height: 20),
             const Text(
               'Acesso Restrito',
@@ -72,7 +74,7 @@ class AdminAuthWrapper extends StatelessWidget {
                   Navigator.pop(context);
                 }
               },
-              icon: const Icon(Icons.arrow_back),
+              icon: const Icon(FontAwesomeIcons.arrowLeft),
               label: const Text('Voltar para o Aplicativo'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryAmber,

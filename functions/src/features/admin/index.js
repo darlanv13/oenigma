@@ -125,8 +125,11 @@ exports.createOrUpdateEvent = onCall(async (request) => {
   let currentEventId = eventId;
   try {
     if (currentEventId) {
+      data.updatedAt = admin.firestore.FieldValue.serverTimestamp();
       await db.collection("events").doc(currentEventId).set(data, {merge: true});
     } else {
+      data.createdAt = admin.firestore.FieldValue.serverTimestamp();
+      data.updatedAt = admin.firestore.FieldValue.serverTimestamp();
       const newEventRef = await db.collection("events").add(data);
       currentEventId = newEventRef.id;
 
@@ -179,6 +182,64 @@ exports.deleteEvent = onCall(async (request) => {
 });
 
 // ---------------------------------------------------------------------------
+// ADMIN HINTS & BANNERS CRUD OPERATIONS
+// ---------------------------------------------------------------------------
+
+exports.createOrUpdateHint = onCall(async (request) => {
+  requireAdmin(request);
+  const { hintId, data } = request.data;
+  try {
+    if (hintId) {
+      data.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+      await db.collection("hints_pool").doc(hintId).update(data);
+      return { success: true, message: "Dica atualizada." };
+    } else {
+      data.createdAt = admin.firestore.FieldValue.serverTimestamp();
+      data.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+      const newRef = await db.collection("hints_pool").add(data);
+      return { success: true, message: "Dica criada com sucesso.", id: newRef.id };
+    }
+  } catch (error) {
+    throw new HttpsError("internal", "Erro ao salvar dica: " + error.message);
+  }
+});
+
+exports.deleteHint = onCall(async (request) => {
+  requireAdmin(request);
+  const { hintId } = request.data;
+  if (!hintId) throw new HttpsError("invalid-argument", "hintId is required.");
+  await db.collection("hints_pool").doc(hintId).delete();
+  return { success: true, message: "Dica excluída." };
+});
+
+exports.createOrUpdateBanner = onCall(async (request) => {
+  requireAdmin(request);
+  const { bannerId, data } = request.data;
+  try {
+    if (bannerId) {
+      data.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+      await db.collection("banners").doc(bannerId).update(data);
+      return { success: true, message: "Banner atualizado." };
+    } else {
+      data.createdAt = admin.firestore.FieldValue.serverTimestamp();
+      data.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+      const newRef = await db.collection("banners").add(data);
+      return { success: true, message: "Banner criado com sucesso.", id: newRef.id };
+    }
+  } catch (error) {
+    throw new HttpsError("internal", "Erro ao salvar banner: " + error.message);
+  }
+});
+
+exports.deleteBanner = onCall(async (request) => {
+  requireAdmin(request);
+  const { bannerId } = request.data;
+  if (!bannerId) throw new HttpsError("invalid-argument", "bannerId is required.");
+  await db.collection("banners").doc(bannerId).delete();
+  return { success: true, message: "Banner excluído." };
+});
+
+// ---------------------------------------------------------------------------
 // ADMIN USER MANAGEMENT
 // ---------------------------------------------------------------------------
 
@@ -188,14 +249,24 @@ exports.listAllUsers = onCall(async (request) => {
   let pageToken;
   do {
     const listUsersResult = await admin.auth().listUsers(1000, pageToken);
-    listUsersResult.users.forEach((userRecord) => {
+    for (const userRecord of listUsersResult.users) {
+      let firestoreName = null;
+      try {
+        const playerDoc = await db.collection("players").doc(userRecord.uid).get();
+        if (playerDoc.exists) {
+          firestoreName = playerDoc.data().name || playerDoc.data().displayName;
+        }
+      } catch (e) {
+        console.warn("Could not fetch user name from firestore for", userRecord.uid);
+      }
+
       users.push({
         uid: userRecord.uid,
         email: userRecord.email,
-        name: userRecord.displayName,
+        name: firestoreName || userRecord.displayName || "Sem Nome",
         isAdmin: userRecord.customClaims?.["super_admin"] === true,
       });
-    });
+    }
     pageToken = listUsersResult.pageToken;
   } while (pageToken);
   return users;

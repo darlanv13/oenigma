@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class AdminFinanceScreen extends StatelessWidget {
   const AdminFinanceScreen({super.key});
@@ -55,7 +57,7 @@ class AdminFinanceScreen extends StatelessWidget {
                     child: ListTile(
                       leading: const CircleAvatar(
                         backgroundColor: Colors.green,
-                        child: Icon(Icons.pix, color: Colors.white),
+                        child: Icon(FontAwesomeIcons.pix, color: Colors.white),
                       ),
                       title: Text('Valor: R\$ $amount - Chave: $pixKey ($pixKeyType)', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       subtitle: Text('UID: $uid\nData da Solicitação: $dateStr', style: const TextStyle(color: secondaryTextColor)),
@@ -64,13 +66,13 @@ class AdminFinanceScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           TextButton.icon(
-                            icon: const Icon(Icons.check_circle, color: Colors.green),
+                            icon: const Icon(FontAwesomeIcons.solidCircleCheck, color: Colors.green),
                             label: const Text('Aprovar & Pagar', style: TextStyle(color: Colors.green)),
                             onPressed: () => _handleWithdrawal(context, requestId, uid, 'approve'),
                           ),
                           const SizedBox(width: 8),
                           TextButton.icon(
-                            icon: const Icon(Icons.cancel, color: Colors.redAccent),
+                            icon: const Icon(FontAwesomeIcons.xmark, color: Colors.redAccent),
                             label: const Text('Rejeitar & Estornar', style: TextStyle(color: Colors.redAccent)),
                             onPressed: () => _handleWithdrawal(context, requestId, uid, 'reject'),
                           ),

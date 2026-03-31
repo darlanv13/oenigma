@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 // Importe o plugin de compartilhamento (você precisará adicioná-lo ao pubspec.yaml)
 // import 'package:share_plus/share_plus.dart';
 
@@ -43,7 +45,7 @@ class CertificateScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   const Icon(
-                    Icons.check_circle_outline,
+                    FontAwesomeIcons.circleCheck,
                     size: 72.0,
                     color: Colors.green,
                   ),
@@ -97,7 +99,7 @@ class CertificateScreen extends StatelessWidget {
                   const SizedBox(height: 32.0),
                   // Adicione o botão de compartilhamento aqui
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.share),
+                    icon: const Icon(FontAwesomeIcons.shareNodes),
                     label: const Text('Compartilhar'),
                     onPressed: () {
                       // Implementar a lógica de compartilhamento aqui usando um plugin como share_plus

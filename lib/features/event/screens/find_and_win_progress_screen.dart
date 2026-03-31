@@ -14,7 +14,9 @@ import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/core/widgets/dialogs/cooldown_dialog.dart';
 import 'package:oenigma/core/widgets/dialogs/enigma_success_dialog.dart';
 import 'package:oenigma/core/widgets/dialogs/error_dialog.dart';
-import 'package:oenigma/features/enigma/screens/enigma_screen.dart'; // Para reutilizar o ScannerScreen
+import 'package:oenigma/features/enigma/screens/enigma_screen.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+ // Para reutilizar o ScannerScreen
 
 class FindAndWinProgressScreen extends ConsumerStatefulWidget {
   final EventModel event;
@@ -214,7 +216,7 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.flag, size: 60, color: primaryAmber),
+          Icon(FontAwesomeIcons.flag, size: 60, color: primaryAmber),
           SizedBox(height: 16),
           Text(
             "Evento Finalizado!",
@@ -312,7 +314,7 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
                         ),
                       ),
                 icon: Icon(
-                  _isBlocked ? Icons.timer_off_outlined : Icons.qr_code_scanner,
+                  _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
                 ),
                 label: Text(_isBlocked ? 'Aguarde' : 'Escanear QR Code'),
                 style: ElevatedButton.styleFrom(
@@ -346,8 +348,8 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
                           )
                         : Icon(
                             _isBlocked
-                                ? Icons.timer_off_outlined
-                                : Icons.check_circle_outline,
+                                ? FontAwesomeIcons.clock
+                                : FontAwesomeIcons.circleCheck,
                           ),
                     label: Text(_isBlocked ? 'Aguarde' : 'Validar Resposta'),
                     style: ElevatedButton.styleFrom(

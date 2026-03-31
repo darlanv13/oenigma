@@ -32,6 +32,8 @@ import 'package:oenigma/features/event/repositories/event_repository.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 // --- TELA DE SCANNER (sem alterações) ---
 class ScannerScreen extends StatefulWidget {
@@ -930,7 +932,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     }
                   : null,
               icon: Icon(
-                _isBlocked ? Icons.timer_off_outlined : Icons.qr_code_scanner,
+                _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
               ),
               label: Text(
                 _isBlocked
@@ -1013,7 +1015,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   _handleAction('purchaseHint');
                 }
               },
-        icon: const Icon(Icons.lightbulb, color: primaryAmber),
+        icon: const Icon(FontAwesomeIcons.lightbulb, color: primaryAmber),
         label: RichText(
           text: TextSpan(
             children: [
@@ -1062,7 +1064,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         _handleToolPurchase('map');
                       }
                     },
-              icon: const Icon(Icons.map, color: Colors.blueAccent),
+              icon: const Icon(FontAwesomeIcons.map, color: Colors.blueAccent),
               label: const Text(
                 'Comprar Mapa (R\$ 20)',
                 style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold),
@@ -1089,7 +1091,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         _handleToolPurchase('compass');
                       }
                     },
-              icon: const Icon(Icons.explore, color: Colors.greenAccent),
+              icon: const Icon(FontAwesomeIcons.compass, color: Colors.greenAccent),
               label: const Text(
                 'Comprar Bússola (R\$ 15)',
                 style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold),
@@ -1120,7 +1122,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       );
       actionButton = ElevatedButton.icon(
         onPressed: _isLoading ? null : () => _saveImageFromUrl(data),
-        icon: const Icon(Icons.download_rounded),
+        icon: const Icon(FontAwesomeIcons.download),
         label: const Text('Salvar Imagem'),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white10,
@@ -1153,7 +1155,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       );
       actionButton = ElevatedButton.icon(
         onPressed: () => _launchMapsUrl(data),
-        icon: const Icon(Icons.map_rounded),
+        icon: const Icon(FontAwesomeIcons.map),
         label: const Text('Abrir no Maps'),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white10,
@@ -1182,7 +1184,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             ),
           );
         },
-        icon: const Icon(Icons.copy_rounded),
+        icon: const Icon(FontAwesomeIcons.copy),
         label: const Text('Copiar Texto'),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white10,
