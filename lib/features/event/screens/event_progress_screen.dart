@@ -36,7 +36,7 @@ class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
     final phases = await ref.read(eventRepositoryProvider).getPhasesForEvent(widget.event.id);
     if (!mounted) return;
 
-    final userId = ref.read(authRepositoryProvider).currentUser?.uid;
+    final userId = ref.read(authRepositoryProvider).currentUser?.objectId;
     if (userId == null) throw Exception("Usuário não autenticado.");
 
     final progress = await ref.read(eventRepositoryProvider).getPlayerProgress(

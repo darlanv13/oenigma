@@ -8,18 +8,20 @@ import 'package:oenigma/features/admin/screens/admin_finance_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_fraud_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_tools_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_banners_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oenigma/features/auth/providers/auth_provider.dart';
+import 'package:oenigma/features/auth/screens/login_screen.dart';
 
 
 
-class MainAdminScreen extends StatefulWidget {
+class MainAdminScreen extends ConsumerStatefulWidget {
   const MainAdminScreen({super.key});
 
   @override
-  State<MainAdminScreen> createState() => _MainAdminScreenState();
+  ConsumerState<MainAdminScreen> createState() => _MainAdminScreenState();
 }
 
-class _MainAdminScreenState extends State<MainAdminScreen> {
+class _MainAdminScreenState extends ConsumerState<MainAdminScreen> {
   int _selectedIndex = 0;
   bool _isExpanded = true;
 
@@ -98,7 +100,12 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
           IconButton(
             icon: const Icon(FontAwesomeIcons.rightFromBracket),
             onPressed: () async {
-              await FirebaseAuth.instance.signOut();
+              ref.read(authRepositoryProvider).signOut();
+              if (context.mounted) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              }
             },
             tooltip: 'Sair do Painel',
           ),
