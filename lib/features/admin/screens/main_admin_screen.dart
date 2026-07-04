@@ -1,165 +1,116 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'package:oenigma/features/admin/screens/admin_banners_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_dashboard_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_events_screen.dart';
-import 'package:oenigma/features/admin/screens/admin_users_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_finance_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_fraud_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_tools_screen.dart';
-import 'package:oenigma/features/admin/screens/admin_banners_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:oenigma/features/admin/screens/admin_users_screen.dart';
+import 'package:oenigma/features/auth/providers/auth_provider.dart';
+import 'package:oenigma/features/auth/screens/login_screen.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 
-
-
-class MainAdminScreen extends StatefulWidget {
+class MainAdminScreen extends ConsumerStatefulWidget {
   const MainAdminScreen({super.key});
 
   @override
-  State<MainAdminScreen> createState() => _MainAdminScreenState();
+  ConsumerState<MainAdminScreen> createState() => _MainAdminScreenState();
 }
 
-class _MainAdminScreenState extends State<MainAdminScreen> {
+class _MainAdminScreenState extends ConsumerState<MainAdminScreen> {
   int _selectedIndex = 0;
-  bool _isExpanded = true;
 
-  final List<Widget> _screens = const [
-    AdminDashboardScreen(),
-    AdminEventsScreen(),
-    AdminUsersScreen(),
-    AdminFinanceScreen(),
-    AdminFraudScreen(),
-    AdminToolsScreen(),
-    AdminBannersScreen(),
+  final List<Widget> _screens = [
+    const AdminDashboardScreen(),
+    const AdminUsersScreen(),
+    const AdminEventsScreen(),
+    const AdminFinanceScreen(),
+    const AdminFraudScreen(),
+    const AdminBannersScreen(),
+    const AdminToolsScreen(),
   ];
 
   final List<NavigationRailDestination> _destinations = const [
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.chartPie),
-      selectedIcon: Icon(FontAwesomeIcons.chartPie, color: primaryAmber),
+      icon: Icon(Icons.dashboard_outlined),
+      selectedIcon: Icon(Icons.dashboard),
       label: Text('Dashboard'),
     ),
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.calendarCheck),
-      selectedIcon: Icon(FontAwesomeIcons.calendarCheck, color: primaryAmber),
-      label: Text('Gestão de Eventos'),
+      icon: Icon(Icons.people_outline),
+      selectedIcon: Icon(Icons.people),
+      label: Text('Usuários'),
     ),
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.users),
-      selectedIcon: Icon(FontAwesomeIcons.users, color: primaryAmber),
-      label: Text('Usuários & Carteira'),
+      icon: Icon(Icons.event_outlined),
+      selectedIcon: Icon(Icons.event),
+      label: Text('Eventos'),
     ),
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.moneyBillWave),
-      selectedIcon: Icon(FontAwesomeIcons.moneyBillWave, color: primaryAmber),
+      icon: Icon(Icons.account_balance_wallet_outlined),
+      selectedIcon: Icon(Icons.account_balance_wallet),
       label: Text('Financeiro'),
     ),
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.shieldHalved),
-      selectedIcon: Icon(FontAwesomeIcons.shieldHalved, color: primaryAmber),
-      label: Text('Monitor de Fraude'),
+      icon: Icon(Icons.security_outlined),
+      selectedIcon: Icon(Icons.security),
+      label: Text('Fraudes'),
     ),
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.toolbox),
-      selectedIcon: Icon(FontAwesomeIcons.toolbox, color: primaryAmber),
-      label: Text('Dicas & Ferramentas'),
+      icon: Icon(Icons.view_carousel_outlined),
+      selectedIcon: Icon(Icons.view_carousel),
+      label: Text('Banners'),
     ),
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.images),
-      selectedIcon: Icon(FontAwesomeIcons.images, color: primaryAmber),
-      label: Text('Gestão de Banners'),
+      icon: Icon(Icons.build_circle_outlined),
+      selectedIcon: Icon(Icons.build_circle),
+      label: Text('Ferramentas'),
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final bool isDesktop = MediaQuery.of(context).size.width >= 800;
-    if (!isDesktop && _isExpanded) {
-      _isExpanded = false;
-    }
-
     return Scaffold(
       backgroundColor: darkBackground,
-      appBar: AppBar(
-        title: const Text('O Enigma - Admin Panel', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: cardColor,
-        elevation: 0,
-        leading: isDesktop
-            ? IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () {
-                  setState(() {
-                    _isExpanded = !_isExpanded;
-                  });
-                },
-              )
-            : null,
-        actions: [
-          IconButton(
-            icon: const Icon(FontAwesomeIcons.rightFromBracket),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-            },
-            tooltip: 'Sair do Painel',
-          ),
-        ],
-      ),
-      drawer: !isDesktop
-          ? Drawer(
-              backgroundColor: cardColor,
-              child: ListView(
-                children: [
-                  const DrawerHeader(
-                    decoration: BoxDecoration(color: primaryAmber),
-                    child: Center(
-                      child: Text(
-                        'Admin Menu',
-                        style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                  for (int i = 0; i < _destinations.length; i++)
-                    ListTile(
-                      leading: _destinations[i].icon,
-                      title: _destinations[i].label,
-                      selected: _selectedIndex == i,
-                      selectedColor: primaryAmber,
-                      onTap: () {
-                        setState(() => _selectedIndex = i);
-                        Navigator.pop(context);
-                      },
-                    ),
-                ],
-              ),
-            )
-          : null,
       body: Row(
         children: [
-          if (isDesktop)
-            NavigationRail(
-              backgroundColor: cardColor,
-              selectedIndex: _selectedIndex,
-              onDestinationSelected: (int index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
-              extended: _isExpanded,
-              selectedIconTheme: const IconThemeData(color: primaryAmber),
-              selectedLabelTextStyle: const TextStyle(color: primaryAmber, fontWeight: FontWeight.bold),
-              unselectedIconTheme: const IconThemeData(color: secondaryTextColor),
-              unselectedLabelTextStyle: const TextStyle(color: secondaryTextColor),
-              destinations: _destinations,
-            ),
-          if (isDesktop) const VerticalDivider(thickness: 1, width: 1, color: Colors.white12),
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: Container(
-                key: ValueKey<int>(_selectedIndex),
-                padding: const EdgeInsets.all(24.0),
-                child: _screens[_selectedIndex],
+          NavigationRail(
+            backgroundColor: cardColor,
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (int index) {
+              setState(() {
+                _selectedIndex = index;
+              });
+            },
+            labelType: NavigationRailLabelType.all,
+            selectedIconTheme: const IconThemeData(color: primaryAmber),
+            unselectedIconTheme: const IconThemeData(color: secondaryTextColor),
+            selectedLabelTextStyle: const TextStyle(color: primaryAmber, fontWeight: FontWeight.bold),
+            unselectedLabelTextStyle: const TextStyle(color: secondaryTextColor),
+            destinations: _destinations,
+            trailing: Expanded(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 24.0),
+                  child: IconButton(
+                    icon: const Icon(Icons.logout, color: Colors.redAccent),
+                    tooltip: 'Sair',
+                    onPressed: () async {
+                      ref.read(authRepositoryProvider).signOut();
+                    },
+                  ),
+                ),
               ),
+            ),
+          ),
+          const VerticalDivider(thickness: 1, width: 1, color: secondaryTextColor),
+          Expanded(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: _screens,
             ),
           ),
         ],

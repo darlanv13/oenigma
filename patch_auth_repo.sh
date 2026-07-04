@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'AUTH_REPO' > lib/features/auth/repositories/auth_repository.dart
 import 'dart:async';
 import 'package:rxdart/rxdart.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
@@ -142,3 +144,4 @@ class AuthRepository {
     _authStateSubject.add(null);
   }
 }
+AUTH_REPO
