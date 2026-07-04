@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/features/home/screens/main_navigation_screen.dart';

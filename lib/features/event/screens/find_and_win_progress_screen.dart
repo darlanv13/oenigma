@@ -81,7 +81,7 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
         // Não precisamos de phaseOrder para find_and_win
       });
 
-      final data = Map<String, dynamic>.from(result.data);
+      final data = Map<String, dynamic>.from(result.result);
       if (mounted && !(data['success'] as bool)) {
         final message = data['message'] ?? "Código incorreto.";
         // Verifica se a resposta contém um tempo de cooldown

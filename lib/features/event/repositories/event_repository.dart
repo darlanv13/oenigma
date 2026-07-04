@@ -1,21 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
 
 class EventRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
-    region: 'southamerica-east1',
-  );
-
-  Future<HttpsCallableResult> callFunction(
+  Future<ParseResponse> callFunction(
     String functionName, [
     Map<String, dynamic>? payload,
   ]) async {
-    final callable = _functions.httpsCallable(functionName);
+    final ParseCloudFunction function = ParseCloudFunction(functionName);
     try {
-      return await callable.call<dynamic>(payload);
+      return await function.execute(parameters: payload);
     } catch (e) {
       rethrow;
     }
@@ -23,15 +17,16 @@ class EventRepository {
 
   Future<Map<String, dynamic>> getHomeScreenData() async {
     final result = await callFunction('getHomeScreenData');
-    return Map<String, dynamic>.from(result.data);
+    if (!result.success || result.result == null) return {};
+    return Map<String, dynamic>.from(result.result);
   }
 
   Future<List<PhaseModel>> getPhasesForEvent(String eventId) async {
     final result = await callFunction('getEventData', {'eventId': eventId});
-    if (result.data == null) {
+    if (!result.success || result.result == null) {
       return [];
     }
-    final eventData = Map<String, dynamic>.from(result.data);
+    final eventData = Map<String, dynamic>.from(result.result);
     final List<dynamic> phasesData = eventData['phases'] ?? [];
     return phasesData.map((data) {
       final phaseMap = Map<String, dynamic>.from(data);
@@ -41,21 +36,21 @@ class EventRepository {
 
   Future<int> getChallengeCountForEvent(String eventId) async {
     final result = await callFunction('getEventData', {'eventId': eventId});
-    if (result.data == null) return 0;
-    final eventData = Map<String, dynamic>.from(result.data);
+    if (!result.success || result.result == null) return 0;
+    final eventData = Map<String, dynamic>.from(result.result);
     final phases = eventData['phases'] as List?;
     return phases?.length ?? 0;
   }
 
   Future<EventModel> getFullEventDetails(String eventId) async {
     final result = await callFunction('getEventData', {'eventId': eventId});
-    if (result.data == null) {
-      throw Exception('Evento não encontrado');
+    if (!result.success || result.result == null) {
+      throw Exception(result.error?.message ?? 'Evento não encontrado');
     }
-    return EventModel.fromMap(Map<String, dynamic>.from(result.data));
+    return EventModel.fromMap(Map<String, dynamic>.from(result.result));
   }
 
-  Future<HttpsCallableResult> subscribeToEvent(String eventId) {
+  Future<ParseResponse> subscribeToEvent(String eventId) {
     return callFunction('subscribeToEvent', {'eventId': eventId});
   }
 
@@ -63,14 +58,16 @@ class EventRepository {
     String playerId,
     String eventId,
   ) async {
-    final playerDoc = await _firestore
-        .collection('players')
-        .doc(playerId)
-        .get();
+    // Attempt to query ParseUser by ID
+    final query = QueryBuilder<ParseUser>(ParseUser.forQuery())
+      ..whereEqualTo('objectId', playerId);
 
-    if (playerDoc.exists && playerDoc.data() != null) {
-      final playerData = playerDoc.data()!;
-      final eventProgress = playerData['events']?[eventId];
+    final response = await query.query();
+
+    if (response.success && response.results != null && response.results!.isNotEmpty) {
+      final user = response.results!.first as ParseUser;
+      final eventsMap = user.get<Map<String, dynamic>>('events') ?? {};
+      final eventProgress = eventsMap[eventId];
 
       if (eventProgress is Map) {
         final progressMap = Map<String, dynamic>.from(eventProgress);
@@ -86,7 +83,7 @@ class EventRepository {
   }
 
   // --- Funções de Escrita (Gerenciamento / Admin) ---
-  Future<HttpsCallableResult> createOrUpdateEvent({
+  Future<ParseResponse> createOrUpdateEvent({
     String? eventId,
     required Map<String, dynamic> data,
   }) {
@@ -96,7 +93,7 @@ class EventRepository {
     });
   }
 
-  Future<HttpsCallableResult> deleteEvent(String eventId) {
+  Future<ParseResponse> deleteEvent(String eventId) {
     return callFunction('deleteEvent', {'eventId': eventId});
   }
 
@@ -114,6 +111,7 @@ class EventRepository {
     final result = await callFunction('getFindAndWinStats', {
       'eventId': eventId,
     });
-    return Map<String, dynamic>.from(result.data);
+    if (!result.success || result.result == null) return {};
+    return Map<String, dynamic>.from(result.result);
   }
 }
