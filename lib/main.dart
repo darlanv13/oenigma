@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/features/auth/screens/auth_wrapper.dart';
 import 'package:oenigma/features/auth/screens/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,14 @@ void main() async {
     persistenceEnabled: true,
     cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
   );
+
+  // Initialize Parse for Back4App
+  const keyApplicationId = 'YOUR_APP_ID';
+  const keyClientKey = 'YOUR_CLIENT_KEY';
+  const keyParseServerUrl = 'https://parseapi.back4app.com';
+
+  await Parse().initialize(keyApplicationId, keyParseServerUrl,
+      clientKey: keyClientKey, autoSendSessionId: true);
 
   await PushNotificationService().initialize();
 

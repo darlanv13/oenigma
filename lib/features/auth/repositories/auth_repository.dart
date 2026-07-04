@@ -1,28 +1,47 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
-
+import 'dart:async';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
 class AuthRepository {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final StreamController<ParseUser?> _authStateController = StreamController<ParseUser?>.broadcast();
 
+  AuthRepository() {
+    _initAuthState();
+  }
 
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
-  User? get currentUser => _auth.currentUser;
+  Future<void> _initAuthState() async {
+    final user = await ParseUser.currentUser() as ParseUser?;
+    if (user != null) {
+      final response = await ParseUser.getCurrentUserFromServer(user.sessionToken!);
+      if (response?.success ?? false) {
+        _authStateController.add(response!.result as ParseUser);
+      } else {
+        await user.logout();
+        _authStateController.add(null);
+      }
+    } else {
+      _authStateController.add(null);
+    }
+  }
+
+  Stream<ParseUser?> get authStateChanges => _authStateController.stream;
+
+  Future<ParseUser?> get currentUser async => await ParseUser.currentUser() as ParseUser?;
 
   Future<String?> signInWithEmailAndPassword(
     String email,
     String password,
   ) async {
     try {
-      await _auth.signInWithEmailAndPassword(
-        email: email.trim(),
-        password: password.trim(),
-      );
-      return null;
-    } on FirebaseAuthException catch (e) {
-      return e.message ?? "Ocorreu um erro desconhecido.";
+      final user = ParseUser(email.trim(), password.trim(), null);
+      final response = await user.login();
+      if (response.success) {
+        _authStateController.add(response.result as ParseUser);
+        return null;
+      } else {
+        return response.error?.message ?? "Ocorreu um erro desconhecido.";
+      }
+    } catch (e) {
+      return e.toString();
     }
   }
 
@@ -31,23 +50,25 @@ class AuthRepository {
     String password,
   ) async {
     try {
-      final userCredential = await _auth.signInWithEmailAndPassword(
-        email: email.trim(),
-        password: password.trim(),
-      );
-      final user = userCredential.user;
-      if (user == null) {
-        return "Ocorreu um erro inesperado.";
-      }
-      final idTokenResult = await user.getIdTokenResult(true);
-      if (idTokenResult.claims?['role'] == 'admin') {
-        return null;
+      final user = ParseUser(email.trim(), password.trim(), null);
+      final response = await user.login();
+      if (response.success) {
+        final loggedInUser = response.result as ParseUser;
+        final isSuperAdmin = loggedInUser.get<bool>('super_admin') ?? false;
+        final isEditor = loggedInUser.get<bool>('editor') ?? false;
+
+        if (isSuperAdmin || isEditor) {
+          _authStateController.add(loggedInUser);
+          return null;
+        } else {
+          await loggedInUser.logout();
+          return "Acesso negado. Esta conta não possui privilégios de administrador.";
+        }
       } else {
-        await _auth.signOut();
-        return "Acesso negado. Esta conta não possui privilégios de administrador.";
+        return response.error?.message ?? "Ocorreu um erro desconhecido.";
       }
-    } on FirebaseAuthException catch (e) {
-      return e.message ?? "Ocorreu um erro desconhecido.";
+    } catch (e) {
+      return e.toString();
     }
   }
 
@@ -60,43 +81,47 @@ class AuthRepository {
     required String phone,
   }) async {
     try {
-      UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(
-            email: email.trim(),
-            password: password.trim(),
-          );
-      User? newUser = userCredential.user;
-      if (newUser != null) {
-        await _firestore.collection('players').doc(newUser.uid).set({
-          'name': fullName,
-          'cpf': cpf,
-          'birthDate': birthDate,
-          'phone': phone,
-          'email': email.trim(),
-          'createdAt': FieldValue.serverTimestamp(),
-          'photoURL': null,
-          'balance': 0,
-        });
+      final user = ParseUser(email.trim(), password.trim(), email.trim());
+
+      // Set custom fields before sign up
+      user.set('name', fullName);
+      user.set('cpf', cpf);
+      user.set('birthDate', birthDate);
+      user.set('phone', phone);
+      user.set('balance', 0);
+      user.set('photoURL', null);
+
+      final response = await user.signUp(allowWithoutEmail: false);
+      if (response.success) {
+        _authStateController.add(response.result as ParseUser);
+        return null;
+      } else {
+        return response.error?.message ?? "Ocorreu um erro desconhecido.";
       }
-      return null;
-    } on FirebaseAuthException catch (e) {
-      return e.message ?? "Ocorreu um erro desconhecido.";
+    } catch (e) {
+      return e.toString();
     }
   }
 
   Future<String?> sendPasswordResetEmail(String email) async {
     try {
-      await _auth.sendPasswordResetEmail(email: email.trim());
-      return null;
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        return 'Nenhum utilizador encontrado para este email.';
+      final user = ParseUser(null, null, email.trim());
+      final response = await user.requestPasswordReset();
+      if (response.success) {
+        return null;
+      } else {
+        return response.error?.message ?? "Ocorreu um erro desconhecido.";
       }
-      return e.message ?? "Ocorreu um erro desconhecido.";
+    } catch (e) {
+      return e.toString();
     }
   }
 
   Future<void> signOut() async {
-    await _auth.signOut();
+    final user = await ParseUser.currentUser() as ParseUser?;
+    if (user != null) {
+      await user.logout();
+    }
+    _authStateController.add(null);
   }
 }
