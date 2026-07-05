@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'dart:convert';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -122,11 +122,9 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
   Future<void> _initiatePayment() async {
     try {
-      final result = await FirebaseFunctions.instanceFor(
-        region: 'southamerica-east1',
-      ).httpsCallable('createPixCharge').call({'amount': widget.amount});
+      final result = await ParseCloudFunction('createPixCharge').execute(parameters: {'amount': widget.amount});
 
-      final data = result.data as Map<dynamic, dynamic>;
+      final data = Map<String, dynamic>.from(result.result);
 
       if (mounted) {
         setState(() {
@@ -227,16 +225,13 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   }
 
   Widget _buildPaymentState() {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('transactions')
-          .doc(_txid)
-          .snapshots(),
+    return FutureBuilder<ParseResponse>(
+      future: _txid == null ? null : (QueryBuilder<ParseObject>(ParseObject('transactions'))..whereEqualTo('objectId', _txid)).query(),
       builder: (context, snapshot) {
         String status = 'pending';
-        if (snapshot.hasData && snapshot.data!.exists) {
-          final transData = snapshot.data!.data() as Map<String, dynamic>;
-          status = transData['status'] ?? 'pending';
+        if (snapshot.hasData && snapshot.data!.success && snapshot.data!.results != null && snapshot.data!.results!.isNotEmpty) {
+          final transData = snapshot.data!.results!.first as ParseObject;
+          status = transData.get<String>('status') ?? 'pending';
         }
 
         if (status == 'approved') {

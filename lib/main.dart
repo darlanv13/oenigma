@@ -1,59 +1,74 @@
-import 'package:oenigma/core/services/push_notification_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:oenigma/firebase_options.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+
 import 'package:oenigma/features/auth/screens/auth_wrapper.dart';
-import 'package:oenigma/features/auth/screens/onboarding_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('pt_BR', null);
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: true,
-    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-  );
+  // Initialize Parse Server
+  const keyApplicationId = '34Q5Q0x8L5Q5Q0x8L5Q5Q0x8L5Q5Q0x8';
+  const keyClientKey = '34Q5Q0x8L5Q5Q0x8L5Q5Q0x8L5Q5Q0x8';
+  const keyParseServerUrl = 'https://parseapi.back4app.com';
 
-  await PushNotificationService().initialize();
+  await Parse().initialize(keyApplicationId, keyParseServerUrl,
+      clientKey: keyClientKey, autoSendSessionId: true);
 
-  final prefs = await SharedPreferences.getInstance();
-  final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
-
-  runApp(ProviderScope(child: EnigmaCityApp(hasSeenOnboarding: hasSeenOnboarding)));
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]).then((_) {
+    runApp(const ProviderScope(child: OEnigmaApp()));
+  });
 }
 
-class EnigmaCityApp extends StatelessWidget {
-  final bool hasSeenOnboarding;
-  const EnigmaCityApp({super.key, required this.hasSeenOnboarding});
+class OEnigmaApp extends StatelessWidget {
+  const OEnigmaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'O Enigma',
-      theme: ThemeData.dark().copyWith(
-        primaryColor: primaryAmber,
+      theme: ThemeData(
+        brightness: Brightness.dark,
         scaffoldBackgroundColor: darkBackground,
-        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
-        appBarTheme: AppBarTheme(
+        primaryColor: primaryAmber,
+        cardColor: cardColor,
+        colorScheme: const ColorScheme.dark(
+          primary: primaryAmber,
+          secondary: Colors.orangeAccent,
+          surface: cardColor,
+        ),
+        appBarTheme: const AppBarTheme(
           backgroundColor: darkBackground,
           elevation: 0,
-          centerTitle: true,
-          titleTextStyle: GoogleFonts.orbitron(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryAmber,
+            foregroundColor: Colors.black,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: cardColor,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: primaryAmber),
           ),
         ),
       ),
-      home: hasSeenOnboarding ? const AuthWrapper() : const OnboardingScreen(),
+      home: const AuthWrapper(),
     );
   }
 }

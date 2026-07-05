@@ -21,7 +21,7 @@ class AdminDashboardScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: FutureBuilder<ParseResponse>(
-                  future: QueryBuilder<ParseUser>(ParseUser.forQuery()).count(),
+                  future: (QueryBuilder<ParseUser>(ParseUser.forQuery())..count()).query(),
                   builder: (context, snapshot) {
                     final count = snapshot.data?.count?.toString() ?? '...';
                     return _buildStatCard('Usuários Ativos', count, Icons.people, Colors.blue);
@@ -31,7 +31,7 @@ class AdminDashboardScreen extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: FutureBuilder<ParseResponse>(
-                  future: (QueryBuilder<ParseObject>(ParseObject('events'))..whereEqualTo('status', 'published')).count(),
+                  future: (QueryBuilder<ParseObject>(ParseObject('events'))..whereEqualTo('status', 'published')..count()).query(),
                   builder: (context, snapshot) {
                     final count = snapshot.data?.count?.toString() ?? '...';
                     return _buildStatCard('Eventos Ativos', count, Icons.event_available, Colors.green);
@@ -41,7 +41,7 @@ class AdminDashboardScreen extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: FutureBuilder<ParseResponse>(
-                  future: (QueryBuilder<ParseObject>(ParseObject('transactions'))..whereEqualTo('type', 'deposit')).count(),
+                  future: (QueryBuilder<ParseObject>(ParseObject('transactions'))..whereEqualTo('type', 'deposit')..count()).query(),
                   builder: (context, snapshot) {
                      final count = snapshot.data?.count?.toString() ?? '...';
                     return _buildStatCard('Depósitos Totais', count, Icons.attach_money, primaryAmber);
@@ -51,7 +51,7 @@ class AdminDashboardScreen extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: FutureBuilder<ParseResponse>(
-                  future: (QueryBuilder<ParseObject>(ParseObject('withdrawals'))..whereEqualTo('status', 'pending')).count(),
+                  future: (QueryBuilder<ParseObject>(ParseObject('withdrawals'))..whereEqualTo('status', 'pending')..count()).query(),
                   builder: (context, snapshot) {
                     final count = snapshot.data?.count?.toString() ?? '...';
                     return _buildStatCard('Saques Pendentes', count, Icons.money_off, Colors.redAccent);

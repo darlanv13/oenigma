@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:oenigma/features/admin/screens/main_admin_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 

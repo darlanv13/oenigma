@@ -1,5 +1,5 @@
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -10,14 +10,14 @@ class HomeBannerCarousel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('banners').where('isActive', isEqualTo: true).orderBy('order').snapshots(),
+    return FutureBuilder<ParseResponse>(
+      future: (QueryBuilder<ParseObject>(ParseObject('banners'))..whereEqualTo('isActive', true)..orderByAscending('order')).query(),
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const SizedBox.shrink(); // Hide if no banners
         }
 
-        final banners = snapshot.data!.docs;
+        final banners = snapshot.data?.results ?? [];
 
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -33,7 +33,7 @@ class HomeBannerCarousel extends StatelessWidget {
             ),
             items: banners.map((doc) {
               final data = doc.data() as Map<String, dynamic>;
-              final imageUrl = data['imageUrl'] ?? '';
+              final imageUrl = data.get<String>('imageUrl') ?? '';
               final actionUrl = data['actionUrl'] ?? '';
 
               return GestureDetector(

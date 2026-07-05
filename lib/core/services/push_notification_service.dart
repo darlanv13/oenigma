@@ -1,25 +1,80 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+
+// Handler para notificações em background (Deve ser top-level)
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Inicialize o Firebase se necessário para operações no background,
+  // mas como o plugin já o faz parcialmente, basta lidar com a mensagem.
+  print("Mensagem em background recebida: \${message.messageId}");
+}
 
 class PushNotificationService {
+  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   Future<void> initialize() async {
-    // Parse Server Flutter SDK automatically handles device registration
-    // internally when initialized, but we can subscribe to channels.
-    try {
-      final installation = await ParseInstallation.currentInstallation();
+    // Solicita permissão para iOS
+    NotificationSettings settings = await _fcm.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      print('Permissão concedida para Push Notifications');
+
+      // Registra o token no Firestore para o usuário atual
+      await _saveDeviceToken();
 
       if (!kIsWeb) {
         // Subscreve ao tópico geral para avisos em massa (ex: Novo Evento)
-        List<dynamic>? channels = installation.get<List<dynamic>>('channels');
-        if (channels == null || !channels.contains('all_players')) {
-           installation.subscribeToChannel('all_players');
-           await installation.save();
-        }
+        await _fcm.subscribeToTopic('all_players');
       }
 
-      debugPrint('Push Notifications inicializado com sucesso via Parse');
-    } catch (e) {
-      debugPrint('Erro ao inicializar Push Notifications: $e');
+      // Escuta tokens atualizados
+      _fcm.onTokenRefresh.listen((newToken) {
+        _updateToken(newToken);
+      });
+
+      // Configura handlers de mensagens
+      if (!kIsWeb) {
+        FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      }
+
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        print('Mensagem recebida em foreground: \${message.notification?.title}');
+        // Você pode mostrar um SnackBar ou Dialog aqui, ou usar flutter_local_notifications
+        // para exibir o alerta mesmo com o app aberto.
+      });
+
+    } else {
+      print('Permissão para Push Notifications negada.');
     }
+  }
+
+  Future<void> _saveDeviceToken() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    try {
+      String? token = await _fcm.getToken();
+      if (token != null) {
+        await _updateToken(token);
+      }
+    } catch (e) {
+      print("Erro ao obter token FCM: \$e");
+    }
+  }
+
+  Future<void> _updateToken(String token) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    await _db.collection('players').doc(user.uid).set({
+      'fcmTokens': FieldValue.arrayUnion([token]),
+      'lastTokenUpdate': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 }

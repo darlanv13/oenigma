@@ -22,26 +22,26 @@ class AdminFinanceScreen extends StatelessWidget {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (!snapshot.hasData || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const Center(
                   child: Text('Não há solicitações de saque pendentes.', style: TextStyle(color: secondaryTextColor)),
                 );
               }
 
-              final requests = snapshot.data!.results! as List<ParseObject>;
+              final requests = snapshot.data!.docs;
 
               return ListView.builder(
                 itemCount: requests.length,
                 itemBuilder: (context, index) {
-                  final request = requests[index];
-                  final requestId = request.objectId!;
-                  final uid = request.get<String>('uid') ?? 'Desconhecido';
-                  final amount = request.get<num>('amount') ?? 0;
-                  final pixKey = request.get<String>('pixKey') ?? 'Chave não informada';
-                  final pixKeyType = request.get<String>('pixKeyType') ?? 'Desconhecido';
-                  final createdAt = request.createdAt;
+                  final request = requests[index].data() as Map<String, dynamic>;
+                  final requestId = requests[index].id;
+                  final uid = request['uid'] ?? 'Desconhecido';
+                  final amount = request['amount'] ?? 0;
+                  final pixKey = request['pixKey'] ?? 'Chave não informada';
+                  final pixKeyType = request['pixKeyType'] ?? 'Desconhecido';
+                  final createdAt = request['createdAt'] as Timestamp?;
                   final dateStr = createdAt != null
-                      ? '${createdAt.day}/${createdAt.month}/${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}'
+                      ? '${createdAt.toDate().day}/${createdAt.toDate().month}/${createdAt.toDate().year} ${createdAt.toDate().hour}:${createdAt.toDate().minute.toString().padLeft(2, '0')}'
                       : 'Data desconhecida';
 
                   return Card(
@@ -83,6 +83,9 @@ class AdminFinanceScreen extends StatelessWidget {
   }
 
   Future<void> _handleWithdrawal(BuildContext context, String withdrawalId, String uid, String action) async {
+    // action should be 'approve' or 'reject'
+    // This assumes we have an admin function that wraps the process, or we do it securely.
+    // For now, let's call a hypothetical cloud function 'admin-processWithdrawal'
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -90,10 +93,10 @@ class AdminFinanceScreen extends StatelessWidget {
     );
 
     try {
-      await ParseCloudFunction('processWithdrawal').execute(parameters: {
+      await FirebaseFunctions.instance.httpsCallable('processWithdrawal').call({
         'withdrawalId': withdrawalId,
         'uid': uid,
-        'action': action,
+        'action': action, // 'approve' fires Pix API, 'reject' refunds wallet
       });
 
       if (context.mounted) {

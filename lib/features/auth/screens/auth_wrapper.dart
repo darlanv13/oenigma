@@ -17,21 +17,35 @@ class AuthWrapper extends ConsumerWidget {
     return authState.when(
       data: (user) {
         if (user != null) {
-          final isSuperAdmin = user.get<bool>('super_admin') ?? false;
-          final isEditor = user.get<bool>('editor') ?? false;
-          final isAdmin = isSuperAdmin || isEditor;
+          return FutureBuilder<IdTokenResult>(
+            future: user.getIdTokenResult(true),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  backgroundColor: darkBackground,
+                  body: Center(child: CircularProgressIndicator(color: primaryAmber)),
+                );
+              }
 
-          if (isAdmin) {
-            final double screenWidth = MediaQuery.of(context).size.width;
-            final bool isDesktop = kIsWeb || screenWidth > 800;
+              final claims = snapshot.data?.claims ?? {};
+              final isAdmin = claims['super_admin'] == true || claims['editor'] == true;
 
-            if (isDesktop) {
-              return const AdminAuthWrapper();
-            } else {
-              return _buildAdminMobileBlockedScreen(context, ref);
-            }
-          }
-          return const MainNavigationScreen();
+              if (isAdmin) {
+                // Determine if device is conceptually a Desktop/Web screen
+                final double screenWidth = MediaQuery.of(context).size.width;
+                final bool isDesktop = kIsWeb || screenWidth > 800;
+
+                if (isDesktop) {
+                  return const AdminAuthWrapper();
+                } else {
+                  return _buildAdminMobileBlockedScreen(context);
+                }
+              }
+
+              // Regular users go to the game
+              return const MainNavigationScreen();
+            },
+          );
         } else {
           return const LoginScreen();
         }
@@ -47,7 +61,7 @@ class AuthWrapper extends ConsumerWidget {
     );
   }
 
-  Widget _buildAdminMobileBlockedScreen(BuildContext context, WidgetRef ref) {
+  Widget _buildAdminMobileBlockedScreen(BuildContext context) {
     return Scaffold(
       backgroundColor: darkBackground,
       body: Center(
@@ -71,8 +85,7 @@ class AuthWrapper extends ConsumerWidget {
               const SizedBox(height: 32),
               ElevatedButton.icon(
                 onPressed: () async {
-                  final authRepository = ref.read(authRepositoryProvider);
-                  await authRepository.signOut();
+                  await FirebaseAuth.instance.signOut();
                 },
                 icon: const Icon(Icons.logout),
                 label: const Text('Sair e Trocar de Conta'),

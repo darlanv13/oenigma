@@ -38,23 +38,23 @@ class AdminBannersScreen extends StatelessWidget {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (!snapshot.hasData || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const Center(
                   child: Text('Nenhum banner cadastrado.', style: TextStyle(color: secondaryTextColor)),
                 );
               }
 
-              final banners = snapshot.data!.results! as List<ParseObject>;
+              final banners = snapshot.data!.docs;
 
               return ListView.builder(
                 itemCount: banners.length,
                 itemBuilder: (context, index) {
-                  final banner = banners[index];
-                  final bannerId = banner.objectId!;
-                  final imageUrl = banner.get<String>('imageUrl') ?? '';
-                  final actionUrl = banner.get<String>('actionUrl') ?? '';
-                  final isActive = banner.get<bool>('isActive') ?? false;
-                  final order = banner.get<int>('order') ?? 0;
+                  final banner = banners[index].data() as Map<String, dynamic>;
+                  final bannerId = banners[index].id;
+                  final imageUrl = banner['imageUrl'] ?? '';
+                  final actionUrl = banner['actionUrl'] ?? '';
+                  final isActive = banner['isActive'] ?? false;
+                  final order = banner['order'] ?? 0;
 
                   return Card(
                     color: cardColor,
@@ -82,9 +82,11 @@ class AdminBannersScreen extends StatelessWidget {
                             icon: const Icon(Icons.delete, color: Colors.redAccent),
                             onPressed: () async {
                                try {
-                                 await ParseCloudFunction('deleteBanner').execute(parameters: {'bannerId': bannerId});
+                                 await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+                                    .httpsCallable('deleteBanner')
+                                    .call({'bannerId': bannerId});
                                } catch (e) {
-                                 // ignore
+                                 print("Erro ao excluir banner: $e");
                                }
                             },
                             tooltip: 'Excluir Banner',
@@ -102,11 +104,11 @@ class AdminBannersScreen extends StatelessWidget {
     );
   }
 
-  void _showBannerDialog(BuildContext context, {String? docId, ParseObject? initialData}) {
-    final imageUrlCtrl = TextEditingController(text: initialData?.get<String>('imageUrl') ?? '');
-    final actionUrlCtrl = TextEditingController(text: initialData?.get<String>('actionUrl') ?? '');
-    final orderCtrl = TextEditingController(text: initialData?.get<int>('order')?.toString() ?? '');
-    bool isActive = initialData?.get<bool>('isActive') ?? true;
+  void _showBannerDialog(BuildContext context, {String? docId, Map<String, dynamic>? initialData}) {
+    final imageCtrl = TextEditingController(text: initialData?['imageUrl'] ?? '');
+    final actionCtrl = TextEditingController(text: initialData?['actionUrl'] ?? '');
+    final orderCtrl = TextEditingController(text: initialData?['order']?.toString() ?? '1');
+    bool isActive = initialData?['isActive'] ?? true;
 
     showDialog(
       context: context,
@@ -114,19 +116,34 @@ class AdminBannersScreen extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              backgroundColor: darkBackground,
+              backgroundColor: cardColor,
               title: Text(docId == null ? 'Novo Banner' : 'Editar Banner', style: const TextStyle(color: Colors.white)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(controller: imageUrlCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'URL da Imagem')),
-                    TextField(controller: actionUrlCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Link de Ação (URL externa ou tela)')),
-                    TextField(controller: orderCtrl, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Ordem de Exibição')),
+                    TextField(
+                      controller: imageCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(labelText: 'URL da Imagem', labelStyle: TextStyle(color: secondaryTextColor)),
+                    ),
+                    TextField(
+                      controller: actionCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(labelText: 'URL de Ação (Abre ao clicar)', labelStyle: TextStyle(color: secondaryTextColor)),
+                    ),
+                    TextField(
+                      controller: orderCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Ordem de Exibição', labelStyle: TextStyle(color: secondaryTextColor)),
+                    ),
+                    const SizedBox(height: 16),
                     SwitchListTile(
-                      title: const Text('Banner Ativo?', style: TextStyle(color: Colors.white)),
+                      title: const Text('Banner Ativo', style: TextStyle(color: Colors.white)),
                       value: isActive,
-                      activeColor: primaryAmber,
+                      activeTrackColor: primaryAmber.withValues(alpha: 0.5),
+                      activeThumbColor: primaryAmber,
                       onChanged: (val) {
                         setState(() {
                           isActive = val;
@@ -137,25 +154,38 @@ class AdminBannersScreen extends StatelessWidget {
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: secondaryTextColor))),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancelar', style: TextStyle(color: Colors.red)),
+                ),
                 ElevatedButton(
                   onPressed: () async {
                     final data = {
-                      'imageUrl': imageUrlCtrl.text,
-                      'actionUrl': actionUrlCtrl.text,
+                      'imageUrl': imageCtrl.text,
+                      'actionUrl': actionCtrl.text,
                       'order': int.tryParse(orderCtrl.text) ?? 1,
                       'isActive': isActive,
+                      'updatedAt': FieldValue.serverTimestamp(),
                     };
+
                     try {
-                      if (docId == null) {
-                        await ParseCloudFunction('createOrUpdateBanner').execute(parameters: {'data': data});
-                      } else {
-                        await ParseCloudFunction('createOrUpdateBanner').execute(parameters: {'bannerId': docId, 'data': data});
-                      }
+                      data.remove('createdAt');
+                      data.remove('updatedAt');
+                      await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+                          .httpsCallable('createOrUpdateBanner')
+                          .call({
+                            'bannerId': docId,
+                            'data': data,
+                          });
+                      if (ctx.mounted) Navigator.pop(ctx);
                     } catch (e) {
-                      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Erro: \$e')));
+                      print("Erro: $e");
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(content: Text('Erro ao salvar banner via Cloud Function: $e')),
+                        );
+                      }
                     }
-                    if (ctx.mounted) Navigator.pop(ctx);
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
                   child: const Text('Salvar'),

@@ -61,7 +61,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       final authRepository = ref.read(authRepositoryProvider);
-      final userId = authRepository.currentUser!.objectId!;
+      final userId = authRepository.currentUser!.uid;
 
       String? photoURL;
       if (_selectedImage != null) {

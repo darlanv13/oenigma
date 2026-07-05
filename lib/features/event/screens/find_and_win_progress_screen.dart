@@ -1,7 +1,7 @@
 // lib/screens/find_and_win_progress_screen.dart
 
 import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -32,15 +32,12 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
   bool _isLoading = false;
   bool _isBlocked = false; // <-- Adicionado para controlar o cooldown
 
-  late final Stream<DocumentSnapshot<Map<String, dynamic>>> _eventStream;
+  late final Future<ParseResponse> _eventStream;
 
   @override
   void initState() {
     super.initState();
-    _eventStream = FirebaseFirestore.instance
-        .collection('events')
-        .doc(widget.event.id)
-        .snapshots();
+    _eventStream = (QueryBuilder<ParseObject>(ParseObject('events'))..whereEqualTo('objectId', widget.event.id)).query();
   }
 
   @override
@@ -113,8 +110,8 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.event.name)),
-      body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: _eventStream,
+      body: FutureBuilder<ParseResponse>(
+        future: _eventStream,
         builder: (context, eventSnapshot) {
           if (eventSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -124,13 +121,13 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
           if (eventSnapshot.hasError) {
             return const Center(child: Text("Erro ao carregar o evento."));
           }
-          if (!eventSnapshot.hasData || !eventSnapshot.data!.exists) {
+          if (!eventSnapshot.hasData || !eventSnapshot.data!.success || eventSnapshot.data!.results == null || eventSnapshot.data!.results!.isEmpty) {
             return const Center(child: Text("Evento não encontrado."));
           }
 
-          final eventData = eventSnapshot.data!.data();
-          final currentEnigmaId = eventData?['currentEnigmaId'] as String?;
-          final eventStatus = eventData?['status'] as String?;
+          final eventData = eventSnapshot.data!.results!.first as ParseObject;
+          final currentEnigmaId = eventData.get<String>('currentEnigmaId');
+          final eventStatus = eventData.get<String>('status');
 
           if (eventStatus == 'closed' &&
               (currentEnigmaId == null || currentEnigmaId.isEmpty)) {
@@ -153,30 +150,29 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
             );
           }
 
-          return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-            stream: FirebaseFirestore.instance
-                .collection('events')
-                .doc(widget.event.id)
-                .collection('enigmas')
-                .doc(currentEnigmaId)
-                .snapshots(),
+          return FutureBuilder<ParseResponse>(
+            future: (QueryBuilder<ParseObject>(ParseObject('enigmas'))..whereEqualTo('eventId', widget.event.id)..whereEqualTo('objectId', currentEnigmaId)).query(),
             builder: (context, enigmaSnapshot) {
               if (enigmaSnapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (!enigmaSnapshot.hasData || !enigmaSnapshot.data!.exists) {
+              if (!enigmaSnapshot.hasData || !enigmaSnapshot.data!.success || enigmaSnapshot.data!.results == null || enigmaSnapshot.data!.results!.isEmpty) {
                 return const Center(
                   child: Text("Enigma atual não encontrado. Aguardando..."),
                 );
               }
 
-              final enigmaData = enigmaSnapshot.data!.data()!;
-              final enigma = EnigmaModel.fromMap({
-                'id': enigmaSnapshot.data!.id,
-                ...enigmaData,
-              });
+              final enigmaData = enigmaSnapshot.data!.results!.first as ParseObject;
+              final enigmaMap = <String, dynamic>{};
+              enigmaMap['id'] = enigmaData.objectId;
+              enigmaMap['instruction'] = enigmaData.get<String>('instruction') ?? '';
+              enigmaMap['type'] = enigmaData.get<String>('type') ?? 'text';
+              enigmaMap['prize'] = enigmaData.get<num>('prize')?.toDouble() ?? 0.0;
+              enigmaMap['order'] = enigmaData.get<int>('order') ?? 1;
+              enigmaMap['imageUrl'] = enigmaData.get<String>('imageUrl');
+              final enigma = EnigmaModel.fromMap(enigmaMap);
 
-              if (enigmaData['status'] == 'closed') {
+              if (enigmaData.get<String>('status') == 'closed') {
                 return const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,

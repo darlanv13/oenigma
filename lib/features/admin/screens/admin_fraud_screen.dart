@@ -22,24 +22,24 @@ class AdminFraudScreen extends StatelessWidget {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (!snapshot.hasData || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const Center(
                   child: Text('Nenhum log de fraude encontrado. Tudo tranquilo!', style: TextStyle(color: secondaryTextColor)),
                 );
               }
 
-              final logs = snapshot.data!.results! as List<ParseObject>;
+              final logs = snapshot.data!.docs;
 
               return ListView.builder(
                 itemCount: logs.length,
                 itemBuilder: (context, index) {
-                  final log = logs[index];
-                  final uid = log.get<String>('uid') ?? 'Desconhecido';
-                  final reason = log.get<String>('reason') ?? 'Motivo desconhecido';
-                  final eventId = log.get<String>('eventId') ?? '';
-                  final timestamp = log.createdAt;
+                  final log = logs[index].data() as Map<String, dynamic>;
+                  final uid = log['uid'] ?? 'Desconhecido';
+                  final reason = log['reason'] ?? 'Motivo desconhecido';
+                  final eventId = log['eventId'] ?? '';
+                  final timestamp = log['timestamp'] as Timestamp?;
                   final dateStr = timestamp != null
-                      ? '${timestamp.day}/${timestamp.month}/${timestamp.year} ${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}'
+                      ? '${timestamp.toDate().day}/${timestamp.toDate().month}/${timestamp.toDate().year} ${timestamp.toDate().hour}:${timestamp.toDate().minute.toString().padLeft(2, '0')}'
                       : 'Data desconhecida';
 
                   return Card(
@@ -65,7 +65,7 @@ class AdminFraudScreen extends StatelessWidget {
                             icon: const Icon(Icons.block, color: Colors.red),
                             label: const Text('Banir', style: TextStyle(color: Colors.red)),
                             onPressed: () {
-                               // Implement Ban logic
+                               // Implement Ban logic (update user custom claims or user doc)
                             },
                           ),
                         ],

@@ -1,4 +1,3 @@
-import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
@@ -19,9 +18,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   }
 
   Future<List<dynamic>> _fetchUsers() async {
-    final result = await ParseCloudFunction('listAllUsers').execute();
-    if (!result.success || result.result == null) return [];
-    return result.result as List<dynamic>;
+    final result = await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+        .httpsCallable('listAllUsers')
+        .call();
+    return result.data as List<dynamic>;
   }
 
   @override
@@ -56,7 +56,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               }
               if (snapshot.hasError) {
                 return Center(
-                  child: Text('Erro ao carregar usuários: ${snapshot.error}', style: const TextStyle(color: Colors.redAccent)),
+                  child: Text('Erro ao carregar usuários: \${snapshot.error}', style: const TextStyle(color: Colors.redAccent)),
                 );
               }
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -103,7 +103,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             onPressed: () async {
                               final functionName = isAdmin ? 'revokeAdminRole' : 'grantAdminRole';
                               try {
-                                await ParseCloudFunction(functionName).execute(parameters: {'uid': uid});
+                                await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+                                    .httpsCallable(functionName)
+                                    .call({'uid': uid});
                                 setState(() {
                                   _usersFuture = _fetchUsers();
                                 });
@@ -115,7 +117,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               } catch (e) {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Erro ao atualizar admin: $e')),
+                                    SnackBar(content: Text('Erro ao atualizar admin: \$e')),
                                   );
                                 }
                               }

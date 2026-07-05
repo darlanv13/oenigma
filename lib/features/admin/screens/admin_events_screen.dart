@@ -1,6 +1,5 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 class AdminEventsScreen extends StatelessWidget {
@@ -33,8 +32,8 @@ class AdminEventsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('events').orderBy('createdAt', descending: true).snapshots(),
+          child: FutureBuilder<ParseResponse>(
+            future: (QueryBuilder<ParseObject>(ParseObject('events'))..orderByDescending('createdAt')).query(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -226,22 +225,17 @@ class AdminPhasesScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('events')
-                    .doc(eventId)
-                    .collection('phases')
-                    .orderBy('order')
-                    .snapshots(),
+              child: FutureBuilder<ParseResponse>(
+                future: (QueryBuilder<ParseObject>(ParseObject('phases'))..whereEqualTo('eventId', eventId)..orderByAscending('order')).query(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) return const CircularProgressIndicator();
-                  final phases = snapshot.data!.docs;
+                  final phases = snapshot.data?.results ?? [];
 
                   return ListView.builder(
                     itemCount: phases.length,
                     itemBuilder: (context, index) {
-                      final phase = phases[index].data() as Map<String, dynamic>;
-                      final phaseId = phases[index].id;
+                      final phase = phases[index] as ParseObject;
+                      final phaseId = phases[index].objectId!;
                       final order = phase['order'] ?? 0;
                       final isBlocked = phase['isBlocked'] ?? false;
 
@@ -307,7 +301,7 @@ class AdminPhasesScreen extends StatelessWidget {
                   'isBlocked': isBlocked,
                 };
 
-                final ref = FirebaseFirestore.instance.collection('events').doc(eventId).collection('phases');
+                /* REMOVED FIRESTORE REF */
 
                 if (docId == null) {
                   await ref.add(data);
@@ -344,31 +338,24 @@ class AdminEnigmasList extends StatelessWidget {
           style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, foregroundColor: Colors.white),
         ),
         const SizedBox(height: 12),
-        StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('events')
-              .doc(eventId)
-              .collection('phases')
-              .doc(phaseId)
-              .collection('enigmas')
-              .orderBy('order')
-              .snapshots(),
+        FutureBuilder<ParseResponse>(
+          future: (QueryBuilder<ParseObject>(ParseObject('enigmas'))..whereEqualTo('eventId', eventId)..whereEqualTo('phaseId', phaseId)..orderByAscending('order')).query(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) return const Text('Carregando...', style: TextStyle(color: Colors.white));
-            final enigmas = snapshot.data!.docs;
+            final enigmas = snapshot.data?.results ?? [];
             if (enigmas.isEmpty) return const Text('Nenhum enigma cadastrado nesta fase.', style: TextStyle(color: secondaryTextColor));
 
             return Column(
               children: enigmas.map((doc) {
-                final data = doc.data() as Map<String, dynamic>;
+                final data = doc as ParseObject;
                 return ListTile(
                   title: Text(data['title'] ?? 'Enigma', style: const TextStyle(color: Colors.white)),
                   subtitle: Text('Tipo: ${data['type']}', style: const TextStyle(color: Colors.grey)),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(icon: const Icon(Icons.edit, size: 18, color: Colors.blue), onPressed: () => _showEnigmaDialog(context, docId: doc.id, initialData: data)),
-                      IconButton(icon: const Icon(Icons.delete, size: 18, color: Colors.red), onPressed: () => FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('deleteEnigma').call({'eventId': eventId, 'phaseId': phaseId, 'enigmaId': doc.id})),
+                      IconButton(icon: const Icon(Icons.edit, size: 18, color: Colors.blue), onPressed: () => _showEnigmaDialog(context, docId: doc.objectId!, initialData: data)),
+                      IconButton(icon: const Icon(Icons.delete, size: 18, color: Colors.red), onPressed: () => FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('deleteEnigma').call({'eventId': eventId, 'phaseId': phaseId, 'enigmaId': doc.objectId!})),
                     ],
                   ),
                 );
@@ -423,15 +410,15 @@ class AdminEnigmasList extends StatelessWidget {
                     const Divider(color: Colors.white24),
                     const Text('Caixa de Dicas (Sorteio)', style: TextStyle(color: primaryAmber, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance.collection('hints_pool').snapshots(),
+                    FutureBuilder<ParseResponse>(
+                      future: QueryBuilder<ParseObject>(ParseObject('hints_pool')).query(),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) return const CircularProgressIndicator();
                         final allHints = snapshot.data!.docs;
                         return Column(
                           children: allHints.map((doc) {
                             final hintData = doc.data() as Map<String, dynamic>;
-                            final isSelected = linkedHints.contains(doc.id);
+                            final isSelected = linkedHints.contains(doc.objectId!);
                             return CheckboxListTile(
                               title: Text(hintData['title'] ?? 'Dica', style: const TextStyle(color: Colors.white, fontSize: 14)),
                               subtitle: Text(hintData['type'] ?? 'text', style: const TextStyle(color: secondaryTextColor, fontSize: 12)),
@@ -441,9 +428,9 @@ class AdminEnigmasList extends StatelessWidget {
                               onChanged: (val) {
                                 setState(() {
                                   if (val == true) {
-                                    linkedHints.add(doc.id);
+                                    linkedHints.add(doc.objectId!);
                                   } else {
-                                    linkedHints.remove(doc.id);
+                                    linkedHints.remove(doc.objectId!);
                                   }
                                 });
                               },

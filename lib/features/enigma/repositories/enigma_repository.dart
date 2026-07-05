@@ -1,4 +1,3 @@
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:oenigma/core/models/event_model.dart';
 
 import 'package:oenigma/core/models/enigma_model.dart';

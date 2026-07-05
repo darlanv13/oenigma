@@ -38,22 +38,22 @@ class AdminToolsScreen extends StatelessWidget {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (!snapshot.hasData || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const Center(
                   child: Text('Nenhuma dica global cadastrada.', style: TextStyle(color: secondaryTextColor)),
                 );
               }
 
-              final hints = snapshot.data!.results! as List<ParseObject>;
+              final hints = snapshot.data!.docs;
 
               return ListView.builder(
                 itemCount: hints.length,
                 itemBuilder: (context, index) {
-                  final hint = hints[index];
-                  final hintId = hint.objectId!;
-                  final title = hint.get<String>('title') ?? 'Sem Título';
-                  final type = hint.get<String>('type') ?? 'text'; // text, image_url, audio_url
-                  final content = hint.get<String>('content') ?? '';
+                  final hint = hints[index].data() as Map<String, dynamic>;
+                  final hintId = hints[index].id;
+                  final title = hint['title'] ?? 'Sem Título';
+                  final type = hint['type'] ?? 'text'; // text, image_url, audio_url
+                  final content = hint['content'] ?? '';
 
                   return Card(
                     color: cardColor,
@@ -81,9 +81,11 @@ class AdminToolsScreen extends StatelessWidget {
                             icon: const Icon(Icons.delete, color: Colors.redAccent),
                             onPressed: () async {
                                try {
-                                 await ParseCloudFunction('deleteHint').execute(parameters: {'hintId': hintId});
+                                 await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+                                    .httpsCallable('deleteHint')
+                                    .call({'hintId': hintId});
                                } catch (e) {
-                                 // ignore
+                                 print("Erro ao excluir dica: $e");
                                }
                             },
                             tooltip: 'Excluir Dica',
@@ -101,10 +103,10 @@ class AdminToolsScreen extends StatelessWidget {
     );
   }
 
-  void _showHintDialog(BuildContext context, {String? docId, ParseObject? initialData}) {
-    final titleCtrl = TextEditingController(text: initialData?.get<String>('title') ?? '');
-    final contentCtrl = TextEditingController(text: initialData?.get<String>('content') ?? '');
-    String type = initialData?.get<String>('type') ?? 'text';
+  void _showHintDialog(BuildContext context, {String? docId, Map<String, dynamic>? initialData}) {
+    final titleCtrl = TextEditingController(text: initialData?['title'] ?? '');
+    final contentCtrl = TextEditingController(text: initialData?['content'] ?? '');
+    String type = initialData?['type'] ?? 'text';
 
     showDialog(
       context: context,
@@ -112,53 +114,79 @@ class AdminToolsScreen extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              backgroundColor: darkBackground,
-              title: Text(docId == null ? 'Nova Dica' : 'Editar Dica', style: const TextStyle(color: Colors.white)),
+              backgroundColor: cardColor,
+              title: Text(docId == null ? 'Nova Dica Global' : 'Editar Dica', style: const TextStyle(color: Colors.white)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextField(controller: titleCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Título Interno')),
-                    DropdownButtonFormField<String>(
+                    TextField(
+                      controller: titleCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(labelText: 'Título de Referência (Admin)', labelStyle: TextStyle(color: secondaryTextColor)),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('Tipo da Dica:', style: TextStyle(color: secondaryTextColor)),
+                    DropdownButton<String>(
                       value: type,
-                      dropdownColor: cardColor,
+                      dropdownColor: darkBackground,
                       style: const TextStyle(color: Colors.white),
                       items: const [
-                        DropdownMenuItem(value: 'text', child: Text('Texto')),
-                        DropdownMenuItem(value: 'image_url', child: Text('URL de Imagem')),
-                        DropdownMenuItem(value: 'audio_url', child: Text('URL de Áudio')),
+                        DropdownMenuItem(value: 'text', child: Text('Texto (Charada)')),
+                        DropdownMenuItem(value: 'image_url', child: Text('Imagem (URL)')),
+                        DropdownMenuItem(value: 'audio_url', child: Text('Áudio (URL)')),
                       ],
-                      onChanged: (val) { if (val != null) setState(() => type = val); },
-                      decoration: const InputDecoration(labelText: 'Tipo de Dica'),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => type = val);
+                        }
+                      },
                     ),
                     TextField(
                       controller: contentCtrl,
-                      maxLines: 4,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(labelText: 'Conteúdo (Texto ou URL)'),
+                      maxLines: type == 'text' ? 3 : 1,
+                      decoration: InputDecoration(
+                        labelText: type == 'text' ? 'Texto da Charada' : 'URL do Arquivo',
+                        labelStyle: const TextStyle(color: secondaryTextColor)
+                      ),
                     ),
                   ],
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: secondaryTextColor))),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancelar', style: TextStyle(color: Colors.red)),
+                ),
                 ElevatedButton(
                   onPressed: () async {
                     final data = {
                       'title': titleCtrl.text,
                       'type': type,
                       'content': contentCtrl.text,
+                      'updatedAt': FieldValue.serverTimestamp(),
                     };
+
                     try {
-                      if (docId == null) {
-                        await ParseCloudFunction('createOrUpdateHint').execute(parameters: {'data': data});
-                      } else {
-                        await ParseCloudFunction('createOrUpdateHint').execute(parameters: {'hintId': docId, 'data': data});
-                      }
+                      data.remove('createdAt');
+                      data.remove('updatedAt');
+                      await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
+                          .httpsCallable('createOrUpdateHint')
+                          .call({
+                            'hintId': docId,
+                            'data': data,
+                          });
+                      if (ctx.mounted) Navigator.pop(ctx);
                     } catch (e) {
-                      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Erro: \$e')));
+                      print("Erro: $e");
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          SnackBar(content: Text('Erro ao salvar dica via Cloud Function: $e')),
+                        );
+                      }
                     }
-                    if (ctx.mounted) Navigator.pop(ctx);
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
                   child: const Text('Salvar'),

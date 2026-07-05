@@ -1,4 +1,3 @@
-import 'package:cloud_functions/cloud_functions.dart';
 
 class RankingRepository {
   final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(

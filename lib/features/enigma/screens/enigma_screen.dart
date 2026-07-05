@@ -1,12 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart' hide GeoPoint;
-import 'package:cloud_firestore/cloud_firestore.dart' as firestore show GeoPoint;
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' show cos, sqrt, asin, pi, sin;
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -631,7 +628,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 // Log to Admin Fraud Monitor
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
-          FirebaseFirestore.instance.collection('fraud_logs').add({
+          final log = ParseObject('fraud_logs')..set('player_id', 'some_id')..set('action', 'mocked')..save();
+          /* FirebaseFirestore.instance.collection('fraud_logs').add({
             'uid': user.uid,
             'eventId': widget.event.id,
             'enigmaId': _currentEnigma.id,

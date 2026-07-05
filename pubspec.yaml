@@ -10,16 +10,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  parse_server_sdk_flutter: ^10.7.0
 
   cupertino_icons: ^1.0.8
-  cloud_firestore: ^5.6.8
-  cloud_functions: ^5.5.1
   image_picker: ^1.1.2
-  firebase_auth: ^5.5.4
-  parse_server_sdk_flutter: ^10.7.0
-  rxdart: ^0.28.0
+  firebase_storage: ^12.4.6
   intl: ^0.20.2
-  firebase_app_check: ^0.3.2+6
   location: ^8.0.0
   location_web: ^6.0.1
   mobile_scanner: ^7.0.1
@@ -29,7 +25,6 @@ dependencies:
   url_launcher: ^6.3.1
   lottie: ^3.0.0
   http: ^1.4.0
-  firebase_core: ^3.14.0
   screenshot: ^3.0.0
   path_provider: ^2.1.5
   share_plus: ^11.0.0
@@ -47,6 +42,7 @@ dependencies:
   google_fonts: ^8.0.2
   cached_network_image: ^3.4.1
   confetti: ^0.8.0
+  firebase_messaging: ^15.2.10
 
 dev_dependencies:
   flutter_test:
@@ -65,7 +61,7 @@ flutter:
     - assets/animations/error.json
     - assets/animations/reset_senha.json
     # Certifique-se de que a imagem do ícone existe nesta pasta:
-    # - assets/icon/icon.png 
+    # - assets/icon/icon.png
 
 # =======================================================
 # AQUI ESTÁ A PARTE QUE FALTAVA (CONFIGURAÇÃO DOS ÍCONES)
