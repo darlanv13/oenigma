@@ -66,8 +66,8 @@ class AdminBannersScreen extends StatelessWidget {
                             ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image))
                             : const Icon(Icons.image, color: Colors.grey),
                       ),
-                      title: Text('Ordem: \$order - \${isActive ? "Ativo" : "Inativo"}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      subtitle: Text('Link: \$actionUrl', style: const TextStyle(color: secondaryTextColor), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      title: Text('Ordem: $order - ${isActive ? "Ativo" : "Inativo"}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      subtitle: Text('Link: $actionUrl', style: const TextStyle(color: secondaryTextColor), maxLines: 1, overflow: TextOverflow.ellipsis),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [

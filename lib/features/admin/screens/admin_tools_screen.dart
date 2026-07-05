@@ -65,7 +65,7 @@ class AdminToolsScreen extends StatelessWidget {
                         size: 40,
                       ),
                       title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      subtitle: Text('Tipo: \$type\nConteúdo: \$content', style: const TextStyle(color: secondaryTextColor), maxLines: 2, overflow: TextOverflow.ellipsis),
+                      subtitle: Text('Tipo: $type\nConteúdo: $content', style: const TextStyle(color: secondaryTextColor), maxLines: 2, overflow: TextOverflow.ellipsis),
                       isThreeLine: true,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,

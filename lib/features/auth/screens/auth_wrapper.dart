@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/features/home/screens/main_navigation_screen.dart';
@@ -18,35 +17,21 @@ class AuthWrapper extends ConsumerWidget {
     return authState.when(
       data: (user) {
         if (user != null) {
-          return FutureBuilder<IdTokenResult>(
-            future: user.getIdTokenResult(true),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  backgroundColor: darkBackground,
-                  body: Center(child: CircularProgressIndicator(color: primaryAmber)),
-                );
-              }
+          final isSuperAdmin = user.get<bool>('super_admin') ?? false;
+          final isEditor = user.get<bool>('editor') ?? false;
+          final isAdmin = isSuperAdmin || isEditor;
 
-              final claims = snapshot.data?.claims ?? {};
-              final isAdmin = claims['super_admin'] == true || claims['editor'] == true;
+          if (isAdmin) {
+            final double screenWidth = MediaQuery.of(context).size.width;
+            final bool isDesktop = kIsWeb || screenWidth > 800;
 
-              if (isAdmin) {
-                // Determine if device is conceptually a Desktop/Web screen
-                final double screenWidth = MediaQuery.of(context).size.width;
-                final bool isDesktop = kIsWeb || screenWidth > 800;
-
-                if (isDesktop) {
-                  return const AdminAuthWrapper();
-                } else {
-                  return _buildAdminMobileBlockedScreen(context);
-                }
-              }
-
-              // Regular users go to the game
-              return const MainNavigationScreen();
-            },
-          );
+            if (isDesktop) {
+              return const AdminAuthWrapper();
+            } else {
+              return _buildAdminMobileBlockedScreen(context, ref);
+            }
+          }
+          return const MainNavigationScreen();
         } else {
           return const LoginScreen();
         }
@@ -62,7 +47,7 @@ class AuthWrapper extends ConsumerWidget {
     );
   }
 
-  Widget _buildAdminMobileBlockedScreen(BuildContext context) {
+  Widget _buildAdminMobileBlockedScreen(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: darkBackground,
       body: Center(
@@ -86,7 +71,8 @@ class AuthWrapper extends ConsumerWidget {
               const SizedBox(height: 32),
               ElevatedButton.icon(
                 onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
+                  final authRepository = ref.read(authRepositoryProvider);
+                  await authRepository.signOut();
                 },
                 icon: const Icon(Icons.logout),
                 label: const Text('Sair e Trocar de Conta'),
