@@ -1,5 +1,5 @@
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -20,8 +20,8 @@ class AdminDashboardScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: StreamBuilder<AggregateQuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('users').count().get().asStream(),
+                child: FutureBuilder<ParseResponse>(
+                  future: QueryBuilder<ParseUser>(ParseUser.forQuery()).count(),
                   builder: (context, snapshot) {
                     final count = snapshot.data?.count?.toString() ?? '...';
                     return _buildStatCard('Usuários Ativos', count, Icons.people, Colors.blue);
@@ -30,8 +30,8 @@ class AdminDashboardScreen extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: StreamBuilder<AggregateQuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('events').where('status', isEqualTo: 'published').count().get().asStream(),
+                child: FutureBuilder<ParseResponse>(
+                  future: (QueryBuilder<ParseObject>(ParseObject('events'))..whereEqualTo('status', 'published')).count(),
                   builder: (context, snapshot) {
                     final count = snapshot.data?.count?.toString() ?? '...';
                     return _buildStatCard('Eventos Ativos', count, Icons.event_available, Colors.green);
@@ -40,8 +40,8 @@ class AdminDashboardScreen extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: StreamBuilder<AggregateQuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('transactions').where('type', isEqualTo: 'deposit').count().get().asStream(),
+                child: FutureBuilder<ParseResponse>(
+                  future: (QueryBuilder<ParseObject>(ParseObject('transactions'))..whereEqualTo('type', 'deposit')).count(),
                   builder: (context, snapshot) {
                      final count = snapshot.data?.count?.toString() ?? '...';
                     return _buildStatCard('Depósitos Totais', count, Icons.attach_money, primaryAmber);
@@ -50,8 +50,8 @@ class AdminDashboardScreen extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: StreamBuilder<AggregateQuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('withdrawals').where('status', isEqualTo: 'pending').count().get().asStream(),
+                child: FutureBuilder<ParseResponse>(
+                  future: (QueryBuilder<ParseObject>(ParseObject('withdrawals'))..whereEqualTo('status', 'pending')).count(),
                   builder: (context, snapshot) {
                     final count = snapshot.data?.count?.toString() ?? '...';
                     return _buildStatCard('Saques Pendentes', count, Icons.money_off, Colors.redAccent);

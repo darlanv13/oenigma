@@ -1,4 +1,4 @@
-import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -90,7 +90,7 @@ class AdminEventsScreen extends StatelessWidget {
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.redAccent),
                             onPressed: () {
-                               ParseCloudFunction('deleteEvent').execute(parameters: {'eventId': eventId});
+                               FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('deleteEvent').call({'eventId': eventId});
                             },
                             tooltip: 'Excluir Evento',
                           ),
@@ -168,11 +168,11 @@ class AdminEventsScreen extends StatelessWidget {
                   // Cannot send FieldValue to Cloud Function, remove it
                   data.remove('updatedAt');
                   if (docId == null) {
-                    await ParseCloudFunction('createOrUpdateEvent').execute(parameters: {
+                    await FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEvent').call({
                       'data': data
                     });
                   } else {
-                    await ParseCloudFunction('createOrUpdateEvent').execute(parameters: {
+                    await FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEvent').call({
                       'eventId': docId,
                       'data': data
                     });
@@ -368,7 +368,7 @@ class AdminEnigmasList extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(icon: const Icon(Icons.edit, size: 18, color: Colors.blue), onPressed: () => _showEnigmaDialog(context, docId: doc.id, initialData: data)),
-                      IconButton(icon: const Icon(Icons.delete, size: 18, color: Colors.red), onPressed: () => ParseCloudFunction('deleteEnigma').execute(parameters: {'eventId': eventId, 'phaseId': phaseId, 'enigmaId': doc.id})),
+                      IconButton(icon: const Icon(Icons.delete, size: 18, color: Colors.red), onPressed: () => FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('deleteEnigma').call({'eventId': eventId, 'phaseId': phaseId, 'enigmaId': doc.id})),
                     ],
                   ),
                 );
@@ -470,13 +470,13 @@ class AdminEnigmasList extends StatelessWidget {
                     };
 
                     if (docId == null) {
-                       ParseCloudFunction('createOrUpdateEnigma').execute(parameters: {
+                       FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEnigma').call({
                           'eventId': eventId,
                           'phaseId': phaseId,
                           'data': data
                        });
                     } else {
-                       ParseCloudFunction('createOrUpdateEnigma').execute(parameters: {
+                       FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEnigma').call({
                           'eventId': eventId,
                           'phaseId': phaseId,
                           'enigmaId': docId,

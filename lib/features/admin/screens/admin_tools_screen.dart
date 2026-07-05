@@ -1,6 +1,5 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 class AdminToolsScreen extends StatelessWidget {
@@ -33,28 +32,28 @@ class AdminToolsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('hints_pool').orderBy('createdAt', descending: true).snapshots(),
+          child: FutureBuilder<ParseResponse>(
+            future: (QueryBuilder<ParseObject>(ParseObject('hints_pool'))..orderByDescending('createdAt')).query(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              if (!snapshot.hasData || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
                 return const Center(
                   child: Text('Nenhuma dica global cadastrada.', style: TextStyle(color: secondaryTextColor)),
                 );
               }
 
-              final hints = snapshot.data!.docs;
+              final hints = snapshot.data!.results! as List<ParseObject>;
 
               return ListView.builder(
                 itemCount: hints.length,
                 itemBuilder: (context, index) {
-                  final hint = hints[index].data() as Map<String, dynamic>;
-                  final hintId = hints[index].id;
-                  final title = hint['title'] ?? 'Sem Título';
-                  final type = hint['type'] ?? 'text'; // text, image_url, audio_url
-                  final content = hint['content'] ?? '';
+                  final hint = hints[index];
+                  final hintId = hint.objectId!;
+                  final title = hint.get<String>('title') ?? 'Sem Título';
+                  final type = hint.get<String>('type') ?? 'text'; // text, image_url, audio_url
+                  final content = hint.get<String>('content') ?? '';
 
                   return Card(
                     color: cardColor,
@@ -66,7 +65,7 @@ class AdminToolsScreen extends StatelessWidget {
                         size: 40,
                       ),
                       title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      subtitle: Text('Tipo: $type\nConteúdo: $content', style: const TextStyle(color: secondaryTextColor), maxLines: 2, overflow: TextOverflow.ellipsis),
+                      subtitle: Text('Tipo: \$type\nConteúdo: \$content', style: const TextStyle(color: secondaryTextColor), maxLines: 2, overflow: TextOverflow.ellipsis),
                       isThreeLine: true,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -82,11 +81,9 @@ class AdminToolsScreen extends StatelessWidget {
                             icon: const Icon(Icons.delete, color: Colors.redAccent),
                             onPressed: () async {
                                try {
-                                 await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
-                                    .httpsCallable('deleteHint')
-                                    .call({'hintId': hintId});
+                                 await ParseCloudFunction('deleteHint').execute(parameters: {'hintId': hintId});
                                } catch (e) {
-                                 print("Erro ao excluir dica: $e");
+                                 // ignore
                                }
                             },
                             tooltip: 'Excluir Dica',
@@ -104,10 +101,10 @@ class AdminToolsScreen extends StatelessWidget {
     );
   }
 
-  void _showHintDialog(BuildContext context, {String? docId, Map<String, dynamic>? initialData}) {
-    final titleCtrl = TextEditingController(text: initialData?['title'] ?? '');
-    final contentCtrl = TextEditingController(text: initialData?['content'] ?? '');
-    String type = initialData?['type'] ?? 'text';
+  void _showHintDialog(BuildContext context, {String? docId, ParseObject? initialData}) {
+    final titleCtrl = TextEditingController(text: initialData?.get<String>('title') ?? '');
+    final contentCtrl = TextEditingController(text: initialData?.get<String>('content') ?? '');
+    String type = initialData?.get<String>('type') ?? 'text';
 
     showDialog(
       context: context,
@@ -115,79 +112,53 @@ class AdminToolsScreen extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              backgroundColor: cardColor,
-              title: Text(docId == null ? 'Nova Dica Global' : 'Editar Dica', style: const TextStyle(color: Colors.white)),
+              backgroundColor: darkBackground,
+              title: Text(docId == null ? 'Nova Dica' : 'Editar Dica', style: const TextStyle(color: Colors.white)),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextField(
-                      controller: titleCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(labelText: 'Título de Referência (Admin)', labelStyle: TextStyle(color: secondaryTextColor)),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text('Tipo da Dica:', style: TextStyle(color: secondaryTextColor)),
-                    DropdownButton<String>(
+                    TextField(controller: titleCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Título Interno')),
+                    DropdownButtonFormField<String>(
                       value: type,
-                      dropdownColor: darkBackground,
+                      dropdownColor: cardColor,
                       style: const TextStyle(color: Colors.white),
                       items: const [
-                        DropdownMenuItem(value: 'text', child: Text('Texto (Charada)')),
-                        DropdownMenuItem(value: 'image_url', child: Text('Imagem (URL)')),
-                        DropdownMenuItem(value: 'audio_url', child: Text('Áudio (URL)')),
+                        DropdownMenuItem(value: 'text', child: Text('Texto')),
+                        DropdownMenuItem(value: 'image_url', child: Text('URL de Imagem')),
+                        DropdownMenuItem(value: 'audio_url', child: Text('URL de Áudio')),
                       ],
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() => type = val);
-                        }
-                      },
+                      onChanged: (val) { if (val != null) setState(() => type = val); },
+                      decoration: const InputDecoration(labelText: 'Tipo de Dica'),
                     ),
                     TextField(
                       controller: contentCtrl,
+                      maxLines: 4,
                       style: const TextStyle(color: Colors.white),
-                      maxLines: type == 'text' ? 3 : 1,
-                      decoration: InputDecoration(
-                        labelText: type == 'text' ? 'Texto da Charada' : 'URL do Arquivo',
-                        labelStyle: const TextStyle(color: secondaryTextColor)
-                      ),
+                      decoration: const InputDecoration(labelText: 'Conteúdo (Texto ou URL)'),
                     ),
                   ],
                 ),
               ),
               actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancelar', style: TextStyle(color: Colors.red)),
-                ),
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: secondaryTextColor))),
                 ElevatedButton(
                   onPressed: () async {
                     final data = {
                       'title': titleCtrl.text,
                       'type': type,
                       'content': contentCtrl.text,
-                      'updatedAt': FieldValue.serverTimestamp(),
                     };
-
                     try {
-                      data.remove('createdAt');
-                      data.remove('updatedAt');
-                      await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
-                          .httpsCallable('createOrUpdateHint')
-                          .call({
-                            'hintId': docId,
-                            'data': data,
-                          });
-                      if (ctx.mounted) Navigator.pop(ctx);
-                    } catch (e) {
-                      print("Erro: $e");
-                      if (ctx.mounted) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          SnackBar(content: Text('Erro ao salvar dica via Cloud Function: $e')),
-                        );
+                      if (docId == null) {
+                        await ParseCloudFunction('createOrUpdateHint').execute(parameters: {'data': data});
+                      } else {
+                        await ParseCloudFunction('createOrUpdateHint').execute(parameters: {'hintId': docId, 'data': data});
                       }
+                    } catch (e) {
+                      if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Erro: \$e')));
                     }
+                    if (ctx.mounted) Navigator.pop(ctx);
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
                   child: const Text('Salvar'),

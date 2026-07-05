@@ -268,7 +268,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         'enigmaId': _currentEnigma.id,
       });
       if (mounted) {
-        final statusData = Map<String, dynamic>.from(result.result);
+        final statusData = Map<String, dynamic>.from(result.data);
         setState(() {
           _isHintVisible = statusData['isHintVisible'] ?? false;
           _hintData = statusData['hintData'] != null ? Map<String, dynamic>.from(statusData['hintData']) : null;
@@ -399,7 +399,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
 
       if (!mounted) return;
 
-      final data = Map<String, dynamic>.from(result.result);
+      final data = Map<String, dynamic>.from(result.data);
       final success = data['success'] ?? false;
 
       if (success) {
@@ -447,7 +447,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
 
       if (!mounted) return;
 
-      final data = Map<String, dynamic>.from(result.result);
+      final data = Map<String, dynamic>.from(result.data);
       final success = data['success'] ?? false;
 
       if (success) {

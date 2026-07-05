@@ -25,7 +25,7 @@ class _MainAdminScreenState extends ConsumerState<MainAdminScreen> {
   int _selectedIndex = 0;
   bool _isExpanded = true;
 
-  final List<Widget> _screens = const [
+  final List<Widget> _screens = [
     AdminDashboardScreen(),
     AdminEventsScreen(),
     AdminUsersScreen(),

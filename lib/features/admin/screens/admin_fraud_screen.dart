@@ -1,5 +1,5 @@
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 class AdminFraudScreen extends StatelessWidget {
@@ -16,34 +16,30 @@ class AdminFraudScreen extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('fraud_logs')
-                .orderBy('timestamp', descending: true)
-                .limit(50)
-                .snapshots(),
+          child: FutureBuilder<ParseResponse>(
+            future: (QueryBuilder<ParseObject>(ParseObject('fraud_logs'))..orderByDescending('timestamp')..setLimit(50)).query(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              if (!snapshot.hasData || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
                 return const Center(
                   child: Text('Nenhum log de fraude encontrado. Tudo tranquilo!', style: TextStyle(color: secondaryTextColor)),
                 );
               }
 
-              final logs = snapshot.data!.docs;
+              final logs = snapshot.data!.results! as List<ParseObject>;
 
               return ListView.builder(
                 itemCount: logs.length,
                 itemBuilder: (context, index) {
-                  final log = logs[index].data() as Map<String, dynamic>;
-                  final uid = log['uid'] ?? 'Desconhecido';
-                  final reason = log['reason'] ?? 'Motivo desconhecido';
-                  final eventId = log['eventId'] ?? '';
-                  final timestamp = log['timestamp'] as Timestamp?;
+                  final log = logs[index];
+                  final uid = log.get<String>('uid') ?? 'Desconhecido';
+                  final reason = log.get<String>('reason') ?? 'Motivo desconhecido';
+                  final eventId = log.get<String>('eventId') ?? '';
+                  final timestamp = log.createdAt;
                   final dateStr = timestamp != null
-                      ? '${timestamp.toDate().day}/${timestamp.toDate().month}/${timestamp.toDate().year} ${timestamp.toDate().hour}:${timestamp.toDate().minute.toString().padLeft(2, '0')}'
+                      ? '${timestamp.day}/${timestamp.month}/${timestamp.year} ${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}'
                       : 'Data desconhecida';
 
                   return Card(
@@ -69,7 +65,7 @@ class AdminFraudScreen extends StatelessWidget {
                             icon: const Icon(Icons.block, color: Colors.red),
                             label: const Text('Banir', style: TextStyle(color: Colors.red)),
                             onPressed: () {
-                               // Implement Ban logic (update user custom claims or user doc)
+                               // Implement Ban logic
                             },
                           ),
                         ],

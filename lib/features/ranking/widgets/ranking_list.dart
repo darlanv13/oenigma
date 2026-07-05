@@ -11,7 +11,7 @@ class RankingList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUserId = ref.read(authRepositoryProvider).currentUser?.objectId;
+    final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid;
 
     return ListView.separated(
       shrinkWrap: true,
