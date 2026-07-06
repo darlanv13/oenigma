@@ -29,7 +29,7 @@ class RankingEventSelector extends StatelessWidget {
         value: selectedEventId,
         isExpanded: true,
         dropdownColor: cardColor,
-        icon: const Icon(FontAwesomeIcons.chevronDown, color: primaryAmber),
+        icon: const FaIcon(FontAwesomeIcons.chevronDown, color: primaryAmber),
         underline: const SizedBox(),
         onChanged: onChanged,
         items: availableEvents.map<DropdownMenuItem<String>>((EventModel event) {

@@ -62,7 +62,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: () => ref.refresh(homeEventsProvider.future),
-                icon: const Icon(FontAwesomeIcons.rotateRight),
+                icon: const FaIcon(FontAwesomeIcons.rotateRight),
                 label: const Text("Tentar Novamente"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryAmber,
@@ -109,19 +109,19 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.house),
+            icon: FaIcon(FontAwesomeIcons.house),
             label: 'Início',
           ),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.wallet),
+            icon: FaIcon(FontAwesomeIcons.wallet),
             label: 'Carteira',
           ),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.trophy),
+            icon: FaIcon(FontAwesomeIcons.trophy),
             label: 'Ranking',
           ),
           BottomNavigationBarItem(
-            icon: Icon(FontAwesomeIcons.user),
+            icon: FaIcon(FontAwesomeIcons.user),
             label: 'Perfil',
           ),
         ],

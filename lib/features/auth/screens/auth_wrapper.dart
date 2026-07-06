@@ -73,7 +73,7 @@ class AuthWrapper extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(FontAwesomeIcons.desktop, size: 80, color: primaryAmber),
+              const FaIcon(FontAwesomeIcons.desktop, size: 80, color: primaryAmber),
               const SizedBox(height: 24),
               const Text(
                 'Acesso Restrito',
@@ -90,7 +90,7 @@ class AuthWrapper extends ConsumerWidget {
                 onPressed: () async {
                   await FirebaseAuth.instance.signOut();
                 },
-                icon: const Icon(FontAwesomeIcons.arrowRightFromBracket),
+                icon: const FaIcon(FontAwesomeIcons.arrowRightFromBracket),
                 label: const Text('Sair e Trocar de Conta'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryAmber,

@@ -216,7 +216,7 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(FontAwesomeIcons.flag, size: 60, color: primaryAmber),
+          FaIcon(FontAwesomeIcons.flag, size: 60, color: primaryAmber),
           SizedBox(height: 16),
           Text(
             "Evento Finalizado!",

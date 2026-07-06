@@ -25,7 +25,7 @@ class WalletProfileHeader extends StatelessWidget {
                 ? NetworkImage(wallet.photoURL!)
                 : null,
             child: (wallet.photoURL == null || wallet.photoURL!.isEmpty)
-                ? const Icon(FontAwesomeIcons.solidUser, color: secondaryTextColor, size: 30)
+                ? const FaIcon(FontAwesomeIcons.solidUser, color: secondaryTextColor, size: 30)
                 : null,
           ),
         ),

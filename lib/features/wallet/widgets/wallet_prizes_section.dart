@@ -58,7 +58,7 @@ class WalletPrizesSection extends StatelessWidget {
               color: primaryAmber.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(FontAwesomeIcons.trophy, color: primaryAmber, size: 32),
+            child: const FaIcon(FontAwesomeIcons.trophy, color: primaryAmber, size: 32),
           ),
           const SizedBox(width: 20),
           Expanded(

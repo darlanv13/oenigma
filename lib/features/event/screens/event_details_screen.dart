@@ -308,7 +308,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 },
               )
             else
-              const Icon(FontAwesomeIcons.circleQuestion, size: 150, color: primaryAmber),
+              const FaIcon(FontAwesomeIcons.circleQuestion, size: 150, color: primaryAmber),
             // O gradiente continua o mesmo
             Container(
               decoration: BoxDecoration(

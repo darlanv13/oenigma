@@ -82,7 +82,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: _reloadData,
-                  icon: const Icon(FontAwesomeIcons.rotateRight),
+                  icon: const FaIcon(FontAwesomeIcons.rotateRight),
                   label: const Text("Tentar Novamente"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryAmber,
@@ -165,7 +165,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             padding: EdgeInsets.all(40.0),
             child: Column(
               children: [
-                Icon(FontAwesomeIcons.calendarXmark, size: 40, color: secondaryTextColor),
+                FaIcon(FontAwesomeIcons.calendarXmark, size: 40, color: secondaryTextColor),
                 SizedBox(height: 16),
                 Text(
                   'Nenhum evento ativo no momento.',

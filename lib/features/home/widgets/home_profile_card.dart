@@ -90,7 +90,7 @@ class HomeProfileCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(FontAwesomeIcons.trophy, size: 14, color: primaryAmber),
+                        const FaIcon(FontAwesomeIcons.trophy, size: 14, color: primaryAmber),
                         const SizedBox(width: 4),
                         Text(
                           'Ranking: #${wallet.lastEventRank ?? '-'}',

@@ -32,7 +32,7 @@ class ProfileAccountActions extends ConsumerWidget {
                 color: Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(FontAwesomeIcons.unlock, color: textColor, size: 20),
+              child: const FaIcon(FontAwesomeIcons.unlock, color: textColor, size: 20),
             ),
             title: const Text(
               'Redefinir Senha',

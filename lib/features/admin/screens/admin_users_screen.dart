@@ -40,7 +40,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             IconButton(
-              icon: const Icon(FontAwesomeIcons.rotateRight, color: Colors.white),
+              icon: const FaIcon(FontAwesomeIcons.rotateRight, color: Colors.white),
               onPressed: () {
                 setState(() {
                   _usersFuture = _fetchUsers();
@@ -96,14 +96,14 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const Icon(FontAwesomeIcons.wallet, color: Colors.greenAccent),
+                            icon: const FaIcon(FontAwesomeIcons.wallet, color: Colors.greenAccent),
                             onPressed: () {
                               // Action to view/edit wallet
                             },
                             tooltip: 'Ver Carteira',
                           ),
                           IconButton(
-                            icon: Icon(isAdmin ? FontAwesomeIcons.userShield : FontAwesomeIcons.solidUser, color: isAdmin ? Colors.blueAccent : Colors.grey),
+                            icon: FaIcon(isAdmin ? FontAwesomeIcons.userShield : FontAwesomeIcons.solidUser, color: isAdmin ? Colors.blueAccent : Colors.grey),
                             onPressed: () async {
                               final functionName = isAdmin ? 'revokeAdminRole' : 'grantAdminRole';
                               try {
@@ -129,7 +129,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             tooltip: isAdmin ? 'Revogar Admin' : 'Tornar Admin',
                           ),
                           IconButton(
-                            icon: const Icon(FontAwesomeIcons.ban, color: Colors.redAccent),
+                            icon: const FaIcon(FontAwesomeIcons.ban, color: Colors.redAccent),
                             onPressed: () {
                               // Action to ban/suspend
                             },

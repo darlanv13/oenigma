@@ -196,7 +196,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   Widget _buildErrorState() {
     return Column(
       children: [
-        const Icon(FontAwesomeIcons.circleExclamation, color: Colors.redAccent, size: 50),
+        const FaIcon(FontAwesomeIcons.circleExclamation, color: Colors.redAccent, size: 50),
         const SizedBox(height: 16),
         const Text(
           "Erro ao gerar Pix",
@@ -301,7 +301,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                icon: const Icon(FontAwesomeIcons.copy, color: Colors.black),
+                icon: const FaIcon(FontAwesomeIcons.copy, color: Colors.black),
                 label: const Text(
                   "COPIAR CÓDIGO PIX",
                   style: TextStyle(
@@ -340,7 +340,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   Widget _buildSuccessState() {
     return Column(
       children: [
-        const Icon(FontAwesomeIcons.circleCheck, color: Colors.green, size: 80),
+        const FaIcon(FontAwesomeIcons.circleCheck, color: Colors.green, size: 80),
         const SizedBox(height: 16),
         const Text(
           "Pagamento Confirmado!",

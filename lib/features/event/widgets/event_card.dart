@@ -283,7 +283,7 @@ class _EventCardState extends State<EventCard> {
                                 ? NetworkImage(event.winnerPhotoURL!)
                                 : null,
                             child: event.winnerPhotoURL == null
-                                ? const Icon(FontAwesomeIcons.solidUser, size: 16)
+                                ? const FaIcon(FontAwesomeIcons.solidUser, size: 16)
                                 : null,
                           ),
                           const SizedBox(width: 8),

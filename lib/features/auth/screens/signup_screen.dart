@@ -148,7 +148,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 if (_currentStep > 0)
                   ElevatedButton.icon(
                     onPressed: details.onStepCancel,
-                    icon: const Icon(FontAwesomeIcons.arrowLeft),
+                    icon: const FaIcon(FontAwesomeIcons.arrowLeft),
                     label: const Text('Voltar'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: cardColor,

@@ -69,9 +69,9 @@ class HomeBannerCarousel extends StatelessWidget {
                             imageUrl: imageUrl,
                             fit: BoxFit.cover,
                             placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: primaryAmber)),
-                            errorWidget: (context, url, error) => const Icon(FontAwesomeIcons.circleExclamation),
+                            errorWidget: (context, url, error) => const FaIcon(FontAwesomeIcons.circleExclamation),
                           )
-                        : const Center(child: Icon(FontAwesomeIcons.image, color: secondaryTextColor)),
+                        : const Center(child: FaIcon(FontAwesomeIcons.image, color: secondaryTextColor)),
                   ),
                 ),
               );

@@ -110,7 +110,7 @@ class PhaseCard extends StatelessWidget {
                             ),
                           ),
                           if (isPlayable)
-                            const Icon(FontAwesomeIcons.chevronRight, color: primaryAmber, size: 16),
+                            const FaIcon(FontAwesomeIcons.chevronRight, color: primaryAmber, size: 16),
                         ],
                       ),
                       const SizedBox(height: 12),

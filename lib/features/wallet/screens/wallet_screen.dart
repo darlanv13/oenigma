@@ -83,7 +83,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(FontAwesomeIcons.circleExclamation, size: 48, color: Colors.redAccent),
+              const FaIcon(FontAwesomeIcons.circleExclamation, size: 48, color: Colors.redAccent),
               const SizedBox(height: 16),
               const Text(
                 'Erro ao carregar carteira',
@@ -145,7 +145,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
         Expanded(
           child: ElevatedButton.icon(
             onPressed: () => _showAddFundsDialog(wallet),
-            icon: const Icon(FontAwesomeIcons.circlePlus),
+            icon: const FaIcon(FontAwesomeIcons.circlePlus),
             label: const Text('Adicionar\nSaldo'),
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryAmber,

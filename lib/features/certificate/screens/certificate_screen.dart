@@ -99,7 +99,7 @@ class CertificateScreen extends StatelessWidget {
                   const SizedBox(height: 32.0),
                   // Adicione o botão de compartilhamento aqui
                   ElevatedButton.icon(
-                    icon: const Icon(FontAwesomeIcons.shareNodes),
+                    icon: const FaIcon(FontAwesomeIcons.shareNodes),
                     label: const Text('Compartilhar'),
                     onPressed: () {
                       // Implementar a lógica de compartilhamento aqui usando um plugin como share_plus
