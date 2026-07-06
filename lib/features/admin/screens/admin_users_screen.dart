@@ -18,9 +18,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   }
 
   Future<List<dynamic>> _fetchUsers() async {
-    final result = await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
-        .httpsCallable('listAllUsers')
-        .call();
+    final result = await ParseCloudFunction('listAllUsers').execute(parameters: );
     return result.data as List<dynamic>;
   }
 
@@ -105,7 +103,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               try {
                                 await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
                                     .httpsCallable(functionName)
-                                    .call({'uid': uid});
+                                    .execute(parameters: {'uid': uid});
                                 setState(() {
                                   _usersFuture = _fetchUsers();
                                 });

@@ -3,9 +3,7 @@ import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
 
 class EnigmaRepository {
-  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
-    region: 'southamerica-east1',
-  );
+
 
   Future<HttpsCallableResult> callFunction(
     String functionName, [

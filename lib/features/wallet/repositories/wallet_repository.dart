@@ -1,9 +1,7 @@
 import 'package:oenigma/core/models/user_wallet_model.dart';
 
 class WalletRepository {
-  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
-    region: 'southamerica-east1',
-  );
+
 
   Future<HttpsCallableResult> callFunction(
     String functionName, [

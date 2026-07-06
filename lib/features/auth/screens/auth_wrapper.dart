@@ -85,7 +85,7 @@ class AuthWrapper extends ConsumerWidget {
               const SizedBox(height: 32),
               ElevatedButton.icon(
                 onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
+                  await ParseUser.signOut();
                 },
                 icon: const Icon(Icons.logout),
                 label: const Text('Sair e Trocar de Conta'),

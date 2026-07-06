@@ -1,4 +1,3 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
 // Handler para notificações em background (Deve ser top-level)
@@ -10,9 +9,9 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 class PushNotificationService {
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  final ParseInstallation _fcm = await ParseInstallation.currentInstallation();
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+
 
   Future<void> initialize() async {
     // Solicita permissão para iOS
@@ -40,10 +39,10 @@ class PushNotificationService {
 
       // Configura handlers de mensagens
       if (!kIsWeb) {
-        FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+        // Parse automatically handles background notifications
       }
 
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      /* FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         print('Mensagem recebida em foreground: \${message.notification?.title}');
         // Você pode mostrar um SnackBar ou Dialog aqui, ou usar flutter_local_notifications
         // para exibir o alerta mesmo com o app aberto.

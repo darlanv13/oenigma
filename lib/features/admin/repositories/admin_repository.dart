@@ -1,8 +1,6 @@
 
 class AdminRepository {
-  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
-    region: 'southamerica-east1',
-  );
+
 
   Future<HttpsCallableResult> callFunction(
     String functionName, [

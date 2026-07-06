@@ -97,7 +97,7 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
           IconButton(
             icon: const Icon(FontAwesomeIcons.rightFromBracket),
             onPressed: () async {
-              await FirebaseAuth.instance.signOut();
+              await ParseUser.signOut();
             },
             tooltip: 'Sair do Painel',
           ),

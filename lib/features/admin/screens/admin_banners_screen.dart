@@ -84,7 +84,7 @@ class AdminBannersScreen extends StatelessWidget {
                                try {
                                  await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
                                     .httpsCallable('deleteBanner')
-                                    .call({'bannerId': bannerId});
+                                    .execute(parameters: {'bannerId': bannerId});
                                } catch (e) {
                                  print("Erro ao excluir banner: $e");
                                }
@@ -171,9 +171,8 @@ class AdminBannersScreen extends StatelessWidget {
                     try {
                       data.remove('createdAt');
                       data.remove('updatedAt');
-                      await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
-                          .httpsCallable('createOrUpdateBanner')
-                          .call({
+                      await ParseCloudFunction('createOrUpdateBanner')
+                          .execute(parameters: {
                             'bannerId': docId,
                             'data': data,
                           });

@@ -157,7 +157,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _codeController = TextEditingController();
   final EnigmaRepository _enigmaRepository = EnigmaRepository();
-  final EventRepository _firebaseService = EventRepository();
+  final EventRepository _eventService = EventRepository();
 
   bool _isLoading = false;
   bool _canBuyHint = false;
@@ -407,7 +407,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           ),
         );
       }
-    } on FirebaseFunctionsException catch (e) {
+    } on Exception catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -465,7 +465,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             case 'event_complete':
               final double prizeWon =
                   (nextStep['prizeWon'] as num?)?.toDouble() ?? 0.0;
-              final List<PhaseModel> allPhases = await _firebaseService
+              final List<PhaseModel> allPhases = await _eventService
                   .getPhasesForEvent(widget.event.id);
               if (mounted) {
                 Navigator.of(context).pushReplacement(
@@ -574,7 +574,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           );
         }
       }
-    } on FirebaseFunctionsException catch (e) {
+    } on Exception catch (e) {
       if (e.code == 'failed-precondition' &&
           e.message != null &&
           e.message!.contains('Saldo insuficiente')) {
@@ -626,7 +626,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           ),
         );
                 // Log to Admin Fraud Monitor
-        final user = FirebaseAuth.instance.currentUser;
+        final user = await ParseUser.currentUser();
         if (user != null) {
           final log = ParseObject('fraud_logs')..set('player_id', 'some_id')..set('action', 'mocked')..save();
           /* FirebaseFirestore.instance.collection('fraud_logs').add({

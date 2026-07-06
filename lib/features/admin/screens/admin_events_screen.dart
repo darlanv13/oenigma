@@ -89,7 +89,7 @@ class AdminEventsScreen extends StatelessWidget {
                           IconButton(
                             icon: const Icon(Icons.delete, color: Colors.redAccent),
                             onPressed: () {
-                               FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('deleteEvent').call({'eventId': eventId});
+                               ParseCloudFunction('deleteEvent').execute(parameters: {'eventId': eventId});
                             },
                             tooltip: 'Excluir Evento',
                           ),
@@ -167,11 +167,11 @@ class AdminEventsScreen extends StatelessWidget {
                   // Cannot send FieldValue to Cloud Function, remove it
                   data.remove('updatedAt');
                   if (docId == null) {
-                    await FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEvent').call({
+                    await ParseCloudFunction('createOrUpdateEvent').execute(parameters: {
                       'data': data
                     });
                   } else {
-                    await FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEvent').call({
+                    await ParseCloudFunction('createOrUpdateEvent').execute(parameters: {
                       'eventId': docId,
                       'data': data
                     });
@@ -355,7 +355,7 @@ class AdminEnigmasList extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(icon: const Icon(Icons.edit, size: 18, color: Colors.blue), onPressed: () => _showEnigmaDialog(context, docId: doc.objectId!, initialData: data)),
-                      IconButton(icon: const Icon(Icons.delete, size: 18, color: Colors.red), onPressed: () => FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('deleteEnigma').call({'eventId': eventId, 'phaseId': phaseId, 'enigmaId': doc.objectId!})),
+                      IconButton(icon: const Icon(Icons.delete, size: 18, color: Colors.red), onPressed: () => ParseCloudFunction('deleteEnigma').execute(parameters: {'eventId': eventId, 'phaseId': phaseId, 'enigmaId': doc.objectId!})),
                     ],
                   ),
                 );
@@ -457,13 +457,13 @@ class AdminEnigmasList extends StatelessWidget {
                     };
 
                     if (docId == null) {
-                       FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEnigma').call({
+                       ParseCloudFunction('createOrUpdateEnigma').execute(parameters: {
                           'eventId': eventId,
                           'phaseId': phaseId,
                           'data': data
                        });
                     } else {
-                       FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEnigma').call({
+                       ParseCloudFunction('createOrUpdateEnigma').execute(parameters: {
                           'eventId': eventId,
                           'phaseId': phaseId,
                           'enigmaId': docId,

@@ -83,7 +83,7 @@ class AdminToolsScreen extends StatelessWidget {
                                try {
                                  await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
                                     .httpsCallable('deleteHint')
-                                    .call({'hintId': hintId});
+                                    .execute(parameters: {'hintId': hintId});
                                } catch (e) {
                                  print("Erro ao excluir dica: $e");
                                }
@@ -172,9 +172,8 @@ class AdminToolsScreen extends StatelessWidget {
                     try {
                       data.remove('createdAt');
                       data.remove('updatedAt');
-                      await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
-                          .httpsCallable('createOrUpdateHint')
-                          .call({
+                      await ParseCloudFunction('createOrUpdateHint')
+                          .execute(parameters: {
                             'hintId': docId,
                             'data': data,
                           });

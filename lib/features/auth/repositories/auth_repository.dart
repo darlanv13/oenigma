@@ -2,7 +2,7 @@
 
 
 class AuthRepository {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+
 
 
 
@@ -19,7 +19,7 @@ class AuthRepository {
         password: password.trim(),
       );
       return null;
-    } on FirebaseAuthException catch (e) {
+    } on Exception catch (e) {
       return e.message ?? "Ocorreu um erro desconhecido.";
     }
   }
@@ -44,7 +44,7 @@ class AuthRepository {
         await _auth.signOut();
         return "Acesso negado. Esta conta não possui privilégios de administrador.";
       }
-    } on FirebaseAuthException catch (e) {
+    } on Exception catch (e) {
       return e.message ?? "Ocorreu um erro desconhecido.";
     }
   }
@@ -77,7 +77,7 @@ class AuthRepository {
         });
       }
       return null;
-    } on FirebaseAuthException catch (e) {
+    } on Exception catch (e) {
       return e.message ?? "Ocorreu um erro desconhecido.";
     }
   }
@@ -86,7 +86,7 @@ class AuthRepository {
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());
       return null;
-    } on FirebaseAuthException catch (e) {
+    } on Exception catch (e) {
       if (e.code == 'user-not-found') {
         return 'Nenhum utilizador encontrado para este email.';
       }
