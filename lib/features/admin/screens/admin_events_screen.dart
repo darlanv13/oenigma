@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class AdminEventsScreen extends StatelessWidget {
   const AdminEventsScreen({super.key});
 
@@ -18,13 +17,17 @@ class AdminEventsScreen extends StatelessWidget {
           children: [
             const Text(
               'Gestão de Eventos',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             ElevatedButton.icon(
               onPressed: () {
                 _showEventDialog(context);
               },
-              icon: const Icon(FontAwesomeIcons.plus),
+              icon: const FaIcon(FontAwesomeIcons.plus),
               label: const Text('Novo Evento'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryAmber,
@@ -36,7 +39,10 @@ class AdminEventsScreen extends StatelessWidget {
         const SizedBox(height: 24),
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('events').orderBy('createdAt', descending: true).snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('events')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -44,12 +50,19 @@ class AdminEventsScreen extends StatelessWidget {
               if (snapshot.hasError) {
                 print("Erro no stream de eventos: \${snapshot.error}");
                 return Center(
-                  child: Text('Erro ao carregar eventos: \n\${snapshot.error}', textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent)),
+                  child: Text(
+                    'Erro ao carregar eventos: \n\${snapshot.error}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
                 );
               }
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const Center(
-                  child: Text('Nenhum evento encontrado.', style: TextStyle(color: secondaryTextColor)),
+                  child: Text(
+                    'Nenhum evento encontrado.',
+                    style: TextStyle(color: secondaryTextColor),
+                  ),
                 );
               }
 
@@ -68,37 +81,72 @@ class AdminEventsScreen extends StatelessWidget {
                     color: cardColor,
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
-                      leading: Icon(
-                        status == 'published' ? FontAwesomeIcons.solidCirclePlay : FontAwesomeIcons.solidCirclePause,
-                        color: status == 'published' ? Colors.green : Colors.orange,
+                      leading: FaIcon(
+                        status == 'published'
+                            ? FontAwesomeIcons.solidCirclePlay
+                            : FontAwesomeIcons.solidCirclePause,
+                        color: status == 'published'
+                            ? Colors.green
+                            : Colors.orange,
                         size: 40,
                       ),
-                      title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      subtitle: Text('Status: $status • Prêmio: R\$ $prizePool', style: const TextStyle(color: secondaryTextColor)),
+                      title: Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Status: $status • Prêmio: R\$ $prizePool',
+                        style: const TextStyle(color: secondaryTextColor),
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const Icon(FontAwesomeIcons.list, color: Colors.blueAccent),
+                            icon: const FaIcon(
+                              FontAwesomeIcons.list,
+                              color: Colors.blueAccent,
+                            ),
                             onPressed: () {
-                               Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => AdminPhasesScreen(eventId: eventId, eventTitle: title)),
-                               );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AdminPhasesScreen(
+                                    eventId: eventId,
+                                    eventTitle: title,
+                                  ),
+                                ),
+                              );
                             },
                             tooltip: 'Gerenciar Fases/Enigmas',
                           ),
                           IconButton(
-                            icon: const Icon(FontAwesomeIcons.pen, color: primaryAmber),
+                            icon: const FaIcon(
+                              FontAwesomeIcons.pen,
+                              color: primaryAmber,
+                            ),
                             onPressed: () {
-                              _showEventDialog(context, docId: eventId, initialData: event);
+                              _showEventDialog(
+                                context,
+                                docId: eventId,
+                                initialData: event,
+                              );
                             },
                             tooltip: 'Editar Evento',
                           ),
                           IconButton(
-                            icon: const Icon(FontAwesomeIcons.trashCan, color: Colors.redAccent),
+                            icon: const FaIcon(
+                              FontAwesomeIcons.trashCan,
+                              color: Colors.redAccent,
+                            ),
                             onPressed: () {
-                               FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('deleteEvent').call({'eventId': eventId});
+                              FirebaseFunctions.instanceFor(
+                                region: 'southamerica-east1',
+                              ).httpsCallable('deleteEvent').call({
+                                'eventId': eventId,
+                              });
                             },
                             tooltip: 'Excluir Evento',
                           ),
@@ -115,10 +163,18 @@ class AdminEventsScreen extends StatelessWidget {
     );
   }
 
-  void _showEventDialog(BuildContext context, {String? docId, Map<String, dynamic>? initialData}) {
+  void _showEventDialog(
+    BuildContext context, {
+    String? docId,
+    Map<String, dynamic>? initialData,
+  }) {
     final titleCtrl = TextEditingController(text: initialData?['title'] ?? '');
-    final descriptionCtrl = TextEditingController(text: initialData?['description'] ?? '');
-    final prizeCtrl = TextEditingController(text: initialData?['prizePool']?.toString() ?? '0');
+    final descriptionCtrl = TextEditingController(
+      text: initialData?['description'] ?? '',
+    );
+    final prizeCtrl = TextEditingController(
+      text: initialData?['prizePool']?.toString() ?? '0',
+    );
     final cityCtrl = TextEditingController(text: initialData?['city'] ?? '');
     String status = initialData?['status'] ?? 'draft';
 
@@ -127,7 +183,10 @@ class AdminEventsScreen extends StatelessWidget {
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: cardColor,
-          title: Text(docId == null ? 'Novo Evento' : 'Editar Evento', style: const TextStyle(color: Colors.white)),
+          title: Text(
+            docId == null ? 'Novo Evento' : 'Editar Evento',
+            style: const TextStyle(color: Colors.white),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -135,23 +194,35 @@ class AdminEventsScreen extends StatelessWidget {
                 TextField(
                   controller: titleCtrl,
                   style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Título', labelStyle: TextStyle(color: secondaryTextColor)),
+                  decoration: const InputDecoration(
+                    labelText: 'Título',
+                    labelStyle: TextStyle(color: secondaryTextColor),
+                  ),
                 ),
                 TextField(
                   controller: descriptionCtrl,
                   style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Descrição', labelStyle: TextStyle(color: secondaryTextColor)),
+                  decoration: const InputDecoration(
+                    labelText: 'Descrição',
+                    labelStyle: TextStyle(color: secondaryTextColor),
+                  ),
                 ),
                 TextField(
                   controller: prizeCtrl,
                   style: const TextStyle(color: Colors.white),
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Prêmio Final (R\$)', labelStyle: TextStyle(color: secondaryTextColor)),
+                  decoration: const InputDecoration(
+                    labelText: 'Prêmio Final (R\$)',
+                    labelStyle: TextStyle(color: secondaryTextColor),
+                  ),
                 ),
                 TextField(
                   controller: cityCtrl,
                   style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Cidade', labelStyle: TextStyle(color: secondaryTextColor)),
+                  decoration: const InputDecoration(
+                    labelText: 'Cidade',
+                    labelStyle: TextStyle(color: secondaryTextColor),
+                  ),
                 ),
               ],
             ),
@@ -159,7 +230,10 @@ class AdminEventsScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.red)),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: Colors.red),
+              ),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -173,23 +247,30 @@ class AdminEventsScreen extends StatelessWidget {
 
                 try {
                   if (docId == null) {
-                    await FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEvent').call({
-                      'data': data
-                    });
+                    await FirebaseFunctions.instanceFor(
+                      region: 'southamerica-east1',
+                    ).httpsCallable('createOrUpdateEvent').call({'data': data});
                   } else {
-                    await FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEvent').call({
+                    await FirebaseFunctions.instanceFor(
+                      region: 'southamerica-east1',
+                    ).httpsCallable('createOrUpdateEvent').call({
                       'eventId': docId,
-                      'data': data
+                      'data': data,
                     });
                   }
                 } catch (e) {
                   if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Erro ao salvar evento: $e')));
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      SnackBar(content: Text('Erro ao salvar evento: $e')),
+                    );
                   }
                 }
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryAmber,
+                foregroundColor: Colors.black,
+              ),
               child: const Text('Salvar'),
             ),
           ],
@@ -203,7 +284,11 @@ class AdminPhasesScreen extends StatelessWidget {
   final String eventId;
   final String eventTitle;
 
-  const AdminPhasesScreen({super.key, required this.eventId, required this.eventTitle});
+  const AdminPhasesScreen({
+    super.key,
+    required this.eventId,
+    required this.eventTitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -218,11 +303,11 @@ class AdminPhasesScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             ElevatedButton.icon(
+            ElevatedButton.icon(
               onPressed: () {
                 _showPhaseDialog(context);
               },
-              icon: const Icon(FontAwesomeIcons.plus),
+              icon: const FaIcon(FontAwesomeIcons.plus),
               label: const Text('Nova Fase'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryAmber,
@@ -239,13 +324,15 @@ class AdminPhasesScreen extends StatelessWidget {
                     .orderBy('order')
                     .snapshots(),
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) return const CircularProgressIndicator();
+                  if (!snapshot.hasData)
+                    return const CircularProgressIndicator();
                   final phases = snapshot.data!.docs;
 
                   return ListView.builder(
                     itemCount: phases.length,
                     itemBuilder: (context, index) {
-                      final phase = phases[index].data() as Map<String, dynamic>;
+                      final phase =
+                          phases[index].data() as Map<String, dynamic>;
                       final phaseId = phases[index].id;
                       final order = phase['order'] ?? 0;
                       final isBlocked = phase['isBlocked'] ?? false;
@@ -253,17 +340,36 @@ class AdminPhasesScreen extends StatelessWidget {
                       return Card(
                         color: cardColor,
                         child: ExpansionTile(
-                          title: Text('Fase $order', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          subtitle: Text('Status: ${isBlocked ? "Bloqueada" : "Ativa"}', style: const TextStyle(color: secondaryTextColor)),
+                          title: Text(
+                            'Fase $order',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Status: ${isBlocked ? "Bloqueada" : "Ativa"}',
+                            style: const TextStyle(color: secondaryTextColor),
+                          ),
                           trailing: IconButton(
-                            icon: const Icon(FontAwesomeIcons.pen, color: primaryAmber),
-                            onPressed: () => _showPhaseDialog(context, docId: phaseId, initialData: phase),
+                            icon: const FaIcon(
+                              FontAwesomeIcons.pen,
+                              color: primaryAmber,
+                            ),
+                            onPressed: () => _showPhaseDialog(
+                              context,
+                              docId: phaseId,
+                              initialData: phase,
+                            ),
                           ),
                           children: [
-                             Padding(
-                               padding: const EdgeInsets.all(16.0),
-                               child: AdminEnigmasList(eventId: eventId, phaseId: phaseId),
-                             )
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: AdminEnigmasList(
+                                eventId: eventId,
+                                phaseId: phaseId,
+                              ),
+                            ),
                           ],
                         ),
                       );
@@ -278,8 +384,14 @@ class AdminPhasesScreen extends StatelessWidget {
     );
   }
 
-  void _showPhaseDialog(BuildContext context, {String? docId, Map<String, dynamic>? initialData}) {
-    final orderCtrl = TextEditingController(text: initialData?['order']?.toString() ?? '1');
+  void _showPhaseDialog(
+    BuildContext context, {
+    String? docId,
+    Map<String, dynamic>? initialData,
+  }) {
+    final orderCtrl = TextEditingController(
+      text: initialData?['order']?.toString() ?? '1',
+    );
     bool isBlocked = initialData?['isBlocked'] ?? false;
 
     showDialog(
@@ -287,7 +399,10 @@ class AdminPhasesScreen extends StatelessWidget {
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: cardColor,
-          title: Text(docId == null ? 'Nova Fase' : 'Editar Fase', style: const TextStyle(color: Colors.white)),
+          title: Text(
+            docId == null ? 'Nova Fase' : 'Editar Fase',
+            style: const TextStyle(color: Colors.white),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -295,7 +410,10 @@ class AdminPhasesScreen extends StatelessWidget {
                 controller: orderCtrl,
                 style: const TextStyle(color: Colors.white),
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Ordem (Nº da Fase)', labelStyle: TextStyle(color: secondaryTextColor)),
+                decoration: const InputDecoration(
+                  labelText: 'Ordem (Nº da Fase)',
+                  labelStyle: TextStyle(color: secondaryTextColor),
+                ),
               ),
               // Simpler switch mock for blocked
             ],
@@ -303,7 +421,10 @@ class AdminPhasesScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.red)),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: Colors.red),
+              ),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -312,7 +433,10 @@ class AdminPhasesScreen extends StatelessWidget {
                   'isBlocked': isBlocked,
                 };
 
-                final ref = FirebaseFirestore.instance.collection('events').doc(eventId).collection('phases');
+                final ref = FirebaseFirestore.instance
+                    .collection('events')
+                    .doc(eventId)
+                    .collection('phases');
 
                 if (docId == null) {
                   await ref.add(data);
@@ -321,7 +445,10 @@ class AdminPhasesScreen extends StatelessWidget {
                 }
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryAmber,
+                foregroundColor: Colors.black,
+              ),
               child: const Text('Salvar'),
             ),
           ],
@@ -335,7 +462,11 @@ class AdminEnigmasList extends StatelessWidget {
   final String eventId;
   final String phaseId;
 
-  const AdminEnigmasList({super.key, required this.eventId, required this.phaseId});
+  const AdminEnigmasList({
+    super.key,
+    required this.eventId,
+    required this.phaseId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -344,9 +475,12 @@ class AdminEnigmasList extends StatelessWidget {
       children: [
         ElevatedButton.icon(
           onPressed: () => _showEnigmaDialog(context),
-          icon: const Icon(FontAwesomeIcons.listCheck, size: 16),
+          icon: const FaIcon(FontAwesomeIcons.listCheck, size: 16),
           label: const Text('Adicionar Enigma/Desafio'),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, foregroundColor: Colors.white),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blueAccent,
+            foregroundColor: Colors.white,
+          ),
         ),
         const SizedBox(height: 12),
         StreamBuilder<QuerySnapshot>(
@@ -359,21 +493,60 @@ class AdminEnigmasList extends StatelessWidget {
               .orderBy('order')
               .snapshots(),
           builder: (context, snapshot) {
-            if (!snapshot.hasData) return const Text('Carregando...', style: TextStyle(color: Colors.white));
+            if (!snapshot.hasData)
+              return const Text(
+                'Carregando...',
+                style: TextStyle(color: Colors.white),
+              );
             final enigmas = snapshot.data!.docs;
-            if (enigmas.isEmpty) return const Text('Nenhum enigma cadastrado nesta fase.', style: TextStyle(color: secondaryTextColor));
+            if (enigmas.isEmpty)
+              return const Text(
+                'Nenhum enigma cadastrado nesta fase.',
+                style: TextStyle(color: secondaryTextColor),
+              );
 
             return Column(
               children: enigmas.map((doc) {
                 final data = doc.data() as Map<String, dynamic>;
                 return ListTile(
-                  title: Text(data['title'] ?? 'Enigma', style: const TextStyle(color: Colors.white)),
-                  subtitle: Text('Tipo: ${data['type']}', style: const TextStyle(color: Colors.grey)),
+                  title: Text(
+                    data['title'] ?? 'Enigma',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  subtitle: Text(
+                    'Tipo: ${data['type']}',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(icon: const Icon(FontAwesomeIcons.pen, size: 18, color: Colors.blue), onPressed: () => _showEnigmaDialog(context, docId: doc.id, initialData: data)),
-                      IconButton(icon: const Icon(FontAwesomeIcons.trashCan, size: 18, color: Colors.red), onPressed: () => FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('deleteEnigma').call({'eventId': eventId, 'phaseId': phaseId, 'enigmaId': doc.id})),
+                      IconButton(
+                        icon: const FaIcon(
+                          FontAwesomeIcons.pen,
+                          size: 18,
+                          color: Colors.blue,
+                        ),
+                        onPressed: () => _showEnigmaDialog(
+                          context,
+                          docId: doc.id,
+                          initialData: data,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const FaIcon(
+                          FontAwesomeIcons.trashCan,
+                          size: 18,
+                          color: Colors.red,
+                        ),
+                        onPressed: () =>
+                            FirebaseFunctions.instanceFor(
+                              region: 'southamerica-east1',
+                            ).httpsCallable('deleteEnigma').call({
+                              'eventId': eventId,
+                              'phaseId': phaseId,
+                              'enigmaId': doc.id,
+                            }),
+                      ),
                     ],
                   ),
                 );
@@ -385,14 +558,26 @@ class AdminEnigmasList extends StatelessWidget {
     );
   }
 
-    void _showEnigmaDialog(BuildContext context, {String? docId, Map<String, dynamic>? initialData}) {
+  void _showEnigmaDialog(
+    BuildContext context, {
+    String? docId,
+    Map<String, dynamic>? initialData,
+  }) {
     final titleCtrl = TextEditingController(text: initialData?['title'] ?? '');
-    final typeCtrl = TextEditingController(text: initialData?['type'] ?? 'qr_code_gps');
-    final codeCtrl = TextEditingController(text: initialData?['correctCode'] ?? '');
-    final orderCtrl = TextEditingController(text: initialData?['order']?.toString() ?? '1');
+    final typeCtrl = TextEditingController(
+      text: initialData?['type'] ?? 'qr_code_gps',
+    );
+    final codeCtrl = TextEditingController(
+      text: initialData?['correctCode'] ?? '',
+    );
+    final orderCtrl = TextEditingController(
+      text: initialData?['order']?.toString() ?? '1',
+    );
     bool allowHints = initialData?['allowHints'] ?? true;
     bool allowTools = initialData?['allowTools'] ?? true;
-    List<String> linkedHints = List<String>.from(initialData?['linkedHints'] ?? []);
+    List<String> linkedHints = List<String>.from(
+      initialData?['linkedHints'] ?? [],
+    );
 
     showDialog(
       context: context,
@@ -401,45 +586,98 @@ class AdminEnigmasList extends StatelessWidget {
           builder: (context, setState) {
             return AlertDialog(
               backgroundColor: cardColor,
-              title: const Text('Configurar Enigma', style: TextStyle(color: Colors.white)),
+              title: const Text(
+                'Configurar Enigma',
+                style: TextStyle(color: Colors.white),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(controller: titleCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Título da Pista/Enigma')),
-                    TextField(controller: typeCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Tipo (qr_code_gps, password, image)')),
-                    TextField(controller: codeCtrl, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Código/Senha Correta')),
-                    TextField(controller: orderCtrl, style: const TextStyle(color: Colors.white), keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Ordem')),
+                    TextField(
+                      controller: titleCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: 'Título da Pista/Enigma',
+                      ),
+                    ),
+                    TextField(
+                      controller: typeCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo (qr_code_gps, password, image)',
+                      ),
+                    ),
+                    TextField(
+                      controller: codeCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: 'Código/Senha Correta',
+                      ),
+                    ),
+                    TextField(
+                      controller: orderCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Ordem'),
+                    ),
                     const SizedBox(height: 16),
                     SwitchListTile(
-                      title: const Text('Habilitar Dicas', style: TextStyle(color: Colors.white)),
+                      title: const Text(
+                        'Habilitar Dicas',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       value: allowHints,
                       activeTrackColor: primaryAmber.withValues(alpha: 0.5),
                       activeThumbColor: primaryAmber,
                       onChanged: (val) => setState(() => allowHints = val),
                     ),
                     SwitchListTile(
-                      title: const Text('Habilitar Ferramentas (Mapa/Bússola)', style: TextStyle(color: Colors.white)),
+                      title: const Text(
+                        'Habilitar Ferramentas (Mapa/Bússola)',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       value: allowTools,
                       activeTrackColor: primaryAmber.withValues(alpha: 0.5),
                       activeThumbColor: primaryAmber,
                       onChanged: (val) => setState(() => allowTools = val),
                     ),
                     const Divider(color: Colors.white24),
-                    const Text('Caixa de Dicas (Sorteio)', style: TextStyle(color: primaryAmber, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Caixa de Dicas (Sorteio)',
+                      style: TextStyle(
+                        color: primaryAmber,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance.collection('hints_pool').snapshots(),
+                      stream: FirebaseFirestore.instance
+                          .collection('hints_pool')
+                          .snapshots(),
                       builder: (context, snapshot) {
-                        if (!snapshot.hasData) return const CircularProgressIndicator();
+                        if (!snapshot.hasData)
+                          return const CircularProgressIndicator();
                         final allHints = snapshot.data!.docs;
                         return Column(
                           children: allHints.map((doc) {
                             final hintData = doc.data() as Map<String, dynamic>;
                             final isSelected = linkedHints.contains(doc.id);
                             return CheckboxListTile(
-                              title: Text(hintData['title'] ?? 'Dica', style: const TextStyle(color: Colors.white, fontSize: 14)),
-                              subtitle: Text(hintData['type'] ?? 'text', style: const TextStyle(color: secondaryTextColor, fontSize: 12)),
+                              title: Text(
+                                hintData['title'] ?? 'Dica',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              subtitle: Text(
+                                hintData['type'] ?? 'text',
+                                style: const TextStyle(
+                                  color: secondaryTextColor,
+                                  fontSize: 12,
+                                ),
+                              ),
                               value: isSelected,
                               activeColor: primaryAmber,
                               checkColor: Colors.black,
@@ -455,13 +693,19 @@ class AdminEnigmasList extends StatelessWidget {
                             );
                           }).toList(),
                         );
-                      }
+                      },
                     ),
                   ],
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar', style: TextStyle(color: Colors.red))),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text(
+                    'Cancelar',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
                 ElevatedButton(
                   onPressed: () async {
                     final data = {
@@ -475,22 +719,29 @@ class AdminEnigmasList extends StatelessWidget {
                     };
 
                     if (docId == null) {
-                       FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEnigma').call({
-                          'eventId': eventId,
-                          'phaseId': phaseId,
-                          'data': data
-                       });
+                      FirebaseFunctions.instanceFor(
+                        region: 'southamerica-east1',
+                      ).httpsCallable('createOrUpdateEnigma').call({
+                        'eventId': eventId,
+                        'phaseId': phaseId,
+                        'data': data,
+                      });
                     } else {
-                       FirebaseFunctions.instanceFor(region: 'southamerica-east1').httpsCallable('createOrUpdateEnigma').call({
-                          'eventId': eventId,
-                          'phaseId': phaseId,
-                          'enigmaId': docId,
-                          'data': data
-                       });
+                      FirebaseFunctions.instanceFor(
+                        region: 'southamerica-east1',
+                      ).httpsCallable('createOrUpdateEnigma').call({
+                        'eventId': eventId,
+                        'phaseId': phaseId,
+                        'enigmaId': docId,
+                        'data': data,
+                      });
                     }
                     if (ctx.mounted) Navigator.pop(ctx);
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryAmber,
+                    foregroundColor: Colors.black,
+                  ),
                   child: const Text('Salvar'),
                 ),
               ],

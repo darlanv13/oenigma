@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide GeoPoint;
-import 'package:cloud_firestore/cloud_firestore.dart' as firestore show GeoPoint;
+import 'package:cloud_firestore/cloud_firestore.dart'
+    as firestore
+    show GeoPoint;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -33,7 +35,6 @@ import 'package:oenigma/core/utils/app_colors.dart';
 
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 
 // --- TELA DE SCANNER (sem alterações) ---
 class ScannerScreen extends StatefulWidget {
@@ -273,15 +274,20 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         final statusData = Map<String, dynamic>.from(result.data);
         setState(() {
           _isHintVisible = statusData['isHintVisible'] ?? false;
-          _hintData = statusData['hintData'] != null ? Map<String, dynamic>.from(statusData['hintData']) : null;
+          _hintData = statusData['hintData'] != null
+              ? Map<String, dynamic>.from(statusData['hintData'])
+              : null;
           _canBuyHint = statusData['canBuyHint'] ?? false;
           _isBlocked = statusData['isBlocked'] ?? false;
           _hasCompass = statusData['hasCompass'] ?? false;
           _hasMap = statusData['hasMap'] ?? false;
           if (statusData['destinationLocation'] != null) {
             _destinationLocation = {
-              'latitude': (statusData['destinationLocation']['latitude'] as num).toDouble(),
-              'longitude': (statusData['destinationLocation']['longitude'] as num).toDouble(),
+              'latitude': (statusData['destinationLocation']['latitude'] as num)
+                  .toDouble(),
+              'longitude':
+                  (statusData['destinationLocation']['longitude'] as num)
+                      .toDouble(),
             };
           }
         });
@@ -323,9 +329,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               try {
                 if (!mounted) return;
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const WalletScreen(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const WalletScreen()),
                 );
               } catch (e) {
                 if (mounted) {
@@ -356,7 +360,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     );
   }
 
-  Future<bool?> _showPurchaseConfirmationDialog(double cost, {String type = 'Dica'}) {
+  Future<bool?> _showPurchaseConfirmationDialog(
+    double cost, {
+    String type = 'Dica',
+  }) {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -394,10 +401,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   Future<void> _handleToolPurchase(String toolType) async {
     setState(() => _isLoading = true);
     try {
-      final result = await _enigmaRepository.callEnigmaFunction('purchaseTool', {
-        'eventId': widget.event.id,
-        'toolType': toolType,
-      });
+      final result = await _enigmaRepository.callEnigmaFunction(
+        'purchaseTool',
+        {'eventId': widget.event.id, 'toolType': toolType},
+      );
 
       if (!mounted) return;
 
@@ -407,7 +414,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(data['message'] ?? "Ferramenta comprada com sucesso!"),
+            content: Text(
+              data['message'] ?? "Ferramenta comprada com sucesso!",
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -615,7 +624,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       permissionGranted = await _location.requestPermission();
       if (permissionGranted != PermissionStatus.granted) return;
     }
-    _locationSubscription = _location.onLocationChanged.listen((currentLocation) {
+    _locationSubscription = _location.onLocationChanged.listen((
+      currentLocation,
+    ) {
       if (!mounted || _currentEnigma.location == null) return;
 
       if (currentLocation.isMock == true) {
@@ -625,12 +636,14 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('⚠️ Localização falsa (Fake GPS) detectada! Por favor, desative para jogar.'),
+            content: Text(
+              '⚠️ Localização falsa (Fake GPS) detectada! Por favor, desative para jogar.',
+            ),
             backgroundColor: Colors.redAccent,
             duration: Duration(seconds: 5),
           ),
         );
-                // Log to Admin Fraud Monitor
+        // Log to Admin Fraud Monitor
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
           FirebaseFirestore.instance.collection('fraud_logs').add({
@@ -639,7 +652,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             'enigmaId': _currentEnigma.id,
             'reason': 'Fake GPS Detectado',
             'timestamp': FieldValue.serverTimestamp(),
-            'location': firestore.GeoPoint(currentLocation.latitude!, currentLocation.longitude!),
+            'location': firestore.GeoPoint(
+              currentLocation.latitude!,
+              currentLocation.longitude!,
+            ),
           });
         }
         return;
@@ -931,7 +947,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       );
                     }
                   : null,
-              icon: Icon(
+              icon: FaIcon(
                 _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
               ),
               label: Text(
@@ -965,31 +981,29 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (_isHintVisible && _hintData != null)
-           _buildCard(title: 'PISTA', child: _buildHintContent()),
+          _buildCard(title: 'PISTA', child: _buildHintContent()),
 
         if (_hasCompass && _destinationLocation != null)
-           Padding(
-             padding: const EdgeInsets.only(bottom: 16.0),
-             child: CompassWidget(
-               destinationLatitude: _destinationLocation!['latitude']!,
-               destinationLongitude: _destinationLocation!['longitude']!
-             ),
-           ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: CompassWidget(
+              destinationLatitude: _destinationLocation!['latitude']!,
+              destinationLongitude: _destinationLocation!['longitude']!,
+            ),
+          ),
 
         if (_hasMap && _destinationLocation != null)
-           Padding(
-             padding: const EdgeInsets.only(bottom: 16.0),
-             child: MapRadiusWidget(
-               destinationLatitude: _destinationLocation!['latitude']!,
-               destinationLongitude: _destinationLocation!['longitude']!
-             ),
-           ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: MapRadiusWidget(
+              destinationLatitude: _destinationLocation!['latitude']!,
+              destinationLongitude: _destinationLocation!['longitude']!,
+            ),
+          ),
 
-        if (!_isHintVisible && _canBuyHint)
-          _buildHintPurchaseButton(),
+        if (!_isHintVisible && _canBuyHint) _buildHintPurchaseButton(),
 
-        if (!_hasCompass || !_hasMap)
-          _buildToolsPurchaseButtons(),
+        if (!_hasCompass || !_hasMap) _buildToolsPurchaseButtons(),
       ],
     );
   }
@@ -1009,13 +1023,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             : () async {
                 final bool? confirmed = await _showPurchaseConfirmationDialog(
                   cost.toDouble(),
-                  type: 'Dica'
+                  type: 'Dica',
                 );
                 if (confirmed == true) {
                   _handleAction('purchaseHint');
                 }
               },
-        icon: const Icon(FontAwesomeIcons.lightbulb, color: primaryAmber),
+        icon: const FaIcon(FontAwesomeIcons.lightbulb, color: primaryAmber),
         label: RichText(
           text: TextSpan(
             children: [
@@ -1045,7 +1059,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   Widget _buildToolsPurchaseButtons() {
-    if (_currentEnigma.type != 'qr_code_gps' && _currentEnigma.type != 'gps') return const SizedBox.shrink();
+    if (_currentEnigma.type != 'qr_code_gps' && _currentEnigma.type != 'gps')
+      return const SizedBox.shrink();
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -1056,21 +1071,31 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               onPressed: _isLoading
                   ? null
                   : () async {
-                      final bool? confirmed = await _showPurchaseConfirmationDialog(
-                        20.0,
-                        type: 'Mapa'
-                      );
+                      final bool? confirmed =
+                          await _showPurchaseConfirmationDialog(
+                            20.0,
+                            type: 'Mapa',
+                          );
                       if (confirmed == true) {
                         _handleToolPurchase('map');
                       }
                     },
-              icon: const Icon(FontAwesomeIcons.map, color: Colors.blueAccent),
+              icon: const FaIcon(
+                FontAwesomeIcons.map,
+                color: Colors.blueAccent,
+              ),
               label: const Text(
                 'Comprar Mapa (R\$ 20)',
-                style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.blueAccent,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1083,21 +1108,31 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               onPressed: _isLoading
                   ? null
                   : () async {
-                      final bool? confirmed = await _showPurchaseConfirmationDialog(
-                        15.0,
-                        type: 'Bússola'
-                      );
+                      final bool? confirmed =
+                          await _showPurchaseConfirmationDialog(
+                            15.0,
+                            type: 'Bússola',
+                          );
                       if (confirmed == true) {
                         _handleToolPurchase('compass');
                       }
                     },
-              icon: const Icon(FontAwesomeIcons.compass, color: Colors.greenAccent),
+              icon: const FaIcon(
+                FontAwesomeIcons.compass,
+                color: Colors.greenAccent,
+              ),
               label: const Text(
                 'Comprar Bússola (R\$ 15)',
-                style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.greenAccent,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1122,7 +1157,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       );
       actionButton = ElevatedButton.icon(
         onPressed: _isLoading ? null : () => _saveImageFromUrl(data),
-        icon: const Icon(FontAwesomeIcons.download),
+        icon: const FaIcon(FontAwesomeIcons.download),
         label: const Text('Salvar Imagem'),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white10,
@@ -1155,7 +1190,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       );
       actionButton = ElevatedButton.icon(
         onPressed: () => _launchMapsUrl(data),
-        icon: const Icon(FontAwesomeIcons.map),
+        icon: const FaIcon(FontAwesomeIcons.map),
         label: const Text('Abrir no Maps'),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white10,
@@ -1184,7 +1219,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             ),
           );
         },
-        icon: const Icon(FontAwesomeIcons.copy),
+        icon: const FaIcon(FontAwesomeIcons.copy),
         label: const Text('Copiar Texto'),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white10,

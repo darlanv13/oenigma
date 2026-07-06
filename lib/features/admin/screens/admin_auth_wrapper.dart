@@ -4,7 +4,6 @@ import 'package:oenigma/features/admin/screens/main_admin_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class AdminAuthWrapper extends StatelessWidget {
   const AdminAuthWrapper({super.key});
 
@@ -31,12 +30,15 @@ class AdminAuthWrapper extends StatelessWidget {
             if (tokenSnapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                 backgroundColor: darkBackground,
-                body: Center(child: CircularProgressIndicator(color: primaryAmber)),
+                body: Center(
+                  child: CircularProgressIndicator(color: primaryAmber),
+                ),
               );
             }
 
             final claims = tokenSnapshot.data?.claims ?? {};
-            final isAdmin = claims['super_admin'] == true || claims['editor'] == true;
+            final isAdmin =
+                claims['super_admin'] == true || claims['editor'] == true;
 
             if (isAdmin) {
               return const MainAdminScreen();
@@ -56,11 +58,19 @@ class AdminAuthWrapper extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(FontAwesomeIcons.shieldHalved, size: 80, color: Colors.redAccent),
+            const FaIcon(
+              FontAwesomeIcons.shieldHalved,
+              size: 80,
+              color: Colors.redAccent,
+            ),
             const SizedBox(height: 20),
             const Text(
               'Acesso Restrito',
-              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 10),
             const Text(
@@ -74,7 +84,7 @@ class AdminAuthWrapper extends StatelessWidget {
                   Navigator.pop(context);
                 }
               },
-              icon: const Icon(FontAwesomeIcons.arrowLeft),
+              icon: const FaIcon(FontAwesomeIcons.arrowLeft),
               label: const Text('Voltar para o Aplicativo'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryAmber,

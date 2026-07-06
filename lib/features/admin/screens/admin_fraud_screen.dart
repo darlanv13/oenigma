@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class AdminFraudScreen extends StatelessWidget {
   const AdminFraudScreen({super.key});
 
@@ -14,7 +13,11 @@ class AdminFraudScreen extends StatelessWidget {
       children: [
         const Text(
           'Monitor de Fraudes (Logs do Sistema)',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         const SizedBox(height: 24),
         Expanded(
@@ -30,7 +33,10 @@ class AdminFraudScreen extends StatelessWidget {
               }
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const Center(
-                  child: Text('Nenhum log de fraude encontrado. Tudo tranquilo!', style: TextStyle(color: secondaryTextColor)),
+                  child: Text(
+                    'Nenhum log de fraude encontrado. Tudo tranquilo!',
+                    style: TextStyle(color: secondaryTextColor),
+                  ),
                 );
               }
 
@@ -52,15 +58,37 @@ class AdminFraudScreen extends StatelessWidget {
                     color: cardColor,
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
-                      leading: const Icon(FontAwesomeIcons.triangleExclamation, color: Colors.redAccent, size: 40),
-                      title: Text('Usuário: $uid', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      leading: const FaIcon(
+                        FontAwesomeIcons.triangleExclamation,
+                        color: Colors.redAccent,
+                        size: 40,
+                      ),
+                      title: Text(
+                        'Usuário: $uid',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 4),
-                          Text('Alerta: $reason', style: const TextStyle(color: Colors.redAccent)),
-                          Text('Evento ID: $eventId', style: const TextStyle(color: secondaryTextColor)),
-                          Text('Data: $dateStr', style: const TextStyle(color: secondaryTextColor, fontSize: 12)),
+                          Text(
+                            'Alerta: $reason',
+                            style: const TextStyle(color: Colors.redAccent),
+                          ),
+                          Text(
+                            'Evento ID: $eventId',
+                            style: const TextStyle(color: secondaryTextColor),
+                          ),
+                          Text(
+                            'Data: $dateStr',
+                            style: const TextStyle(
+                              color: secondaryTextColor,
+                              fontSize: 12,
+                            ),
+                          ),
                         ],
                       ),
                       isThreeLine: true,
@@ -68,10 +96,16 @@ class AdminFraudScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           TextButton.icon(
-                            icon: const Icon(FontAwesomeIcons.ban, color: Colors.red),
-                            label: const Text('Banir', style: TextStyle(color: Colors.red)),
+                            icon: const FaIcon(
+                              FontAwesomeIcons.ban,
+                              color: Colors.red,
+                            ),
+                            label: const Text(
+                              'Banir',
+                              style: TextStyle(color: Colors.red),
+                            ),
                             onPressed: () {
-                               // Implement Ban logic (update user custom claims or user doc)
+                              // Implement Ban logic (update user custom claims or user doc)
                             },
                           ),
                         ],

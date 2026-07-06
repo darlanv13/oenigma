@@ -4,7 +4,6 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class AdminFinanceScreen extends StatelessWidget {
   const AdminFinanceScreen({super.key});
 
@@ -15,7 +14,11 @@ class AdminFinanceScreen extends StatelessWidget {
       children: [
         const Text(
           'Gestão Financeira e Saques (Pix)',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
         ),
         const SizedBox(height: 24),
         Expanded(
@@ -31,7 +34,10 @@ class AdminFinanceScreen extends StatelessWidget {
               }
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const Center(
-                  child: Text('Não há solicitações de saque pendentes.', style: TextStyle(color: secondaryTextColor)),
+                  child: Text(
+                    'Não há solicitações de saque pendentes.',
+                    style: TextStyle(color: secondaryTextColor),
+                  ),
                 );
               }
 
@@ -40,7 +46,8 @@ class AdminFinanceScreen extends StatelessWidget {
               return ListView.builder(
                 itemCount: requests.length,
                 itemBuilder: (context, index) {
-                  final request = requests[index].data() as Map<String, dynamic>;
+                  final request =
+                      requests[index].data() as Map<String, dynamic>;
                   final requestId = requests[index].id;
                   final uid = request['uid'] ?? 'Desconhecido';
                   final amount = request['amount'] ?? 0;
@@ -57,24 +64,58 @@ class AdminFinanceScreen extends StatelessWidget {
                     child: ListTile(
                       leading: const CircleAvatar(
                         backgroundColor: Colors.green,
-                        child: Icon(FontAwesomeIcons.pix, color: Colors.white),
+                        child: FaIcon(
+                          FontAwesomeIcons.pix,
+                          color: Colors.white,
+                        ),
                       ),
-                      title: Text('Valor: R\$ $amount - Chave: $pixKey ($pixKeyType)', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      subtitle: Text('UID: $uid\nData da Solicitação: $dateStr', style: const TextStyle(color: secondaryTextColor)),
+                      title: Text(
+                        'Valor: R\$ $amount - Chave: $pixKey ($pixKeyType)',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'UID: $uid\nData da Solicitação: $dateStr',
+                        style: const TextStyle(color: secondaryTextColor),
+                      ),
                       isThreeLine: true,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           TextButton.icon(
-                            icon: const Icon(FontAwesomeIcons.solidCircleCheck, color: Colors.green),
-                            label: const Text('Aprovar & Pagar', style: TextStyle(color: Colors.green)),
-                            onPressed: () => _handleWithdrawal(context, requestId, uid, 'approve'),
+                            icon: const FaIcon(
+                              FontAwesomeIcons.solidCircleCheck,
+                              color: Colors.green,
+                            ),
+                            label: const Text(
+                              'Aprovar & Pagar',
+                              style: TextStyle(color: Colors.green),
+                            ),
+                            onPressed: () => _handleWithdrawal(
+                              context,
+                              requestId,
+                              uid,
+                              'approve',
+                            ),
                           ),
                           const SizedBox(width: 8),
                           TextButton.icon(
-                            icon: const Icon(FontAwesomeIcons.xmark, color: Colors.redAccent),
-                            label: const Text('Rejeitar & Estornar', style: TextStyle(color: Colors.redAccent)),
-                            onPressed: () => _handleWithdrawal(context, requestId, uid, 'reject'),
+                            icon: const FaIcon(
+                              FontAwesomeIcons.xmark,
+                              color: Colors.redAccent,
+                            ),
+                            label: const Text(
+                              'Rejeitar & Estornar',
+                              style: TextStyle(color: Colors.redAccent),
+                            ),
+                            onPressed: () => _handleWithdrawal(
+                              context,
+                              requestId,
+                              uid,
+                              'reject',
+                            ),
                           ),
                         ],
                       ),
@@ -89,7 +130,12 @@ class AdminFinanceScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _handleWithdrawal(BuildContext context, String withdrawalId, String uid, String action) async {
+  Future<void> _handleWithdrawal(
+    BuildContext context,
+    String withdrawalId,
+    String uid,
+    String action,
+  ) async {
     // action should be 'approve' or 'reject'
     // This assumes we have an admin function that wraps the process, or we do it securely.
     // For now, let's call a hypothetical cloud function 'admin-processWithdrawal'
@@ -116,7 +162,10 @@ class AdminFinanceScreen extends StatelessWidget {
       if (context.mounted) {
         Navigator.pop(context); // close loader
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao processar saque: $e'), backgroundColor: Colors.redAccent),
+          SnackBar(
+            content: Text('Erro ao processar saque: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     }

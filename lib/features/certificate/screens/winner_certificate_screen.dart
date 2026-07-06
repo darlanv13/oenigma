@@ -12,7 +12,6 @@ import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class WinnerCertificateScreen extends StatefulWidget {
   final EventModel event;
   final double prizeWon;
@@ -37,7 +36,9 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 5));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 5),
+    );
     _confettiController.play();
   }
 
@@ -57,7 +58,11 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
     ).create();
     await imagePath.writeAsBytes(image);
 
-    await Share.shareXFiles([XFile(imagePath.path)], text: 'Eu venci o evento "${widget.event.name}" no OEnigma! #OEnigmaApp #CaçadorDeEnigmas'); // ignore: deprecated_member_use
+    await Share.shareXFiles(
+      [XFile(imagePath.path)],
+      text:
+          'Eu venci o evento "${widget.event.name}" no OEnigma! #OEnigmaApp #CaçadorDeEnigmas',
+    ); // ignore: deprecated_member_use
   }
 
   @override
@@ -98,7 +103,10 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                       children: [
                         _buildEnigmaCityLogo(),
                         const SizedBox(height: 10),
-                        Lottie.asset('assets/animations/trofel.json', height: 120),
+                        Lottie.asset(
+                          'assets/animations/trofel.json',
+                          height: 120,
+                        ),
                         const Text(
                           "CERTIFICADO DE CONQUISTA",
                           style: TextStyle(
@@ -123,12 +131,15 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                                   ? NetworkImage(winnerPhotoURL)
                                   : null,
                               child: winnerPhotoURL == null
-                                  ? const Icon(FontAwesomeIcons.solidUser, size: 45)
+                                  ? const FaIcon(
+                                      FontAwesomeIcons.solidUser,
+                                      size: 45,
+                                    )
                                   : null,
                             ),
                             Positioned(
                               top: -1,
-                              child: Icon(
+                              child: FaIcon(
                                 FontAwesomeIcons.medal,
                                 color: primaryAmber,
                                 size: 30,
@@ -158,17 +169,17 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                         _buildStatItem(
                           "Prêmio Recebido",
                           currencyFormat.format(widget.prizeWon),
-                          FontAwesomeIcons.trophy,
+                          FontAwesomeIcons.trophy as IconData,
                         ),
                         _buildStatItem(
                           "Posição Final",
                           "#1",
-                          FontAwesomeIcons.chartBar,
+                          FontAwesomeIcons.chartBar as IconData,
                         ),
                         _buildStatItem(
                           "Fases Concluídas",
                           "${widget.allPhases.length}",
-                          FontAwesomeIcons.circleCheck,
+                          FontAwesomeIcons.circleCheck as IconData,
                         ),
                         const SizedBox(height: 10),
                         Text(
@@ -193,7 +204,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                     ),
                   ),
                   onPressed: _shareCertificate,
-                  icon: const Icon(FontAwesomeIcons.shareNodes),
+                  icon: const FaIcon(FontAwesomeIcons.shareNodes),
                   label: const Text(
                     "Compartilhar Conquista",
                     style: TextStyle(fontSize: 16),
@@ -227,7 +238,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                 Colors.blue,
                 Colors.pink,
                 Colors.orange,
-                Colors.purple
+                Colors.purple,
               ],
             ),
           ),
@@ -266,7 +277,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: secondaryTextColor, size: 20),
+          FaIcon(icon as FaIconData?, color: secondaryTextColor, size: 20),
           const SizedBox(width: 10),
           Text(
             "$label: ",
@@ -298,7 +309,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
         children: [
           const Row(
             children: [
-              Icon(FontAwesomeIcons.circleQuestion, color: primaryAmber),
+              FaIcon(FontAwesomeIcons.circleQuestion, color: primaryAmber),
               SizedBox(width: 10),
               Text(
                 "Como Receber seu Prêmio",

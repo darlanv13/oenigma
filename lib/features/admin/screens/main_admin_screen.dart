@@ -10,8 +10,6 @@ import 'package:oenigma/features/admin/screens/admin_tools_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_banners_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-
-
 class MainAdminScreen extends StatefulWidget {
   const MainAdminScreen({super.key});
 
@@ -35,38 +33,38 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
 
   final List<NavigationRailDestination> _destinations = const [
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.chartPie),
-      selectedIcon: Icon(FontAwesomeIcons.chartPie, color: primaryAmber),
+      icon: FaIcon(FontAwesomeIcons.chartPie),
+      selectedIcon: FaIcon(FontAwesomeIcons.chartPie, color: primaryAmber),
       label: Text('Dashboard'),
     ),
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.calendarCheck),
-      selectedIcon: Icon(FontAwesomeIcons.calendarCheck, color: primaryAmber),
+      icon: FaIcon(FontAwesomeIcons.calendarCheck),
+      selectedIcon: FaIcon(FontAwesomeIcons.calendarCheck, color: primaryAmber),
       label: Text('Gestão de Eventos'),
     ),
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.users),
-      selectedIcon: Icon(FontAwesomeIcons.users, color: primaryAmber),
+      icon: FaIcon(FontAwesomeIcons.users),
+      selectedIcon: FaIcon(FontAwesomeIcons.users, color: primaryAmber),
       label: Text('Usuários & Carteira'),
     ),
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.moneyBillWave),
-      selectedIcon: Icon(FontAwesomeIcons.moneyBillWave, color: primaryAmber),
+      icon: FaIcon(FontAwesomeIcons.moneyBillWave),
+      selectedIcon: FaIcon(FontAwesomeIcons.moneyBillWave, color: primaryAmber),
       label: Text('Financeiro'),
     ),
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.shieldHalved),
-      selectedIcon: Icon(FontAwesomeIcons.shieldHalved, color: primaryAmber),
+      icon: FaIcon(FontAwesomeIcons.shieldHalved),
+      selectedIcon: FaIcon(FontAwesomeIcons.shieldHalved, color: primaryAmber),
       label: Text('Monitor de Fraude'),
     ),
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.toolbox),
-      selectedIcon: Icon(FontAwesomeIcons.toolbox, color: primaryAmber),
+      icon: FaIcon(FontAwesomeIcons.toolbox),
+      selectedIcon: FaIcon(FontAwesomeIcons.toolbox, color: primaryAmber),
       label: Text('Dicas & Ferramentas'),
     ),
     NavigationRailDestination(
-      icon: Icon(FontAwesomeIcons.images),
-      selectedIcon: Icon(FontAwesomeIcons.images, color: primaryAmber),
+      icon: FaIcon(FontAwesomeIcons.images),
+      selectedIcon: FaIcon(FontAwesomeIcons.images, color: primaryAmber),
       label: Text('Gestão de Banners'),
     ),
   ];
@@ -81,12 +79,15 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
     return Scaffold(
       backgroundColor: darkBackground,
       appBar: AppBar(
-        title: const Text('O Enigma - Admin Panel', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'O Enigma - Admin Panel',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: cardColor,
         elevation: 0,
         leading: isDesktop
             ? IconButton(
-                icon: const Icon(FontAwesomeIcons.bars),
+                icon: const FaIcon(FontAwesomeIcons.bars),
                 onPressed: () {
                   setState(() {
                     _isExpanded = !_isExpanded;
@@ -96,7 +97,7 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
             : null,
         actions: [
           IconButton(
-            icon: const Icon(FontAwesomeIcons.rightFromBracket),
+            icon: const FaIcon(FontAwesomeIcons.rightFromBracket),
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
             },
@@ -114,7 +115,11 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                     child: Center(
                       child: Text(
                         'Admin Menu',
-                        style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -146,12 +151,24 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
               },
               extended: _isExpanded,
               selectedIconTheme: const IconThemeData(color: primaryAmber),
-              selectedLabelTextStyle: const TextStyle(color: primaryAmber, fontWeight: FontWeight.bold),
-              unselectedIconTheme: const IconThemeData(color: secondaryTextColor),
-              unselectedLabelTextStyle: const TextStyle(color: secondaryTextColor),
+              selectedLabelTextStyle: const TextStyle(
+                color: primaryAmber,
+                fontWeight: FontWeight.bold,
+              ),
+              unselectedIconTheme: const IconThemeData(
+                color: secondaryTextColor,
+              ),
+              unselectedLabelTextStyle: const TextStyle(
+                color: secondaryTextColor,
+              ),
               destinations: _destinations,
             ),
-          if (isDesktop) const VerticalDivider(thickness: 1, width: 1, color: Colors.white12),
+          if (isDesktop)
+            const VerticalDivider(
+              thickness: 1,
+              width: 1,
+              color: Colors.white12,
+            ),
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),

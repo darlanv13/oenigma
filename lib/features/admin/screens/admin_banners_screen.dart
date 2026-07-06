@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class AdminBannersScreen extends StatelessWidget {
   const AdminBannersScreen({super.key});
 
@@ -18,13 +17,17 @@ class AdminBannersScreen extends StatelessWidget {
           children: [
             const Text(
               'Gestão de Banners',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             ElevatedButton.icon(
               onPressed: () {
                 _showBannerDialog(context);
               },
-              icon: const Icon(FontAwesomeIcons.image),
+              icon: const FaIcon(FontAwesomeIcons.image),
               label: const Text('Novo Banner'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryAmber,
@@ -36,14 +39,20 @@ class AdminBannersScreen extends StatelessWidget {
         const SizedBox(height: 24),
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('banners').orderBy('order').snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('banners')
+                .orderBy('order')
+                .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const Center(
-                  child: Text('Nenhum banner cadastrado.', style: TextStyle(color: secondaryTextColor)),
+                  child: Text(
+                    'Nenhum banner cadastrado.',
+                    style: TextStyle(color: secondaryTextColor),
+                  ),
                 );
               }
 
@@ -66,31 +75,62 @@ class AdminBannersScreen extends StatelessWidget {
                       leading: SizedBox(
                         width: 80,
                         child: imageUrl.isNotEmpty
-                            ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => const Icon(FontAwesomeIcons.image))
-                            : const Icon(FontAwesomeIcons.image, color: Colors.grey),
+                            ? Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const FaIcon(FontAwesomeIcons.image),
+                              )
+                            : const FaIcon(
+                                FontAwesomeIcons.image,
+                                color: Colors.grey,
+                              ),
                       ),
-                      title: Text('Ordem: $order - ${isActive ? "Ativo" : "Inativo"}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      subtitle: Text('Link: $actionUrl', style: const TextStyle(color: secondaryTextColor), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      title: Text(
+                        'Ordem: $order - ${isActive ? "Ativo" : "Inativo"}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Link: $actionUrl',
+                        style: const TextStyle(color: secondaryTextColor),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const Icon(FontAwesomeIcons.pen, color: primaryAmber),
+                            icon: const FaIcon(
+                              FontAwesomeIcons.pen,
+                              color: primaryAmber,
+                            ),
                             onPressed: () {
-                              _showBannerDialog(context, docId: bannerId, initialData: banner);
+                              _showBannerDialog(
+                                context,
+                                docId: bannerId,
+                                initialData: banner,
+                              );
                             },
                             tooltip: 'Editar Banner',
                           ),
                           IconButton(
-                            icon: const Icon(FontAwesomeIcons.trashCan, color: Colors.redAccent),
+                            icon: const FaIcon(
+                              FontAwesomeIcons.trashCan,
+                              color: Colors.redAccent,
+                            ),
                             onPressed: () async {
-                               try {
-                                 await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
-                                    .httpsCallable('deleteBanner')
-                                    .call({'bannerId': bannerId});
-                               } catch (e) {
-                                 print("Erro ao excluir banner: $e");
-                               }
+                              try {
+                                await FirebaseFunctions.instanceFor(
+                                  region: 'southamerica-east1',
+                                ).httpsCallable('deleteBanner').call({
+                                  'bannerId': bannerId,
+                                });
+                              } catch (e) {
+                                print("Erro ao excluir banner: $e");
+                              }
                             },
                             tooltip: 'Excluir Banner',
                           ),
@@ -107,10 +147,20 @@ class AdminBannersScreen extends StatelessWidget {
     );
   }
 
-  void _showBannerDialog(BuildContext context, {String? docId, Map<String, dynamic>? initialData}) {
-    final imageCtrl = TextEditingController(text: initialData?['imageUrl'] ?? '');
-    final actionCtrl = TextEditingController(text: initialData?['actionUrl'] ?? '');
-    final orderCtrl = TextEditingController(text: initialData?['order']?.toString() ?? '1');
+  void _showBannerDialog(
+    BuildContext context, {
+    String? docId,
+    Map<String, dynamic>? initialData,
+  }) {
+    final imageCtrl = TextEditingController(
+      text: initialData?['imageUrl'] ?? '',
+    );
+    final actionCtrl = TextEditingController(
+      text: initialData?['actionUrl'] ?? '',
+    );
+    final orderCtrl = TextEditingController(
+      text: initialData?['order']?.toString() ?? '1',
+    );
     bool isActive = initialData?['isActive'] ?? true;
 
     showDialog(
@@ -120,7 +170,10 @@ class AdminBannersScreen extends StatelessWidget {
           builder: (context, setState) {
             return AlertDialog(
               backgroundColor: cardColor,
-              title: Text(docId == null ? 'Novo Banner' : 'Editar Banner', style: const TextStyle(color: Colors.white)),
+              title: Text(
+                docId == null ? 'Novo Banner' : 'Editar Banner',
+                style: const TextStyle(color: Colors.white),
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -128,22 +181,34 @@ class AdminBannersScreen extends StatelessWidget {
                     TextField(
                       controller: imageCtrl,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(labelText: 'URL da Imagem', labelStyle: TextStyle(color: secondaryTextColor)),
+                      decoration: const InputDecoration(
+                        labelText: 'URL da Imagem',
+                        labelStyle: TextStyle(color: secondaryTextColor),
+                      ),
                     ),
                     TextField(
                       controller: actionCtrl,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(labelText: 'URL de Ação (Abre ao clicar)', labelStyle: TextStyle(color: secondaryTextColor)),
+                      decoration: const InputDecoration(
+                        labelText: 'URL de Ação (Abre ao clicar)',
+                        labelStyle: TextStyle(color: secondaryTextColor),
+                      ),
                     ),
                     TextField(
                       controller: orderCtrl,
                       style: const TextStyle(color: Colors.white),
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Ordem de Exibição', labelStyle: TextStyle(color: secondaryTextColor)),
+                      decoration: const InputDecoration(
+                        labelText: 'Ordem de Exibição',
+                        labelStyle: TextStyle(color: secondaryTextColor),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     SwitchListTile(
-                      title: const Text('Banner Ativo', style: TextStyle(color: Colors.white)),
+                      title: const Text(
+                        'Banner Ativo',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       value: isActive,
                       activeTrackColor: primaryAmber.withValues(alpha: 0.5),
                       activeThumbColor: primaryAmber,
@@ -152,14 +217,17 @@ class AdminBannersScreen extends StatelessWidget {
                           isActive = val;
                         });
                       },
-                    )
+                    ),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancelar', style: TextStyle(color: Colors.red)),
+                  child: const Text(
+                    'Cancelar',
+                    style: TextStyle(color: Colors.red),
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -171,23 +239,30 @@ class AdminBannersScreen extends StatelessWidget {
                     };
 
                     try {
-                      await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
-                          .httpsCallable('createOrUpdateBanner')
-                          .call({
-                            'bannerId': docId,
-                            'data': data,
-                          });
+                      await FirebaseFunctions.instanceFor(
+                        region: 'southamerica-east1',
+                      ).httpsCallable('createOrUpdateBanner').call({
+                        'bannerId': docId,
+                        'data': data,
+                      });
                       if (ctx.mounted) Navigator.pop(ctx);
                     } catch (e) {
                       print("Erro: $e");
                       if (ctx.mounted) {
                         ScaffoldMessenger.of(ctx).showSnackBar(
-                          SnackBar(content: Text('Erro ao salvar banner via Cloud Function: $e')),
+                          SnackBar(
+                            content: Text(
+                              'Erro ao salvar banner via Cloud Function: $e',
+                            ),
+                          ),
                         );
                       }
                     }
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryAmber,
+                    foregroundColor: Colors.black,
+                  ),
                   child: const Text('Salvar'),
                 ),
               ],
