@@ -173,8 +173,7 @@ class _EventCardState extends State<EventCard> {
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const Icon(
-                                    FontAwesomeIcons.calendarDay,
+                                  const FaIcon(FontAwesomeIcons.calendarDay,
                                     color: secondaryTextColor,
                                     size: 12,
                                   ),
@@ -318,8 +317,7 @@ class _EventCardState extends State<EventCard> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                FontAwesomeIcons.hourglassHalf,
+              const FaIcon(FontAwesomeIcons.hourglassHalf,
                 color: secondaryTextColor,
                 size: 50,
               ),

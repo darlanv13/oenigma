@@ -65,8 +65,7 @@ class HomeProfileCard extends StatelessWidget {
                       ? NetworkImage(wallet.photoURL!)
                       : null,
                   child: (wallet.photoURL == null || wallet.photoURL!.isEmpty)
-                      ? const Icon(
-                          FontAwesomeIcons.user,
+                      ? const FaIcon(FontAwesomeIcons.user,
                           color: secondaryTextColor,
                           size: 30,
                         )

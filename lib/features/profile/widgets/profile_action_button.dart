@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 class ProfileActionButton extends StatelessWidget {
-  final IconData icon;
+  final dynamic icon;
   final String tooltip;
   final VoidCallback onTap;
 

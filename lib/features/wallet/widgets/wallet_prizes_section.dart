@@ -22,8 +22,7 @@ class WalletPrizesSection extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(
-              FontAwesomeIcons.trophy,
+            FaIcon(FontAwesomeIcons.trophy,
               size: 48,
               color: secondaryTextColor.withValues(alpha: 0.5),
             ),

@@ -1,8 +1,9 @@
+import "package:font_awesome_flutter/font_awesome_flutter.dart";
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 class NavButton extends StatelessWidget {
-  final IconData icon;
+  final dynamic icon;
   final String label;
   final VoidCallback onTap;
 

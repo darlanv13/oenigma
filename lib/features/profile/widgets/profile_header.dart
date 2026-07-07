@@ -68,8 +68,7 @@ class ProfileHeader extends StatelessWidget {
                     child: selectedImage == null &&
                             (playerData['photoURL'] == null ||
                                 playerData['photoURL'].isEmpty)
-                        ? const Icon(
-                            FontAwesomeIcons.solidUser,
+                        ? const FaIcon(FontAwesomeIcons.solidUser,
                             size: 50,
                             color: secondaryTextColor,
                           )
@@ -84,8 +83,7 @@ class ProfileHeader extends StatelessWidget {
                       color: primaryAmber,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      FontAwesomeIcons.camera,
+                    child: const FaIcon(FontAwesomeIcons.camera,
                       size: 20,
                       color: darkBackground,
                     ),

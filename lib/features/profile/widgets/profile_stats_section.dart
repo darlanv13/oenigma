@@ -47,7 +47,7 @@ class ProfileStatsSection extends StatelessWidget {
 class _StatCard extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
+  final dynamic icon;
   final Color color;
 
   const _StatCard({

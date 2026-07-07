@@ -432,7 +432,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     );
   }
 
-  Widget _buildInfoPill(IconData icon, String label, String value) {
+  Widget _buildInfoPill(dynamic icon, String label, String value) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -518,8 +518,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             child: IconButton(
               icon: const Padding(
                 padding: EdgeInsets.only(right: 2.0),
-                child: Icon(
-                  FontAwesomeIcons.angleLeft,
+                child: FaIcon(FontAwesomeIcons.angleLeft,
                   color: Colors.white,
                   size: 20,
                 ),
@@ -609,10 +608,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                     strokeWidth: 2,
                   ),
                 )
-              : Icon(
-                  _isSubscribed
-                      ? FontAwesomeIcons.play
-                      : FontAwesomeIcons.rightToBracket,
+              : FaIcon(_isSubscribed ? FontAwesomeIcons.play : FontAwesomeIcons.rightToBracket,
                   size: 28,
                 ),
           label: Text(
@@ -627,7 +623,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 
   // Widget auxiliar para botões desabilitados
-  Widget _buildDisabledButton({required IconData icon, required String label}) {
+  Widget _buildDisabledButton({required dynamic icon, required String label}) {
     return Container(
       color: darkBackground,
       child: Container(

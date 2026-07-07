@@ -58,8 +58,7 @@ class AdminFraudScreen extends StatelessWidget {
                     color: cardColor,
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
-                      leading: const FaIcon(
-                        FontAwesomeIcons.triangleExclamation,
+                      leading: const FaIcon(FontAwesomeIcons.triangleExclamation,
                         color: Colors.redAccent,
                         size: 40,
                       ),
@@ -96,8 +95,7 @@ class AdminFraudScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           TextButton.icon(
-                            icon: const FaIcon(
-                              FontAwesomeIcons.ban,
+                            icon: const FaIcon(FontAwesomeIcons.ban,
                               color: Colors.red,
                             ),
                             label: const Text(

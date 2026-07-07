@@ -38,8 +38,7 @@ class ProfileAccountActions extends ConsumerWidget {
               'Redefinir Senha',
               style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
             ),
-            trailing: const Icon(
-              FontAwesomeIcons.chevronRight,
+            trailing: const FaIcon(FontAwesomeIcons.chevronRight,
               color: secondaryTextColor,
             ),
             onTap: () => onResetPassword(email),
@@ -55,8 +54,7 @@ class ProfileAccountActions extends ConsumerWidget {
                 color: Colors.redAccent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
-                FontAwesomeIcons.arrowRightFromBracket,
+              child: const FaIcon(FontAwesomeIcons.arrowRightFromBracket,
                 color: Colors.redAccent,
                 size: 20,
               ),

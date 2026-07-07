@@ -38,7 +38,7 @@ class WalletHistoryList extends StatelessWidget {
 }
 
 class _HistoryItem extends StatelessWidget {
-  final IconData icon;
+  final dynamic icon;
   final String title;
   final String subtitle;
   final Color color;

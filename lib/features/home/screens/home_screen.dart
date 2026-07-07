@@ -60,8 +60,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  FontAwesomeIcons.circleExclamation,
+                const FaIcon(FontAwesomeIcons.circleExclamation,
                   size: 48,
                   color: Colors.redAccent,
                 ),

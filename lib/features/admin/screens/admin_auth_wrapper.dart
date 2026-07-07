@@ -58,8 +58,7 @@ class AdminAuthWrapper extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const FaIcon(
-              FontAwesomeIcons.shieldHalved,
+            const FaIcon(FontAwesomeIcons.shieldHalved,
               size: 80,
               color: Colors.redAccent,
             ),

@@ -241,8 +241,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 40.0),
                         child: Column(
                           children: [
-                            Icon(
-                              FontAwesomeIcons.trophy,
+                            FaIcon(FontAwesomeIcons.trophy,
                               size: 64,
                               color: secondaryTextColor.withValues(alpha: 0.5),
                             ),

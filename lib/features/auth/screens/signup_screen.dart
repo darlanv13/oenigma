@@ -167,7 +167,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                             color: darkBackground,
                           ),
                         )
-                      : Icon(
+                      : FaIcon(
                           _currentStep == 0 ? FontAwesomeIcons.arrowRight : FontAwesomeIcons.check,
                         ),
                   label: Text(_currentStep == 0 ? 'Avançar' : 'Concluir'),
@@ -281,7 +281,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String hintText,
-    required IconData icon,
+    required dynamic icon,
     bool obscureText = false,
     String? Function(String?)? validator,
     TextInputType? keyboardType,
@@ -297,7 +297,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       textCapitalization: textCapitalization,
       style: const TextStyle(color: textColor),
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: textColor.withValues(alpha: 0.7)),
+        prefixIcon: FaIcon(icon, color: textColor.withValues(alpha: 0.7)),
         hintText: hintText,
         hintStyle: TextStyle(color: textColor.withValues(alpha: 0.7)),
         filled: true,

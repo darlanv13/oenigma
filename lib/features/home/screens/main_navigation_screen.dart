@@ -40,8 +40,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                FontAwesomeIcons.circleExclamation,
+              const FaIcon(FontAwesomeIcons.circleExclamation,
                 size: 48,
                 color: Colors.redAccent,
               ),

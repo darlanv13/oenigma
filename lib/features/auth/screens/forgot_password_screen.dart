@@ -102,8 +102,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       keyboardType: TextInputType.emailAddress,
                       style: const TextStyle(color: textColor),
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                          FontAwesomeIcons.envelope,
+                        prefixIcon: const FaIcon(FontAwesomeIcons.envelope,
                           color: secondaryTextColor,
                         ),
                         labelText: 'Email',

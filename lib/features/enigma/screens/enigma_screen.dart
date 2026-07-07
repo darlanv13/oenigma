@@ -947,8 +947,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       );
                     }
                   : null,
-              icon: FaIcon(
-                _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
+              icon: FaIcon(_isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
               ),
               label: Text(
                 _isBlocked
@@ -1080,8 +1079,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         _handleToolPurchase('map');
                       }
                     },
-              icon: const FaIcon(
-                FontAwesomeIcons.map,
+              icon: const FaIcon(FontAwesomeIcons.map,
                 color: Colors.blueAccent,
               ),
               label: const Text(
@@ -1117,8 +1115,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         _handleToolPurchase('compass');
                       }
                     },
-              icon: const FaIcon(
-                FontAwesomeIcons.compass,
+              icon: const FaIcon(FontAwesomeIcons.compass,
                 color: Colors.greenAccent,
               ),
               label: const Text(

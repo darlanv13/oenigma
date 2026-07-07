@@ -219,8 +219,7 @@ class _CompassWidgetState extends State<CompassWidget> with SingleTickerProvider
                     ),
 
                     // O JOGADOR (Triângulo Vermelho no Centro)
-                    const Icon(
-                      FontAwesomeIcons.locationArrow, // Um ícone que parece um triângulo
+                    const FaIcon(FontAwesomeIcons.locationArrow, // Um ícone que parece um triângulo
                       color: Colors.redAccent,
                       size: 24,
                     ),

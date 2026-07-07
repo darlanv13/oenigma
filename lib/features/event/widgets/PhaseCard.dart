@@ -147,7 +147,7 @@ class PhaseCard extends StatelessWidget {
 
   // Helper para construir o ícone da esquerda
   Widget _buildLeftIcon() {
-    IconData iconData;
+    dynamic iconData;
     Color backgroundColor;
     Color iconColor = Colors.white;
 
@@ -204,8 +204,7 @@ class PhaseCard extends StatelessWidget {
         bool isSolved = index < completedEnigmas;
         return Padding(
           padding: const EdgeInsets.only(right: 6.0),
-          child: Icon(
-            isSolved ? FontAwesomeIcons.solidStar : FontAwesomeIcons.star,
+          child: FaIcon(isSolved ? FontAwesomeIcons.solidStar : FontAwesomeIcons.star,
             color: isSolved ? primaryAmber : secondaryTextColor.withValues(alpha: 0.5),
             size: 16,
           ),

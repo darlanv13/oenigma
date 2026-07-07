@@ -105,8 +105,7 @@ class AdminEventsScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const FaIcon(
-                              FontAwesomeIcons.list,
+                            icon: const FaIcon(FontAwesomeIcons.list,
                               color: Colors.blueAccent,
                             ),
                             onPressed: () {
@@ -123,8 +122,7 @@ class AdminEventsScreen extends StatelessWidget {
                             tooltip: 'Gerenciar Fases/Enigmas',
                           ),
                           IconButton(
-                            icon: const FaIcon(
-                              FontAwesomeIcons.pen,
+                            icon: const FaIcon(FontAwesomeIcons.pen,
                               color: primaryAmber,
                             ),
                             onPressed: () {
@@ -137,8 +135,7 @@ class AdminEventsScreen extends StatelessWidget {
                             tooltip: 'Editar Evento',
                           ),
                           IconButton(
-                            icon: const FaIcon(
-                              FontAwesomeIcons.trashCan,
+                            icon: const FaIcon(FontAwesomeIcons.trashCan,
                               color: Colors.redAccent,
                             ),
                             onPressed: () {
@@ -352,8 +349,7 @@ class AdminPhasesScreen extends StatelessWidget {
                             style: const TextStyle(color: secondaryTextColor),
                           ),
                           trailing: IconButton(
-                            icon: const FaIcon(
-                              FontAwesomeIcons.pen,
+                            icon: const FaIcon(FontAwesomeIcons.pen,
                               color: primaryAmber,
                             ),
                             onPressed: () => _showPhaseDialog(
@@ -521,8 +517,7 @@ class AdminEnigmasList extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const FaIcon(
-                          FontAwesomeIcons.pen,
+                        icon: const FaIcon(FontAwesomeIcons.pen,
                           size: 18,
                           color: Colors.blue,
                         ),
@@ -533,8 +528,7 @@ class AdminEnigmasList extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        icon: const FaIcon(
-                          FontAwesomeIcons.trashCan,
+                        icon: const FaIcon(FontAwesomeIcons.trashCan,
                           size: 18,
                           color: Colors.red,
                         ),

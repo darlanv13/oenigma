@@ -99,8 +99,7 @@ class AdminToolsScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const FaIcon(
-                              FontAwesomeIcons.pen,
+                            icon: const FaIcon(FontAwesomeIcons.pen,
                               color: Colors.blueAccent,
                             ),
                             onPressed: () {
@@ -113,8 +112,7 @@ class AdminToolsScreen extends StatelessWidget {
                             tooltip: 'Editar Dica',
                           ),
                           IconButton(
-                            icon: const FaIcon(
-                              FontAwesomeIcons.trashCan,
+                            icon: const FaIcon(FontAwesomeIcons.trashCan,
                               color: Colors.redAccent,
                             ),
                             onPressed: () async {

@@ -64,8 +64,7 @@ class AdminFinanceScreen extends StatelessWidget {
                     child: ListTile(
                       leading: const CircleAvatar(
                         backgroundColor: Colors.green,
-                        child: FaIcon(
-                          FontAwesomeIcons.pix,
+                        child: FaIcon(FontAwesomeIcons.pix,
                           color: Colors.white,
                         ),
                       ),
@@ -85,8 +84,7 @@ class AdminFinanceScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           TextButton.icon(
-                            icon: const FaIcon(
-                              FontAwesomeIcons.solidCircleCheck,
+                            icon: const FaIcon(FontAwesomeIcons.solidCircleCheck,
                               color: Colors.green,
                             ),
                             label: const Text(
@@ -102,8 +100,7 @@ class AdminFinanceScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           TextButton.icon(
-                            icon: const FaIcon(
-                              FontAwesomeIcons.xmark,
+                            icon: const FaIcon(FontAwesomeIcons.xmark,
                               color: Colors.redAccent,
                             ),
                             label: const Text(

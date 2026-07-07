@@ -69,8 +69,7 @@ class RankingList extends ConsumerWidget {
                       ? NetworkImage(player.photoURL!)
                       : null,
                   child: player.photoURL == null
-                      ? const Icon(
-                          FontAwesomeIcons.solidUser,
+                      ? const FaIcon(FontAwesomeIcons.solidUser,
                           size: 20,
                           color: secondaryTextColor,
                         )

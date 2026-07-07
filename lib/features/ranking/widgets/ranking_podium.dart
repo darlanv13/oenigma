@@ -108,8 +108,7 @@ class _PodiumPlace extends StatelessWidget {
                       ? NetworkImage(player.photoURL!)
                       : null,
                   child: player.photoURL == null
-                      ? Icon(
-                          FontAwesomeIcons.solidUser,
+                      ? FaIcon(FontAwesomeIcons.solidUser,
                           size: isFirstPlace ? 30 : 20,
                           color: secondaryTextColor,
                         )

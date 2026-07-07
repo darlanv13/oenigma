@@ -133,8 +133,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               icon: FontAwesomeIcons.lock,
               obscureText: !_isPasswordVisible,
               suffixIcon: IconButton(
-                icon: Icon(
-                  _isPasswordVisible ? FontAwesomeIcons.solidEyeSlash : FontAwesomeIcons.solidEye,
+                icon: FaIcon(_isPasswordVisible ? FontAwesomeIcons.solidEyeSlash : FontAwesomeIcons.solidEye,
                   color: textColor.withValues(alpha: 0.7),
                 ),
                 onPressed: () =>
@@ -226,7 +225,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String hintText,
-    required IconData icon,
+    required dynamic icon,
     bool obscureText = false,
     Widget? suffixIcon,
     String? Function(String?)? validator,

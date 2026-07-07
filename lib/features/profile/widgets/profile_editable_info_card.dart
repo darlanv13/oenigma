@@ -97,7 +97,7 @@ class ProfileEditableInfoCard extends StatelessWidget {
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
+  final dynamic icon;
 
   const _InfoRow({
     required this.label,
@@ -137,7 +137,7 @@ class _InfoRow extends StatelessWidget {
 class _TextFormField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
-  final IconData icon;
+  final dynamic icon;
 
   const _TextFormField({
     required this.controller,

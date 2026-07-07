@@ -131,16 +131,14 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                                   ? NetworkImage(winnerPhotoURL)
                                   : null,
                               child: winnerPhotoURL == null
-                                  ? const FaIcon(
-                                      FontAwesomeIcons.solidUser,
+                                  ? const FaIcon(FontAwesomeIcons.solidUser,
                                       size: 45,
                                     )
                                   : null,
                             ),
                             Positioned(
                               top: -1,
-                              child: FaIcon(
-                                FontAwesomeIcons.medal,
+                              child: FaIcon(FontAwesomeIcons.medal,
                                 color: primaryAmber,
                                 size: 30,
                               ),
@@ -169,17 +167,17 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                         _buildStatItem(
                           "Prêmio Recebido",
                           currencyFormat.format(widget.prizeWon),
-                          FontAwesomeIcons.trophy as IconData,
+                          FontAwesomeIcons.trophy as dynamic,
                         ),
                         _buildStatItem(
                           "Posição Final",
                           "#1",
-                          FontAwesomeIcons.chartBar as IconData,
+                          FontAwesomeIcons.chartBar as dynamic,
                         ),
                         _buildStatItem(
                           "Fases Concluídas",
                           "${widget.allPhases.length}",
-                          FontAwesomeIcons.circleCheck as IconData,
+                          FontAwesomeIcons.circleCheck as dynamic,
                         ),
                         const SizedBox(height: 10),
                         Text(
@@ -271,13 +269,13 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon) {
+  Widget _buildStatItem(String label, String value, dynamic icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          FaIcon(icon as FaIconData?, color: secondaryTextColor, size: 20),
+          FaIcon(icon, color: secondaryTextColor, size: 20),
           const SizedBox(width: 10),
           Text(
             "$label: ",

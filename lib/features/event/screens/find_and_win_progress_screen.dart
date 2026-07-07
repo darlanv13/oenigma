@@ -313,8 +313,7 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
                           ),
                         ),
                       ),
-                icon: Icon(
-                  _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
+                icon: FaIcon(_isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
                 ),
                 label: Text(_isBlocked ? 'Aguarde' : 'Escanear QR Code'),
                 style: ElevatedButton.styleFrom(
@@ -346,10 +345,7 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Icon(
-                            _isBlocked
-                                ? FontAwesomeIcons.clock
-                                : FontAwesomeIcons.circleCheck,
+                        : FaIcon(_isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.circleCheck,
                           ),
                     label: Text(_isBlocked ? 'Aguarde' : 'Validar Resposta'),
                     style: ElevatedButton.styleFrom(

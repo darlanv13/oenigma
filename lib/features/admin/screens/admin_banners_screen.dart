@@ -81,8 +81,7 @@ class AdminBannersScreen extends StatelessWidget {
                                 errorBuilder: (context, error, stackTrace) =>
                                     const FaIcon(FontAwesomeIcons.image),
                               )
-                            : const FaIcon(
-                                FontAwesomeIcons.image,
+                            : const FaIcon(FontAwesomeIcons.image,
                                 color: Colors.grey,
                               ),
                       ),
@@ -103,8 +102,7 @@ class AdminBannersScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const FaIcon(
-                              FontAwesomeIcons.pen,
+                            icon: const FaIcon(FontAwesomeIcons.pen,
                               color: primaryAmber,
                             ),
                             onPressed: () {
@@ -117,8 +115,7 @@ class AdminBannersScreen extends StatelessWidget {
                             tooltip: 'Editar Banner',
                           ),
                           IconButton(
-                            icon: const FaIcon(
-                              FontAwesomeIcons.trashCan,
+                            icon: const FaIcon(FontAwesomeIcons.trashCan,
                               color: Colors.redAccent,
                             ),
                             onPressed: () async {
