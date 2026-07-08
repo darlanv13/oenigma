@@ -15,9 +15,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('pt_BR', null);
   await Parse().initialize(
-    'YOUR_APP_ID', // Replace with valid App ID
+    'ThUDHY1ayK6ah9JFm9YLHTDF9FKMHTU096eqkDKK', // Replace with valid App ID
     'https://parseapi.back4app.com', // Replace with valid Server URL
-    clientKey: 'YOUR_CLIENT_KEY', // Replace with valid Client Key
+    clientKey:
+        'ZyTU944E8jmtJuDu4lL2mh5tcQR7AErvhL0xNY5d', // Replace with valid Client Key
     autoSendSessionId: true,
   );
 
@@ -26,7 +27,9 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final bool hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
 
-  runApp(ProviderScope(child: EnigmaCityApp(hasSeenOnboarding: hasSeenOnboarding)));
+  runApp(
+    ProviderScope(child: EnigmaCityApp(hasSeenOnboarding: hasSeenOnboarding)),
+  );
 }
 
 class EnigmaCityApp extends StatelessWidget {

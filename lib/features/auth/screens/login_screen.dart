@@ -7,7 +7,6 @@ import 'package:oenigma/features/auth/screens/signup_screen.dart';
 import 'package:oenigma/features/auth/screens/forgot_password_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -122,7 +121,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _buildTextFormField(
               controller: _emailController,
               hintText: "Email",
-              icon: FontAwesomeIcons.envelope,
+              // CORREÇÃO AQUI: Passando o Widget FaIcon centralizado
+              prefixIcon: Container(
+                alignment: Alignment.center,
+                width: 48,
+                child: FaIcon(
+                  FontAwesomeIcons.envelope,
+                  color: textColor.withValues(alpha: 0.7),
+                  size: 20,
+                ),
+              ),
               validator: (val) =>
                   val!.isEmpty ? 'Por favor, insira um email' : null,
             ),
@@ -130,11 +138,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _buildTextFormField(
               controller: _passwordController,
               hintText: "Senha",
-              icon: FontAwesomeIcons.lock,
+              // CORREÇÃO AQUI: Passando o Widget FaIcon centralizado
+              prefixIcon: Container(
+                alignment: Alignment.center,
+                width: 48,
+                child: FaIcon(
+                  FontAwesomeIcons.lock,
+                  color: textColor.withValues(alpha: 0.7),
+                  size: 20,
+                ),
+              ),
               obscureText: !_isPasswordVisible,
               suffixIcon: IconButton(
-                icon: FaIcon(_isPasswordVisible ? FontAwesomeIcons.solidEyeSlash : FontAwesomeIcons.solidEye,
+                icon: FaIcon(
+                  _isPasswordVisible
+                      ? FontAwesomeIcons.solidEyeSlash
+                      : FontAwesomeIcons.solidEye,
                   color: textColor.withValues(alpha: 0.7),
+                  size: 20,
                 ),
                 onPressed: () =>
                     setState(() => _isPasswordVisible = !_isPasswordVisible),
@@ -222,10 +243,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  // CORREÇÃO NA ASSINATURA DA FUNÇÃO: Recebendo "Widget prefixIcon"
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String hintText,
-    required dynamic icon,
+    required Widget prefixIcon,
     bool obscureText = false,
     Widget? suffixIcon,
     String? Function(String?)? validator,
@@ -238,7 +260,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: TextStyle(color: textColor.withValues(alpha: 0.7)),
-        prefixIcon: Icon(icon, color: textColor.withValues(alpha: 0.7)),
+        prefixIcon: prefixIcon, // E repassando diretamente aqui
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: darkBackground,

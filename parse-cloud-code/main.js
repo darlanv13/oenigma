@@ -2,6 +2,93 @@
 // Write your cloud functions here.
 
 // -----------------------------------------------------------------------------
+// App / Home Functions
+// -----------------------------------------------------------------------------
+Parse.Cloud.define("getHomeScreenData", async (request) => {
+  try {
+    // 1. Pegar o usuário logado que fez a requisição
+    const user = request.user;
+
+    // 2. Buscar Banners
+    const Banner = Parse.Object.extend("Banner");
+    const bannerQuery = new Parse.Query(Banner);
+    const banners = await bannerQuery.find({ useMasterKey: true });
+
+    // 3. Buscar Eventos abertos
+    const Event = Parse.Object.extend("Event");
+    const eventQuery = new Parse.Query(Event);
+    eventQuery.equalTo("status", "open");
+    const events = await eventQuery.find({ useMasterKey: true });
+
+    // FORMATAR OS EVENTOS PARA O FLUTTER NÃO DAR ERRO DE TIPO
+    const formattedEvents = events.map(e => {
+      const json = e.toJSON();
+
+      // Corrige o campo ID (O Flutter espera 'id', mas o Parse envia 'objectId' por padrão)
+      json.id = e.id;
+
+      // Corrige a Data (Converte o Objeto/Map de data do Parse numa String simples)
+      if (json.startDate && json.startDate.iso) {
+        json.startDate = json.startDate.iso;
+      }
+
+      return json;
+    });
+
+    // 4. Montar a Carteira (Wallet) e Dados do Jogador
+    let walletData = {};
+    let playerData = {};
+
+    if (user) {
+      // Se houver usuário logado, envia os dados reais
+      walletData = {
+        objectId: user.id,
+        name: user.get("name") || user.get("username") || "Jogador",
+        email: user.get("email") || "",
+        balance: user.get("balance") || 0.0,
+        lastWonEventName: user.get("lastWonEventName"),
+        lastEventRank: user.get("lastEventRank"),
+        lastEventName: user.get("lastEventName")
+      };
+      playerData = user.get("events") || {}; // Progresso salvo do jogador
+    } else {
+      // Valores padrão de segurança (Caso seja um Visitante)
+      walletData = {
+        objectId: "visitante",
+        name: "Visitante",
+        email: "sem_email@teste.com",
+        balance: 0.0
+      };
+    }
+
+    // 5. Buscar o Ranking para a tela inicial (allPlayers)
+    const userQuery = new Parse.Query(Parse.User);
+    userQuery.descending("balance"); // Ordena pelos mais ricos, por exemplo
+    userQuery.limit(5); // Pega apenas os 5 primeiros
+    const topPlayers = await userQuery.find({ useMasterKey: true });
+
+    const allPlayers = topPlayers.map(p => ({
+      objectId: p.id,
+      name: p.get("name") || p.get("username") || "Jogador",
+      balance: p.get("balance") || 0.0
+    }));
+
+    // 6. Retornar TUDO que o ficheiro home_screen.dart do Flutter pede
+    return {
+      banners: banners.map(b => b.toJSON()),
+      events: formattedEvents,
+      walletData: walletData,
+      playerData: playerData,
+      allPlayers: allPlayers
+    };
+
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao buscar dados da home: " + error.message);
+  }
+});
+
+
+// -----------------------------------------------------------------------------
 // Admin / Dashboard Functions
 // -----------------------------------------------------------------------------
 Parse.Cloud.define("getAdminDashboardData", async (request) => {
