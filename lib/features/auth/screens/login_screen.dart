@@ -238,7 +238,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: TextStyle(color: textColor.withValues(alpha: 0.7)),
-        prefixIcon: Icon(icon, color: textColor.withValues(alpha: 0.7)),
+        prefixIcon: FaIcon(icon, color: textColor.withValues(alpha: 0.7)),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: darkBackground,

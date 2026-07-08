@@ -142,7 +142,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                 title,
                 style: const TextStyle(color: secondaryTextColor, fontSize: 14),
               ),
-              Icon(icon, color: color, size: 20),
+              FaIcon(icon, color: color, size: 20),
             ],
           ),
           const SizedBox(height: 12),

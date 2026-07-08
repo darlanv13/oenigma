@@ -68,7 +68,7 @@ class _StatCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 28),
+          FaIcon(icon, color: color, size: 28),
           const SizedBox(height: 12),
           Text(
             value,

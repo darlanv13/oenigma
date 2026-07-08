@@ -1,4 +1,4 @@
-import "package:font_awesome_flutter/font_awesome_flutter.dart";
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
@@ -28,7 +28,7 @@ class NavButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              FaIcon(
                 icon,
                 color: primaryAmber, // Ícone sempre em âmbar
                 size: 28,

@@ -115,7 +115,7 @@ class _InfoRow extends StatelessWidget {
             color: Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: secondaryTextColor, size: 20),
+          child: FaIcon(icon, color: secondaryTextColor, size: 20),
         ),
         const SizedBox(width: 16),
         Column(
@@ -151,7 +151,7 @@ class _TextFormField extends StatelessWidget {
       controller: controller,
       style: const TextStyle(color: textColor),
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: secondaryTextColor, size: 20),
+        prefixIcon: FaIcon(icon, color: secondaryTextColor, size: 20),
         labelText: label,
         labelStyle: const TextStyle(color: secondaryTextColor),
         filled: true,

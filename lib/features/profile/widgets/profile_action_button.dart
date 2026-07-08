@@ -1,3 +1,4 @@
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
@@ -26,7 +27,7 @@ class ProfileActionButton extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(10.0),
-            child: Icon(icon, color: primaryAmber, size: 24),
+            child: FaIcon(icon, color: primaryAmber, size: 24),
           ),
         ),
       ),

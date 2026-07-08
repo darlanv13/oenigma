@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class HomeActionButton extends StatelessWidget {
   final dynamic icon;
@@ -26,7 +27,7 @@ class HomeActionButton extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, size: 24, color: textColor),
+            FaIcon(icon, size: 24, color: textColor),
             const SizedBox(height: 8),
             Text(
               label,
