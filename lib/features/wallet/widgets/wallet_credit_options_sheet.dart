@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'dart:convert';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -124,11 +124,10 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
   Future<void> _initiatePayment() async {
     try {
-      final result = await FirebaseFunctions.instanceFor(
-        region: 'southamerica-east1',
-      ).httpsCallable('createPixCharge').call({'amount': widget.amount});
+      final result = await ParseCloudFunction('createPixCharge').execute(parameters: {'amount': widget.amount});
+      if (!result.success) throw result.error ?? ParseError();
 
-      final data = result.data as Map<dynamic, dynamic>;
+      final data = result.result as Map<dynamic, dynamic>;
 
       if (mounted) {
         setState(() {

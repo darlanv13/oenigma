@@ -1,4 +1,4 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -123,9 +123,7 @@ class AdminBannersScreen extends StatelessWidget {
                             ),
                             onPressed: () async {
                               try {
-                                await FirebaseFunctions.instanceFor(
-                                  region: 'southamerica-east1',
-                                ).httpsCallable('deleteBanner').call({
+                                await ParseCloudFunction('deleteBanner').execute(parameters: {
                                   'bannerId': bannerId,
                                 });
                               } catch (e) {
@@ -239,9 +237,7 @@ class AdminBannersScreen extends StatelessWidget {
                     };
 
                     try {
-                      await FirebaseFunctions.instanceFor(
-                        region: 'southamerica-east1',
-                      ).httpsCallable('createOrUpdateBanner').call({
+                      await ParseCloudFunction('createOrUpdateBanner').execute(parameters: {
                         'bannerId': docId,
                         'data': data,
                       });

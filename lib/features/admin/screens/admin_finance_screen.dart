@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -146,7 +146,7 @@ class AdminFinanceScreen extends StatelessWidget {
     );
 
     try {
-      await FirebaseFunctions.instance.httpsCallable('processWithdrawal').call({
+      await ParseCloudFunction('processWithdrawal').execute(parameters: {
         'withdrawalId': withdrawalId,
         'uid': uid,
         'action': action, // 'approve' fires Pix API, 'reject' refunds wallet

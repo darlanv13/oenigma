@@ -1,17 +1,17 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
 class RankingRepository {
-  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
-    region: 'southamerica-east1',
-  );
-
-  Future<HttpsCallableResult> callFunction(
+  Future<ParseResponse> callFunction(
     String functionName, [
     Map<String, dynamic>? payload,
   ]) async {
-    final callable = _functions.httpsCallable(functionName);
+    final ParseCloudFunction function = ParseCloudFunction(functionName);
     try {
-      return await callable.call<dynamic>(payload);
+      final response = await function.execute(parameters: payload);
+      if (!response.success) {
+        throw response.error ?? ParseError();
+      }
+      return response;
     } catch (e) {
       rethrow;
     }

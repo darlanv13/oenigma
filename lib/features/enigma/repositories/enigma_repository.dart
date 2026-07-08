@@ -1,26 +1,26 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:oenigma/core/models/event_model.dart';
 
 import 'package:oenigma/core/models/enigma_model.dart';
 
 class EnigmaRepository {
-  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
-    region: 'southamerica-east1',
-  );
-
-  Future<HttpsCallableResult> callFunction(
+  Future<ParseResponse> callFunction(
     String functionName, [
     Map<String, dynamic>? payload,
   ]) async {
-    final callable = _functions.httpsCallable(functionName);
+    final ParseCloudFunction function = ParseCloudFunction(functionName);
     try {
-      return await callable.call<dynamic>(payload);
+      final response = await function.execute(parameters: payload);
+      if (!response.success) {
+        throw response.error ?? ParseError();
+      }
+      return response;
     } catch (e) {
       rethrow;
     }
   }
 
-  Future<HttpsCallableResult> callEnigmaFunction(
+  Future<ParseResponse> callEnigmaFunction(
     String action,
     Map<String, dynamic> payload,
   ) {
@@ -29,7 +29,7 @@ class EnigmaRepository {
   }
 
   // Admin Methods
-  Future<HttpsCallableResult> createOrUpdatePhase({
+  Future<ParseResponse> createOrUpdatePhase({
     required String eventId,
     String? phaseId,
     required Map<String, dynamic> data,
@@ -41,7 +41,7 @@ class EnigmaRepository {
     });
   }
 
-  Future<HttpsCallableResult> createOrUpdateEnigma({
+  Future<ParseResponse> createOrUpdateEnigma({
     required String eventId,
     String? phaseId,
     String? enigmaId,
@@ -55,14 +55,14 @@ class EnigmaRepository {
     });
   }
 
-  Future<void> deletePhase({required String eventId, required String phaseId}) {
+  Future<ParseResponse> deletePhase({required String eventId, required String phaseId}) {
     return callFunction('deletePhase', {
       'eventId': eventId,
       'phaseId': phaseId,
     });
   }
 
-  Future<void> deleteEnigma({
+  Future<ParseResponse> deleteEnigma({
     required String eventId,
     String? phaseId,
     required String enigmaId,
@@ -79,8 +79,8 @@ class EnigmaRepository {
     String? phaseId,
   ) async {
     final result = await callFunction('getEventData', {'eventId': eventId});
-    if (result.data == null) throw Exception('Event not found');
-    final event = EventModel.fromMap(Map<String, dynamic>.from(result.data));
+    if (result.result == null) throw Exception('Event not found');
+    final event = EventModel.fromMap(Map<String, dynamic>.from(result.result));
 
     if (phaseId != null) {
       final phase = event.phases.firstWhere((p) => p.id == phaseId);
