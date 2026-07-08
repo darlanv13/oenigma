@@ -1,10 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class AdminFraudScreen extends StatelessWidget {
+class AdminFraudScreen extends StatefulWidget {
   const AdminFraudScreen({super.key});
+
+  @override
+  State<AdminFraudScreen> createState() => _AdminFraudScreenState();
+}
+
+class _AdminFraudScreenState extends State<AdminFraudScreen> {
+  late Future<ParseResponse> _fraudLogsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFraudLogs();
+  }
+
+  void _loadFraudLogs() {
+    setState(() {
+      _fraudLogsFuture = (QueryBuilder<ParseObject>(ParseObject('FraudLog'))
+            ..orderByDescending('createdAt')
+            ..setLimit(50))
+          .query();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,17 +43,21 @@ class AdminFraudScreen extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('fraud_logs')
-                .orderBy('timestamp', descending: true)
-                .limit(50)
-                .snapshots(),
+          child: FutureBuilder<ParseResponse>(
+            future: _fraudLogsFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'Erro: ${snapshot.error}',
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
+                );
+              }
+              if (!snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
                 return const Center(
                   child: Text(
                     'Nenhum log de fraude encontrado. Tudo tranquilo!',
@@ -40,19 +66,19 @@ class AdminFraudScreen extends StatelessWidget {
                 );
               }
 
-              final logs = snapshot.data!.docs;
+              final logs = snapshot.data!.results as List<ParseObject>;
 
               return ListView.builder(
                 itemCount: logs.length,
                 itemBuilder: (context, index) {
-                  final log = logs[index].data() as Map<String, dynamic>;
-                  final uid = log['uid'] ?? 'Desconhecido';
-                  final reason = log['reason'] ?? 'Motivo desconhecido';
-                  final eventId = log['eventId'] ?? '';
-                  final timestamp = log['timestamp'] as Timestamp?;
-                  final dateStr = timestamp != null
-                      ? '${timestamp.toDate().day}/${timestamp.toDate().month}/${timestamp.toDate().year} ${timestamp.toDate().hour}:${timestamp.toDate().minute.toString().padLeft(2, '0')}'
-                      : 'Data desconhecida';
+                  final log = logs[index];
+                  final objectId = log.get<String>('objectId') ?? 'Desconhecido';
+                  final reason = log.get<String>('reason') ?? 'Motivo desconhecido';
+                  final eventId = log.get<String>('eventId') ?? '';
+                  final createdAt = log.createdAt;
+                  final dateStr = (createdAt != null
+                      ? '${createdAt.day}/${createdAt.month}/${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}'
+                      : 'Data desconhecida');
 
                   return Card(
                     color: cardColor,
@@ -63,7 +89,7 @@ class AdminFraudScreen extends StatelessWidget {
                         size: 40,
                       ),
                       title: Text(
-                        'Usuário: $uid',
+                        'Usuário: $objectId',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

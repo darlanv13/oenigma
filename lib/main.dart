@@ -1,10 +1,10 @@
 import 'package:oenigma/core/services/push_notification_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:oenigma/firebase_options.dart';
+
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/features/auth/screens/auth_wrapper.dart';
@@ -14,11 +14,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('pt_BR', null);
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: true,
-    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  await Parse().initialize(
+    'YOUR_APP_ID', // Replace with valid App ID
+    'https://parseapi.back4app.com', // Replace with valid Server URL
+    clientKey: 'YOUR_CLIENT_KEY', // Replace with valid Client Key
+    autoSendSessionId: true,
   );
 
   await PushNotificationService().initialize();

@@ -1,7 +1,6 @@
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'dart:convert';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -228,16 +227,19 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   }
 
   Widget _buildPaymentState() {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('transactions')
-          .doc(_txid)
-          .snapshots(),
+    return StreamBuilder<ParseObject?>(
+      stream: Stream.periodic(const Duration(seconds: 3)).asyncMap((_) async {
+          final q = QueryBuilder<ParseObject>(ParseObject('Transaction'))
+            ..whereEqualTo('objectId', _txid);
+          final res = await q.query();
+          if (res.success && res.results != null) return res.results!.first as ParseObject;
+          return null;
+      }),
       builder: (context, snapshot) {
         String status = 'pending';
-        if (snapshot.hasData && snapshot.data!.exists) {
-          final transData = snapshot.data!.data() as Map<String, dynamic>;
-          status = transData['status'] ?? 'pending';
+        if (snapshot.hasData && snapshot.data != null) {
+          final transData = snapshot.data!;
+          status = transData.get<String>('status') ?? 'pending';
         }
 
         if (status == 'approved') {

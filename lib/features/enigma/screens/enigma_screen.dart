@@ -1,8 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart' hide GeoPoint;
-import 'package:cloud_firestore/cloud_firestore.dart'
-    as firestore
-    show GeoPoint;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -163,7 +158,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     with SingleTickerProviderStateMixin {
   final TextEditingController _codeController = TextEditingController();
   final EnigmaRepository _enigmaRepository = EnigmaRepository();
-  final EventRepository _firebaseService = EventRepository();
+  final EventRepository _eventService = EventRepository();
 
   bool _isLoading = false;
   bool _canBuyHint = false;
@@ -479,7 +474,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             case 'event_complete':
               final double prizeWon =
                   (nextStep['prizeWon'] as num?)?.toDouble() ?? 0.0;
-              final List<PhaseModel> allPhases = await _firebaseService
+              final List<PhaseModel> allPhases = await _eventService
                   .getPhasesForEvent(widget.event.id);
               if (mounted) {
                 Navigator.of(context).pushReplacement(
@@ -644,20 +639,16 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           ),
         );
         // Log to Admin Fraud Monitor
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          FirebaseFirestore.instance.collection('fraud_logs').add({
-            'uid': user.uid,
-            'eventId': widget.event.id,
-            'enigmaId': _currentEnigma.id,
-            'reason': 'Fake GPS Detectado',
-            'timestamp': FieldValue.serverTimestamp(),
-            'location': firestore.GeoPoint(
-              currentLocation.latitude!,
-              currentLocation.longitude!,
-            ),
-          });
-        }
+        ParseUser.currentUser().then((user) {
+          if (user != null && user is ParseUser) {
+             final log = ParseObject('FraudLog')
+              ..set('objectId', user.objectId)
+              ..set('eventId', widget.event.id)
+              ..set('enigmaId', _currentEnigma.id)
+              ..set('reason', 'Fake GPS Detectado');
+             log.save();
+          }
+        });
         return;
       }
       final distanceInMeters = _calculateDistance(

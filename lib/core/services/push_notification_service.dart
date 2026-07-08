@@ -1,82 +1,30 @@
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-
-// Handler para notificações em background (Deve ser top-level)
-@pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Inicialize o Firebase se necessário para operações no background,
-  // mas como o plugin já o faz parcialmente, basta lidar com a mensagem.
-  print("Mensagem em background recebida: \${message.messageId}");
-}
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'dart:developer' as dev;
 
 class PushNotificationService {
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
   Future<void> initialize() async {
-    // Solicita permissão para iOS
-    NotificationSettings settings = await _fcm.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('Permissão concedida para Push Notifications');
-
-      // Registra o token no Firestore para o usuário atual
-      await _saveDeviceToken();
-
-      if (!kIsWeb) {
-        // Subscreve ao tópico geral para avisos em massa (ex: Novo Evento)
-        await _fcm.subscribeToTopic('all_players');
-      }
-
-      // Escuta tokens atualizados
-      _fcm.onTokenRefresh.listen((newToken) {
-        _updateToken(newToken);
-      });
-
-      // Configura handlers de mensagens
-      if (!kIsWeb) {
-        FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-      }
-
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        print('Mensagem recebida em foreground: \${message.notification?.title}');
-        // Você pode mostrar um SnackBar ou Dialog aqui, ou usar flutter_local_notifications
-        // para exibir o alerta mesmo com o app aberto.
-      });
-
-    } else {
-      print('Permissão para Push Notifications negada.');
-    }
-  }
-
-  Future<void> _saveDeviceToken() async {
-    final user = _auth.currentUser;
-    if (user == null) return;
+    if (kIsWeb) return;
 
     try {
-      String? token = await _fcm.getToken();
-      if (token != null) {
-        await _updateToken(token);
+      final installation = await ParseInstallation.currentInstallation();
+
+      final List<dynamic> channels = installation.get<List<dynamic>>('channels') ?? [];
+      if (!channels.contains('all_players')) {
+        installation.setAddUnique('channels', 'all_players');
+        await installation.save();
+        dev.log('Inscrito no canal all_players', name: 'PushNotificationService');
       }
-    } catch (e) {
-      print("Erro ao obter token FCM: \$e");
+
+      final user = await ParseUser.currentUser() as ParseUser?;
+      if (user != null) {
+        installation.set('user', user);
+        await installation.save();
+        dev.log('Instalação vinculada ao usuário', name: 'PushNotificationService');
+      }
+
+    } catch (e, stack) {
+      dev.log('Erro ao inicializar ParseInstallation', name: 'PushNotificationService', error: e, stackTrace: stack);
     }
-  }
-
-  Future<void> _updateToken(String token) async {
-    final user = _auth.currentUser;
-    if (user == null) return;
-
-    await _db.collection('players').doc(user.uid).set({
-      'fcmTokens': FieldValue.arrayUnion([token]),
-      'lastTokenUpdate': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
   }
 }

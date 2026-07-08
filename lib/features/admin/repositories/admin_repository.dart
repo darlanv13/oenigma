@@ -1,4 +1,9 @@
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final adminRepositoryProvider = Provider<AdminRepository>((ref) {
+  return AdminRepository();
+});
 
 class AdminRepository {
   Future<ParseResponse> callFunction(
@@ -27,11 +32,11 @@ class AdminRepository {
     return result.result as List<dynamic>;
   }
 
-  Future<void> grantAdminRole(String uid) {
-    return callFunction('grantAdminRole', {'uid': uid});
+  Future<void> grantAdminRole(String objectId) {
+    return callFunction('grantAdminRole', {'objectId': objectId});
   }
 
-  Future<void> revokeAdminRole(String uid) {
-    return callFunction('revokeAdminRole', {'uid': uid});
+  Future<void> revokeAdminRole(String objectId) {
+    return callFunction('revokeAdminRole', {'objectId': objectId});
   }
 }

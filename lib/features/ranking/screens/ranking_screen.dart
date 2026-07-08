@@ -67,7 +67,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
         if (phasesCompleted > 0) {
           ranking.add(
             RankingPlayerModel(
-              uid: playerMap['uid'] ?? '',
+              objectId: playerMap['objectId'] ?? '',
               name: playerMap['name'] ?? 'Jogador',
               photoURL: playerMap['photoURL'],
               phasesCompleted: phasesCompleted,

@@ -1,11 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class AdminFinanceScreen extends StatelessWidget {
+class AdminFinanceScreen extends StatefulWidget {
   const AdminFinanceScreen({super.key});
+
+  @override
+  State<AdminFinanceScreen> createState() => _AdminFinanceScreenState();
+}
+
+class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
+  late Future<ParseResponse> _withdrawalsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWithdrawals();
+  }
+
+  void _loadWithdrawals() {
+    setState(() {
+      _withdrawalsFuture = (QueryBuilder<ParseObject>(ParseObject('Withdrawal'))
+            ..whereEqualTo('status', 'pending')
+            ..orderByAscending('createdAt'))
+          .query();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,17 +43,21 @@ class AdminFinanceScreen extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('withdrawals')
-                .where('status', isEqualTo: 'pending')
-                .orderBy('createdAt', descending: false)
-                .snapshots(),
+          child: FutureBuilder<ParseResponse>(
+            future: _withdrawalsFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'Erro: ${snapshot.error}',
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
+                );
+              }
+              if (!snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
                 return const Center(
                   child: Text(
                     'Não há solicitações de saque pendentes.',
@@ -41,22 +66,21 @@ class AdminFinanceScreen extends StatelessWidget {
                 );
               }
 
-              final requests = snapshot.data!.docs;
+              final requests = snapshot.data!.results as List<ParseObject>;
 
               return ListView.builder(
                 itemCount: requests.length,
                 itemBuilder: (context, index) {
-                  final request =
-                      requests[index].data() as Map<String, dynamic>;
-                  final requestId = requests[index].id;
-                  final uid = request['uid'] ?? 'Desconhecido';
-                  final amount = request['amount'] ?? 0;
-                  final pixKey = request['pixKey'] ?? 'Chave não informada';
-                  final pixKeyType = request['pixKeyType'] ?? 'Desconhecido';
-                  final createdAt = request['createdAt'] as Timestamp?;
-                  final dateStr = createdAt != null
-                      ? '${createdAt.toDate().day}/${createdAt.toDate().month}/${createdAt.toDate().year} ${createdAt.toDate().hour}:${createdAt.toDate().minute.toString().padLeft(2, '0')}'
-                      : 'Data desconhecida';
+                  final request = requests[index];
+                  final requestId = request.objectId!;
+                  final objectId = request.get<String>('objectId') ?? 'Desconhecido';
+                  final amount = request.get<num>('amount') ?? 0;
+                  final pixKey = request.get<String>('pixKey') ?? 'Chave não informada';
+                  final pixKeyType = request.get<String>('pixKeyType') ?? 'Desconhecido';
+                  final createdAt = request.createdAt;
+                  final dateStr = (createdAt != null
+                      ? '${createdAt.day}/${createdAt.month}/${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}'
+                      : 'Data desconhecida');
 
                   return Card(
                     color: cardColor,
@@ -76,7 +100,7 @@ class AdminFinanceScreen extends StatelessWidget {
                         ),
                       ),
                       subtitle: Text(
-                        'UID: $uid\nData da Solicitação: $dateStr',
+                        'UID: $objectId\nData da Solicitação: $dateStr',
                         style: const TextStyle(color: secondaryTextColor),
                       ),
                       isThreeLine: true,
@@ -94,7 +118,7 @@ class AdminFinanceScreen extends StatelessWidget {
                             onPressed: () => _handleWithdrawal(
                               context,
                               requestId,
-                              uid,
+                              objectId,
                               'approve',
                             ),
                           ),
@@ -110,7 +134,7 @@ class AdminFinanceScreen extends StatelessWidget {
                             onPressed: () => _handleWithdrawal(
                               context,
                               requestId,
-                              uid,
+                              objectId,
                               'reject',
                             ),
                           ),
@@ -130,12 +154,9 @@ class AdminFinanceScreen extends StatelessWidget {
   Future<void> _handleWithdrawal(
     BuildContext context,
     String withdrawalId,
-    String uid,
+    String objectId,
     String action,
   ) async {
-    // action should be 'approve' or 'reject'
-    // This assumes we have an admin function that wraps the process, or we do it securely.
-    // For now, let's call a hypothetical cloud function 'admin-processWithdrawal'
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -145,8 +166,8 @@ class AdminFinanceScreen extends StatelessWidget {
     try {
       await ParseCloudFunction('processWithdrawal').execute(parameters: {
         'withdrawalId': withdrawalId,
-        'uid': uid,
-        'action': action, // 'approve' fires Pix API, 'reject' refunds wallet
+        'objectId': objectId,
+        'action': action,
       });
 
       if (context.mounted) {
@@ -154,6 +175,7 @@ class AdminFinanceScreen extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Saque processado com sucesso: $action')),
         );
+        _loadWithdrawals();
       }
     } catch (e) {
       if (context.mounted) {

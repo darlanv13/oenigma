@@ -1,5 +1,5 @@
 class UserWalletModel {
-  final String uid;
+  final String objectId;
   final String name;
   final String email;
   final String? photoURL;
@@ -9,7 +9,7 @@ class UserWalletModel {
   final String? lastEventName;
 
   UserWalletModel({
-    required this.uid,
+    required this.objectId,
     required this.name,
     required this.email,
     this.photoURL,
@@ -21,7 +21,7 @@ class UserWalletModel {
 
   factory UserWalletModel.fromMap(Map<String, dynamic> map) {
     return UserWalletModel(
-      uid: map['uid'] ?? '',
+      objectId: map['objectId'] ?? '',
       name: map['name'] ?? 'Utilizador',
       email: map['email'] ?? 'email@indisponivel.com',
       photoURL: map['photoURL'],

@@ -1,53 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oenigma/features/auth/providers/auth_provider.dart';
+
 import 'package:oenigma/features/admin/screens/main_admin_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class AdminAuthWrapper extends StatelessWidget {
+class AdminAuthWrapper extends ConsumerWidget {
   const AdminAuthWrapper({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            backgroundColor: darkBackground,
-            body: Center(child: CircularProgressIndicator(color: primaryAmber)),
-          );
-        }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
 
-        final user = snapshot.data;
+    return authState.when(
+      data: (user) {
         if (user == null) {
           return _buildAccessDenied(context);
         }
 
-        return FutureBuilder<IdTokenResult>(
-          future: user.getIdTokenResult(true),
-          builder: (context, tokenSnapshot) {
-            if (tokenSnapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                backgroundColor: darkBackground,
-                body: Center(
-                  child: CircularProgressIndicator(color: primaryAmber),
-                ),
-              );
-            }
+        final isAdmin = user.get<bool>('isAdmin') ?? false;
 
-            final claims = tokenSnapshot.data?.claims ?? {};
-            final isAdmin =
-                claims['super_admin'] == true || claims['editor'] == true;
+        if (!isAdmin) {
+          return _buildAccessDenied(context);
+        }
 
-            if (isAdmin) {
-              return const MainAdminScreen();
-            } else {
-              return _buildAccessDenied(context);
-            }
-          },
-        );
+        return const MainAdminScreen();
       },
+      loading: () => const Scaffold(
+        backgroundColor: darkBackground,
+        body: Center(child: CircularProgressIndicator(color: primaryAmber)),
+      ),
+      error: (e, st) => Scaffold(
+        backgroundColor: darkBackground,
+        body: Center(child: Text('Erro: $e')),
+      ),
     );
   }
 

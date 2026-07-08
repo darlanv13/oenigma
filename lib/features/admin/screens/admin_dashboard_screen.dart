@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oenigma/features/admin/repositories/admin_repository.dart';
 
+final adminDashboardProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) {
+  final repo = ref.read(adminRepositoryProvider);
+  return repo.getAdminDashboardData();
+});
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dashboardData = ref.watch(adminDashboardProvider);
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -19,48 +26,48 @@ class AdminDashboardScreen extends StatelessWidget {
             style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: StreamBuilder<AggregateQuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('users').count().get().asStream(),
-                  builder: (context, snapshot) {
-                    final count = snapshot.data?.count?.toString() ?? '...';
-                    return _buildStatCard('Usuários Ativos', count, FontAwesomeIcons.userGroup, Colors.blue);
-                  },
+          dashboardData.when(
+            data: (data) => Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'Usuários Ativos',
+                    data['users']?.toString() ?? '...',
+                    FontAwesomeIcons.userGroup,
+                    Colors.blue,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: StreamBuilder<AggregateQuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('events').where('status', isEqualTo: 'published').count().get().asStream(),
-                  builder: (context, snapshot) {
-                    final count = snapshot.data?.count?.toString() ?? '...';
-                    return _buildStatCard('Eventos Ativos', count, FontAwesomeIcons.calendarCheck, Colors.green);
-                  },
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStatCard(
+                    'Eventos Ativos',
+                    data['activeEvents']?.toString() ?? '...',
+                    FontAwesomeIcons.calendarCheck,
+                    Colors.green,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: StreamBuilder<AggregateQuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('transactions').where('type', isEqualTo: 'deposit').count().get().asStream(),
-                  builder: (context, snapshot) {
-                     final count = snapshot.data?.count?.toString() ?? '...';
-                    return _buildStatCard('Depósitos Totais', count, FontAwesomeIcons.dollarSign, primaryAmber);
-                  },
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStatCard(
+                    'Depósitos Totais',
+                    data['totalDeposits']?.toString() ?? '...',
+                    FontAwesomeIcons.dollarSign,
+                    primaryAmber,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: StreamBuilder<AggregateQuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('withdrawals').where('status', isEqualTo: 'pending').count().get().asStream(),
-                  builder: (context, snapshot) {
-                    final count = snapshot.data?.count?.toString() ?? '...';
-                    return _buildStatCard('Saques Pendentes', count, FontAwesomeIcons.moneyBillTrendUp, Colors.redAccent);
-                  },
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStatCard(
+                    'Saques Pendentes',
+                    data['pendingWithdrawals']?.toString() ?? '...',
+                    FontAwesomeIcons.moneyBillTrendUp,
+                    Colors.redAccent,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => Center(child: Text('Erro ao carregar dashboard: $err', style: const TextStyle(color: Colors.red))),
           ),
           const SizedBox(height: 32),
           const Text(

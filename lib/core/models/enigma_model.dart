@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/foundation.dart';
 
 class EnigmaModel {
@@ -7,7 +7,7 @@ class EnigmaModel {
   final String instruction;
   final String code;
   final String? imageUrl;
-  final GeoPoint? location;
+  final ParseGeoPoint? location;
   final String? hintType;
   final String? hintData;
   final double hintPrice;
@@ -34,7 +34,7 @@ class EnigmaModel {
     String? instruction,
     String? code,
     String? imageUrl,
-    GeoPoint? location,
+    ParseGeoPoint? location,
     ValueGetter<String?>? hintType,
     String? hintData,
     double? prize,
@@ -55,14 +55,14 @@ class EnigmaModel {
   }
 
   factory EnigmaModel.fromMap(Map<String, dynamic> map) {
-    GeoPoint? parsedLocation;
-    if (map['location'] is GeoPoint) {
+    ParseGeoPoint? parsedLocation;
+    if (map['location'] is ParseGeoPoint) {
       parsedLocation = map['location'];
     } else if (map['location'] is Map) {
       final locationMap = Map<String, dynamic>.from(map['location']);
       final lat = (locationMap['_latitude'] as num?)?.toDouble() ?? 0.0;
       final lon = (locationMap['_longitude'] as num?)?.toDouble() ?? 0.0;
-      parsedLocation = GeoPoint(lat, lon);
+      parsedLocation = ParseGeoPoint(latitude: lat, longitude: lon);
     }
     return EnigmaModel(
       id: map['id'] ?? '',
@@ -86,7 +86,7 @@ class EnigmaModel {
       'instruction': instruction,
       'code': code,
       'imageUrl': imageUrl,
-      'location': location, // O Firestore aceita GeoPoint direto
+      'location': location, // O Firestore aceita ParseGeoPoint direto
       'hintType': hintType,
       'hintData': hintData,
       'hintPrice': hintPrice, // Importante para sua monetização

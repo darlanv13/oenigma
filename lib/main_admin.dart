@@ -1,15 +1,21 @@
 // lib/main_admin.dart
 
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/features/admin/screens/admin_auth_wrapper.dart'; // Crie este arquivo a seguir
 import 'package:oenigma/core/utils/app_colors.dart';
-import 'package:oenigma/firebase_options.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const AdminApp());
+  await Parse().initialize(
+    'YOUR_APP_ID', // Replace with valid App ID
+    'https://parseapi.back4app.com', // Replace with valid Server URL
+    clientKey: 'YOUR_CLIENT_KEY', // Replace with valid Client Key
+    autoSendSessionId: true,
+  );
+  runApp(const ProviderScope(child: AdminApp()));
 }
 
 class AdminApp extends StatelessWidget {

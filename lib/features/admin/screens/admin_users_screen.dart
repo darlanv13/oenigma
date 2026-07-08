@@ -74,7 +74,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 itemCount: users.length,
                 itemBuilder: (context, index) {
                   final user = users[index] as Map<String, dynamic>;
-                  final uid = user['uid'] as String;
+                  final objectId = user['objectId'] as String;
                   final name = user['name'] ?? user['displayName'] ?? 'Sem Nome';
                   final email = user['email'] ?? 'Sem Email';
                   final photoURL = user['photoURL'] as String?;
@@ -106,7 +106,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             onPressed: () async {
                               final functionName = isAdmin ? 'revokeAdminRole' : 'grantAdminRole';
                               try {
-                                final response = await ParseCloudFunction(functionName).execute(parameters: {'uid': uid});
+                                final response = await ParseCloudFunction(functionName).execute(parameters: {'objectId': objectId});
       if (!response.success) throw response.error ?? ParseError();
                                 setState(() {
                                   _usersFuture = _fetchUsers();

@@ -1,11 +1,31 @@
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class AdminEventsScreen extends StatelessWidget {
+class AdminEventsScreen extends StatefulWidget {
   const AdminEventsScreen({super.key});
+
+  @override
+  State<AdminEventsScreen> createState() => _AdminEventsScreenState();
+}
+
+class _AdminEventsScreenState extends State<AdminEventsScreen> {
+  late Future<ParseResponse> _eventsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEvents();
+  }
+
+  void _loadEvents() {
+    setState(() {
+      final query = QueryBuilder<ParseObject>(ParseObject('Event'))
+        ..orderByDescending('createdAt');
+      _eventsFuture = query.query();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,26 +58,23 @@ class AdminEventsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('events')
-                .orderBy('createdAt', descending: true)
-                .snapshots(),
+          child: FutureBuilder<ParseResponse>(
+            future: _eventsFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                print("Erro no stream de eventos: \${snapshot.error}");
+                debugPrint("Erro no stream de eventos: ${snapshot.error}");
                 return Center(
                   child: Text(
-                    'Erro ao carregar eventos: \n\${snapshot.error}',
+                    'Erro ao carregar eventos: \n${snapshot.error}',
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.redAccent),
                   ),
                 );
               }
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              if (!snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
                 return const Center(
                   child: Text(
                     'Nenhum evento encontrado.',
@@ -66,85 +83,113 @@ class AdminEventsScreen extends StatelessWidget {
                 );
               }
 
-              final events = snapshot.data!.docs;
+              final events = snapshot.data!.results as List<ParseObject>;
 
-              return ListView.builder(
+              return ListView.separated(
                 itemCount: events.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 16),
                 itemBuilder: (context, index) {
-                  final event = events[index].data() as Map<String, dynamic>;
-                  final eventId = events[index].id;
-                  final title = event['title'] ?? 'Sem Título';
-                  final status = event['status'] ?? 'draft';
-                  final prizePool = event['prizePool'] ?? 0;
+                  final event = events[index];
+                  final eventId = event.objectId!;
+                  final title = event.get<String>('title') ?? 'Sem Título';
+                  final status = event.get<String>('status') ?? 'draft';
+                  final isPublished = status == 'published';
+                  final prizePool = event.get<num>('prizePool') ?? 0;
 
                   return Card(
                     color: cardColor,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      leading: FaIcon(
-                        status == 'published'
-                            ? FontAwesomeIcons.solidCirclePlay
-                            : FontAwesomeIcons.solidCirclePause,
-                        color: status == 'published'
-                            ? Colors.green
-                            : Colors.orange,
-                        size: 40,
-                      ),
-                      title: Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Status: $status • Prêmio: R\$ $prizePool',
-                        style: const TextStyle(color: secondaryTextColor),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          IconButton(
-                            icon: const FaIcon(FontAwesomeIcons.list,
-                              color: Colors.blueAccent,
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AdminPhasesScreen(
-                                    eventId: eventId,
-                                    eventTitle: title,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              );
-                            },
-                            tooltip: 'Gerenciar Fases/Enigmas',
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isPublished
+                                      ? Colors.green.withValues(alpha: 0.2)
+                                      : Colors.orange.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  isPublished ? 'Publicado' : 'Rascunho',
+                                  style: TextStyle(
+                                    color: isPublished
+                                        ? Colors.green
+                                        : Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          IconButton(
-                            icon: const FaIcon(FontAwesomeIcons.pen,
-                              color: primaryAmber,
-                            ),
-                            onPressed: () {
-                              _showEventDialog(
-                                context,
-                                docId: eventId,
-                                initialData: event,
-                              );
-                            },
-                            tooltip: 'Editar Evento',
+                          const SizedBox(height: 8),
+                          Text(
+                            'Premiação: R\$ $prizePool',
+                            style: const TextStyle(color: primaryAmber),
                           ),
-                          IconButton(
-                            icon: const FaIcon(FontAwesomeIcons.trashCan,
-                              color: Colors.redAccent,
-                            ),
-                            onPressed: () {
-                              ParseCloudFunction('deleteEvent').execute(parameters: {
-                                'eventId': eventId,
-                              });
-                            },
-                            tooltip: 'Excluir Evento',
-                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () {
+                                  _showEventDialog(context,
+                                      docId: eventId, data: _parseObjectToMap(event));
+                                },
+                                icon: const FaIcon(FontAwesomeIcons.penToSquare,
+                                    size: 16),
+                                label: const Text('Editar'),
+                              ),
+                              TextButton.icon(
+                                onPressed: () {
+                                  _showPhasesDialog(context, eventId);
+                                },
+                                icon: const FaIcon(FontAwesomeIcons.listOl,
+                                    size: 16),
+                                label: const Text('Fases'),
+                              ),
+                              TextButton.icon(
+                                onPressed: () {
+                                  _toggleEventStatus(eventId, status);
+                                },
+                                icon: FaIcon(
+                                  isPublished
+                                      ? FontAwesomeIcons.eyeSlash
+                                      : FontAwesomeIcons.eye,
+                                  size: 16,
+                                ),
+                                label: Text(isPublished
+                                    ? 'Ocultar'
+                                    : 'Publicar'),
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  ParseCloudFunction('deleteEvent').execute(parameters: {
+                                    'eventId': eventId,
+                                  }).then((_) => _loadEvents());
+                                },
+                                icon: const FaIcon(FontAwesomeIcons.trash,
+                                    color: Colors.redAccent, size: 16),
+                              ),
+                            ],
+                          )
                         ],
                       ),
                     ),
@@ -158,26 +203,29 @@ class AdminEventsScreen extends StatelessWidget {
     );
   }
 
-  void _showEventDialog(
-    BuildContext context, {
-    String? docId,
-    Map<String, dynamic>? initialData,
-  }) {
-    final titleCtrl = TextEditingController(text: initialData?['title'] ?? '');
-    final descriptionCtrl = TextEditingController(
-      text: initialData?['description'] ?? '',
-    );
+  Map<String, dynamic> _parseObjectToMap(ParseObject obj) {
+    final map = <String, dynamic>{};
+    obj.toJson().forEach((key, value) {
+      map[key] = value;
+    });
+    return map;
+  }
+
+  void _showEventDialog(BuildContext context,
+      {String? docId, Map<String, dynamic>? data}) {
+    final titleCtrl = TextEditingController(text: data?['title']);
+    final descCtrl = TextEditingController(text: data?['description']);
     final prizeCtrl = TextEditingController(
-      text: initialData?['prizePool']?.toString() ?? '0',
-    );
-    final cityCtrl = TextEditingController(text: initialData?['city'] ?? '');
-    String status = initialData?['status'] ?? 'draft';
+        text: data?['prizePool']?.toString());
+    final orderCtrl = TextEditingController(
+        text: data?['order']?.toString() ?? '1');
+    final iconCtrl = TextEditingController(text: data?['icon']);
 
     showDialog(
       context: context,
-      builder: (ctx) {
+      builder: (context) {
         return AlertDialog(
-          backgroundColor: cardColor,
+          backgroundColor: darkBackground,
           title: Text(
             docId == null ? 'Novo Evento' : 'Editar Evento',
             style: const TextStyle(color: Colors.white),
@@ -189,80 +237,68 @@ class AdminEventsScreen extends StatelessWidget {
                 TextField(
                   controller: titleCtrl,
                   style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'Título',
-                    labelStyle: TextStyle(color: secondaryTextColor),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Título'),
                 ),
                 TextField(
-                  controller: descriptionCtrl,
+                  controller: descCtrl,
                   style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'Descrição',
-                    labelStyle: TextStyle(color: secondaryTextColor),
-                  ),
+                  decoration: const InputDecoration(labelText: 'Descrição'),
+                  maxLines: 3,
                 ),
                 TextField(
                   controller: prizeCtrl,
                   style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(labelText: 'Prêmio (R\$)'),
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Prêmio Final (R\$)',
-                    labelStyle: TextStyle(color: secondaryTextColor),
-                  ),
                 ),
                 TextField(
-                  controller: cityCtrl,
+                  controller: orderCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(labelText: 'Ordem'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: iconCtrl,
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
-                    labelText: 'Cidade',
-                    labelStyle: TextStyle(color: secondaryTextColor),
-                  ),
+                      labelText: 'URL do Ícone (Lottie/Image)'),
                 ),
               ],
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text(
-                'Cancelar',
-                style: TextStyle(color: Colors.red),
-              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
             ),
             ElevatedButton(
               onPressed: () async {
-                final data = {
+                final newData = {
                   'title': titleCtrl.text,
-                  'description': descriptionCtrl.text,
+                  'description': descCtrl.text,
                   'prizePool': num.tryParse(prizeCtrl.text) ?? 0,
-                  'city': cityCtrl.text,
-                  'status': status,
+                  'order': int.tryParse(orderCtrl.text) ?? 1,
+                  'icon': iconCtrl.text,
+                  'status': data?['status'] ?? 'draft',
                 };
-
                 try {
                   if (docId == null) {
-                    final response = await ParseCloudFunction('createOrUpdateEvent').execute(parameters: {'data': data});
-      if (!response.success) throw response.error ?? ParseError();
+                    final response = await ParseCloudFunction('createOrUpdateEvent').execute(parameters: {'data': newData});
+                    if (!response.success) throw response.error ?? ParseError();
                   } else {
                     await ParseCloudFunction('createOrUpdateEvent').execute(parameters: {
                       'eventId': docId,
-                      'data': data,
+                      'data': newData
                     });
                   }
-                } catch (e) {
-                  if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(content: Text('Erro ao salvar evento: $e')),
-                    );
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    _loadEvents();
                   }
+                } catch (e) {
+                  debugPrint('Erro ao salvar evento: $e');
                 }
-                if (ctx.mounted) Navigator.pop(ctx);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryAmber,
-                foregroundColor: Colors.black,
-              ),
               child: const Text('Salvar'),
             ),
           ],
@@ -270,410 +306,401 @@ class AdminEventsScreen extends StatelessWidget {
       },
     );
   }
-}
 
-class AdminPhasesScreen extends StatelessWidget {
-  final String eventId;
-  final String eventTitle;
+  void _toggleEventStatus(String eventId, String currentStatus) async {
+    final newStatus = currentStatus == 'published' ? 'draft' : 'published';
+    try {
+      await ParseCloudFunction('createOrUpdateEvent').execute(parameters: {
+        'eventId': eventId,
+        'data': {'status': newStatus}
+      });
+      _loadEvents();
+    } catch(e) {
+      debugPrint("Erro ao alterar status: $e");
+    }
+  }
 
-  const AdminPhasesScreen({
-    super.key,
-    required this.eventId,
-    required this.eventTitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: darkBackground,
-      appBar: AppBar(
-        title: Text('Fases: $eventTitle'),
-        backgroundColor: cardColor,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ElevatedButton.icon(
-              onPressed: () {
-                _showPhaseDialog(context);
-              },
-              icon: const FaIcon(FontAwesomeIcons.plus),
-              label: const Text('Nova Fase'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryAmber,
-                foregroundColor: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('events')
-                    .doc(eventId)
-                    .collection('phases')
-                    .orderBy('order')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData)
-                    return const CircularProgressIndicator();
-                  final phases = snapshot.data!.docs;
-
-                  return ListView.builder(
-                    itemCount: phases.length,
-                    itemBuilder: (context, index) {
-                      final phase =
-                          phases[index].data() as Map<String, dynamic>;
-                      final phaseId = phases[index].id;
-                      final order = phase['order'] ?? 0;
-                      final isBlocked = phase['isBlocked'] ?? false;
-
-                      return Card(
-                        color: cardColor,
-                        child: ExpansionTile(
-                          title: Text(
-                            'Fase $order',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+  void _showPhasesDialog(BuildContext context, String eventId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: darkBackground,
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            height: MediaQuery.of(context).size.height * 0.8,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Fases do Evento',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const FaIcon(FontAwesomeIcons.xmark,
+                          color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    _showPhaseEditDialog(context, eventId);
+                  },
+                  icon: const FaIcon(FontAwesomeIcons.plus, size: 16),
+                  label: const Text('Nova Fase'),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: FutureBuilder<ParseResponse>(
+                    future: (QueryBuilder<ParseObject>(ParseObject('Phase'))
+                        ..whereEqualTo('event', (ParseObject('Event')..objectId = eventId).toPointer())
+                        ..orderByAscending('order')).query(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null) {
+                         return const Center(
+                          child: Text(
+                            'Nenhuma fase cadastrada.',
+                            style: TextStyle(color: secondaryTextColor),
                           ),
-                          subtitle: Text(
-                            'Status: ${isBlocked ? "Bloqueada" : "Ativa"}',
-                            style: const TextStyle(color: secondaryTextColor),
-                          ),
-                          trailing: IconButton(
-                            icon: const FaIcon(FontAwesomeIcons.pen,
-                              color: primaryAmber,
-                            ),
-                            onPressed: () => _showPhaseDialog(
-                              context,
-                              docId: phaseId,
-                              initialData: phase,
-                            ),
-                          ),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: AdminEnigmasList(
-                                eventId: eventId,
-                                phaseId: phaseId,
+                        );
+                      }
+
+                      final phases = snapshot.data!.results as List<ParseObject>;
+
+                      return ListView.builder(
+                        itemCount: phases.length,
+                        itemBuilder: (context, index) {
+                          final phase = phases[index];
+                          final phaseId = phase.objectId!;
+                          final order = phase.get<num>('order') ?? 0;
+                          final isBlocked = phase.get<bool>('isBlocked') ?? false;
+
+                          return Card(
+                            color: cardColor,
+                            child: ExpansionTile(
+                              title: Text(
+                                'Fase $order',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
+                              subtitle: Text(
+                                isBlocked ? 'Bloqueada' : 'Desbloqueada',
+                                style: TextStyle(
+                                  color: isBlocked
+                                      ? Colors.redAccent
+                                      : Colors.green,
+                                ),
+                              ),
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    TextButton.icon(
+                                      onPressed: () => _showPhaseEditDialog(
+                                          context, eventId,
+                                          docId: phaseId, data: _parseObjectToMap(phase)),
+                                      icon: const FaIcon(
+                                          FontAwesomeIcons.penToSquare,
+                                          size: 14),
+                                      label: const Text('Editar'),
+                                    ),
+                                    TextButton.icon(
+                                      onPressed: () => _showEnigmaEditDialog(
+                                          context, eventId, phaseId),
+                                      icon: const FaIcon(
+                                          FontAwesomeIcons.plus,
+                                          size: 14),
+                                      label: const Text('Novo Enigma'),
+                                    ),
+                                  ],
+                                ),
+                                _buildEnigmasList(eventId, phaseId),
+                              ],
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showPhaseDialog(
-    BuildContext context, {
-    String? docId,
-    Map<String, dynamic>? initialData,
-  }) {
-    final orderCtrl = TextEditingController(
-      text: initialData?['order']?.toString() ?? '1',
-    );
-    bool isBlocked = initialData?['isBlocked'] ?? false;
-
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: cardColor,
-          title: Text(
-            docId == null ? 'Nova Fase' : 'Editar Fase',
-            style: const TextStyle(color: Colors.white),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: orderCtrl,
-                style: const TextStyle(color: Colors.white),
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Ordem (Nº da Fase)',
-                  labelStyle: TextStyle(color: secondaryTextColor),
+                  ),
                 ),
-              ),
-              // Simpler switch mock for blocked
-            ],
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text(
-                'Cancelar',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final data = {
-                  'order': int.tryParse(orderCtrl.text) ?? 1,
-                  'isBlocked': isBlocked,
-                };
-
-                final ref = FirebaseFirestore.instance
-                    .collection('events')
-                    .doc(eventId)
-                    .collection('phases');
-
-                if (docId == null) {
-                  await ref.add(data);
-                } else {
-                  await ref.doc(docId).update(data);
-                }
-                if (ctx.mounted) Navigator.pop(ctx);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryAmber,
-                foregroundColor: Colors.black,
-              ),
-              child: const Text('Salvar'),
-            ),
-          ],
         );
       },
     );
   }
-}
 
-class AdminEnigmasList extends StatelessWidget {
-  final String eventId;
-  final String phaseId;
-
-  const AdminEnigmasList({
-    super.key,
-    required this.eventId,
-    required this.phaseId,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ElevatedButton.icon(
-          onPressed: () => _showEnigmaDialog(context),
-          icon: const FaIcon(FontAwesomeIcons.listCheck, size: 16),
-          label: const Text('Adicionar Enigma/Desafio'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blueAccent,
-            foregroundColor: Colors.white,
+  Widget _buildEnigmasList(String eventId, String phaseId) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Enigmas:',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('events')
-              .doc(eventId)
-              .collection('phases')
-              .doc(phaseId)
-              .collection('enigmas')
-              .orderBy('order')
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData)
-              return const Text(
-                'Carregando...',
-                style: TextStyle(color: Colors.white),
-              );
-            final enigmas = snapshot.data!.docs;
-            if (enigmas.isEmpty)
-              return const Text(
-                'Nenhum enigma cadastrado nesta fase.',
-                style: TextStyle(color: secondaryTextColor),
-              );
+          const SizedBox(height: 12),
+          FutureBuilder<ParseResponse>(
+            future: (QueryBuilder<ParseObject>(ParseObject('Enigma'))
+                ..whereEqualTo('phase', (ParseObject('Phase')..objectId = phaseId).toPointer())
+                ..orderByAscending('order')).query(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Text(
+                  'Carregando...',
+                  style: TextStyle(color: Colors.white),
+                );
+              }
+              if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null) {
+                return const Text(
+                  'Nenhum enigma cadastrado nesta fase.',
+                  style: TextStyle(color: secondaryTextColor),
+                );
+              }
 
-            return Column(
-              children: enigmas.map((doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                return ListTile(
-                  title: Text(
-                    data['title'] ?? 'Enigma',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  subtitle: Text(
-                    'Tipo: ${data['type']}',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const FaIcon(FontAwesomeIcons.pen,
-                          size: 18,
-                          color: Colors.blue,
+              final enigmas = snapshot.data!.results as List<ParseObject>;
+
+              return Column(
+                children: enigmas.map((doc) {
+                  final enigmaId = doc.objectId!;
+                  final code = doc.get<String>('code') ?? '';
+                  final type = doc.get<String>('type') ?? '';
+
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      'Código: $code',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    subtitle: Text(
+                      'Tipo: $type',
+                      style: const TextStyle(color: secondaryTextColor),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const FaIcon(FontAwesomeIcons.penToSquare,
+                              size: 16, color: Colors.blue),
+                          onPressed: () => _showEnigmaEditDialog(
+                              context, eventId, phaseId,
+                              docId: enigmaId, data: _parseObjectToMap(doc)),
                         ),
-                        onPressed: () => _showEnigmaDialog(
-                          context,
-                          docId: doc.id,
-                          initialData: data,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const FaIcon(FontAwesomeIcons.trashCan,
-                          size: 18,
-                          color: Colors.red,
-                        ),
-                        onPressed: () =>
+                        IconButton(
+                          icon: const FaIcon(FontAwesomeIcons.trash,
+                              size: 16, color: Colors.redAccent),
+                          onPressed: () {
                             ParseCloudFunction('deleteEnigma').execute(parameters: {
                               'eventId': eventId,
-                              'phaseId': phaseId,
-                              'enigmaId': doc.id,
-                            }),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            );
-          },
-        ),
-      ],
+                              'enigmaId': enigmaId,
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
-  void _showEnigmaDialog(
-    BuildContext context, {
-    String? docId,
-    Map<String, dynamic>? initialData,
-  }) {
-    final titleCtrl = TextEditingController(text: initialData?['title'] ?? '');
-    final typeCtrl = TextEditingController(
-      text: initialData?['type'] ?? 'qr_code_gps',
-    );
-    final codeCtrl = TextEditingController(
-      text: initialData?['correctCode'] ?? '',
-    );
+  void _showPhaseEditDialog(BuildContext context, String eventId,
+      {String? docId, Map<String, dynamic>? data}) {
     final orderCtrl = TextEditingController(
-      text: initialData?['order']?.toString() ?? '1',
-    );
-    bool allowHints = initialData?['allowHints'] ?? true;
-    bool allowTools = initialData?['allowTools'] ?? true;
-    List<String> linkedHints = List<String>.from(
-      initialData?['linkedHints'] ?? [],
-    );
+        text: data?['order']?.toString() ?? '1');
+    bool isBlocked = data?['isBlocked'] ?? false;
 
     showDialog(
       context: context,
-      builder: (ctx) {
+      builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              backgroundColor: cardColor,
-              title: const Text(
-                'Configurar Enigma',
-                style: TextStyle(color: Colors.white),
+              backgroundColor: darkBackground,
+              title: Text(
+                docId == null ? 'Nova Fase' : 'Editar Fase',
+                style: const TextStyle(color: Colors.white),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: orderCtrl,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: 'Ordem'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  SwitchListTile(
+                    title: const Text('Bloqueada',
+                        style: TextStyle(color: Colors.white)),
+                    value: isBlocked,
+                    onChanged: (val) {
+                      setState(() => isBlocked = val);
+                    },
+                    activeColor: primaryAmber,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final newData = {
+                      'order': int.tryParse(orderCtrl.text) ?? 1,
+                      'isBlocked': isBlocked,
+                    };
+                    try {
+                      if (docId == null) {
+                         final obj = ParseObject('Phase')
+                          ..set('event', (ParseObject('Event')..objectId = eventId).toPointer())
+                          ..set('order', newData['order'])
+                          ..set('isBlocked', newData['isBlocked']);
+                         await obj.save();
+                      } else {
+                         final obj = ParseObject('Phase')..objectId = docId
+                          ..set('order', newData['order'])
+                          ..set('isBlocked', newData['isBlocked']);
+                         await obj.save();
+                      }
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                      }
+                    } catch (e) {
+                      debugPrint('Erro ao salvar fase: $e');
+                    }
+                  },
+                  child: const Text('Salvar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showEnigmaEditDialog(
+      BuildContext context, String eventId, String phaseId,
+      {String? docId, Map<String, dynamic>? data}) {
+    final orderCtrl = TextEditingController(
+        text: data?['order']?.toString() ?? '1');
+    final codeCtrl = TextEditingController(text: data?['code']);
+    final instructionCtrl =
+        TextEditingController(text: data?['instruction']);
+    final typeCtrl = TextEditingController(text: data?['type'] ?? 'text');
+    final prizeCtrl = TextEditingController(
+        text: data?['prize']?.toString() ?? '0');
+    List<dynamic> linkedHints = List.from(data?['linkedHints'] ?? []);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: darkBackground,
+              title: Text(
+                docId == null ? 'Novo Enigma' : 'Editar Enigma',
+                style: const TextStyle(color: Colors.white),
               ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
-                      controller: titleCtrl,
+                      controller: orderCtrl,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        labelText: 'Título da Pista/Enigma',
-                      ),
-                    ),
-                    TextField(
-                      controller: typeCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        labelText: 'Tipo (qr_code_gps, password, image)',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Ordem'),
+                      keyboardType: TextInputType.number,
                     ),
                     TextField(
                       controller: codeCtrl,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
-                        labelText: 'Código/Senha Correta',
-                      ),
+                          labelText: 'Código (Senha/Resposta)'),
                     ),
                     TextField(
-                      controller: orderCtrl,
+                      controller: instructionCtrl,
                       style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(labelText: 'Instrução'),
+                      maxLines: 2,
+                    ),
+                    TextField(
+                      controller: typeCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                          labelText: 'Tipo (text, gps, qrcode)'),
+                    ),
+                    TextField(
+                      controller: prizeCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration:
+                          const InputDecoration(labelText: 'Prêmio (R\$)'),
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Ordem'),
                     ),
                     const SizedBox(height: 16),
-                    SwitchListTile(
-                      title: const Text(
-                        'Habilitar Dicas',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      value: allowHints,
-                      activeTrackColor: primaryAmber.withValues(alpha: 0.5),
-                      activeThumbColor: primaryAmber,
-                      onChanged: (val) => setState(() => allowHints = val),
-                    ),
-                    SwitchListTile(
-                      title: const Text(
-                        'Habilitar Ferramentas (Mapa/Bússola)',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      value: allowTools,
-                      activeTrackColor: primaryAmber.withValues(alpha: 0.5),
-                      activeThumbColor: primaryAmber,
-                      onChanged: (val) => setState(() => allowTools = val),
-                    ),
-                    const Divider(color: Colors.white24),
                     const Text(
-                      'Caixa de Dicas (Sorteio)',
+                      'Dicas Vinculadas (Hints Pool)',
                       style: TextStyle(
-                        color: primaryAmber,
-                        fontWeight: FontWeight.bold,
-                      ),
+                          color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
-                    StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('hints_pool')
-                          .snapshots(),
+                    FutureBuilder<ParseResponse>(
+                      future: QueryBuilder<ParseObject>(ParseObject('Hint')).query(),
                       builder: (context, snapshot) {
-                        if (!snapshot.hasData)
+                        if (snapshot.connectionState == ConnectionState.waiting) {
                           return const CircularProgressIndicator();
-                        final allHints = snapshot.data!.docs;
+                        }
+                        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null) {
+                          return const Text('Nenhuma dica no pool.', style: TextStyle(color: Colors.white));
+                        }
+
+                        final allHints = snapshot.data!.results as List<ParseObject>;
+
                         return Column(
                           children: allHints.map((doc) {
-                            final hintData = doc.data() as Map<String, dynamic>;
-                            final isSelected = linkedHints.contains(doc.id);
+                            final hintId = doc.objectId!;
+                            final isSelected = linkedHints.contains(hintId);
                             return CheckboxListTile(
                               title: Text(
-                                hintData['title'] ?? 'Dica',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              subtitle: Text(
-                                hintData['type'] ?? 'text',
-                                style: const TextStyle(
-                                  color: secondaryTextColor,
-                                  fontSize: 12,
-                                ),
+                                doc.get<String>('title') ?? 'Dica',
+                                style: const TextStyle(color: Colors.white),
                               ),
                               value: isSelected,
                               activeColor: primaryAmber,
-                              checkColor: Colors.black,
                               onChanged: (val) {
                                 setState(() {
                                   if (val == true) {
-                                    linkedHints.add(doc.id);
+                                    linkedHints.add(hintId);
                                   } else {
-                                    linkedHints.remove(doc.id);
+                                    linkedHints.remove(hintId);
                                   }
                                 });
                               },
@@ -687,44 +714,40 @@ class AdminEnigmasList extends StatelessWidget {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text(
-                    'Cancelar',
-                    style: TextStyle(color: Colors.red),
-                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    final data = {
-                      'title': titleCtrl.text,
-                      'type': typeCtrl.text,
-                      'correctCode': codeCtrl.text,
+                    final newData = {
                       'order': int.tryParse(orderCtrl.text) ?? 1,
-                      'allowHints': allowHints,
-                      'allowTools': allowTools,
+                      'code': codeCtrl.text,
+                      'instruction': instructionCtrl.text,
+                      'type': typeCtrl.text,
+                      'prize': num.tryParse(prizeCtrl.text) ?? 0,
                       'linkedHints': linkedHints,
                     };
-
-                    if (docId == null) {
-                      ParseCloudFunction('createOrUpdateEnigma').execute(parameters: {
-                        'eventId': eventId,
-                        'phaseId': phaseId,
-                        'data': data,
-                      });
-                    } else {
-                      ParseCloudFunction('createOrUpdateEnigma').execute(parameters: {
-                        'eventId': eventId,
-                        'phaseId': phaseId,
-                        'enigmaId': docId,
-                        'data': data,
-                      });
+                    try {
+                      if (docId == null) {
+                        ParseCloudFunction('createOrUpdateEnigma').execute(parameters: {
+                          'eventId': eventId,
+                          'phaseId': phaseId,
+                          'data': newData
+                        });
+                      } else {
+                        ParseCloudFunction('createOrUpdateEnigma').execute(parameters: {
+                          'eventId': eventId,
+                          'enigmaId': docId,
+                          'data': newData
+                        });
+                      }
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                      }
+                    } catch (e) {
+                      debugPrint('Erro ao salvar enigma: $e');
                     }
-                    if (ctx.mounted) Navigator.pop(ctx);
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryAmber,
-                    foregroundColor: Colors.black,
-                  ),
                   child: const Text('Salvar'),
                 ),
               ],

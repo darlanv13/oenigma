@@ -13,7 +13,7 @@ class RankingList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUserId = ref.read(authRepositoryProvider).currentUser?.uid;
+    final currentUserId = ref.read(authRepositoryProvider).currentUser?.objectId;
 
     return ListView.separated(
       shrinkWrap: true,
@@ -22,7 +22,7 @@ class RankingList extends ConsumerWidget {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final player = players[index];
-        final isCurrentUser = player.uid == currentUserId;
+        final isCurrentUser = player.objectId == currentUserId;
 
         return Container(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),

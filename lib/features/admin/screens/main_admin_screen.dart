@@ -8,7 +8,7 @@ import 'package:oenigma/features/admin/screens/admin_finance_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_fraud_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_tools_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_banners_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
 class MainAdminScreen extends StatefulWidget {
   const MainAdminScreen({super.key});
@@ -99,7 +99,8 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
           IconButton(
             icon: const FaIcon(FontAwesomeIcons.rightFromBracket),
             onPressed: () async {
-              await FirebaseAuth.instance.signOut();
+              final user = await ParseUser.currentUser() as ParseUser?;
+              if (user != null) await user.logout();
             },
             tooltip: 'Sair do Painel',
           ),

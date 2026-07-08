@@ -1,5 +1,5 @@
 class RankingPlayerModel {
-  final String uid;
+  final String objectId;
   final String name;
   final String? photoURL;
   final int phasesCompleted;
@@ -7,7 +7,7 @@ class RankingPlayerModel {
   int position;
 
   RankingPlayerModel({
-    required this.uid,
+    required this.objectId,
     required this.name,
     this.photoURL,
     required this.phasesCompleted,
@@ -19,7 +19,7 @@ class RankingPlayerModel {
 
   factory RankingPlayerModel.fromMap(Map<String, dynamic> map) {
     return RankingPlayerModel(
-      uid: map['uid'] ?? '',
+      objectId: map['objectId'] ?? '',
       name: map['name'] ?? 'Anônimo',
       photoURL: map['photoURL'],
       phasesCompleted: map['phasesCompleted'] ?? 0,

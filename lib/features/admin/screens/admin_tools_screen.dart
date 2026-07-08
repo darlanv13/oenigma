@@ -1,11 +1,31 @@
-import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class AdminToolsScreen extends StatelessWidget {
+class AdminToolsScreen extends StatefulWidget {
   const AdminToolsScreen({super.key});
+
+  @override
+  State<AdminToolsScreen> createState() => _AdminToolsScreenState();
+}
+
+class _AdminToolsScreenState extends State<AdminToolsScreen> {
+  late Future<ParseResponse> _hintsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHints();
+  }
+
+  void _loadHints() {
+    setState(() {
+      _hintsFuture = (QueryBuilder<ParseObject>(ParseObject('Hint'))
+            ..orderByDescending('createdAt'))
+          .query();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,16 +58,18 @@ class AdminToolsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('hints_pool')
-                .orderBy('createdAt', descending: true)
-                .snapshots(),
+          child: FutureBuilder<ParseResponse>(
+            future: _hintsFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Erro: ${snapshot.error}', style: const TextStyle(color: Colors.redAccent)),
+                );
+              }
+              if (!snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
                 return const Center(
                   child: Text(
                     'Nenhuma dica global cadastrada.',
@@ -56,30 +78,33 @@ class AdminToolsScreen extends StatelessWidget {
                 );
               }
 
-              final hints = snapshot.data!.docs;
+              final hints = snapshot.data!.results as List<ParseObject>;
 
               return ListView.builder(
                 itemCount: hints.length,
                 itemBuilder: (context, index) {
-                  final hint = hints[index].data() as Map<String, dynamic>;
-                  final hintId = hints[index].id;
-                  final title = hint['title'] ?? 'Sem Título';
-                  final type =
-                      hint['type'] ?? 'text'; // text, image_url, audio_url
-                  final content = hint['content'] ?? '';
+                  final hint = hints[index];
+                  final hintId = hint.objectId!;
+                  final title = hint.get<String>('title') ?? 'Sem Título';
+                  final description = hint.get<String>('description') ?? '';
+                  final type = hint.get<String>('type') ?? 'text';
+                  // ignore: unused_local_variable
+                  var contentUrl = hint.get<String>('contentUrl') ?? '';
 
                   return Card(
                     color: cardColor,
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
-                      leading: FaIcon(
-                        type == 'image_url'
-                            ? FontAwesomeIcons.image
-                            : type == 'audio_url'
-                            ? FontAwesomeIcons.music
-                            : FontAwesomeIcons.fileLines,
-                        color: primaryAmber,
-                        size: 40,
+                      leading: CircleAvatar(
+                        backgroundColor: primaryAmber.withValues(alpha: 0.2),
+                        child: FaIcon(
+                          type == 'text'
+                              ? FontAwesomeIcons.fileLines
+                              : (type == 'image'
+                                  ? FontAwesomeIcons.image
+                                  : FontAwesomeIcons.microphoneLines),
+                          color: primaryAmber,
+                        ),
                       ),
                       title: Text(
                         title,
@@ -88,43 +113,76 @@ class AdminToolsScreen extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      subtitle: Text(
-                        'Tipo: $type\nConteúdo: $content',
-                        style: const TextStyle(color: secondaryTextColor),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 4),
+                          Text(
+                            description,
+                            style: const TextStyle(color: secondaryTextColor),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Tipo: $type',
+                            style: const TextStyle(
+                                color: primaryAmber, fontSize: 12),
+                          ),
+                        ],
                       ),
                       isThreeLine: true,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const FaIcon(FontAwesomeIcons.pen,
-                              color: Colors.blueAccent,
-                            ),
+                            icon: const FaIcon(FontAwesomeIcons.penToSquare,
+                                color: Colors.blue),
                             onPressed: () {
                               _showHintDialog(
                                 context,
                                 docId: hintId,
-                                initialData: hint,
+                                data: _parseObjectToMap(hint),
                               );
                             },
-                            tooltip: 'Editar Dica',
                           ),
                           IconButton(
-                            icon: const FaIcon(FontAwesomeIcons.trashCan,
-                              color: Colors.redAccent,
-                            ),
-                            onPressed: () async {
-                              try {
-                                await ParseCloudFunction('deleteHint').execute(parameters: {
-                                  'hintId': hintId,
-                                });
-                              } catch (e) {
-                                print("Erro ao excluir dica: $e");
-                              }
+                            icon: const FaIcon(FontAwesomeIcons.trash,
+                                color: Colors.redAccent),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  backgroundColor: darkBackground,
+                                  title: const Text('Confirmar exclusão',
+                                      style: TextStyle(color: Colors.white)),
+                                  content: const Text(
+                                      'Deseja mesmo excluir esta dica?',
+                                      style:
+                                          TextStyle(color: secondaryTextColor)),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('Cancelar'),
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.redAccent),
+                                      onPressed: () async {
+                                        Navigator.pop(context);
+                                        try {
+                                          await ParseCloudFunction('deleteHint').execute(parameters: {
+                                            'hintId': hintId,
+                                          });
+                                          _loadHints();
+                                        } catch (e) {
+                                          debugPrint('Erro ao excluir: $e');
+                                        }
+                                      },
+                                      child: const Text('Excluir'),
+                                    ),
+                                  ],
+                                ),
+                              );
                             },
-                            tooltip: 'Excluir Dica',
                           ),
                         ],
                       ),
@@ -139,128 +197,96 @@ class AdminToolsScreen extends StatelessWidget {
     );
   }
 
-  void _showHintDialog(
-    BuildContext context, {
-    String? docId,
-    Map<String, dynamic>? initialData,
-  }) {
-    final titleCtrl = TextEditingController(text: initialData?['title'] ?? '');
-    final contentCtrl = TextEditingController(
-      text: initialData?['content'] ?? '',
-    );
-    String type = initialData?['type'] ?? 'text';
+  Map<String, dynamic> _parseObjectToMap(ParseObject obj) {
+    final map = <String, dynamic>{};
+    obj.toJson().forEach((key, value) {
+      map[key] = value;
+    });
+    return map;
+  }
+
+  void _showHintDialog(BuildContext context,
+      {String? docId, Map<String, dynamic>? data}) {
+    final titleCtrl = TextEditingController(text: data?['title']);
+    final descCtrl = TextEditingController(text: data?['description']);
+    final typeCtrl = TextEditingController(text: data?['type'] ?? 'text');
+    final contentUrlCtrl = TextEditingController(text: data?['contentUrl']);
 
     showDialog(
       context: context,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: cardColor,
-              title: Text(
-                docId == null ? 'Nova Dica Global' : 'Editar Dica',
-                style: const TextStyle(color: Colors.white),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextField(
-                      controller: titleCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        labelText: 'Título de Referência (Admin)',
-                        labelStyle: TextStyle(color: secondaryTextColor),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Tipo da Dica:',
-                      style: TextStyle(color: secondaryTextColor),
-                    ),
-                    DropdownButton<String>(
-                      value: type,
-                      dropdownColor: darkBackground,
-                      style: const TextStyle(color: Colors.white),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'text',
-                          child: Text('Texto (Charada)'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'image_url',
-                          child: Text('Imagem (URL)'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'audio_url',
-                          child: Text('Áudio (URL)'),
-                        ),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() => type = val);
-                        }
-                      },
-                    ),
-                    TextField(
-                      controller: contentCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      maxLines: type == 'text' ? 3 : 1,
-                      decoration: InputDecoration(
-                        labelText: type == 'text'
-                            ? 'Texto da Charada'
-                            : 'URL do Arquivo',
-                        labelStyle: const TextStyle(color: secondaryTextColor),
-                      ),
-                    ),
-                  ],
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: darkBackground,
+          title: Text(
+            docId == null ? 'Nova Dica' : 'Editar Dica',
+            style: const TextStyle(color: Colors.white),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(labelText: 'Título'),
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text(
-                    'Cancelar',
-                    style: TextStyle(color: Colors.red),
-                  ),
+                TextField(
+                  controller: descCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(labelText: 'Descrição'),
+                  maxLines: 2,
                 ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final data = {
-                      'title': titleCtrl.text,
-                      'type': type,
-                      'content': contentCtrl.text,
-                    };
-
-                    try {
-                      await ParseCloudFunction('createOrUpdateHint').execute(parameters: {
-                        'hintId': docId,
-                        'data': data,
-                      });
-                      if (ctx.mounted) Navigator.pop(ctx);
-                    } catch (e) {
-                      print("Erro: $e");
-                      if (ctx.mounted) {
-                        ScaffoldMessenger.of(ctx).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Erro ao salvar dica via Cloud Function: $e',
-                            ),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryAmber,
-                    foregroundColor: Colors.black,
-                  ),
-                  child: const Text('Salvar'),
+                TextField(
+                  controller: typeCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                      labelText: 'Tipo (text, image, audio)'),
+                ),
+                TextField(
+                  controller: contentUrlCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                      labelText: 'URL do Conteúdo (Opcional)'),
                 ),
               ],
-            );
-          },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final newData = {
+                  'title': titleCtrl.text,
+                  'description': descCtrl.text,
+                  'type': typeCtrl.text,
+                  'contentUrl': contentUrlCtrl.text,
+                };
+
+                try {
+                  if (docId == null) {
+                    await ParseCloudFunction('createOrUpdateHint').execute(parameters: {
+                      'data': newData
+                    });
+                  } else {
+                    await ParseCloudFunction('createOrUpdateHint').execute(parameters: {
+                      'hintId': docId,
+                      'data': newData
+                    });
+                  }
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    _loadHints();
+                  }
+                } catch (e) {
+                  debugPrint('Erro ao salvar dica: $e');
+                }
+              },
+              child: const Text('Salvar'),
+            ),
+          ],
         );
       },
     );
