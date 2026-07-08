@@ -1,4 +1,4 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -21,10 +21,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   }
 
   Future<List<dynamic>> _fetchUsers() async {
-    final result = await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
-        .httpsCallable('listAllUsers')
-        .call();
-    return result.data as List<dynamic>;
+    final result = await ParseCloudFunction('listAllUsers').execute();
+      if (!result.success) throw result.error ?? ParseError();
+    return result.result as List<dynamic>;
   }
 
   @override
@@ -107,9 +106,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             onPressed: () async {
                               final functionName = isAdmin ? 'revokeAdminRole' : 'grantAdminRole';
                               try {
-                                await FirebaseFunctions.instanceFor(region: 'southamerica-east1')
-                                    .httpsCallable(functionName)
-                                    .call({'uid': uid});
+                                final response = await ParseCloudFunction(functionName).execute(parameters: {'uid': uid});
+      if (!response.success) throw response.error ?? ParseError();
                                 setState(() {
                                   _usersFuture = _fetchUsers();
                                 });

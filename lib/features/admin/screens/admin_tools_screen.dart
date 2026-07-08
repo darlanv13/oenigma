@@ -1,4 +1,4 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -117,9 +117,7 @@ class AdminToolsScreen extends StatelessWidget {
                             ),
                             onPressed: () async {
                               try {
-                                await FirebaseFunctions.instanceFor(
-                                  region: 'southamerica-east1',
-                                ).httpsCallable('deleteHint').call({
+                                await ParseCloudFunction('deleteHint').execute(parameters: {
                                   'hintId': hintId,
                                 });
                               } catch (e) {
@@ -236,9 +234,7 @@ class AdminToolsScreen extends StatelessWidget {
                     };
 
                     try {
-                      await FirebaseFunctions.instanceFor(
-                        region: 'southamerica-east1',
-                      ).httpsCallable('createOrUpdateHint').call({
+                      await ParseCloudFunction('createOrUpdateHint').execute(parameters: {
                         'hintId': docId,
                         'data': data,
                       });

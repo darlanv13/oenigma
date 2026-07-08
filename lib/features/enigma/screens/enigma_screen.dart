@@ -8,7 +8,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' show cos, sqrt, asin, pi, sin;
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -271,7 +271,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         'enigmaId': _currentEnigma.id,
       });
       if (mounted) {
-        final statusData = Map<String, dynamic>.from(result.data);
+        final statusData = Map<String, dynamic>.from(result.result);
         setState(() {
           _isHintVisible = statusData['isHintVisible'] ?? false;
           _hintData = statusData['hintData'] != null
@@ -408,7 +408,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
 
       if (!mounted) return;
 
-      final data = Map<String, dynamic>.from(result.data);
+      final data = Map<String, dynamic>.from(result.result);
       final success = data['success'] ?? false;
 
       if (success) {
@@ -421,7 +421,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           ),
         );
       }
-    } on FirebaseFunctionsException catch (e) {
+    } on ParseError catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -458,7 +458,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
 
       if (!mounted) return;
 
-      final data = Map<String, dynamic>.from(result.data);
+      final data = Map<String, dynamic>.from(result.result);
       final success = data['success'] ?? false;
 
       if (success) {
@@ -588,8 +588,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           );
         }
       }
-    } on FirebaseFunctionsException catch (e) {
-      if (e.code == 'failed-precondition' &&
+    } on ParseError catch (e) {
+      if (e.message != null && e.message!.contains('saldo') &&
           e.message != null &&
           e.message!.contains('Saldo insuficiente')) {
         _showInsufficientFundsDialog();

@@ -1,4 +1,4 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/features/event/providers/event_repository_provider.dart';
@@ -96,9 +96,9 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         );
         setState(() => _isSubscribed = true);
       }
-    } on FirebaseFunctionsException catch (e) {
+    } on ParseError catch (e) {
       if (mounted) {
-        if (e.code == 'failed-precondition') {
+        if (e.message != null && e.message!.contains('saldo')) {
           _showInsufficientFundsDialog();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

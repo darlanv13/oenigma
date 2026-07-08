@@ -1,18 +1,18 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 
 class WalletRepository {
-  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
-    region: 'southamerica-east1',
-  );
-
-  Future<HttpsCallableResult> callFunction(
+  Future<ParseResponse> callFunction(
     String functionName, [
     Map<String, dynamic>? payload,
   ]) async {
-    final callable = _functions.httpsCallable(functionName);
+    final ParseCloudFunction function = ParseCloudFunction(functionName);
     try {
-      return await callable.call<dynamic>(payload);
+      final response = await function.execute(parameters: payload);
+      if (!response.success) {
+        throw response.error ?? ParseError();
+      }
+      return response;
     } catch (e) {
       rethrow;
     }
@@ -20,10 +20,10 @@ class WalletRepository {
 
   Future<UserWalletModel> getUserWalletData() async {
     final result = await callFunction('getUserWalletData');
-    if (result.data == null) {
+    if (result.result == null) {
       throw Exception("Não foi possível carregar os dados da carteira.");
     }
-    final walletData = Map<String, dynamic>.from(result.data);
+    final walletData = Map<String, dynamic>.from(result.result);
     return UserWalletModel.fromMap(walletData);
   }
 }
