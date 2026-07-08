@@ -86,7 +86,7 @@ class EnigmaModel {
       'instruction': instruction,
       'code': code,
       'imageUrl': imageUrl,
-      'location': location, // O Firestore aceita ParseGeoPoint direto
+      'location': location, // O Back4App/Parse aceita ParseGeoPoint direto
       'hintType': hintType,
       'hintData': hintData,
       'hintPrice': hintPrice, // Importante para sua monetização

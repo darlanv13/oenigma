@@ -12,13 +12,8 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  cloud_firestore: ^6.6.0
-  cloud_functions: ^6.3.3
   image_picker: ^1.1.2
-  firebase_auth: ^6.5.4
-  firebase_storage: ^13.4.3
   intl: ^0.20.2
-  firebase_app_check: ^0.4.5
   location: ^8.0.0
   location_web: ^6.0.1
   mobile_scanner: ^7.0.1
@@ -28,7 +23,6 @@ dependencies:
   url_launcher: ^6.3.1
   lottie: ^3.0.0
   http: ^1.4.0
-  firebase_core: ^4.11.0
   screenshot: ^3.0.0
   path_provider: ^2.1.5
   share_plus: ^13.2.0
@@ -46,7 +40,6 @@ dependencies:
   google_fonts: ^8.0.2
   cached_network_image: ^3.4.1
   confetti: ^0.8.0
-  firebase_messaging: ^16.4.1
   
   # === PACOTE DO PARSE ADICIONADO AQUI ===
   parse_server_sdk_flutter: ^10.4.0
