@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class AdminUsersScreen extends StatefulWidget {
   const AdminUsersScreen({super.key});
 
@@ -22,7 +21,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
   Future<List<dynamic>> _fetchUsers() async {
     final result = await ParseCloudFunction('listAllUsers').execute();
-      if (!result.success) throw result.error ?? ParseError();
+    if (!result.success) throw result.error ?? ParseError();
     return result.result as List<dynamic>;
   }
 
@@ -36,16 +35,23 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           children: [
             const Text(
               'Gestão de Usuários e Carteira',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             IconButton(
-              icon: const FaIcon(FontAwesomeIcons.rotateRight, color: Colors.white),
+              icon: const FaIcon(
+                FontAwesomeIcons.rotateRight,
+                color: Colors.white,
+              ),
               onPressed: () {
                 setState(() {
                   _usersFuture = _fetchUsers();
                 });
               },
-            )
+            ),
           ],
         ),
         const SizedBox(height: 24),
@@ -57,14 +63,23 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 return const Center(child: CircularProgressIndicator());
               }
               if (snapshot.hasError) {
-                print("Erro no FutureBuilder de usuários: \${snapshot.error}");
+                debugPrint(
+                  "Erro no FutureBuilder de usuários: \${snapshot.error}",
+                );
                 return Center(
-                  child: Text('Erro ao carregar usuários: \n\${snapshot.error}', textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent)),
+                  child: Text(
+                    'Erro ao carregar usuários: \n\${snapshot.error}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
                 );
               }
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return const Center(
-                  child: Text('Nenhum usuário encontrado.', style: TextStyle(color: secondaryTextColor)),
+                  child: Text(
+                    'Nenhum usuário encontrado.',
+                    style: TextStyle(color: secondaryTextColor),
+                  ),
                 );
               }
 
@@ -75,51 +90,96 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 itemBuilder: (context, index) {
                   final user = users[index] as Map<String, dynamic>;
                   final objectId = user['objectId'] as String;
-                  final name = user['name'] ?? user['displayName'] ?? 'Sem Nome';
+                  final name =
+                      user['name'] ?? user['displayName'] ?? 'Sem Nome';
                   final email = user['email'] ?? 'Sem Email';
                   final photoURL = user['photoURL'] as String?;
                   final isAdmin = user['isAdmin'] ?? false;
+                  final isBanned = user['isBanned'] ?? false;
 
                   return Card(
                     color: cardColor,
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: isAdmin ? Colors.blueAccent : primaryAmber,
-                        backgroundImage: photoURL != null ? NetworkImage(photoURL) : null,
-                        child: photoURL == null ? Text(name[0].toUpperCase(), style: const TextStyle(color: Colors.black)) : null,
+                        backgroundColor: isAdmin
+                            ? Colors.blueAccent
+                            : primaryAmber,
+                        backgroundImage: photoURL != null
+                            ? NetworkImage(photoURL)
+                            : null,
+                        child: photoURL == null
+                            ? Text(
+                                name[0].toUpperCase(),
+                                style: const TextStyle(color: Colors.black),
+                              )
+                            : null,
                       ),
-                      title: Text(name, style: const TextStyle(color: Colors.white)),
-                      subtitle: Text('$email${isAdmin ? " • Admin" : ""}', style: const TextStyle(color: secondaryTextColor)),
+                      title: Text(
+                        name,
+                        style: TextStyle(
+                          color: isBanned ? Colors.grey : Colors.white,
+                          decoration: isBanned
+                              ? TextDecoration.lineThrough
+                              : null,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '$email${isAdmin ? " • Admin" : ""}${isBanned ? " • Banido" : ""}',
+                        style: const TextStyle(color: secondaryTextColor),
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const FaIcon(FontAwesomeIcons.wallet, color: Colors.greenAccent),
+                            icon: const FaIcon(
+                              FontAwesomeIcons.wallet,
+                              color: Colors.greenAccent,
+                            ),
                             onPressed: () {
                               // Action to view/edit wallet
                             },
                             tooltip: 'Ver Carteira',
                           ),
                           IconButton(
-                            icon: FaIcon(isAdmin ? FontAwesomeIcons.userShield : FontAwesomeIcons.solidUser, color: isAdmin ? Colors.blueAccent : Colors.grey),
+                            icon: FaIcon(
+                              isAdmin
+                                  ? FontAwesomeIcons.userShield
+                                  : FontAwesomeIcons.solidUser,
+                              color: isAdmin ? Colors.blueAccent : Colors.grey,
+                            ),
                             onPressed: () async {
-                              final functionName = isAdmin ? 'revokeAdminRole' : 'grantAdminRole';
+                              final functionName = isAdmin
+                                  ? 'revokeAdminRole'
+                                  : 'grantAdminRole';
                               try {
-                                final response = await ParseCloudFunction(functionName).execute(parameters: {'objectId': objectId});
-      if (!response.success) throw response.error ?? ParseError();
+                                final response = await ParseCloudFunction(
+                                  functionName,
+                                ).execute(parameters: {'objectId': objectId});
+                                if (!response.success)
+                                  throw response.error ?? ParseError();
                                 setState(() {
                                   _usersFuture = _fetchUsers();
                                 });
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(isAdmin ? 'Admin revogado.' : 'Admin concedido.')),
+                                    SnackBar(
+                                      content: Text(
+                                        isAdmin
+                                            ? 'Admin revogado.'
+                                            : 'Admin concedido.',
+                                      ),
+                                    ),
                                   );
                                 }
                               } catch (e) {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Erro ao atualizar admin: \$e')),
+                                    SnackBar(
+                                      content: Text(
+                                        'Erro ao atualizar admin: \$e',
+                                      ),
+                                    ),
                                   );
                                 }
                               }
@@ -127,11 +187,46 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             tooltip: isAdmin ? 'Revogar Admin' : 'Tornar Admin',
                           ),
                           IconButton(
-                            icon: const FaIcon(FontAwesomeIcons.ban, color: Colors.redAccent),
-                            onPressed: () {
-                              // Action to ban/suspend
+                            icon: FaIcon(
+                              isBanned
+                                  ? FontAwesomeIcons.check
+                                  : FontAwesomeIcons.ban,
+                              color: isBanned ? Colors.green : Colors.redAccent,
+                            ),
+                            onPressed: () async {
+                              try {
+                                final response = await ParseCloudFunction(
+                                  'toggleUserBan',
+                                ).execute(parameters: {'objectId': objectId});
+                                if (!response.success)
+                                  throw response.error ?? ParseError();
+                                setState(() {
+                                  _usersFuture = _fetchUsers();
+                                });
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        isBanned
+                                            ? 'Usuário desbanido.'
+                                            : 'Usuário banido.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Erro ao atualizar banimento: \$e',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
                             },
-                            tooltip: 'Banir/Suspender',
+                            tooltip: isBanned ? 'Desbanir' : 'Banir/Suspender',
                           ),
                         ],
                       ),

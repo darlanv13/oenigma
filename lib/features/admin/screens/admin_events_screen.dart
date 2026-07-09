@@ -74,7 +74,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   ),
                 );
               }
-              if (!snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
+              if (!snapshot.hasData ||
+                  !snapshot.data!.success ||
+                  snapshot.data!.results == null ||
+                  snapshot.data!.results!.isEmpty) {
                 return const Center(
                   child: Text(
                     'Nenhum evento encontrado.',
@@ -87,7 +90,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
               return ListView.separated(
                 itemCount: events.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 16),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 16),
                 itemBuilder: (context, index) {
                   final event = events[index];
                   final eventId = event.objectId!;
@@ -150,19 +154,26 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             children: [
                               TextButton.icon(
                                 onPressed: () {
-                                  _showEventDialog(context,
-                                      docId: eventId, data: _parseObjectToMap(event));
+                                  _showEventDialog(
+                                    context,
+                                    docId: eventId,
+                                    data: _parseObjectToMap(event),
+                                  );
                                 },
-                                icon: const FaIcon(FontAwesomeIcons.penToSquare,
-                                    size: 16),
+                                icon: const FaIcon(
+                                  FontAwesomeIcons.penToSquare,
+                                  size: 16,
+                                ),
                                 label: const Text('Editar'),
                               ),
                               TextButton.icon(
                                 onPressed: () {
                                   _showPhasesDialog(context, eventId);
                                 },
-                                icon: const FaIcon(FontAwesomeIcons.listOl,
-                                    size: 16),
+                                icon: const FaIcon(
+                                  FontAwesomeIcons.listOl,
+                                  size: 16,
+                                ),
                                 label: const Text('Fases'),
                               ),
                               TextButton.icon(
@@ -175,21 +186,24 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                       : FontAwesomeIcons.eye,
                                   size: 16,
                                 ),
-                                label: Text(isPublished
-                                    ? 'Ocultar'
-                                    : 'Publicar'),
+                                label: Text(
+                                  isPublished ? 'Ocultar' : 'Publicar',
+                                ),
                               ),
                               IconButton(
                                 onPressed: () {
-                                  ParseCloudFunction('deleteEvent').execute(parameters: {
-                                    'eventId': eventId,
-                                  }).then((_) => _loadEvents());
+                                  ParseCloudFunction('deleteEvent')
+                                      .execute(parameters: {'eventId': eventId})
+                                      .then((_) => _loadEvents());
                                 },
-                                icon: const FaIcon(FontAwesomeIcons.trash,
-                                    color: Colors.redAccent, size: 16),
+                                icon: const FaIcon(
+                                  FontAwesomeIcons.trash,
+                                  color: Colors.redAccent,
+                                  size: 16,
+                                ),
                               ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -211,14 +225,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     return map;
   }
 
-  void _showEventDialog(BuildContext context,
-      {String? docId, Map<String, dynamic>? data}) {
+  void _showEventDialog(
+    BuildContext context, {
+    String? docId,
+    Map<String, dynamic>? data,
+  }) {
     final titleCtrl = TextEditingController(text: data?['title']);
     final descCtrl = TextEditingController(text: data?['description']);
     final prizeCtrl = TextEditingController(
-        text: data?['prizePool']?.toString());
+      text: data?['prizePool']?.toString(),
+    );
     final orderCtrl = TextEditingController(
-        text: data?['order']?.toString() ?? '1');
+      text: data?['order']?.toString() ?? '1',
+    );
     final iconCtrl = TextEditingController(text: data?['icon']);
 
     showDialog(
@@ -261,7 +280,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   controller: iconCtrl,
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
-                      labelText: 'URL do Ícone (Lottie/Image)'),
+                    labelText: 'URL do Ícone (Lottie/Image)',
+                  ),
                 ),
               ],
             ),
@@ -283,13 +303,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                 };
                 try {
                   if (docId == null) {
-                    final response = await ParseCloudFunction('createOrUpdateEvent').execute(parameters: {'data': newData});
+                    final response = await ParseCloudFunction(
+                      'createOrUpdateEvent',
+                    ).execute(parameters: {'data': newData});
                     if (!response.success) throw response.error ?? ParseError();
                   } else {
-                    await ParseCloudFunction('createOrUpdateEvent').execute(parameters: {
-                      'eventId': docId,
-                      'data': newData
-                    });
+                    await ParseCloudFunction(
+                      'createOrUpdateEvent',
+                    ).execute(parameters: {'eventId': docId, 'data': newData});
                   }
                   if (context.mounted) {
                     Navigator.pop(context);
@@ -310,12 +331,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   void _toggleEventStatus(String eventId, String currentStatus) async {
     final newStatus = currentStatus == 'published' ? 'draft' : 'published';
     try {
-      await ParseCloudFunction('createOrUpdateEvent').execute(parameters: {
-        'eventId': eventId,
-        'data': {'status': newStatus}
-      });
+      await ParseCloudFunction('createOrUpdateEvent').execute(
+        parameters: {
+          'eventId': eventId,
+          'data': {'status': newStatus},
+        },
+      );
       _loadEvents();
-    } catch(e) {
+    } catch (e) {
       debugPrint("Erro ao alterar status: $e");
     }
   }
@@ -345,98 +368,231 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: const FaIcon(FontAwesomeIcons.xmark,
-                          color: Colors.white),
+                      icon: const FaIcon(
+                        FontAwesomeIcons.xmark,
+                        color: Colors.white,
+                      ),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    _showPhaseEditDialog(context, eventId);
-                  },
-                  icon: const FaIcon(FontAwesomeIcons.plus, size: 16),
-                  label: const Text('Nova Fase'),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: FutureBuilder<ParseResponse>(
-                    future: (QueryBuilder<ParseObject>(ParseObject('Phase'))
-                        ..whereEqualTo('event', (ParseObject('Event')..objectId = eventId).toPointer())
-                        ..orderByAscending('order')).query(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null) {
-                         return const Center(
-                          child: Text(
-                            'Nenhuma fase cadastrada.',
-                            style: TextStyle(color: secondaryTextColor),
+                StatefulBuilder(
+                  builder: (context, setStatePhases) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            _showPhaseEditDialog(
+                              context,
+                              eventId,
+                              onSaved: () {
+                                setStatePhases(() {});
+                              },
+                            );
+                          },
+                          icon: const FaIcon(FontAwesomeIcons.plus, size: 16),
+                          label: const Text('Nova Fase'),
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: FutureBuilder<ParseResponse>(
+                            future:
+                                (QueryBuilder<ParseObject>(ParseObject('Phase'))
+                                      ..whereEqualTo(
+                                        'event',
+                                        (ParseObject(
+                                          'Event',
+                                        )..objectId = eventId).toPointer(),
+                                      )
+                                      ..orderByAscending('order'))
+                                    .query(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              if (snapshot.hasError ||
+                                  !snapshot.hasData ||
+                                  !snapshot.data!.success ||
+                                  snapshot.data!.results == null) {
+                                return const Center(
+                                  child: Text(
+                                    'Nenhuma fase cadastrada.',
+                                    style: TextStyle(color: secondaryTextColor),
+                                  ),
+                                );
+                              }
+
+                              final phases =
+                                  snapshot.data!.results as List<ParseObject>;
+
+                              return ListView.builder(
+                                itemCount: phases.length,
+                                itemBuilder: (context, index) {
+                                  final phase = phases[index];
+                                  final phaseId = phase.objectId!;
+                                  final order = phase.get<num>('order') ?? 0;
+                                  final isBlocked =
+                                      phase.get<bool>('isBlocked') ?? false;
+
+                                  return Card(
+                                    color: cardColor,
+                                    child: ExpansionTile(
+                                      title: Text(
+                                        'Fase $order',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        isBlocked
+                                            ? 'Bloqueada'
+                                            : 'Desbloqueada',
+                                        style: TextStyle(
+                                          color: isBlocked
+                                              ? Colors.redAccent
+                                              : Colors.green,
+                                        ),
+                                      ),
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            TextButton.icon(
+                                              onPressed: () =>
+                                                  _showPhaseEditDialog(
+                                                    context,
+                                                    eventId,
+                                                    docId: phaseId,
+                                                    data: _parseObjectToMap(
+                                                      phase,
+                                                    ),
+                                                    onSaved: () {
+                                                      setStatePhases(() {});
+                                                    },
+                                                  ),
+                                              icon: const FaIcon(
+                                                FontAwesomeIcons.penToSquare,
+                                                size: 14,
+                                              ),
+                                              label: const Text('Editar'),
+                                            ),
+                                            TextButton.icon(
+                                              onPressed: () =>
+                                                  _showEnigmaEditDialog(
+                                                    context,
+                                                    eventId,
+                                                    phaseId,
+                                                  ),
+                                              icon: const FaIcon(
+                                                FontAwesomeIcons.plus,
+                                                size: 14,
+                                              ),
+                                              label: const Text('Novo Enigma'),
+                                            ),
+                                            TextButton.icon(
+                                              onPressed: () async {
+                                                bool confirm =
+                                                    await showDialog(
+                                                      context: context,
+                                                      builder: (ctx) => AlertDialog(
+                                                        backgroundColor:
+                                                            darkBackground,
+                                                        title: const Text(
+                                                          'Confirmar exclusão',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                          ),
+                                                        ),
+                                                        content: const Text(
+                                                          'Deseja excluir esta fase e seus enigmas?',
+                                                          style: TextStyle(
+                                                            color:
+                                                                secondaryTextColor,
+                                                          ),
+                                                        ),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                  ctx,
+                                                                  false,
+                                                                ),
+                                                            child: const Text(
+                                                              'Cancelar',
+                                                            ),
+                                                          ),
+                                                          ElevatedButton(
+                                                            style: ElevatedButton.styleFrom(
+                                                              backgroundColor:
+                                                                  Colors
+                                                                      .redAccent,
+                                                            ),
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                  ctx,
+                                                                  true,
+                                                                ),
+                                                            child: const Text(
+                                                              'Excluir',
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ) ??
+                                                    false;
+                                                if (confirm) {
+                                                  try {
+                                                    await ParseCloudFunction(
+                                                      'deletePhase',
+                                                    ).execute(
+                                                      parameters: {
+                                                        'eventId': eventId,
+                                                        'phaseId': phaseId,
+                                                      },
+                                                    );
+                                                    if (context.mounted) {
+                                                      setStatePhases(() {});
+                                                    }
+                                                  } catch (e) {
+                                                    debugPrint(
+                                                      'Erro ao excluir fase: \$e',
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                              icon: const FaIcon(
+                                                FontAwesomeIcons.trash,
+                                                color: Colors.redAccent,
+                                                size: 14,
+                                              ),
+                                              label: const Text(
+                                                'Excluir',
+                                                style: TextStyle(
+                                                  color: Colors.redAccent,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        _buildEnigmasList(eventId, phaseId),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                            },
                           ),
-                        );
-                      }
-
-                      final phases = snapshot.data!.results as List<ParseObject>;
-
-                      return ListView.builder(
-                        itemCount: phases.length,
-                        itemBuilder: (context, index) {
-                          final phase = phases[index];
-                          final phaseId = phase.objectId!;
-                          final order = phase.get<num>('order') ?? 0;
-                          final isBlocked = phase.get<bool>('isBlocked') ?? false;
-
-                          return Card(
-                            color: cardColor,
-                            child: ExpansionTile(
-                              title: Text(
-                                'Fase $order',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: Text(
-                                isBlocked ? 'Bloqueada' : 'Desbloqueada',
-                                style: TextStyle(
-                                  color: isBlocked
-                                      ? Colors.redAccent
-                                      : Colors.green,
-                                ),
-                              ),
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    TextButton.icon(
-                                      onPressed: () => _showPhaseEditDialog(
-                                          context, eventId,
-                                          docId: phaseId, data: _parseObjectToMap(phase)),
-                                      icon: const FaIcon(
-                                          FontAwesomeIcons.penToSquare,
-                                          size: 14),
-                                      label: const Text('Editar'),
-                                    ),
-                                    TextButton.icon(
-                                      onPressed: () => _showEnigmaEditDialog(
-                                          context, eventId, phaseId),
-                                      icon: const FaIcon(
-                                          FontAwesomeIcons.plus,
-                                          size: 14),
-                                      label: const Text('Novo Enigma'),
-                                    ),
-                                  ],
-                                ),
-                                _buildEnigmasList(eventId, phaseId),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -454,16 +610,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         children: [
           const Text(
             'Enigmas:',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           FutureBuilder<ParseResponse>(
-            future: (QueryBuilder<ParseObject>(ParseObject('Enigma'))
-                ..whereEqualTo('phase', (ParseObject('Phase')..objectId = phaseId).toPointer())
-                ..orderByAscending('order')).query(),
+            future:
+                (QueryBuilder<ParseObject>(ParseObject('Enigma'))
+                      ..whereEqualTo(
+                        'phase',
+                        (ParseObject('Phase')..objectId = phaseId).toPointer(),
+                      )
+                      ..orderByAscending('order'))
+                    .query(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Text(
@@ -471,7 +629,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   style: TextStyle(color: Colors.white),
                 );
               }
-              if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null) {
+              if (snapshot.hasError ||
+                  !snapshot.hasData ||
+                  !snapshot.data!.success ||
+                  snapshot.data!.results == null) {
                 return const Text(
                   'Nenhum enigma cadastrado nesta fase.',
                   style: TextStyle(color: secondaryTextColor),
@@ -500,20 +661,32 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const FaIcon(FontAwesomeIcons.penToSquare,
-                              size: 16, color: Colors.blue),
+                          icon: const FaIcon(
+                            FontAwesomeIcons.penToSquare,
+                            size: 16,
+                            color: Colors.blue,
+                          ),
                           onPressed: () => _showEnigmaEditDialog(
-                              context, eventId, phaseId,
-                              docId: enigmaId, data: _parseObjectToMap(doc)),
+                            context,
+                            eventId,
+                            phaseId,
+                            docId: enigmaId,
+                            data: _parseObjectToMap(doc),
+                          ),
                         ),
                         IconButton(
-                          icon: const FaIcon(FontAwesomeIcons.trash,
-                              size: 16, color: Colors.redAccent),
+                          icon: const FaIcon(
+                            FontAwesomeIcons.trash,
+                            size: 16,
+                            color: Colors.redAccent,
+                          ),
                           onPressed: () {
-                            ParseCloudFunction('deleteEnigma').execute(parameters: {
-                              'eventId': eventId,
-                              'enigmaId': enigmaId,
-                            });
+                            ParseCloudFunction('deleteEnigma').execute(
+                              parameters: {
+                                'eventId': eventId,
+                                'enigmaId': enigmaId,
+                              },
+                            );
                           },
                         ),
                       ],
@@ -528,10 +701,16 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     );
   }
 
-  void _showPhaseEditDialog(BuildContext context, String eventId,
-      {String? docId, Map<String, dynamic>? data}) {
+  void _showPhaseEditDialog(
+    BuildContext context,
+    String eventId, {
+    String? docId,
+    Map<String, dynamic>? data,
+    VoidCallback? onSaved,
+  }) {
     final orderCtrl = TextEditingController(
-        text: data?['order']?.toString() ?? '1');
+      text: data?['order']?.toString() ?? '1',
+    );
     bool isBlocked = data?['isBlocked'] ?? false;
 
     showDialog(
@@ -555,8 +734,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     keyboardType: TextInputType.number,
                   ),
                   SwitchListTile(
-                    title: const Text('Bloqueada',
-                        style: TextStyle(color: Colors.white)),
+                    title: const Text(
+                      'Bloqueada',
+                      style: TextStyle(color: Colors.white),
+                    ),
                     value: isBlocked,
                     onChanged: (val) {
                       setState(() => isBlocked = val);
@@ -578,22 +759,26 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     };
                     try {
                       if (docId == null) {
-                         final obj = ParseObject('Phase')
-                          ..set('event', (ParseObject('Event')..objectId = eventId).toPointer())
-                          ..set('order', newData['order'])
-                          ..set('isBlocked', newData['isBlocked']);
-                         await obj.save();
+                        await ParseCloudFunction('createOrUpdatePhase').execute(
+                          parameters: {'eventId': eventId, 'data': newData},
+                        );
                       } else {
-                         final obj = ParseObject('Phase')..objectId = docId
-                          ..set('order', newData['order'])
-                          ..set('isBlocked', newData['isBlocked']);
-                         await obj.save();
+                        await ParseCloudFunction('createOrUpdatePhase').execute(
+                          parameters: {
+                            'eventId': eventId,
+                            'phaseId': docId,
+                            'data': newData,
+                          },
+                        );
                       }
                       if (context.mounted) {
                         Navigator.pop(context);
+                        if (onSaved != null) {
+                          onSaved();
+                        }
                       }
                     } catch (e) {
-                      debugPrint('Erro ao salvar fase: $e');
+                      debugPrint('Erro ao salvar fase: \$e');
                     }
                   },
                   child: const Text('Salvar'),
@@ -607,16 +792,21 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }
 
   void _showEnigmaEditDialog(
-      BuildContext context, String eventId, String phaseId,
-      {String? docId, Map<String, dynamic>? data}) {
+    BuildContext context,
+    String eventId,
+    String phaseId, {
+    String? docId,
+    Map<String, dynamic>? data,
+  }) {
     final orderCtrl = TextEditingController(
-        text: data?['order']?.toString() ?? '1');
+      text: data?['order']?.toString() ?? '1',
+    );
     final codeCtrl = TextEditingController(text: data?['code']);
-    final instructionCtrl =
-        TextEditingController(text: data?['instruction']);
+    final instructionCtrl = TextEditingController(text: data?['instruction']);
     final typeCtrl = TextEditingController(text: data?['type'] ?? 'text');
     final prizeCtrl = TextEditingController(
-        text: data?['prize']?.toString() ?? '0');
+      text: data?['prize']?.toString() ?? '0',
+    );
     List<dynamic> linkedHints = List.from(data?['linkedHints'] ?? []);
 
     showDialog(
@@ -644,7 +834,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       controller: codeCtrl,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
-                          labelText: 'Código (Senha/Resposta)'),
+                        labelText: 'Código (Senha/Resposta)',
+                      ),
                     ),
                     TextField(
                       controller: instructionCtrl,
@@ -656,33 +847,47 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       controller: typeCtrl,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
-                          labelText: 'Tipo (text, gps, qrcode)'),
+                        labelText: 'Tipo (text, gps, qrcode)',
+                      ),
                     ),
                     TextField(
                       controller: prizeCtrl,
                       style: const TextStyle(color: Colors.white),
-                      decoration:
-                          const InputDecoration(labelText: 'Prêmio (R\$)'),
+                      decoration: const InputDecoration(
+                        labelText: 'Prêmio (R\$)',
+                      ),
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 16),
                     const Text(
                       'Dicas Vinculadas (Hints Pool)',
                       style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     FutureBuilder<ParseResponse>(
-                      future: QueryBuilder<ParseObject>(ParseObject('Hint')).query(),
+                      future: QueryBuilder<ParseObject>(
+                        ParseObject('Hint'),
+                      ).query(),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const CircularProgressIndicator();
                         }
-                        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null) {
-                          return const Text('Nenhuma dica no pool.', style: TextStyle(color: Colors.white));
+                        if (snapshot.hasError ||
+                            !snapshot.hasData ||
+                            !snapshot.data!.success ||
+                            snapshot.data!.results == null) {
+                          return const Text(
+                            'Nenhuma dica no pool.',
+                            style: TextStyle(color: Colors.white),
+                          );
                         }
 
-                        final allHints = snapshot.data!.results as List<ParseObject>;
+                        final allHints =
+                            snapshot.data!.results as List<ParseObject>;
 
                         return Column(
                           children: allHints.map((doc) {
@@ -729,17 +934,21 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     };
                     try {
                       if (docId == null) {
-                        ParseCloudFunction('createOrUpdateEnigma').execute(parameters: {
-                          'eventId': eventId,
-                          'phaseId': phaseId,
-                          'data': newData
-                        });
+                        ParseCloudFunction('createOrUpdateEnigma').execute(
+                          parameters: {
+                            'eventId': eventId,
+                            'phaseId': phaseId,
+                            'data': newData,
+                          },
+                        );
                       } else {
-                        ParseCloudFunction('createOrUpdateEnigma').execute(parameters: {
-                          'eventId': eventId,
-                          'enigmaId': docId,
-                          'data': newData
-                        });
+                        ParseCloudFunction('createOrUpdateEnigma').execute(
+                          parameters: {
+                            'eventId': eventId,
+                            'enigmaId': docId,
+                            'data': newData,
+                          },
+                        );
                       }
                       if (context.mounted) {
                         Navigator.pop(context);

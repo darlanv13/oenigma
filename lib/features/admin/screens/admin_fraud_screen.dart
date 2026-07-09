@@ -21,10 +21,11 @@ class _AdminFraudScreenState extends State<AdminFraudScreen> {
 
   void _loadFraudLogs() {
     setState(() {
-      _fraudLogsFuture = (QueryBuilder<ParseObject>(ParseObject('FraudLog'))
-            ..orderByDescending('createdAt')
-            ..setLimit(50))
-          .query();
+      _fraudLogsFuture =
+          (QueryBuilder<ParseObject>(ParseObject('FraudLog'))
+                ..orderByDescending('createdAt')
+                ..setLimit(50))
+              .query();
     });
   }
 
@@ -57,7 +58,10 @@ class _AdminFraudScreenState extends State<AdminFraudScreen> {
                   ),
                 );
               }
-              if (!snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
+              if (!snapshot.hasData ||
+                  !snapshot.data!.success ||
+                  snapshot.data!.results == null ||
+                  snapshot.data!.results!.isEmpty) {
                 return const Center(
                   child: Text(
                     'Nenhum log de fraude encontrado. Tudo tranquilo!',
@@ -72,8 +76,10 @@ class _AdminFraudScreenState extends State<AdminFraudScreen> {
                 itemCount: logs.length,
                 itemBuilder: (context, index) {
                   final log = logs[index];
-                  final objectId = log.get<String>('objectId') ?? 'Desconhecido';
-                  final reason = log.get<String>('reason') ?? 'Motivo desconhecido';
+                  final objectId =
+                      log.get<String>('objectId') ?? 'Desconhecido';
+                  final reason =
+                      log.get<String>('reason') ?? 'Motivo desconhecido';
                   final eventId = log.get<String>('eventId') ?? '';
                   final createdAt = log.createdAt;
                   final dateStr = (createdAt != null
@@ -84,7 +90,8 @@ class _AdminFraudScreenState extends State<AdminFraudScreen> {
                     color: cardColor,
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
-                      leading: const FaIcon(FontAwesomeIcons.triangleExclamation,
+                      leading: const FaIcon(
+                        FontAwesomeIcons.triangleExclamation,
                         color: Colors.redAccent,
                         size: 40,
                       ),
@@ -121,15 +128,41 @@ class _AdminFraudScreenState extends State<AdminFraudScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           TextButton.icon(
-                            icon: const FaIcon(FontAwesomeIcons.ban,
+                            icon: const FaIcon(
+                              FontAwesomeIcons.ban,
                               color: Colors.red,
                             ),
                             label: const Text(
                               'Banir',
                               style: TextStyle(color: Colors.red),
                             ),
-                            onPressed: () {
-                              // Implement Ban logic (update user custom claims or user doc)
+                            onPressed: () async {
+                              try {
+                                final response = await ParseCloudFunction(
+                                  'toggleUserBan',
+                                ).execute(parameters: {'objectId': objectId});
+                                if (!response.success)
+                                  throw response.error ?? ParseError();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Status de banimento alternado com sucesso.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Erro ao atualizar banimento: \$e',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
                             },
                           ),
                         ],
