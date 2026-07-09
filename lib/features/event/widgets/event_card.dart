@@ -173,13 +173,15 @@ class _EventCardState extends State<EventCard> {
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const FaIcon(FontAwesomeIcons.calendarDay,
+                                  const FaIcon(FontAwesomeIcons.locationDot,
                                     color: secondaryTextColor,
                                     size: 12,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    _formatDate(widget.event.startDate),
+                                    widget.event.location.isNotEmpty && widget.event.location != 'Local não definido'
+                                        ? widget.event.location
+                                        : _formatDate(widget.event.startDate),
                                     style: const TextStyle(
                                       color: secondaryTextColor,
                                       fontSize: 12,
@@ -209,9 +211,11 @@ class _EventCardState extends State<EventCard> {
                             ),
                           ),
                           Text(
-                            "R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}",
-                            style: const TextStyle(
-                              color: textColor,
+                            widget.event.price == 0
+                                ? "Grátis"
+                                : "R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}",
+                            style: TextStyle(
+                              color: widget.event.price == 0 ? Colors.green : textColor,
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),

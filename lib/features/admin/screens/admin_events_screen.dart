@@ -243,6 +243,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final orderCtrl = TextEditingController(
       text: data?['order']?.toString() ?? '1',
     );
+    final locationCtrl = TextEditingController(text: data?['location']);
     final iconCtrl = TextEditingController(text: data?['icon']);
 
     showDialog(
@@ -280,6 +281,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(labelText: 'Ordem'),
                   keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: locationCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(labelText: 'Local do Evento (Cidade) *'),
                 ),
                 TextField(
                   controller: iconCtrl,
@@ -322,12 +328,22 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
+                if (locationCtrl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('O local do evento é obrigatório.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
                 final newData = {
                   'title': titleCtrl.text,
                   'description': descCtrl.text,
                   'prizePool': num.tryParse(prizeCtrl.text) ?? 0,
                   'order': int.tryParse(orderCtrl.text) ?? 1,
                   'icon': iconCtrl.text,
+                  'location': locationCtrl.text.trim(),
                   'eventType': selectedEventType,
                   'status': data?['status'] ?? 'draft',
                 };
