@@ -127,7 +127,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           style: TextStyle(color: primaryAmber),
         ),
         content: Text(
-          'Confirma a sua inscrição no evento "${widget.event.name}" pelo valor de R\$ ${widget.event.price.toStringAsFixed(2)}?',
+          'Confirma a sua inscrição no evento "${widget.event.name}"?',
         ),
         actions: [
           TextButton(
@@ -425,7 +425,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           _buildInfoPill(
             FontAwesomeIcons.coins,
             'Inscrição',
-            'R\$ ${widget.event.price.toStringAsFixed(2)}',
+            'Grátis',
           ),
         ],
       ),
@@ -614,7 +614,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           label: Text(
             _isSubscribed
                 ? 'Jogar'
-                : 'Inscreva-se (R\$ ${widget.event.price.toStringAsFixed(2)})',
+                : 'Inscreva-se Grátis',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
