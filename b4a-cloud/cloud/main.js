@@ -166,15 +166,7 @@ Parse.Cloud.define("subscribeToEvent", async (request) => {
     const query = new Parse.Query(Event);
     const event = await query.get(eventId, { useMasterKey: true });
 
-    const price = event.get("price") || 0.0;
-    const balance = user.get("balance") || 0.0;
-
-    if (balance < price) {
-      throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "saldo insuficiente");
-    }
-
-    // Deduct price
-    user.set("balance", balance - price);
+    // Ingress is 100% free - No price deduction or balance checks
 
     // Update events map
     let userEvents = user.get("events") || {};
