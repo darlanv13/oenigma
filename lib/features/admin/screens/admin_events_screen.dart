@@ -249,128 +249,251 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: darkBackground,
-          title: Text(
-            docId == null ? 'Novo Evento' : 'Editar Evento',
-            style: const TextStyle(color: Colors.white),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Título'),
-                ),
-                TextField(
-                  controller: descCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Descrição'),
-                  maxLines: 3,
-                ),
-                TextField(
-                  controller: prizeCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Prêmio (R\$)'),
-                  keyboardType: TextInputType.number,
-                ),
-                TextField(
-                  controller: orderCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Ordem'),
-                  keyboardType: TextInputType.number,
-                ),
-                TextField(
-                  controller: locationCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'Local do Evento (Cidade) *',
-                  ),
-                ),
-                TextField(
-                  controller: iconCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'URL do Ícone (Lottie/Image)',
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: selectedEventType,
-                  dropdownColor: cardColor,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'Tipo de Evento',
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'classic',
-                      child: Text('Classic (A Jornada Estratégica)'),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              backgroundColor: darkBackground,
+              insetPadding: const EdgeInsets.all(16),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.9,
+                constraints: const BoxConstraints(maxWidth: 600),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      docId == null ? 'Novo Evento' : 'Editar Evento',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    DropdownMenuItem(
-                      value: 'find_and_win',
-                      child: Text('Find & Win (Recompensa Instantânea)'),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            TextField(
+                              controller: titleCtrl,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                labelText: 'Título',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: descCtrl,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                labelText: 'Descrição',
+                              ),
+                              maxLines: 3,
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: prizeCtrl,
+                                    style: const TextStyle(color: Colors.white),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Prêmio (R\$)',
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextField(
+                                    controller: orderCtrl,
+                                    style: const TextStyle(color: Colors.white),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Ordem',
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: locationCtrl,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                labelText: 'Local do Evento (Cidade) *',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: iconCtrl,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                labelText: 'URL do Ícone (Lottie/Image)',
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            DropdownButtonFormField<String>(
+                              value: selectedEventType,
+                              dropdownColor: cardColor,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                labelText: 'Tipo de Evento',
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'classic',
+                                  child: Text(
+                                    'Classic (A Jornada Estratégica)',
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'find_and_win',
+                                  child: Text(
+                                    'Find & Win (Recompensa Instantânea)',
+                                  ),
+                                ),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() {
+                                    selectedEventType = val;
+                                  });
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: selectedEventType == 'classic'
+                                    ? Colors.blue.withValues(alpha: 0.1)
+                                    : Colors.orange.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: selectedEventType == 'classic'
+                                      ? Colors.blue
+                                      : Colors.orange,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      FaIcon(
+                                        FontAwesomeIcons.circleInfo,
+                                        color: selectedEventType == 'classic'
+                                            ? Colors.blue
+                                            : Colors.orange,
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        selectedEventType == 'classic'
+                                            ? 'Modo Clássico'
+                                            : 'Modo Find & Win',
+                                        style: TextStyle(
+                                          color: selectedEventType == 'classic'
+                                              ? Colors.blue
+                                              : Colors.orange,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    selectedEventType == 'classic'
+                                        ? 'O jogador precisa concluir todas as fases e enigmas (jornada estruturada). O prêmio configurado neste formulário será entregue apenas no final de toda a jornada.'
+                                        : 'Fases são ignoradas pelo jogador (recompensa instantânea). O prêmio é entregue na hora ao resolver cada enigma. O valor do "Prêmio (R\$)" acima funciona apenas como informativo do total estimado da campanha.',
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancelar'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryAmber,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                          ),
+                          onPressed: () async {
+                            if (locationCtrl.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'O local do evento é obrigatório.',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                              return;
+                            }
+                            final newData = {
+                              'title': titleCtrl.text,
+                              'description': descCtrl.text,
+                              'prizePool': num.tryParse(prizeCtrl.text) ?? 0,
+                              'order': int.tryParse(orderCtrl.text) ?? 1,
+                              'icon': iconCtrl.text,
+                              'location': locationCtrl.text.trim(),
+                              'eventType': selectedEventType,
+                              'status': data?['status'] ?? 'draft',
+                            };
+                            try {
+                              if (docId == null) {
+                                final response = await ParseCloudFunction(
+                                  'createOrUpdateEvent',
+                                ).execute(parameters: {'data': newData});
+                                if (!response.success)
+                                  throw response.error ?? ParseError();
+                              } else {
+                                await ParseCloudFunction(
+                                  'createOrUpdateEvent',
+                                ).execute(
+                                  parameters: {
+                                    'eventId': docId,
+                                    'data': newData,
+                                  },
+                                );
+                              }
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                _loadEvents();
+                              }
+                            } catch (e) {
+                              debugPrint('Erro ao salvar evento: $e');
+                            }
+                          },
+                          child: const Text('Salvar'),
+                        ),
+                      ],
                     ),
                   ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      selectedEventType = val;
-                    }
-                  },
                 ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (locationCtrl.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('O local do evento é obrigatório.'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                  return;
-                }
-                final newData = {
-                  'title': titleCtrl.text,
-                  'description': descCtrl.text,
-                  'prizePool': num.tryParse(prizeCtrl.text) ?? 0,
-                  'order': int.tryParse(orderCtrl.text) ?? 1,
-                  'icon': iconCtrl.text,
-                  'location': locationCtrl.text.trim(),
-                  'eventType': selectedEventType,
-                  'status': data?['status'] ?? 'draft',
-                };
-                try {
-                  if (docId == null) {
-                    final response = await ParseCloudFunction(
-                      'createOrUpdateEvent',
-                    ).execute(parameters: {'data': newData});
-                    if (!response.success) throw response.error ?? ParseError();
-                  } else {
-                    await ParseCloudFunction(
-                      'createOrUpdateEvent',
-                    ).execute(parameters: {'eventId': docId, 'data': newData});
-                  }
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    _loadEvents();
-                  }
-                } catch (e) {
-                  debugPrint('Erro ao salvar evento: $e');
-                }
-              },
-              child: const Text('Salvar'),
-            ),
-          ],
+              ),
+            );
+          },
         );
       },
     );
