@@ -3,7 +3,8 @@ import 'dart:async';
 
 class AuthRepository {
   // We use a StreamController to broadcast auth state changes manually in Parse
-  final StreamController<ParseUser?> _authStateController = StreamController<ParseUser?>.broadcast();
+  final StreamController<ParseUser?> _authStateController =
+      StreamController<ParseUser?>.broadcast();
 
   Stream<ParseUser?> get authStateChanges => _authStateController.stream;
 
@@ -17,7 +18,9 @@ class AuthRepository {
   Future<void> _initCurrentUser() async {
     final user = await ParseUser.currentUser() as ParseUser?;
     if (user != null) {
-      final response = await ParseUser.getCurrentUserFromServer(user.sessionToken!);
+      final response = await ParseUser.getCurrentUserFromServer(
+        user.sessionToken!,
+      );
       if (response?.success ?? false) {
         _currentUser = response!.result;
       } else {
@@ -55,7 +58,10 @@ class AuthRepository {
       final response = await user.login();
       if (response.success) {
         final ParseUser loggedUser = response.result;
-        if (loggedUser.get<String>('role') == 'admin') {
+        final isAdmin = loggedUser.get<bool>('isAdmin') ?? false;
+        final role = loggedUser.get<String>('role') ?? 'player';
+
+        if (role == 'admin' || isAdmin) {
           _currentUser = loggedUser;
           _authStateController.add(_currentUser);
           return null;
@@ -106,9 +112,9 @@ class AuthRepository {
       final ParseUser user = ParseUser(null, null, email.trim());
       final response = await user.requestPasswordReset();
       if (response.success) {
-         return null;
+        return null;
       } else {
-         return response.error?.message ?? "Ocorreu um erro desconhecido.";
+        return response.error?.message ?? "Ocorreu um erro desconhecido.";
       }
     } catch (e) {
       return e.toString();
