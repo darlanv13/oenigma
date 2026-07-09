@@ -97,7 +97,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   final eventId = event.objectId!;
                   final title = event.get<String>('title') ?? 'Sem Título';
                   final status = event.get<String>('status') ?? 'draft';
-                  final isPublished = status == 'published';
+                  final isPublished = status == 'open';
                   final prizePool = event.get<num>('prizePool') ?? 0;
 
                   return Card(
@@ -329,7 +329,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }
 
   void _toggleEventStatus(String eventId, String currentStatus) async {
-    final newStatus = currentStatus == 'published' ? 'draft' : 'published';
+    final newStatus = currentStatus == 'open' ? 'draft' : 'open';
     try {
       await ParseCloudFunction('createOrUpdateEvent').execute(
         parameters: {
