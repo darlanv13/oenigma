@@ -415,7 +415,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
             };
           } else {
              // Finished event
-             let rawPrize = eventObj.get("prize") || "0";
+             let rawPrize = eventObj.get("prizePool") || eventObj.get("prize") || "0";
              if (typeof rawPrize === 'string') {
                rawPrize = rawPrize.replace('R$', '').replace(',', '.').trim();
              }

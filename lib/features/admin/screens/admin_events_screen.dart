@@ -236,6 +236,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }) {
     final titleCtrl = TextEditingController(text: data?['title']);
     final descCtrl = TextEditingController(text: data?['description']);
+    String selectedEventType = data?['eventType'] ?? 'classic';
     final prizeCtrl = TextEditingController(
       text: data?['prizePool']?.toString(),
     );
@@ -287,6 +288,30 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     labelText: 'URL do Ícone (Lottie/Image)',
                   ),
                 ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedEventType,
+                  dropdownColor: cardColor,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo de Evento',
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'classic',
+                      child: Text('Classic (A Jornada Estratégica)'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'find_and_win',
+                      child: Text('Find & Win (Recompensa Instantânea)'),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      selectedEventType = val;
+                    }
+                  },
+                ),
               ],
             ),
           ),
@@ -303,6 +328,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   'prizePool': num.tryParse(prizeCtrl.text) ?? 0,
                   'order': int.tryParse(orderCtrl.text) ?? 1,
                   'icon': iconCtrl.text,
+                  'eventType': selectedEventType,
                   'status': data?['status'] ?? 'draft',
                 };
                 try {
