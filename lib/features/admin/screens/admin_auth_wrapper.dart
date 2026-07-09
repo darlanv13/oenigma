@@ -5,6 +5,9 @@ import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/features/admin/screens/main_admin_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+
+import '../../auth/screens/login_screen.dart';
 
 class AdminAuthWrapper extends ConsumerWidget {
   const AdminAuthWrapper({super.key});
@@ -45,7 +48,8 @@ class AdminAuthWrapper extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const FaIcon(FontAwesomeIcons.shieldHalved,
+            const FaIcon(
+              FontAwesomeIcons.shieldHalved,
               size: 80,
               color: Colors.redAccent,
             ),
@@ -76,6 +80,25 @@ class AdminAuthWrapper extends ConsumerWidget {
                 backgroundColor: primaryAmber,
                 foregroundColor: Colors.black,
               ),
+            ),
+
+            ElevatedButton(
+              onPressed: () async {
+                // 1. Pega o usuário logado atualmente
+                final currentUser = await ParseUser.currentUser() as ParseUser?;
+
+                // 2. Faz o logout para limpar o cache do celular
+                if (currentUser != null) {
+                  await currentUser.logout();
+                }
+
+                // 3. Redireciona o usuário de volta para a tela de Login
+                // (Dependendo de como configurou o seu GoRouter ou Navigator, ajuste a rota abaixo)
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              },
+              child: const Text("Sair e Fazer Login"),
             ),
           ],
         ),

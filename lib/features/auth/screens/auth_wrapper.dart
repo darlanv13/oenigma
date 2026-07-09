@@ -9,7 +9,6 @@ import 'package:oenigma/features/admin/screens/admin_auth_wrapper.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class AuthWrapper extends ConsumerWidget {
   const AuthWrapper({super.key});
 
@@ -22,20 +21,20 @@ class AuthWrapper extends ConsumerWidget {
         if (user != null) {
           final isAdmin = user.get<bool>('isAdmin') ?? false;
 
-              if (isAdmin) {
-                // Determine if device is conceptually a Desktop/Web screen
-                final double screenWidth = MediaQuery.of(context).size.width;
-                final bool isDesktop = kIsWeb || screenWidth > 800;
+          if (isAdmin) {
+            // Determine if device is conceptually a Desktop/Web screen
+            final double screenWidth = MediaQuery.of(context).size.width;
+            final bool isDesktop = kIsWeb || screenWidth > 800;
 
-                if (isDesktop) {
-                  return const AdminAuthWrapper();
-                } else {
-                  return _buildAdminMobileBlockedScreen(context);
-                }
-              }
+            if (isDesktop) {
+              return const AdminAuthWrapper();
+            } else {
+              return _buildAdminMobileBlockedScreen(context);
+            }
+          }
 
-              // Regular users go to the game
-              return const MainNavigationScreen();
+          // Regular users go to the game
+          return const MainNavigationScreen();
         } else {
           return const LoginScreen();
         }
@@ -60,17 +59,29 @@ class AuthWrapper extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const FaIcon(FontAwesomeIcons.desktop, size: 80, color: primaryAmber),
+              const FaIcon(
+                FontAwesomeIcons.desktop,
+                size: 80,
+                color: primaryAmber,
+              ),
               const SizedBox(height: 24),
               const Text(
                 'Acesso Restrito',
-                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
               const Text(
                 'Você é um Administrador. Para gerenciar o O Enigma com eficiência, o Painel Admin deve ser acessado por um computador/Desktop.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: secondaryTextColor, fontSize: 16, height: 1.5),
+                style: TextStyle(
+                  color: secondaryTextColor,
+                  fontSize: 16,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 32),
               ElevatedButton.icon(
@@ -83,7 +94,10 @@ class AuthWrapper extends ConsumerWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryAmber,
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ],
