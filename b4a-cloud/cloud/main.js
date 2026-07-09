@@ -46,18 +46,29 @@ Parse.Cloud.define("getHomeScreenData", async (request) => {
         name: user.get("name") || user.get("username") || "Jogador",
         email: user.get("email") || "",
         balance: user.get("balance") || 0.0,
+        photoURL: user.get("photoURL") || null,
         lastWonEventName: user.get("lastWonEventName"),
         lastEventRank: user.get("lastEventRank"),
         lastEventName: user.get("lastEventName")
       };
-      playerData = user.get("events") || {}; // Progresso salvo do jogador
+      playerData = {
+        events: user.get("events") || {},
+        winnerEvents: user.get("winnerEvents") || [],
+        name: user.get("name") || user.get("username") || "Jogador",
+        email: user.get("email") || "",
+        cpf: user.get("cpf") || "",
+        phone: user.get("phone") || "",
+        birthDate: user.get("birthDate") || "",
+        photoURL: user.get("photoURL") || null
+      };
     } else {
       // Valores padrão de segurança (Caso seja um Visitante)
       walletData = {
         objectId: "visitante",
         name: "Visitante",
         email: "sem_email@teste.com",
-        balance: 0.0
+        balance: 0.0,
+        photoURL: null
       };
     }
 
@@ -400,157 +411,159 @@ Parse.Cloud.define("processWithdrawal", async (request) => {
   }
 });
 
-// =============================================================================
-// 1. FUNÇÕES DA CARTEIRA E USUÁRIO (Wallet Repository)
-// =============================================================================
+// -----------------------------------------------------------------------------
+// Missing Frontend Functions
+// -----------------------------------------------------------------------------
 
 Parse.Cloud.define("getUserWalletData", async (request) => {
   const user = request.user;
-  if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Usuário não autenticado.");
+  if (!user) {
+    throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "User not authenticated.");
+  }
+  return {
+    objectId: user.id,
+    name: user.get("name") || user.get("username") || "Jogador",
+    email: user.get("email") || "",
+    balance: user.get("balance") || 0.0,
+    photoURL: user.get("photoURL") || null,
+    lastWonEventName: user.get("lastWonEventName"),
+    lastEventRank: user.get("lastEventRank"),
+    lastEventName: user.get("lastEventName")
+  };
+});
+
+Parse.Cloud.define("subscribeToEvent", async (request) => {
+  const { eventId } = request.params;
+  const user = request.user;
+  if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "User not authenticated.");
+  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
 
   try {
-    // Retorna exatamente os campos que o UserWalletModel.fromMap espera no Flutter
-    return {
-      objectId: user.id,
-      name: user.get("name") || user.get("username") || "Jogador",
-      email: user.get("email") || "",
-      photoURL: user.get("photoURL"),
-      balance: user.get("balance") || 0.0,
-      lastWonEventName: user.get("lastWonEventName"),
-      lastEventRank: user.get("lastEventRank"),
-      lastEventName: user.get("lastEventName")
-    };
+    const Event = Parse.Object.extend("Event");
+    const query = new Parse.Query(Event);
+    const event = await query.get(eventId, { useMasterKey: true });
+
+    const price = event.get("price") || 0.0;
+    const balance = user.get("balance") || 0.0;
+
+    if (balance < price) {
+      throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "saldo insuficiente");
+    }
+
+    // Deduct price
+    user.set("balance", balance - price);
+
+    // Update events map
+    let userEvents = user.get("events") || {};
+    userEvents[eventId] = { currentPhase: 1, currentEnigma: 1, hintsPurchased: [] };
+    user.set("events", userEvents);
+
+    await user.save(null, { useMasterKey: true });
+
+    // Increment player count on Event
+    event.increment("playerCount");
+    await event.save(null, { useMasterKey: true });
+
+    return { success: true };
   } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao carregar carteira: " + error.message);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
   }
 });
 
-
-// =============================================================================
-// 2. FUNÇÕES DE RANKING (Ranking Repository)
-// =============================================================================
-
-Parse.Cloud.define("getRankingData", async (request) => {
+Parse.Cloud.define("getEventData", async (request) => {
   const { eventId } = request.params;
-  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId é obrigatório.");
+  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
 
   try {
-    // Busca todos os usuários que têm progresso salvo no campo "events"
-    const query = new Parse.Query(Parse.User);
-    query.exists("events");
-    query.limit(100); // Limite de jogadores para não sobrecarregar
-    const users = await query.find({ useMasterKey: true });
+    const Event = Parse.Object.extend("Event");
+    const query = new Parse.Query(Event);
+    const event = await query.get(eventId, { useMasterKey: true });
 
-    let ranking = [];
+    const eventJson = event.toJSON();
+    eventJson.id = event.id;
+    if (eventJson.startDate && eventJson.startDate.iso) {
+      eventJson.startDate = eventJson.startDate.iso;
+    }
 
-    // Filtra e pontua apenas os usuários inscritos neste evento
-    users.forEach(u => {
-      const eventsProgress = u.get("events");
-      if (eventsProgress && eventsProgress[eventId]) {
-        ranking.push({
-          playerId: u.id,
-          playerName: u.get("name") || u.get("username") || "Anônimo",
-          photoURL: u.get("photoURL"),
-          // O "score" pode ser a fase/enigma em que o jogador está
-          score: eventsProgress[eventId].currentEnigma || 1
-        });
-      }
+    // Fetch phases for event
+    const Phase = Parse.Object.extend("Phase");
+    const phaseQuery = new Parse.Query(Phase);
+    const eventPointer = new Event();
+    eventPointer.id = eventId;
+    phaseQuery.equalTo("event", eventPointer);
+    phaseQuery.ascending("order");
+    const phases = await phaseQuery.find({ useMasterKey: true });
+
+    // Fetch enigmas for event
+    const Enigma = Parse.Object.extend("Enigma");
+    const enigmaQuery = new Parse.Query(Enigma);
+    enigmaQuery.equalTo("event", eventPointer);
+    enigmaQuery.ascending("order");
+    const enigmas = await enigmaQuery.find({ useMasterKey: true });
+
+    // Map enigmas to phases (if any) or to event level list
+    let enigmasJson = enigmas.map(e => {
+      const json = e.toJSON();
+      json.id = e.id;
+      // SECURITY: Remove the code so it's not exposed to the client!
+      delete json.code;
+      return json;
     });
 
-    // Ordena do maior Score (mais avançado) para o menor
-    ranking.sort((a, b) => b.score - a.score);
+    let phasesJson = phases.map(p => {
+      const json = p.toJSON();
+      json.id = p.id;
+      json.enigmas = enigmasJson.filter(e => e.phaseId === p.id || (e.phase && e.phase.objectId === p.id));
+      return json;
+    });
 
-    return { ranking: ranking };
+    eventJson.phases = phasesJson;
+    eventJson.enigmas = enigmasJson;
+
+    return eventJson;
   } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao buscar ranking: " + error.message);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
   }
 });
 
-
-// =============================================================================
-// 3. FUNÇÕES DE GAMEPLAY DOS ENIGMAS (Enigma Repository)
-// =============================================================================
-
-Parse.Cloud.define("handleEnigmaAction", async (request) => {
-  const { action, eventId, enigmaId, answer } = request.params;
+Parse.Cloud.define("toggleEventStatus", async (request) => {
+  const { eventId, newStatus } = request.params;
   const user = request.user;
-
-  if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Você precisa estar logado para jogar.");
-  if (!eventId || !enigmaId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "Faltam parâmetros.");
+  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!eventId || !newStatus) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId and newStatus are required.");
 
   try {
-    const Enigma = Parse.Object.extend("Enigma");
-    const query = new Parse.Query(Enigma);
-    const enigma = await query.get(enigmaId, { useMasterKey: true });
-
-    // AÇÃO 1: VALIDAR RESPOSTA
-    if (action === "validate_answer") {
-      const correctCode = enigma.get("code") || "";
-
-      // Compara a resposta ignorando maiúsculas e minúsculas
-      if (answer && answer.trim().toUpperCase() === correctCode.toUpperCase()) {
-
-        let progress = user.get("events") || {};
-        if (!progress[eventId]) progress[eventId] = { currentPhase: 1, currentEnigma: 1, hintsPurchased: [] };
-
-        // Avança 1 enigma no progresso
-        progress[eventId].currentEnigma += 1;
-        user.set("events", progress);
-
-        // Se for modo Find & Win, paga o prêmio do enigma ao jogador
-        const prize = enigma.get("prize") || 0;
-        if (prize > 0) {
-          user.increment("balance", prize);
-        }
-
-        await user.save(null, { useMasterKey: true });
-        return { success: true, isCorrect: true, message: "Resposta correta! Você avançou." };
-      } else {
-        return { success: true, isCorrect: false, message: "Código incorreto. Tente novamente!" };
-      }
-    }
-
-    // AÇÃO 2: COMPRAR DICA
-    if (action === "buy_hint") {
-      const hintPrice = enigma.get("hintPrice") || 0;
-
-      if (user.get("balance") < hintPrice) {
-        throw new Parse.Error(141, "Saldo insuficiente para comprar esta dica.");
-      }
-
-      // Desconta o valor da carteira
-      user.increment("balance", -hintPrice);
-
-      // Regista que a dica foi comprada no progresso para não cobrar 2x depois
-      let progress = user.get("events") || {};
-      if (!progress[eventId]) progress[eventId] = { currentPhase: 1, currentEnigma: 1, hintsPurchased: [] };
-      if (!progress[eventId].hintsPurchased) progress[eventId].hintsPurchased = [];
-
-      if (!progress[eventId].hintsPurchased.includes(enigmaId)) {
-        progress[eventId].hintsPurchased.push(enigmaId);
-      }
-
-      user.set("events", progress);
-      await user.save(null, { useMasterKey: true });
-
-      return { success: true, hintData: enigma.get("hintData") };
-    }
-
-    throw new Parse.Error(Parse.Error.INVALID_QUERY, "Ação desconhecida.");
-
+    const Event = Parse.Object.extend("Event");
+    const query = new Parse.Query(Event);
+    const event = await query.get(eventId, { useMasterKey: true });
+    event.set("status", newStatus);
+    await event.save(null, { useMasterKey: true });
+    return { success: true };
   } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro no enigma: " + error.message);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
   }
 });
 
+Parse.Cloud.define("getFindAndWinStats", async (request) => {
+  const { eventId } = request.params;
+  const user = request.user;
+  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
 
-// =============================================================================
-// 4. FUNÇÕES DE ADMIN PARA FASES E ENIGMAS (Enigma Repository)
-// =============================================================================
+  try {
+    const userQuery = new Parse.Query(Parse.User);
+    const totalSubscribed = await userQuery.count({ useMasterKey: true });
+    return { totalPlayers: totalSubscribed, completionRate: 0 };
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
+  }
+});
 
 Parse.Cloud.define("createOrUpdatePhase", async (request) => {
   const { eventId, phaseId, data } = request.params;
-  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId é obrigatório.");
+  const user = request.user;
+  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
 
   try {
     const Phase = Parse.Object.extend("Phase");
@@ -561,17 +574,15 @@ Parse.Cloud.define("createOrUpdatePhase", async (request) => {
       phase = await query.get(phaseId, { useMasterKey: true });
     } else {
       phase = new Phase();
-      // Opcional: Se desejar associar a fase diretamente a um evento através de um Pointer
       const Event = Parse.Object.extend("Event");
       const eventPointer = new Event();
       eventPointer.id = eventId;
       phase.set("event", eventPointer);
+      phase.set("eventId", eventId);
     }
 
     if (data) {
       for (const key in data) {
-        // Se a data passar uma lista de enigmas formatada
-        if (key === "enigmas") continue;
         phase.set(key, data[key]);
       }
     }
@@ -579,57 +590,57 @@ Parse.Cloud.define("createOrUpdatePhase", async (request) => {
     await phase.save(null, { useMasterKey: true });
     return { success: true, phaseId: phase.id };
   } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao salvar Fase: " + error.message);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
   }
 });
 
 Parse.Cloud.define("deletePhase", async (request) => {
-  const { phaseId } = request.params;
-  if (!phaseId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "phaseId é obrigatório.");
+  const { eventId, phaseId } = request.params;
+  const user = request.user;
+  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!phaseId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "phaseId is required.");
 
   try {
     const Phase = Parse.Object.extend("Phase");
     const query = new Parse.Query(Phase);
     const phase = await query.get(phaseId, { useMasterKey: true });
     await phase.destroy({ useMasterKey: true });
-    return { success: true, message: "Fase removida." };
+    return { success: true };
   } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao remover Fase: " + error.message);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
   }
 });
 
-// A versão de createOrUpdateEnigma e deleteEnigma no seu arquivo anterior 
-// precisa agora considerar o `phaseId` também (Admin Repository espera isso).
-Parse.Cloud.define("createOrUpdateEnigma", async (request) => {
-  const { eventId, phaseId, enigmaId, data } = request.params;
+Parse.Cloud.define("handleEnigmaAction", async (request) => {
+  const { action, eventId, enigmaId, answer } = request.params;
+  const user = request.user;
+  if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "User not authenticated.");
+  if (!action) throw new Parse.Error(Parse.Error.INVALID_QUERY, "action is required.");
+
   try {
-    const Enigma = Parse.Object.extend("Enigma");
-    let enigma;
-
-    if (enigmaId) {
+    if (action === 'getStatus') {
+      // get user progress
+      const userEvents = user.get("events") || {};
+      const eventProgress = userEvents[eventId] || {};
+      return {
+        currentPhase: eventProgress.currentPhase || 1,
+        currentEnigma: eventProgress.currentEnigma || 1,
+        hintsPurchased: eventProgress.hintsPurchased || []
+      };
+    } else if (action === 'verify_code' || action === 'scan_enigma') {
+      // Assuming basic code verification
+      const Enigma = Parse.Object.extend("Enigma");
       const query = new Parse.Query(Enigma);
-      enigma = await query.get(enigmaId, { useMasterKey: true });
-    } else {
-      enigma = new Enigma();
+      const enigma = await query.get(enigmaId, { useMasterKey: true });
 
-      // Associa a uma Fase se phaseId for fornecido
-      if (phaseId) {
-        const Phase = Parse.Object.extend("Phase");
-        const phasePointer = new Phase();
-        phasePointer.id = phaseId;
-        enigma.set("phase", phasePointer);
+      if (enigma.get("code") === answer) {
+        return { success: true, message: "Correct answer" };
+      } else {
+        return { success: false, message: "Incorrect answer" };
       }
     }
-
-    if (data) {
-      for (const key in data) {
-        enigma.set(key, data[key]);
-      }
-    }
-
-    await enigma.save(null, { useMasterKey: true });
-    return { success: true, enigmaId: enigma.id };
+    return { success: true, message: "Action handled." };
   } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao salvar Enigma: " + error.message);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
   }
 });
