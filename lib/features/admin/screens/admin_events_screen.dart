@@ -377,222 +377,240 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                StatefulBuilder(
-                  builder: (context, setStatePhases) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            _showPhaseEditDialog(
-                              context,
-                              eventId,
-                              onSaved: () {
-                                setStatePhases(() {});
-                              },
-                            );
-                          },
-                          icon: const FaIcon(FontAwesomeIcons.plus, size: 16),
-                          label: const Text('Nova Fase'),
-                        ),
-                        const SizedBox(height: 16),
-                        Expanded(
-                          child: FutureBuilder<ParseResponse>(
-                            future:
-                                (QueryBuilder<ParseObject>(ParseObject('Phase'))
-                                      ..whereEqualTo(
-                                        'event',
-                                        (ParseObject(
-                                          'Event',
-                                        )..objectId = eventId).toPointer(),
-                                      )
-                                      ..orderByAscending('order'))
-                                    .query(),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-                              if (snapshot.hasError ||
-                                  !snapshot.hasData ||
-                                  !snapshot.data!.success ||
-                                  snapshot.data!.results == null) {
-                                return const Center(
-                                  child: Text(
-                                    'Nenhuma fase cadastrada.',
-                                    style: TextStyle(color: secondaryTextColor),
-                                  ),
-                                );
-                              }
-
-                              final phases =
-                                  snapshot.data!.results as List<ParseObject>;
-
-                              return ListView.builder(
-                                itemCount: phases.length,
-                                itemBuilder: (context, index) {
-                                  final phase = phases[index];
-                                  final phaseId = phase.objectId!;
-                                  final order = phase.get<num>('order') ?? 0;
-                                  final isBlocked =
-                                      phase.get<bool>('isBlocked') ?? false;
-
-                                  return Card(
-                                    color: cardColor,
-                                    child: ExpansionTile(
-                                      title: Text(
-                                        'Fase $order',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      subtitle: Text(
-                                        isBlocked
-                                            ? 'Bloqueada'
-                                            : 'Desbloqueada',
-                                        style: TextStyle(
-                                          color: isBlocked
-                                              ? Colors.redAccent
-                                              : Colors.green,
-                                        ),
-                                      ),
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            TextButton.icon(
-                                              onPressed: () =>
-                                                  _showPhaseEditDialog(
-                                                    context,
-                                                    eventId,
-                                                    docId: phaseId,
-                                                    data: _parseObjectToMap(
-                                                      phase,
-                                                    ),
-                                                    onSaved: () {
-                                                      setStatePhases(() {});
-                                                    },
-                                                  ),
-                                              icon: const FaIcon(
-                                                FontAwesomeIcons.penToSquare,
-                                                size: 14,
-                                              ),
-                                              label: const Text('Editar'),
-                                            ),
-                                            TextButton.icon(
-                                              onPressed: () =>
-                                                  _showEnigmaEditDialog(
-                                                    context,
-                                                    eventId,
-                                                    phaseId,
-                                                  ),
-                                              icon: const FaIcon(
-                                                FontAwesomeIcons.plus,
-                                                size: 14,
-                                              ),
-                                              label: const Text('Novo Enigma'),
-                                            ),
-                                            TextButton.icon(
-                                              onPressed: () async {
-                                                bool confirm =
-                                                    await showDialog(
-                                                      context: context,
-                                                      builder: (ctx) => AlertDialog(
-                                                        backgroundColor:
-                                                            darkBackground,
-                                                        title: const Text(
-                                                          'Confirmar exclusão',
-                                                          style: TextStyle(
-                                                            color: Colors.white,
-                                                          ),
-                                                        ),
-                                                        content: const Text(
-                                                          'Deseja excluir esta fase e seus enigmas?',
-                                                          style: TextStyle(
-                                                            color:
-                                                                secondaryTextColor,
-                                                          ),
-                                                        ),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () =>
-                                                                Navigator.pop(
-                                                                  ctx,
-                                                                  false,
-                                                                ),
-                                                            child: const Text(
-                                                              'Cancelar',
-                                                            ),
-                                                          ),
-                                                          ElevatedButton(
-                                                            style: ElevatedButton.styleFrom(
-                                                              backgroundColor:
-                                                                  Colors
-                                                                      .redAccent,
-                                                            ),
-                                                            onPressed: () =>
-                                                                Navigator.pop(
-                                                                  ctx,
-                                                                  true,
-                                                                ),
-                                                            child: const Text(
-                                                              'Excluir',
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ) ??
-                                                    false;
-                                                if (confirm) {
-                                                  try {
-                                                    await ParseCloudFunction(
-                                                      'deletePhase',
-                                                    ).execute(
-                                                      parameters: {
-                                                        'eventId': eventId,
-                                                        'phaseId': phaseId,
-                                                      },
-                                                    );
-                                                    if (context.mounted) {
-                                                      setStatePhases(() {});
-                                                    }
-                                                  } catch (e) {
-                                                    debugPrint(
-                                                      'Erro ao excluir fase: \$e',
-                                                    );
-                                                  }
-                                                }
-                                              },
-                                              icon: const FaIcon(
-                                                FontAwesomeIcons.trash,
-                                                color: Colors.redAccent,
-                                                size: 14,
-                                              ),
-                                              label: const Text(
-                                                'Excluir',
-                                                style: TextStyle(
-                                                  color: Colors.redAccent,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        _buildEnigmasList(eventId, phaseId),
-                                      ],
-                                    ),
-                                  );
+                Expanded(
+                  child: StatefulBuilder(
+                    builder: (context, setStatePhases) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              _showPhaseEditDialog(
+                                context,
+                                eventId,
+                                onSaved: () {
+                                  setStatePhases(() {});
                                 },
                               );
                             },
+                            icon: const FaIcon(FontAwesomeIcons.plus, size: 16),
+                            label: const Text('Nova Fase'),
                           ),
-                        ),
-                      ],
-                    );
-                  },
+                          const SizedBox(height: 16),
+                          Expanded(
+                            child: FutureBuilder<ParseResponse>(
+                              future:
+                                  (QueryBuilder<ParseObject>(
+                                          ParseObject('Phase'),
+                                        )
+                                        ..whereEqualTo(
+                                          'event',
+                                          (ParseObject(
+                                            'Event',
+                                          )..objectId = eventId).toPointer(),
+                                        )
+                                        ..orderByAscending('order'))
+                                      .query(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                }
+                                if (snapshot.hasError ||
+                                    !snapshot.hasData ||
+                                    !snapshot.data!.success ||
+                                    snapshot.data!.results == null) {
+                                  return const Center(
+                                    child: Text(
+                                      'Nenhuma fase cadastrada.',
+                                      style: TextStyle(
+                                        color: secondaryTextColor,
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                final phases =
+                                    snapshot.data!.results as List<ParseObject>;
+
+                                return ListView.builder(
+                                  itemCount: phases.length,
+                                  itemBuilder: (context, index) {
+                                    final phase = phases[index];
+                                    final phaseId = phase.objectId!;
+                                    final order = phase.get<num>('order') ?? 0;
+                                    final isBlocked =
+                                        phase.get<bool>('isBlocked') ?? false;
+
+                                    return Card(
+                                      color: cardColor,
+                                      child: ExpansionTile(
+                                        title: Text(
+                                          'Fase $order',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        subtitle: Text(
+                                          isBlocked
+                                              ? 'Bloqueada'
+                                              : 'Desbloqueada',
+                                          style: TextStyle(
+                                            color: isBlocked
+                                                ? Colors.redAccent
+                                                : Colors.green,
+                                          ),
+                                        ),
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
+                                            children: [
+                                              TextButton.icon(
+                                                onPressed: () =>
+                                                    _showPhaseEditDialog(
+                                                      context,
+                                                      eventId,
+                                                      docId: phaseId,
+                                                      data: _parseObjectToMap(
+                                                        phase,
+                                                      ),
+                                                      onSaved: () {
+                                                        setStatePhases(() {});
+                                                      },
+                                                    ),
+                                                icon: const FaIcon(
+                                                  FontAwesomeIcons.penToSquare,
+                                                  size: 14,
+                                                ),
+                                                label: const Text('Editar'),
+                                              ),
+                                              TextButton.icon(
+                                                onPressed: () =>
+                                                    _showEnigmaEditDialog(
+                                                      context,
+                                                      eventId,
+                                                      phaseId,
+                                                      onSaved: () {
+                                                        setStatePhases(() {});
+                                                      },
+                                                    ),
+                                                icon: const FaIcon(
+                                                  FontAwesomeIcons.plus,
+                                                  size: 14,
+                                                ),
+                                                label: const Text(
+                                                  'Novo Enigma',
+                                                ),
+                                              ),
+                                              TextButton.icon(
+                                                onPressed: () async {
+                                                  bool confirm =
+                                                      await showDialog(
+                                                        context: context,
+                                                        builder: (ctx) => AlertDialog(
+                                                          backgroundColor:
+                                                              darkBackground,
+                                                          title: const Text(
+                                                            'Confirmar exclusão',
+                                                            style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                            ),
+                                                          ),
+                                                          content: const Text(
+                                                            'Deseja excluir esta fase e seus enigmas?',
+                                                            style: TextStyle(
+                                                              color:
+                                                                  secondaryTextColor,
+                                                            ),
+                                                          ),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                    ctx,
+                                                                    false,
+                                                                  ),
+                                                              child: const Text(
+                                                                'Cancelar',
+                                                              ),
+                                                            ),
+                                                            ElevatedButton(
+                                                              style: ElevatedButton.styleFrom(
+                                                                backgroundColor:
+                                                                    Colors
+                                                                        .redAccent,
+                                                              ),
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                    ctx,
+                                                                    true,
+                                                                  ),
+                                                              child: const Text(
+                                                                'Excluir',
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ) ??
+                                                      false;
+                                                  if (confirm) {
+                                                    try {
+                                                      await ParseCloudFunction(
+                                                        'deletePhase',
+                                                      ).execute(
+                                                        parameters: {
+                                                          'eventId': eventId,
+                                                          'phaseId': phaseId,
+                                                        },
+                                                      );
+                                                      if (context.mounted) {
+                                                        setStatePhases(() {});
+                                                      }
+                                                    } catch (e) {
+                                                      debugPrint(
+                                                        'Erro ao excluir fase: \$e',
+                                                      );
+                                                    }
+                                                  }
+                                                },
+                                                icon: const FaIcon(
+                                                  FontAwesomeIcons.trash,
+                                                  color: Colors.redAccent,
+                                                  size: 14,
+                                                ),
+                                                label: const Text(
+                                                  'Excluir',
+                                                  style: TextStyle(
+                                                    color: Colors.redAccent,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          _buildEnigmasList(
+                                            eventId,
+                                            phaseId,
+                                            () {
+                                              setStatePhases(() {});
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
@@ -602,7 +620,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     );
   }
 
-  Widget _buildEnigmasList(String eventId, String phaseId) {
+  Widget _buildEnigmasList(
+    String eventId,
+    String phaseId,
+    VoidCallback onRefresh,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Column(
@@ -672,6 +694,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             phaseId,
                             docId: enigmaId,
                             data: _parseObjectToMap(doc),
+                            onSaved: onRefresh,
                           ),
                         ),
                         IconButton(
@@ -680,13 +703,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             size: 16,
                             color: Colors.redAccent,
                           ),
-                          onPressed: () {
-                            ParseCloudFunction('deleteEnigma').execute(
-                              parameters: {
-                                'eventId': eventId,
-                                'enigmaId': enigmaId,
-                              },
-                            );
+                          onPressed: () async {
+                            final response =
+                                await ParseCloudFunction(
+                                  'deleteEnigma',
+                                ).execute(
+                                  parameters: {
+                                    'eventId': eventId,
+                                    'enigmaId': enigmaId,
+                                  },
+                                );
+                            if (response.success) {
+                              onRefresh();
+                            }
                           },
                         ),
                       ],
@@ -724,27 +753,30 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                 docId == null ? 'Nova Fase' : 'Editar Fase',
                 style: const TextStyle(color: Colors.white),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: orderCtrl,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(labelText: 'Ordem'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  SwitchListTile(
-                    title: const Text(
-                      'Bloqueada',
-                      style: TextStyle(color: Colors.white),
+              content: SingleChildScrollView(
+                // CORREÇÃO: Proteção contra o teclado
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: orderCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(labelText: 'Ordem'),
+                      keyboardType: TextInputType.number,
                     ),
-                    value: isBlocked,
-                    onChanged: (val) {
-                      setState(() => isBlocked = val);
-                    },
-                    activeColor: primaryAmber,
-                  ),
-                ],
+                    SwitchListTile(
+                      title: const Text(
+                        'Bloqueada',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      value: isBlocked,
+                      onChanged: (val) {
+                        setState(() => isBlocked = val);
+                      },
+                      activeColor: primaryAmber,
+                    ),
+                  ],
+                ),
               ),
               actions: [
                 TextButton(
@@ -758,27 +790,50 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       'isBlocked': isBlocked,
                     };
                     try {
+                      ParseResponse response;
                       if (docId == null) {
-                        await ParseCloudFunction('createOrUpdatePhase').execute(
-                          parameters: {'eventId': eventId, 'data': newData},
-                        );
+                        response =
+                            await ParseCloudFunction(
+                              'createOrUpdatePhase',
+                            ).execute(
+                              parameters: {'eventId': eventId, 'data': newData},
+                            );
                       } else {
-                        await ParseCloudFunction('createOrUpdatePhase').execute(
-                          parameters: {
-                            'eventId': eventId,
-                            'phaseId': docId,
-                            'data': newData,
-                          },
-                        );
+                        response =
+                            await ParseCloudFunction(
+                              'createOrUpdatePhase',
+                            ).execute(
+                              parameters: {
+                                'eventId': eventId,
+                                'phaseId': docId,
+                                'data': newData,
+                              },
+                            );
                       }
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        if (onSaved != null) {
-                          onSaved();
+
+                      if (response.success) {
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          if (onSaved != null) onSaved();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Fase guardada com sucesso!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } else {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Erro: ${response.error?.message}'),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
                         }
                       }
                     } catch (e) {
-                      debugPrint('Erro ao salvar fase: \$e');
+                      debugPrint('Erro ao salvar fase: $e');
                     }
                   },
                   child: const Text('Salvar'),
@@ -797,6 +852,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     String phaseId, {
     String? docId,
     Map<String, dynamic>? data,
+    VoidCallback?
+    onSaved, // Adicionado callback para atualizar a lista ao guardar
   }) {
     final orderCtrl = TextEditingController(
       text: data?['order']?.toString() ?? '1',
@@ -808,6 +865,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       text: data?['prize']?.toString() ?? '0',
     );
     List<dynamic> linkedHints = List.from(data?['linkedHints'] ?? []);
+
+    // CORREÇÃO CRÍTICA: Instanciar o Future aqui evita que a requisição repita a cada clique de checkbox
+    final Future<ParseResponse> hintsFuture = QueryBuilder<ParseObject>(
+      ParseObject('Hint'),
+    ).query();
 
     showDialog(
       context: context,
@@ -854,7 +916,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       controller: prizeCtrl,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
-                        labelText: 'Prêmio (R\$)',
+                        labelText: 'Prémio (R\$)',
                       ),
                       keyboardType: TextInputType.number,
                     ),
@@ -868,13 +930,17 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     ),
                     const SizedBox(height: 8),
                     FutureBuilder<ParseResponse>(
-                      future: QueryBuilder<ParseObject>(
-                        ParseObject('Hint'),
-                      ).query(),
+                      future:
+                          hintsFuture, // Usa a referência fixa definida acima
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
-                          return const CircularProgressIndicator();
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
                         }
                         if (snapshot.hasError ||
                             !snapshot.hasData ||
@@ -933,25 +999,51 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       'linkedHints': linkedHints,
                     };
                     try {
+                      ParseResponse response;
                       if (docId == null) {
-                        ParseCloudFunction('createOrUpdateEnigma').execute(
-                          parameters: {
-                            'eventId': eventId,
-                            'phaseId': phaseId,
-                            'data': newData,
-                          },
-                        );
+                        response =
+                            await ParseCloudFunction(
+                              'createOrUpdateEnigma',
+                            ).execute(
+                              parameters: {
+                                'eventId': eventId,
+                                'phaseId': phaseId,
+                                'data': newData,
+                              },
+                            );
                       } else {
-                        ParseCloudFunction('createOrUpdateEnigma').execute(
-                          parameters: {
-                            'eventId': eventId,
-                            'enigmaId': docId,
-                            'data': newData,
-                          },
-                        );
+                        response =
+                            await ParseCloudFunction(
+                              'createOrUpdateEnigma',
+                            ).execute(
+                              parameters: {
+                                'eventId': eventId,
+                                'enigmaId': docId,
+                                'data': newData,
+                              },
+                            );
                       }
-                      if (context.mounted) {
-                        Navigator.pop(context);
+
+                      if (response.success) {
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          if (onSaved != null) onSaved();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Enigma guardado com sucesso!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } else {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Erro: ${response.error?.message}'),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                        }
                       }
                     } catch (e) {
                       debugPrint('Erro ao salvar enigma: $e');
