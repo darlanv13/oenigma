@@ -7,6 +7,7 @@ import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
+import 'admin_login_screen.dart';
 import '../../auth/screens/login_screen.dart';
 
 class AdminAuthWrapper extends ConsumerWidget {
@@ -19,12 +20,13 @@ class AdminAuthWrapper extends ConsumerWidget {
     return authState.when(
       data: (user) {
         if (user == null) {
-          return _buildAccessDenied(context);
+          return const AdminLoginScreen();
         }
 
         final isAdmin = user.get<bool>('isAdmin') ?? false;
+        final role = user.get<String>('role') ?? 'player';
 
-        if (!isAdmin) {
+        if (!isAdmin && role != 'admin') {
           return _buildAccessDenied(context);
         }
 

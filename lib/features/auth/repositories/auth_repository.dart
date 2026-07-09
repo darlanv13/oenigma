@@ -55,7 +55,10 @@ class AuthRepository {
       final response = await user.login();
       if (response.success) {
         final ParseUser loggedUser = response.result;
-        if (loggedUser.get<String>('role') == 'admin') {
+        final isAdmin = loggedUser.get<bool>('isAdmin') ?? false;
+        final role = loggedUser.get<String>('role') ?? 'player';
+
+        if (role == 'admin' || isAdmin) {
           _currentUser = loggedUser;
           _authStateController.add(_currentUser);
           return null;
