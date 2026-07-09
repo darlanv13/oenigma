@@ -424,42 +424,49 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 
   Widget _buildInfoPill(dynamic icon, String label, String value) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cardColor.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        children: [
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(15),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: cardColor.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          child: Row(
+            children: [
           FaIcon(icon, color: secondaryTextColor, size: 24),
           const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: secondaryTextColor,
-                    fontSize: 12,
-                  ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: secondaryTextColor,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -555,20 +562,35 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             ),
           ],
         ),
-        child: ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _isSubscribed ? Colors.green : primaryAmber,
-            foregroundColor: _isSubscribed ? Colors.white : Colors.black,
-            elevation: 8,
-            shadowColor: _isSubscribed ? Colors.greenAccent : primaryAmber,
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: _isSubscribed
+                ? const LinearGradient(colors: [Colors.green, Colors.lightGreen])
+                : const LinearGradient(colors: [primaryAmber, Color(0xFFFFD54F)]),
+            boxShadow: [
+              BoxShadow(
+                color: _isSubscribed
+                    ? Colors.green.withValues(alpha: 0.4)
+                    : primaryAmber.withValues(alpha: 0.4),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          onPressed: _isLoading
-              ? null
-              : () {
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: _isSubscribed ? Colors.white : Colors.black,
+              shadowColor: Colors.transparent,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            onPressed: _isLoading
+                ? null
+                : () {
                   if (_isSubscribed) {
                     // Verifica o tipo de evento para decidir para onde navegar
                     if (widget.event.eventType == 'find_and_win') {
@@ -603,14 +625,19 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                   ),
                 )
               : FaIcon(
-                  _isSubscribed
-                      ? FontAwesomeIcons.play
-                      : FontAwesomeIcons.rightToBracket,
-                  size: 28,
-                ),
-          label: Text(
-            _isSubscribed ? 'Jogar' : 'Inscreva-se Grátis',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    _isSubscribed
+                        ? FontAwesomeIcons.play
+                        : FontAwesomeIcons.rightToBracket,
+                    size: 28,
+                  ),
+            label: Text(
+              _isSubscribed ? 'JOGAR AGORA' : 'INSCREVA-SE GRÁTIS',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
+              ),
+            ),
           ),
         ),
       ),
