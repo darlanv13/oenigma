@@ -44,7 +44,9 @@ Parse.Cloud.define("listAllUsers", async (request) => {
         email: user.get("email") || "",
         name: user.get("name") || "",
         isAdmin: user.get("isAdmin") || false,
-        walletBalance: user.get("walletBalance") || 0,
+        isBanned: user.get("isBanned") || false,
+        photoURL: user.get("photoURL") || null,
+        walletBalance: user.get("balance") || 0,
         createdAt: user.createdAt
       };
     });
@@ -84,6 +86,24 @@ Parse.Cloud.define("revokeAdminRole", async (request) => {
     return { success: true, message: "Admin role revoked." };
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error revoking admin role: " + error.message);
+  }
+});
+
+Parse.Cloud.define("toggleUserBan", async (request) => {
+  const admin = request.user;
+  if (!admin || !admin.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  const { objectId } = request.params;
+  if (!objectId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "objectId is required.");
+
+  try {
+    const query = new Parse.Query(Parse.User);
+    const user = await query.get(objectId, { useMasterKey: true });
+    const currentBanStatus = user.get("isBanned") || false;
+    user.set("isBanned", !currentBanStatus);
+    await user.save(null, { useMasterKey: true });
+    return { success: true, isBanned: !currentBanStatus };
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error toggling user ban status: " + error.message);
   }
 });
 
@@ -136,7 +156,7 @@ Parse.Cloud.define("deleteEvent", async (request) => {
 Parse.Cloud.define("createOrUpdateEnigma", async (request) => {
   const user = request.user;
   if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
-  const { enigmaId, eventId, data } = request.params;
+  const { enigmaId, eventId, phaseId, data } = request.params;
 
   try {
     const Enigma = Parse.Object.extend("Enigma");
@@ -154,6 +174,13 @@ Parse.Cloud.define("createOrUpdateEnigma", async (request) => {
         enigma.set("event", eventPointer);
         // also store id string to match frontend logic
         enigma.set("eventId", eventId);
+      }
+      if (phaseId) {
+        const Phase = Parse.Object.extend("Phase");
+        const phasePointer = new Phase();
+        phasePointer.id = phaseId;
+        enigma.set("phase", phasePointer);
+        enigma.set("phaseId", phaseId);
       }
     }
 
@@ -282,7 +309,7 @@ Parse.Cloud.define("deleteBanner", async (request) => {
 Parse.Cloud.define("processWithdrawal", async (request) => {
   const user = request.user;
   if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
-  const { withdrawalId } = request.params;
+  const { withdrawalId, objectId, action } = request.params;
   if (!withdrawalId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "withdrawalId is required.");
 
   try {
@@ -290,10 +317,24 @@ Parse.Cloud.define("processWithdrawal", async (request) => {
     const query = new Parse.Query(Withdrawal);
     const withdrawal = await query.get(withdrawalId, { useMasterKey: true });
 
-    withdrawal.set("status", "completed");
-    await withdrawal.save(null, { useMasterKey: true });
+    if (action === 'reject') {
+      withdrawal.set("status", "rejected");
+      await withdrawal.save(null, { useMasterKey: true });
 
-    return { success: true, message: "Withdrawal processed." };
+      if (objectId) {
+        const userQuery = new Parse.Query(Parse.User);
+        const targetUser = await userQuery.get(objectId, { useMasterKey: true });
+        const currentBalance = targetUser.get("balance") || 0.0;
+        const amount = withdrawal.get("amount") || 0.0;
+        targetUser.set("balance", currentBalance + amount);
+        await targetUser.save(null, { useMasterKey: true });
+      }
+      return { success: true, message: "Withdrawal rejected and refunded." };
+    } else {
+      withdrawal.set("status", "completed");
+      await withdrawal.save(null, { useMasterKey: true });
+      return { success: true, message: "Withdrawal approved and processed." };
+    }
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error processing withdrawal: " + error.message);
   }
