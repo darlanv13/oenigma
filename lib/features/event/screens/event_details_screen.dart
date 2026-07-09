@@ -98,7 +98,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       }
     } on ParseError catch (e) {
       if (mounted) {
-        if (e.message != null && e.message!.contains('saldo')) {
+        if (e.message?.contains('saldo') == true) {
           _showInsufficientFundsDialog();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

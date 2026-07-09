@@ -584,9 +584,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         }
       }
     } on ParseError catch (e) {
-      if (e.message != null && e.message!.contains('saldo') &&
-          e.message != null &&
-          e.message!.contains('Saldo insuficiente')) {
+      if (e.message?.contains('saldo') == true ||
+          e.message?.contains('Saldo insuficiente') == true) {
         _showInsufficientFundsDialog();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
