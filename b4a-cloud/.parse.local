@@ -1,0 +1,10 @@
+{
+  "applications": {
+    "_default": {
+      "link": "enigmacity"
+    },
+    "enigmacity": {
+      "applicationId": "ThUDHY1ayK6ah9JFm9YLHTDF9FKMHTU096eqkDKK"
+    }
+  }
+}
