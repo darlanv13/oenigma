@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oenigma/features/admin/utils/admin_upload_util.dart';
 
 class AdminBannersScreen extends StatefulWidget {
   const AdminBannersScreen({super.key});
@@ -267,8 +268,20 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                     TextField(
                       controller: imageUrlCtrl,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                          labelText: 'URL da Imagem (Obrigatório)'),
+                      decoration: InputDecoration(
+                        labelText: 'URL da Imagem (Obrigatório)',
+                        suffixIcon: IconButton(
+                          icon: const FaIcon(FontAwesomeIcons.upload, size: 18),
+                          onPressed: () async {
+                            final url = await AdminUploadUtil.pickAndUploadImage(context);
+                            if (url != null) {
+                              setState(() {
+                                imageUrlCtrl.text = url;
+                              });
+                            }
+                          },
+                        ),
+                      ),
                     ),
                     TextField(
                       controller: actionUrlCtrl,

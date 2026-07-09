@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oenigma/features/admin/utils/admin_upload_util.dart';
 
 class AdminToolsScreen extends StatefulWidget {
   const AdminToolsScreen({super.key});
@@ -268,8 +269,9 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: darkBackground,
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            backgroundColor: darkBackground,
           title: Text(
             docId == null ? 'Nova Dica' : 'Editar Dica',
             style: const TextStyle(color: Colors.white),
@@ -299,8 +301,19 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                 TextField(
                   controller: contentUrlCtrl,
                   style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'URL do Conteúdo (Opcional)',
+                    suffixIcon: IconButton(
+                      icon: const FaIcon(FontAwesomeIcons.upload, size: 18),
+                      onPressed: () async {
+                        final url = await AdminUploadUtil.pickAndUploadImage(context);
+                        if (url != null) {
+                          setState(() {
+                            contentUrlCtrl.text = url;
+                          });
+                        }
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -365,7 +378,8 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
               child: const Text('Salvar'),
             ),
           ],
-        );
+          );
+        });
       },
     );
   }

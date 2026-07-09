@@ -6,6 +6,7 @@ import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oenigma/features/admin/utils/admin_upload_util.dart';
 
 class AdminEventsScreen extends StatefulWidget {
   const AdminEventsScreen({super.key});
@@ -330,8 +331,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             TextField(
                               controller: iconCtrl,
                               style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'URL do Ícone (Lottie/Image)',
+                                suffixIcon: IconButton(
+                                  icon: const FaIcon(FontAwesomeIcons.upload, size: 18),
+                                  onPressed: () async {
+                                    final url = await AdminUploadUtil.pickAndUploadImage(context);
+                                    if (url != null) {
+                                      setState(() {
+                                        iconCtrl.text = url;
+                                      });
+                                    }
+                                  },
+                                ),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -1179,8 +1191,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               TextField(
                                 controller: photoUrlCtrl,
                                 style: const TextStyle(color: Colors.white),
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   labelText: 'URL da Foto do Local',
+                                  suffixIcon: IconButton(
+                                    icon: const FaIcon(FontAwesomeIcons.upload, size: 18),
+                                    onPressed: () async {
+                                      final url = await AdminUploadUtil.pickAndUploadImage(context);
+                                      if (url != null) {
+                                        setState(() {
+                                          photoUrlCtrl.text = url;
+                                        });
+                                      }
+                                    },
+                                  ),
                                 ),
                               ),
                             ],
