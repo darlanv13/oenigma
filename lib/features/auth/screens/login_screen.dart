@@ -247,7 +247,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String hintText,
-    required Widget prefixIcon,
+    required Widget prefixIcon, // Alterado de IconData para Widget
     bool obscureText = false,
     Widget? suffixIcon,
     String? Function(String?)? validator,
@@ -258,17 +258,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       validator: validator,
       style: const TextStyle(color: textColor),
       decoration: InputDecoration(
+        filled: true,
+        fillColor: cardColor,
         hintText: hintText,
         hintStyle: TextStyle(color: textColor.withValues(alpha: 0.7)),
-        prefixIcon: prefixIcon, // E repassando diretamente aqui
+        prefixIcon: prefixIcon, // Usando o Widget passado
         suffixIcon: suffixIcon,
-        filled: true,
-        fillColor: darkBackground,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
         ),
-        errorStyle: const TextStyle(color: primaryAmber),
       ),
     );
   }

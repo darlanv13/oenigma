@@ -176,7 +176,7 @@ class PhaseCard extends StatelessWidget {
         ] : [],
       ),
       child: Center(
-        child: Icon(iconData, color: iconColor, size: 28),
+        child: FaIcon(iconData, color: iconColor, size: 28),
       ),
     );
   }

@@ -68,7 +68,7 @@ class _HistoryItem extends StatelessWidget {
               color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: FaIcon(icon, color: color, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(

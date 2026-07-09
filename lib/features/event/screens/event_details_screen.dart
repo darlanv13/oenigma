@@ -441,7 +441,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: secondaryTextColor, size: 24),
+          FaIcon(icon, color: secondaryTextColor, size: 24),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -643,7 +643,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             ),
           ),
           onPressed: null,
-          icon: Icon(icon, size: 24),
+          icon: FaIcon(icon, size: 24),
           label: Text(
             label,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.1),

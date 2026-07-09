@@ -105,7 +105,7 @@ class ProfileBadgesSection extends StatelessWidget {
                     CircleAvatar(
                       radius: 30,
                       backgroundColor: badge['color'].withValues(alpha: 0.2),
-                      child: Icon(
+                      child: FaIcon(
                         badge['icon'],
                         size: 30,
                         color: badge['color'],
