@@ -21,9 +21,9 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
 
   void _loadHints() {
     setState(() {
-      _hintsFuture = (QueryBuilder<ParseObject>(ParseObject('Hint'))
-            ..orderByDescending('createdAt'))
-          .query();
+      _hintsFuture = (QueryBuilder<ParseObject>(
+        ParseObject('Hint'),
+      )..orderByDescending('createdAt')).query();
     });
   }
 
@@ -66,10 +66,16 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
               }
               if (snapshot.hasError) {
                 return Center(
-                  child: Text('Erro: ${snapshot.error}', style: const TextStyle(color: Colors.redAccent)),
+                  child: Text(
+                    'Erro: ${snapshot.error}',
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
                 );
               }
-              if (!snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
+              if (!snapshot.hasData ||
+                  !snapshot.data!.success ||
+                  snapshot.data!.results == null ||
+                  snapshot.data!.results!.isEmpty) {
                 return const Center(
                   child: Text(
                     'Nenhuma dica global cadastrada.',
@@ -101,8 +107,8 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                           type == 'text'
                               ? FontAwesomeIcons.fileLines
                               : (type == 'image'
-                                  ? FontAwesomeIcons.image
-                                  : FontAwesomeIcons.microphoneLines),
+                                    ? FontAwesomeIcons.image
+                                    : FontAwesomeIcons.microphoneLines),
                           color: primaryAmber,
                         ),
                       ),
@@ -125,7 +131,9 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                           Text(
                             'Tipo: $type',
                             style: const TextStyle(
-                                color: primaryAmber, fontSize: 12),
+                              color: primaryAmber,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -134,8 +142,10 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const FaIcon(FontAwesomeIcons.penToSquare,
-                                color: Colors.blue),
+                            icon: const FaIcon(
+                              FontAwesomeIcons.penToSquare,
+                              color: Colors.blue,
+                            ),
                             onPressed: () {
                               _showHintDialog(
                                 context,
@@ -145,19 +155,23 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                             },
                           ),
                           IconButton(
-                            icon: const FaIcon(FontAwesomeIcons.trash,
-                                color: Colors.redAccent),
+                            icon: const FaIcon(
+                              FontAwesomeIcons.trash,
+                              color: Colors.redAccent,
+                            ),
                             onPressed: () {
                               showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
                                   backgroundColor: darkBackground,
-                                  title: const Text('Confirmar exclusão',
-                                      style: TextStyle(color: Colors.white)),
+                                  title: const Text(
+                                    'Confirmar exclusão',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
                                   content: const Text(
-                                      'Deseja mesmo excluir esta dica?',
-                                      style:
-                                          TextStyle(color: secondaryTextColor)),
+                                    'Deseja mesmo excluir esta dica?',
+                                    style: TextStyle(color: secondaryTextColor),
+                                  ),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
@@ -165,14 +179,50 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                                     ),
                                     ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.redAccent),
+                                        backgroundColor: Colors.redAccent,
+                                      ),
                                       onPressed: () async {
-                                        Navigator.pop(context);
+                                        Navigator.pop(
+                                          context,
+                                        ); // Fecha o dialog de confirmação
                                         try {
-                                          await ParseCloudFunction('deleteHint').execute(parameters: {
-                                            'hintId': hintId,
-                                          });
-                                          _loadHints();
+                                          final response =
+                                              await ParseCloudFunction(
+                                                'deleteHint',
+                                              ).execute(
+                                                parameters: {'hintId': hintId},
+                                              );
+
+                                          // VERIFICAÇÃO ADICIONADA:
+                                          if (response.success) {
+                                            _loadHints();
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'Dica excluída com sucesso!',
+                                                  ),
+                                                  backgroundColor: Colors.green,
+                                                ),
+                                              );
+                                            }
+                                          } else {
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    'Erro: ${response.error?.message}',
+                                                  ),
+                                                  backgroundColor:
+                                                      Colors.redAccent,
+                                                ),
+                                              );
+                                            }
+                                          }
                                         } catch (e) {
                                           debugPrint('Erro ao excluir: $e');
                                         }
@@ -205,8 +255,11 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
     return map;
   }
 
-  void _showHintDialog(BuildContext context,
-      {String? docId, Map<String, dynamic>? data}) {
+  void _showHintDialog(
+    BuildContext context, {
+    String? docId,
+    Map<String, dynamic>? data,
+  }) {
     final titleCtrl = TextEditingController(text: data?['title']);
     final descCtrl = TextEditingController(text: data?['description']);
     final typeCtrl = TextEditingController(text: data?['type'] ?? 'text');
@@ -240,13 +293,15 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                   controller: typeCtrl,
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
-                      labelText: 'Tipo (text, image, audio)'),
+                    labelText: 'Tipo (text, image, audio)',
+                  ),
                 ),
                 TextField(
                   controller: contentUrlCtrl,
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
-                      labelText: 'URL do Conteúdo (Opcional)'),
+                    labelText: 'URL do Conteúdo (Opcional)',
+                  ),
                 ),
               ],
             ),
@@ -266,19 +321,42 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                 };
 
                 try {
+                  ParseResponse response; // Variável para capturar a resposta
+
                   if (docId == null) {
-                    await ParseCloudFunction('createOrUpdateHint').execute(parameters: {
-                      'data': newData
-                    });
+                    response = await ParseCloudFunction(
+                      'createOrUpdateHint',
+                    ).execute(parameters: {'data': newData});
                   } else {
-                    await ParseCloudFunction('createOrUpdateHint').execute(parameters: {
-                      'hintId': docId,
-                      'data': newData
-                    });
+                    response = await ParseCloudFunction(
+                      'createOrUpdateHint',
+                    ).execute(parameters: {'hintId': docId, 'data': newData});
                   }
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    _loadHints();
+
+                  // VERIFICAÇÃO ADICIONADA:
+                  if (response.success) {
+                    if (context.mounted) {
+                      Navigator.pop(
+                        context,
+                      ); // Só fecha o modal se der sucesso!
+                      _loadHints();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Dica salva com sucesso!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  } else {
+                    // Mostra o erro e NÃO fecha o modal
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Erro: ${response.error?.message}'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                    }
                   }
                 } catch (e) {
                   debugPrint('Erro ao salvar dica: $e');

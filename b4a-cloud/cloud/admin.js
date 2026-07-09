@@ -8,7 +8,8 @@ Parse.Cloud.define("getAdminDashboardData", async (request) => {
     const usersCount = await usersQuery.count({ useMasterKey: true });
 
     const eventsQuery = new Parse.Query("Event");
-    eventsQuery.equalTo("status", "published");
+    // CORREÇÃO: Alterado de "published" para "open" para bater com a lógica do app
+    eventsQuery.equalTo("status", "open");
     const activeEventsCount = await eventsQuery.count({ useMasterKey: true });
 
     const depositsQuery = new Parse.Query("Transaction");

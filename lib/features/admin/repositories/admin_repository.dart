@@ -39,4 +39,19 @@ class AdminRepository {
   Future<void> revokeAdminRole(String objectId) {
     return callFunction('revokeAdminRole', {'objectId': objectId});
   }
+
+  Future<void> createOrUpdateHint(
+    Map<String, dynamic> data, {
+    String? hintId,
+  }) async {
+    final payload = <String, dynamic>{'data': data};
+    if (hintId != null) {
+      payload['hintId'] = hintId;
+    }
+    await callFunction('createOrUpdateHint', payload);
+  }
+
+  Future<void> deleteHint(String hintId) async {
+    await callFunction('deleteHint', {'hintId': hintId});
+  }
 }
