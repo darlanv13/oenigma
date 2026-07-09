@@ -254,31 +254,111 @@ Parse.Cloud.define("getEventData", async (request) => {
 
 
 Parse.Cloud.define("handleEnigmaAction", async (request) => {
-  const { action, eventId, enigmaId, answer } = request.params;
+  const { action, eventId, phaseOrder, enigmaId, answer, code, toolType } = request.params;
   const user = request.user;
   if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "User not authenticated.");
   if (!action) throw new Parse.Error(Parse.Error.INVALID_QUERY, "action is required.");
 
   try {
+    let userEvents = user.get("events") || {};
+    let eventProgress = userEvents[eventId] || {};
+    let hintsPurchased = eventProgress.hintsPurchased || [];
+    let toolsPurchased = eventProgress.toolsPurchased || [];
+    let balance = user.get("balance") || 0.0;
+
+    // Check cooldown
+    const now = new Date().getTime();
+    if (eventProgress.cooldownUntil && eventProgress.cooldownUntil > now && action !== 'getStatus') {
+      return { success: false, message: "Aguarde o Cooldown", cooldownUntil: eventProgress.cooldownUntil };
+    }
+
     if (action === 'getStatus') {
-      // get user progress
-      const userEvents = user.get("events") || {};
-      const eventProgress = userEvents[eventId] || {};
       return {
+        success: true,
         currentPhase: eventProgress.currentPhase || 1,
         currentEnigma: eventProgress.currentEnigma || 1,
-        hintsPurchased: eventProgress.hintsPurchased || []
+        hintsPurchased: hintsPurchased,
+        toolsPurchased: toolsPurchased,
+        cooldownUntil: eventProgress.cooldownUntil || null,
+        result: {
+          currentPhase: eventProgress.currentPhase || 1,
+          currentEnigma: eventProgress.currentEnigma || 1,
+          hintsPurchased: hintsPurchased,
+          toolsPurchased: toolsPurchased,
+          cooldownUntil: eventProgress.cooldownUntil || null
+        }
       };
-    } else if (action === 'verify_code' || action === 'scan_enigma') {
-      // Assuming basic code verification
+    } else if (action === 'purchaseHint') {
+      const pOrder = phaseOrder || eventProgress.currentPhase || 1;
+      const cost = pOrder * 5.0; // R$ 5,00 por fase (Fase 1: 5, Fase 2: 10, Fase 3: 15)
+
+      if (balance < cost) {
+        throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Saldo insuficiente para comprar a dica.");
+      }
+
+      user.set("balance", balance - cost);
+
+      const hint = {
+        type: 'text',
+        data: 'Aqui está uma dica muito valiosa para este enigma: Observe os arredores.'
+      };
+
+      hintsPurchased.push(enigmaId);
+      eventProgress.hintsPurchased = hintsPurchased;
+      userEvents[eventId] = eventProgress;
+      user.set("events", userEvents);
+      await user.save(null, { useMasterKey: true });
+
+      return { success: true, hint: hint, message: "Dica comprada com sucesso." };
+
+    } else if (action === 'purchaseTool') {
+      let cost = 0;
+      if (toolType === 'map') cost = 20.0;
+      else if (toolType === 'compass') cost = 15.0;
+      else throw new Parse.Error(Parse.Error.INVALID_QUERY, "Invalid tool type.");
+
+      if (balance < cost) {
+        throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Saldo insuficiente para comprar a ferramenta.");
+      }
+
+      user.set("balance", balance - cost);
+
+      toolsPurchased.push(toolType);
+      eventProgress.toolsPurchased = toolsPurchased;
+      userEvents[eventId] = eventProgress;
+      user.set("events", userEvents);
+      await user.save(null, { useMasterKey: true });
+
+      return { success: true, message: "Ferramenta comprada com sucesso." };
+
+    } else if (action === 'validateCode' || action === 'verify_code' || action === 'scan_enigma') {
+      const guess = code || answer;
       const Enigma = Parse.Object.extend("Enigma");
       const query = new Parse.Query(Enigma);
       const enigma = await query.get(enigmaId, { useMasterKey: true });
 
-      if (enigma.get("code") === answer) {
-        return { success: true, message: "Correct answer" };
+      if (enigma.get("code") === guess) {
+        return {
+          success: true,
+          message: "Resposta Correta!",
+          nextStep: {
+            type: 'event_complete',
+            prize: enigma.get("prize") || 100.0
+          }
+        };
       } else {
-        return { success: false, message: "Incorrect answer" };
+        // Cooldown punishment
+        const cooldownTime = now + (3 * 60 * 1000); // 3 minutes cooldown
+        eventProgress.cooldownUntil = cooldownTime;
+        userEvents[eventId] = eventProgress;
+        user.set("events", userEvents);
+        await user.save(null, { useMasterKey: true });
+
+        return {
+          success: false,
+          message: "Código Incorreto. Você recebeu uma penalidade.",
+          cooldownUntil: cooldownTime
+        };
       }
     }
     return { success: true, message: "Action handled." };
