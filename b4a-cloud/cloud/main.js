@@ -330,14 +330,116 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
       const enigma = await query.get(enigmaId, { useMasterKey: true });
 
       if (enigma.get("code") === guess) {
-        return {
-          success: true,
-          message: "Resposta Correta!",
-          nextStep: {
-            type: 'event_complete',
-            prize: enigma.get("prize") || 100.0
+
+        // Fetch Event to know the eventType
+        const Event = Parse.Object.extend("Event");
+        const eventQuery = new Parse.Query(Event);
+        const eventObj = await eventQuery.get(eventId, { useMasterKey: true });
+
+        const eventType = eventObj.get("eventType") || 'classic';
+        const enigmaPrize = enigma.get("prize") || 0.0;
+
+        let nextStepData = {};
+        if (eventType === 'find_and_win') {
+          // Recompensa Instantânea: add to balance immediately
+          user.set("balance", balance + enigmaPrize);
+
+          // Registrar que enigma foi concluído no histórico
+          let solvedEnigmas = eventProgress.solvedEnigmas || [];
+          solvedEnigmas.push(enigmaId);
+          eventProgress.solvedEnigmas = solvedEnigmas;
+          userEvents[eventId] = eventProgress;
+          user.set("events", userEvents);
+          await user.save(null, { useMasterKey: true });
+
+          nextStepData = {
+            type: 'next_enigma', // keeps the player in the loop
+            prizeWon: enigmaPrize,
+            enigmaData: {}
+          };
+
+          return {
+            success: true,
+            message: "Resposta Correta! Recompensa instantânea creditada.",
+            nextStep: nextStepData
+          };
+        } else {
+          // Classic Mode: "Pote de Ouro" Final
+          // Verify progression
+          const Phase = Parse.Object.extend("Phase");
+          const phaseQuery = new Parse.Query(Phase);
+          phaseQuery.equalTo("event", eventObj);
+          phaseQuery.ascending("order");
+          const phases = await phaseQuery.find({ useMasterKey: true });
+
+          let isLastPhase = true;
+          let isLastEnigma = true;
+
+          const currentPhaseOrder = eventProgress.currentPhase || 1;
+          const currentEnigmaOrder = eventProgress.currentEnigma || 1;
+
+          const currentPhaseObj = phases.find(p => p.get("order") === currentPhaseOrder);
+          if (currentPhaseObj) {
+            const enigmaQuery = new Parse.Query(Enigma);
+            enigmaQuery.equalTo("phase", currentPhaseObj);
+            const totalEnigmas = await enigmaQuery.count({ useMasterKey: true });
+
+            if (currentEnigmaOrder < totalEnigmas) {
+              isLastEnigma = false;
+              isLastPhase = false;
+            } else if (currentPhaseOrder < phases.length) {
+              isLastPhase = false;
+            }
           }
-        };
+
+          if (!isLastPhase || !isLastEnigma) {
+            // Advancing in classic mode
+            if (!isLastEnigma) {
+               eventProgress.currentEnigma = currentEnigmaOrder + 1;
+            } else {
+               eventProgress.currentPhase = currentPhaseOrder + 1;
+               eventProgress.currentEnigma = 1;
+            }
+
+            userEvents[eventId] = eventProgress;
+            user.set("events", userEvents);
+            await user.save(null, { useMasterKey: true });
+
+            return {
+              success: true,
+              message: "Resposta Correta!",
+              nextStep: {
+                type: 'next_enigma',
+                enigmaData: {}
+              }
+            };
+          } else {
+             // Finished event
+             let rawPrize = eventObj.get("prize") || "0";
+             if (typeof rawPrize === 'string') {
+               rawPrize = rawPrize.replace('R$', '').replace(',', '.').trim();
+             }
+             const prizePool = parseFloat(rawPrize) || 0.0;
+
+             user.set("balance", balance + prizePool);
+             user.set("lastWonEventName", eventObj.get("name"));
+
+             let winnerEvents = user.get("winnerEvents") || [];
+             winnerEvents.push(eventId);
+             user.set("winnerEvents", winnerEvents);
+
+             await user.save(null, { useMasterKey: true });
+
+             return {
+                success: true,
+                message: "Resposta Correta!",
+                nextStep: {
+                  type: 'event_complete',
+                  prizeWon: prizePool
+                }
+             };
+          }
+        }
       } else {
         // Cooldown punishment
         const cooldownTime = now + (3 * 60 * 1000); // 3 minutes cooldown
