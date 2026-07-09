@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -97,7 +101,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   final eventId = event.objectId!;
                   final title = event.get<String>('title') ?? 'Sem Título';
                   final status = event.get<String>('status') ?? 'draft';
-                  final isPublished = status == 'published';
+                  final isPublished = status == 'open';
                   final prizePool = event.get<num>('prizePool') ?? 0;
 
                   return Card(
@@ -329,7 +333,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }
 
   void _toggleEventStatus(String eventId, String currentStatus) async {
-    final newStatus = currentStatus == 'published' ? 'draft' : 'published';
+    final newStatus = currentStatus == 'open' ? 'draft' : 'open';
     try {
       await ParseCloudFunction('createOrUpdateEvent').execute(
         parameters: {
@@ -852,27 +856,38 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     String phaseId, {
     String? docId,
     Map<String, dynamic>? data,
-    VoidCallback?
-    onSaved, // Adicionado callback para atualizar a lista ao guardar
+    VoidCallback? onSaved,
   }) {
     final orderCtrl = TextEditingController(
       text: data?['order']?.toString() ?? '1',
     );
     final codeCtrl = TextEditingController(text: data?['code']);
     final instructionCtrl = TextEditingController(text: data?['instruction']);
-    final typeCtrl = TextEditingController(text: data?['type'] ?? 'text');
     final prizeCtrl = TextEditingController(
       text: data?['prize']?.toString() ?? '0',
     );
-    List<dynamic> linkedHints = List.from(data?['linkedHints'] ?? []);
+    final photoUrlCtrl = TextEditingController(text: data?['photoUrl']);
 
-    // CORREÇÃO CRÍTICA: Instanciar o Future aqui evita que a requisição repita a cada clique de checkbox
+    // NOVOS CONTROLADORES: Bússola e Coordenadas Obrigatórias
+    bool hasCompass = data?['hasCompass'] ?? false;
+    final compassCoordsCtrl = TextEditingController(
+      text: data?['compassCoords'],
+    );
+
+    String selectedType = data?['type'] ?? 'text';
+    if (!['text', 'gps', 'qrcode', 'foto'].contains(selectedType)) {
+      selectedType = 'text';
+    }
+
+    List<dynamic> linkedHints = List.from(data?['linkedHints'] ?? []);
     final Future<ParseResponse> hintsFuture = QueryBuilder<ParseObject>(
       ParseObject('Hint'),
     ).query();
+    bool isSaving = false;
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
@@ -892,35 +907,126 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       decoration: const InputDecoration(labelText: 'Ordem'),
                       keyboardType: TextInputType.number,
                     ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: selectedType,
+                      dropdownColor: darkBackground,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo de Enigma',
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'text',
+                          child: Text('Texto (Senha/Palavra)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'gps',
+                          child: Text('GPS (Coordenada Oculta)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'qrcode',
+                          child: Text('QR Code Simples'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'foto',
+                          child: Text('Foto (Achar Local + Ler QR Code)'),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        setState(() {
+                          selectedType = val!;
+                        });
+                      },
+                    ),
+
+                    if (selectedType == 'foto') ...[
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: photoUrlCtrl,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: const InputDecoration(
+                          labelText: 'URL da Foto do Local',
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 12),
                     TextField(
                       controller: codeCtrl,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        labelText: 'Código (Senha/Resposta)',
+                      decoration: InputDecoration(
+                        labelText: selectedType == 'gps'
+                            ? 'Coordenadas Alvo (Lat, Lng)'
+                            : 'Código (Senha/Resposta)',
                       ),
                     ),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: instructionCtrl,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(labelText: 'Instrução'),
+                      decoration: const InputDecoration(
+                        labelText: 'Instrução para o jogador',
+                      ),
                       maxLines: 2,
                     ),
-                    TextField(
-                      controller: typeCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        labelText: 'Tipo (text, gps, qrcode)',
-                      ),
-                    ),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: prizeCtrl,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
-                        labelText: 'Prémio (R\$)',
+                        labelText: 'Prêmio (R\$)',
                       ),
                       keyboardType: TextInputType.number,
                     ),
+
                     const SizedBox(height: 16),
+                    const Divider(color: Colors.white24),
+                    const SizedBox(height: 8),
+
+                    // 👇 NOVO: CONFIGURAÇÃO DA BÚSSOLA 👇
+                    SwitchListTile(
+                      title: const Text(
+                        'Habilitar Bússola neste enigma?',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: const Text(
+                        'Permite ao usuário usar o item facilitador.',
+                        style: TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
+                      value: hasCompass,
+                      activeColor: primaryAmber,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (val) {
+                        setState(() {
+                          hasCompass = val;
+                        });
+                      },
+                    ),
+
+                    // Campo de Coordenadas condicional: Só aparece se a bússola estiver ligada
+                    if (hasCompass) ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: compassCoordsCtrl,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: const InputDecoration(
+                          labelText:
+                              'Coordenadas da Bússola (Lat, Lng) *Obrigatório',
+                          labelStyle: TextStyle(color: primaryAmber),
+                          hintText: 'Ex: -23.5505, -46.6333',
+                          hintStyle: TextStyle(color: Colors.white38),
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
+                    const Divider(color: Colors.white24),
+                    const SizedBox(height: 12),
                     const Text(
                       'Dicas Vinculadas (Hints Pool)',
                       style: TextStyle(
@@ -929,22 +1035,17 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
+
                     FutureBuilder<ParseResponse>(
-                      future:
-                          hintsFuture, // Usa a referência fixa definida acima
+                      future: hintsFuture,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           return const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: CircularProgressIndicator(),
-                            ),
+                            child: CircularProgressIndicator(),
                           );
                         }
-                        if (snapshot.hasError ||
-                            !snapshot.hasData ||
-                            !snapshot.data!.success ||
+                        if (!snapshot.hasData ||
                             snapshot.data!.results == null) {
                           return const Text(
                             'Nenhuma dica no pool.',
@@ -954,7 +1055,6 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
                         final allHints =
                             snapshot.data!.results as List<ParseObject>;
-
                         return Column(
                           children: allHints.map((doc) {
                             final hintId = doc.objectId!;
@@ -968,11 +1068,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               activeColor: primaryAmber,
                               onChanged: (val) {
                                 setState(() {
-                                  if (val == true) {
+                                  if (val == true)
                                     linkedHints.add(hintId);
-                                  } else {
+                                  else
                                     linkedHints.remove(hintId);
-                                  }
                                 });
                               },
                             );
@@ -985,71 +1084,107 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: isSaving ? null : () => Navigator.pop(context),
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
-                  onPressed: () async {
-                    final newData = {
-                      'order': int.tryParse(orderCtrl.text) ?? 1,
-                      'code': codeCtrl.text,
-                      'instruction': instructionCtrl.text,
-                      'type': typeCtrl.text,
-                      'prize': num.tryParse(prizeCtrl.text) ?? 0,
-                      'linkedHints': linkedHints,
-                    };
-                    try {
-                      ParseResponse response;
-                      if (docId == null) {
-                        response =
-                            await ParseCloudFunction(
-                              'createOrUpdateEnigma',
-                            ).execute(
-                              parameters: {
-                                'eventId': eventId,
-                                'phaseId': phaseId,
-                                'data': newData,
-                              },
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          // 🔴 REGRA DE VALIDAÇÃO OBRIGATÓRIA DA BÚSSOLA 🔴
+                          if (hasCompass &&
+                              compassCoordsCtrl.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Erro: Ao habilitar a Bússola, insira as coordenadas correspondentes!',
+                                ),
+                                backgroundColor: Colors.redAccent,
+                              ),
                             );
-                      } else {
-                        response =
-                            await ParseCloudFunction(
-                              'createOrUpdateEnigma',
-                            ).execute(
-                              parameters: {
-                                'eventId': eventId,
-                                'enigmaId': docId,
-                                'data': newData,
-                              },
-                            );
-                      }
+                            return; // Cancela a execução para impedir o salvamento incorreto
+                          }
 
-                      if (response.success) {
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          if (onSaved != null) onSaved();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Enigma guardado com sucesso!'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        }
-                      } else {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Erro: ${response.error?.message}'),
-                              backgroundColor: Colors.redAccent,
-                            ),
-                          );
-                        }
-                      }
-                    } catch (e) {
-                      debugPrint('Erro ao salvar enigma: $e');
-                    }
-                  },
-                  child: const Text('Salvar'),
+                          setState(() => isSaving = true);
+
+                          try {
+                            final newData = {
+                              'order': int.tryParse(orderCtrl.text) ?? 1,
+                              'code': codeCtrl.text,
+                              'instruction': instructionCtrl.text,
+                              'type': selectedType,
+                              'prize': num.tryParse(prizeCtrl.text) ?? 0,
+                              'linkedHints': linkedHints,
+
+                              // Salvando as novas chaves no Back4App
+                              'hasCompass': hasCompass,
+                              'compassCoords': hasCompass
+                                  ? compassCoordsCtrl.text.trim()
+                                  : '',
+                            };
+
+                            if (selectedType == 'foto') {
+                              newData['photoUrl'] = photoUrlCtrl.text;
+                            }
+
+                            ParseResponse response;
+                            if (docId == null) {
+                              response =
+                                  await ParseCloudFunction(
+                                    'createOrUpdateEnigma',
+                                  ).execute(
+                                    parameters: {
+                                      'eventId': eventId,
+                                      'phaseId': phaseId,
+                                      'data': newData,
+                                    },
+                                  );
+                            } else {
+                              response =
+                                  await ParseCloudFunction(
+                                    'createOrUpdateEnigma',
+                                  ).execute(
+                                    parameters: {
+                                      'eventId': eventId,
+                                      'enigmaId': docId,
+                                      'data': newData,
+                                    },
+                                  );
+                            }
+
+                            if (response.success) {
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                if (onSaved != null) onSaved();
+                              }
+                            } else {
+                              throw Exception(
+                                response.error?.message ?? 'Erro desconhecido',
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Erro: $e'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
+                          } finally {
+                            setState(() => isSaving = false);
+                          }
+                        },
+                  child: isSaving
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Salvar'),
                 ),
               ],
             );
