@@ -46,18 +46,29 @@ Parse.Cloud.define("getHomeScreenData", async (request) => {
         name: user.get("name") || user.get("username") || "Jogador",
         email: user.get("email") || "",
         balance: user.get("balance") || 0.0,
+        photoURL: user.get("photoURL") || null,
         lastWonEventName: user.get("lastWonEventName"),
         lastEventRank: user.get("lastEventRank"),
         lastEventName: user.get("lastEventName")
       };
-      playerData = user.get("events") || {}; // Progresso salvo do jogador
+      playerData = {
+        events: user.get("events") || {},
+        winnerEvents: user.get("winnerEvents") || [],
+        name: user.get("name") || user.get("username") || "Jogador",
+        email: user.get("email") || "",
+        cpf: user.get("cpf") || "",
+        phone: user.get("phone") || "",
+        birthDate: user.get("birthDate") || "",
+        photoURL: user.get("photoURL") || null
+      };
     } else {
       // Valores padrão de segurança (Caso seja um Visitante)
       walletData = {
         objectId: "visitante",
         name: "Visitante",
         email: "sem_email@teste.com",
-        balance: 0.0
+        balance: 0.0,
+        photoURL: null
       };
     }
 
@@ -397,5 +408,239 @@ Parse.Cloud.define("processWithdrawal", async (request) => {
     return { success: true, message: "Withdrawal processed." };
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error processing withdrawal: " + error.message);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// Missing Frontend Functions
+// -----------------------------------------------------------------------------
+
+Parse.Cloud.define("getUserWalletData", async (request) => {
+  const user = request.user;
+  if (!user) {
+    throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "User not authenticated.");
+  }
+  return {
+    objectId: user.id,
+    name: user.get("name") || user.get("username") || "Jogador",
+    email: user.get("email") || "",
+    balance: user.get("balance") || 0.0,
+    photoURL: user.get("photoURL") || null,
+    lastWonEventName: user.get("lastWonEventName"),
+    lastEventRank: user.get("lastEventRank"),
+    lastEventName: user.get("lastEventName")
+  };
+});
+
+Parse.Cloud.define("subscribeToEvent", async (request) => {
+  const { eventId } = request.params;
+  const user = request.user;
+  if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "User not authenticated.");
+  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
+
+  try {
+    const Event = Parse.Object.extend("Event");
+    const query = new Parse.Query(Event);
+    const event = await query.get(eventId, { useMasterKey: true });
+
+    const price = event.get("price") || 0.0;
+    const balance = user.get("balance") || 0.0;
+
+    if (balance < price) {
+      throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "saldo insuficiente");
+    }
+
+    // Deduct price
+    user.set("balance", balance - price);
+
+    // Update events map
+    let userEvents = user.get("events") || {};
+    userEvents[eventId] = { currentPhase: 1, currentEnigma: 1, hintsPurchased: [] };
+    user.set("events", userEvents);
+
+    await user.save(null, { useMasterKey: true });
+
+    // Increment player count on Event
+    event.increment("playerCount");
+    await event.save(null, { useMasterKey: true });
+
+    return { success: true };
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
+  }
+});
+
+Parse.Cloud.define("getEventData", async (request) => {
+  const { eventId } = request.params;
+  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
+
+  try {
+    const Event = Parse.Object.extend("Event");
+    const query = new Parse.Query(Event);
+    const event = await query.get(eventId, { useMasterKey: true });
+
+    const eventJson = event.toJSON();
+    eventJson.id = event.id;
+    if (eventJson.startDate && eventJson.startDate.iso) {
+      eventJson.startDate = eventJson.startDate.iso;
+    }
+
+    // Fetch phases for event
+    const Phase = Parse.Object.extend("Phase");
+    const phaseQuery = new Parse.Query(Phase);
+    const eventPointer = new Event();
+    eventPointer.id = eventId;
+    phaseQuery.equalTo("event", eventPointer);
+    phaseQuery.ascending("order");
+    const phases = await phaseQuery.find({ useMasterKey: true });
+
+    // Fetch enigmas for event
+    const Enigma = Parse.Object.extend("Enigma");
+    const enigmaQuery = new Parse.Query(Enigma);
+    enigmaQuery.equalTo("event", eventPointer);
+    enigmaQuery.ascending("order");
+    const enigmas = await enigmaQuery.find({ useMasterKey: true });
+
+    // Map enigmas to phases (if any) or to event level list
+    let enigmasJson = enigmas.map(e => {
+        const json = e.toJSON();
+        json.id = e.id;
+        // SECURITY: Remove the code so it's not exposed to the client!
+        delete json.code;
+        return json;
+    });
+
+    let phasesJson = phases.map(p => {
+        const json = p.toJSON();
+        json.id = p.id;
+        json.enigmas = enigmasJson.filter(e => e.phaseId === p.id || (e.phase && e.phase.objectId === p.id));
+        return json;
+    });
+
+    eventJson.phases = phasesJson;
+    eventJson.enigmas = enigmasJson;
+
+    return eventJson;
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
+  }
+});
+
+Parse.Cloud.define("toggleEventStatus", async (request) => {
+  const { eventId, newStatus } = request.params;
+  const user = request.user;
+  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!eventId || !newStatus) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId and newStatus are required.");
+
+  try {
+    const Event = Parse.Object.extend("Event");
+    const query = new Parse.Query(Event);
+    const event = await query.get(eventId, { useMasterKey: true });
+    event.set("status", newStatus);
+    await event.save(null, { useMasterKey: true });
+    return { success: true };
+  } catch(error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
+  }
+});
+
+Parse.Cloud.define("getFindAndWinStats", async (request) => {
+  const { eventId } = request.params;
+  const user = request.user;
+  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
+
+  try {
+      const userQuery = new Parse.Query(Parse.User);
+      const totalSubscribed = await userQuery.count({useMasterKey: true});
+      return { totalPlayers: totalSubscribed, completionRate: 0 };
+  } catch(error) {
+      throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
+  }
+});
+
+Parse.Cloud.define("createOrUpdatePhase", async (request) => {
+  const { eventId, phaseId, data } = request.params;
+  const user = request.user;
+  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
+
+  try {
+    const Phase = Parse.Object.extend("Phase");
+    let phase;
+
+    if (phaseId) {
+      const query = new Parse.Query(Phase);
+      phase = await query.get(phaseId, { useMasterKey: true });
+    } else {
+      phase = new Phase();
+      const Event = Parse.Object.extend("Event");
+      const eventPointer = new Event();
+      eventPointer.id = eventId;
+      phase.set("event", eventPointer);
+      phase.set("eventId", eventId);
+    }
+
+    if (data) {
+      for (const key in data) {
+        phase.set(key, data[key]);
+      }
+    }
+
+    await phase.save(null, { useMasterKey: true });
+    return { success: true, phaseId: phase.id };
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
+  }
+});
+
+Parse.Cloud.define("deletePhase", async (request) => {
+  const { eventId, phaseId } = request.params;
+  const user = request.user;
+  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!phaseId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "phaseId is required.");
+
+  try {
+    const Phase = Parse.Object.extend("Phase");
+    const query = new Parse.Query(Phase);
+    const phase = await query.get(phaseId, { useMasterKey: true });
+    await phase.destroy({ useMasterKey: true });
+    return { success: true };
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
+  }
+});
+
+Parse.Cloud.define("handleEnigmaAction", async (request) => {
+  const { action, eventId, enigmaId, answer } = request.params;
+  const user = request.user;
+  if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "User not authenticated.");
+  if (!action) throw new Parse.Error(Parse.Error.INVALID_QUERY, "action is required.");
+
+  try {
+      if (action === 'getStatus') {
+          // get user progress
+          const userEvents = user.get("events") || {};
+          const eventProgress = userEvents[eventId] || {};
+          return {
+              currentPhase: eventProgress.currentPhase || 1,
+              currentEnigma: eventProgress.currentEnigma || 1,
+              hintsPurchased: eventProgress.hintsPurchased || []
+          };
+      } else if (action === 'verify_code' || action === 'scan_enigma') {
+          // Assuming basic code verification
+          const Enigma = Parse.Object.extend("Enigma");
+          const query = new Parse.Query(Enigma);
+          const enigma = await query.get(enigmaId, { useMasterKey: true });
+
+          if (enigma.get("code") === answer) {
+              return { success: true, message: "Correct answer" };
+          } else {
+              return { success: false, message: "Incorrect answer" };
+          }
+      }
+      return { success: true, message: "Action handled." };
+  } catch(error) {
+      throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
   }
 });

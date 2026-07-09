@@ -1,0 +1,9 @@
+{
+  "name": "parse-cloud-code",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "dependencies": {
+    "parse": "^4.3.0"
+  }
+}
