@@ -236,12 +236,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }) {
     final titleCtrl = TextEditingController(text: data?['title']);
     final descCtrl = TextEditingController(text: data?['description']);
+    String selectedEventType = data?['eventType'] ?? 'classic';
     final prizeCtrl = TextEditingController(
       text: data?['prizePool']?.toString(),
     );
     final orderCtrl = TextEditingController(
       text: data?['order']?.toString() ?? '1',
     );
+    final locationCtrl = TextEditingController(text: data?['location']);
     final iconCtrl = TextEditingController(text: data?['icon']);
 
     showDialog(
@@ -281,11 +283,42 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   keyboardType: TextInputType.number,
                 ),
                 TextField(
+                  controller: locationCtrl,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: 'Local do Evento (Cidade) *',
+                  ),
+                ),
+                TextField(
                   controller: iconCtrl,
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
                     labelText: 'URL do Ícone (Lottie/Image)',
                   ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedEventType,
+                  dropdownColor: cardColor,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo de Evento',
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'classic',
+                      child: Text('Classic (A Jornada Estratégica)'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'find_and_win',
+                      child: Text('Find & Win (Recompensa Instantânea)'),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      selectedEventType = val;
+                    }
+                  },
                 ),
               ],
             ),
@@ -297,12 +330,23 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
+                if (locationCtrl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('O local do evento é obrigatório.'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
                 final newData = {
                   'title': titleCtrl.text,
                   'description': descCtrl.text,
                   'prizePool': num.tryParse(prizeCtrl.text) ?? 0,
                   'order': int.tryParse(orderCtrl.text) ?? 1,
                   'icon': iconCtrl.text,
+                  'location': locationCtrl.text.trim(),
+                  'eventType': selectedEventType,
                   'status': data?['status'] ?? 'draft',
                 };
                 try {

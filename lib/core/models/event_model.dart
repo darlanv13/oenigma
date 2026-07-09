@@ -60,13 +60,16 @@ class EventModel {
 
     return EventModel(
       id: map['id'] ?? '',
-      name: map['name'] ?? 'Evento Desconhecido',
-      prize: map['prize'] ?? 'R\$ 0',
+      name: map['name'] ?? map['title'] ?? 'Evento Desconhecido',
+      prize:
+          map['prize'] ??
+          (map['prizePool'] != null ? 'R\$ ${map['prizePool']}' : 'R\$ 0'),
       price: (map['price'] as num?)?.toDouble() ?? 0.0,
       icon: map['icon'] ?? '',
       startDate: map['startDate'] ?? 'Data não definida',
       location: map['location'] ?? 'Local não definido',
-      fullDescription: map['fullDescription'] ?? 'Nenhuma descrição.',
+      fullDescription:
+          map['fullDescription'] ?? map['description'] ?? 'Nenhuma descrição.',
       status: map['status'] ?? 'open',
       winnerName: map['winnerName'],
       winnerPhotoURL: map['winnerPhotoURL'], // <-- 3. LEIA O DADO DO MAPA

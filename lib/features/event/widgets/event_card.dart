@@ -7,7 +7,6 @@ import '../screens/event_details_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class EventCard extends StatefulWidget {
   final EventModel event;
   final Map<String, dynamic> playerData;
@@ -173,13 +172,18 @@ class _EventCardState extends State<EventCard> {
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  const FaIcon(FontAwesomeIcons.calendarDay,
+                                  const FaIcon(
+                                    FontAwesomeIcons.locationDot,
                                     color: secondaryTextColor,
                                     size: 12,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    _formatDate(widget.event.startDate),
+                                    widget.event.location.isNotEmpty &&
+                                            widget.event.location !=
+                                                'Local não definido'
+                                        ? widget.event.location
+                                        : _formatDate(widget.event.startDate),
                                     style: const TextStyle(
                                       color: secondaryTextColor,
                                       fontSize: 12,
@@ -209,9 +213,13 @@ class _EventCardState extends State<EventCard> {
                             ),
                           ),
                           Text(
-                            "R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}",
-                            style: const TextStyle(
-                              color: textColor,
+                            widget.event.price == 0
+                                ? "Grátis"
+                                : "R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}",
+                            style: TextStyle(
+                              color: widget.event.price == 0
+                                  ? Colors.green
+                                  : textColor,
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
@@ -245,7 +253,9 @@ class _EventCardState extends State<EventCard> {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
           child: Container(
-            decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6)),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.6),
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -282,7 +292,10 @@ class _EventCardState extends State<EventCard> {
                                 ? NetworkImage(event.winnerPhotoURL!)
                                 : null,
                             child: event.winnerPhotoURL == null
-                                ? const FaIcon(FontAwesomeIcons.solidUser, size: 16)
+                                ? const FaIcon(
+                                    FontAwesomeIcons.solidUser,
+                                    size: 16,
+                                  )
                                 : null,
                           ),
                           const SizedBox(width: 8),
@@ -317,7 +330,8 @@ class _EventCardState extends State<EventCard> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const FaIcon(FontAwesomeIcons.hourglassHalf,
+              const FaIcon(
+                FontAwesomeIcons.hourglassHalf,
                 color: secondaryTextColor,
                 size: 50,
               ),

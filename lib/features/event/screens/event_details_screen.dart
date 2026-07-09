@@ -7,13 +7,11 @@ import 'package:lottie/lottie.dart';
 import 'dart:ui';
 import 'package:oenigma/core/models/event_model.dart';
 
-
 import '../screens/event_progress_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'find_and_win_progress_screen.dart';
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 
 class EventDetailsScreen extends ConsumerStatefulWidget {
   final EventModel event;
@@ -30,8 +28,6 @@ class EventDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
-
-
   late final Future<LottieComposition> _composition;
   Future<Map<String, int>>? _statsFuture;
 
@@ -60,7 +56,9 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 
   Future<Map<String, int>> _getFindAndWinStats() async {
-    final stats = await ref.read(eventRepositoryProvider).getFindAndWinStats(widget.event.id);
+    final stats = await ref
+        .read(eventRepositoryProvider)
+        .getFindAndWinStats(widget.event.id);
     return {
       'total': stats['totalEnigmas'] ?? 0,
       'solved': stats['solvedEnigmas'] ?? 0,
@@ -68,9 +66,9 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 
   Future<Map<String, int>> _getClassicEventStats() async {
-    final count = await ref.read(eventRepositoryProvider).getChallengeCountForEvent(
-      widget.event.id,
-    );
+    final count = await ref
+        .read(eventRepositoryProvider)
+        .getChallengeCountForEvent(widget.event.id);
     return {
       'total': count,
       'solved': 0,
@@ -98,7 +96,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       }
     } on ParseError catch (e) {
       if (mounted) {
-        if (e.message != null && e.message!.contains('saldo')) {
+        if (e.message?.contains('saldo') == true) {
           _showInsufficientFundsDialog();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -127,7 +125,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           style: TextStyle(color: primaryAmber),
         ),
         content: Text(
-          'Confirma a sua inscrição no evento "${widget.event.name}" pelo valor de R\$ ${widget.event.price.toStringAsFixed(2)}?',
+          'Confirma a sua inscrição no evento "${widget.event.name}"?',
         ),
         actions: [
           TextButton(
@@ -191,16 +189,13 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               try {
                 // 3. Busca os dados da carteira
 
-
                 if (mounted) {
                   // 4. Fecha o loading (usando context da tela, que é o pai do loading agora)
                   Navigator.of(context).pop();
 
                   // 5. Navega para a tela da carteira
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => WalletScreen( ),
-                    ),
+                    MaterialPageRoute(builder: (context) => WalletScreen()),
                   );
                 }
               } catch (e) {
@@ -240,18 +235,14 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             backgroundColor: darkBackground,
             elevation: 0,
             leading: _buildBackButton(context),
-            flexibleSpace: FlexibleSpaceBar(
-              background: _buildHeaderImage(),
-            ),
+            flexibleSpace: FlexibleSpaceBar(background: _buildHeaderImage()),
           ),
           SliverToBoxAdapter(
             child: Container(
               transform: Matrix4.translationValues(0.0, -30.0, 0.0),
               decoration: const BoxDecoration(
                 color: darkBackground,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(30),
-                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,7 +299,11 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 },
               )
             else
-              const FaIcon(FontAwesomeIcons.circleQuestion, size: 150, color: primaryAmber),
+              const FaIcon(
+                FontAwesomeIcons.circleQuestion,
+                size: 150,
+                color: primaryAmber,
+              ),
             // O gradiente continua o mesmo
             Container(
               decoration: BoxDecoration(
@@ -422,11 +417,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             },
           ),
 
-          _buildInfoPill(
-            FontAwesomeIcons.coins,
-            'Inscrição',
-            'R\$ ${widget.event.price.toStringAsFixed(2)}',
-          ),
+          _buildInfoPill(FontAwesomeIcons.coins, 'Inscrição', 'Grátis'),
         ],
       ),
     );
@@ -518,7 +509,8 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             child: IconButton(
               icon: const Padding(
                 padding: EdgeInsets.only(right: 2.0),
-                child: FaIcon(FontAwesomeIcons.angleLeft,
+                child: FaIcon(
+                  FontAwesomeIcons.angleLeft,
                   color: Colors.white,
                   size: 20,
                 ),
@@ -555,11 +547,13 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           boxShadow: [
             BoxShadow(
-              color: primaryAmber.withValues(alpha: _isSubscribed ? 0.05 : 0.15),
+              color: primaryAmber.withValues(
+                alpha: _isSubscribed ? 0.05 : 0.15,
+              ),
               blurRadius: 20,
               offset: const Offset(0, -5),
-            )
-          ]
+            ),
+          ],
         ),
         child: ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
@@ -608,13 +602,14 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                     strokeWidth: 2,
                   ),
                 )
-              : FaIcon(_isSubscribed ? FontAwesomeIcons.play : FontAwesomeIcons.rightToBracket,
+              : FaIcon(
+                  _isSubscribed
+                      ? FontAwesomeIcons.play
+                      : FontAwesomeIcons.rightToBracket,
                   size: 28,
                 ),
           label: Text(
-            _isSubscribed
-                ? 'Jogar'
-                : 'Inscreva-se (R\$ ${widget.event.price.toStringAsFixed(2)})',
+            _isSubscribed ? 'Jogar' : 'Inscreva-se Grátis',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
@@ -631,7 +626,9 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         decoration: BoxDecoration(
           color: cardColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+          border: Border(
+            top: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+          ),
         ),
         child: ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
@@ -646,7 +643,11 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           icon: FaIcon(icon, size: 24),
           label: Text(
             label,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1.1),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.1,
+            ),
           ),
         ),
       ),

@@ -584,9 +584,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         }
       }
     } on ParseError catch (e) {
-      if (e.message != null && e.message!.contains('saldo') &&
-          e.message != null &&
-          e.message!.contains('Saldo insuficiente')) {
+      if (e.message?.contains('saldo') == true ||
+          e.message?.contains('Saldo insuficiente') == true) {
         _showInsufficientFundsDialog();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -641,12 +640,12 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         // Log to Admin Fraud Monitor
         ParseUser.currentUser().then((user) {
           if (user != null && user is ParseUser) {
-             final log = ParseObject('FraudLog')
+            final log = ParseObject('FraudLog')
               ..set('objectId', user.objectId)
               ..set('eventId', widget.event.id)
               ..set('enigmaId', _currentEnigma.id)
               ..set('reason', 'Fake GPS Detectado');
-             log.save();
+            log.save();
           }
         });
         return;
@@ -938,7 +937,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       );
                     }
                   : null,
-              icon: FaIcon(_isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
+              icon: FaIcon(
+                _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
               ),
               label: Text(
                 _isBlocked
@@ -977,8 +977,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           Padding(
             padding: const EdgeInsets.only(bottom: 16.0),
             child: CompassWidget(
-              destinationLatitude: _destinationLocation!['latitude']!,
+              targetLatitude: _destinationLocation!['latitude']!,
+              targetLongitude: _destinationLocation!['longitude']!,
               destinationLongitude: _destinationLocation!['longitude']!,
+              destinationLatitude: _destinationLocation!['latitude']!,
             ),
           ),
 
@@ -1070,7 +1072,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         _handleToolPurchase('map');
                       }
                     },
-              icon: const FaIcon(FontAwesomeIcons.map,
+              icon: const FaIcon(
+                FontAwesomeIcons.map,
                 color: Colors.blueAccent,
               ),
               label: const Text(
@@ -1106,7 +1109,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         _handleToolPurchase('compass');
                       }
                     },
-              icon: const FaIcon(FontAwesomeIcons.compass,
+              icon: const FaIcon(
+                FontAwesomeIcons.compass,
                 color: Colors.greenAccent,
               ),
               label: const Text(

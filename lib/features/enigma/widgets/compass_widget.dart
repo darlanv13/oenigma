@@ -1,104 +1,69 @@
-import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
+import 'package:flutter_compass/flutter_compass.dart';
 
 class CompassWidget extends StatefulWidget {
-  final double destinationLatitude;
-  final double destinationLongitude;
-  final double maxRadarDistance; // Distância máxima que o radar deteta (em metros)
+  final double targetLatitude;
+  final double targetLongitude;
 
   const CompassWidget({
     super.key,
-    required this.destinationLatitude,
-    required this.destinationLongitude,
-    this.maxRadarDistance = 500.0, // Padrão: 500 metros
+    required this.targetLatitude,
+    required this.targetLongitude,
+    required double destinationLongitude,
+    required double destinationLatitude,
   });
 
   @override
   State<CompassWidget> createState() => _CompassWidgetState();
 }
 
-class _CompassWidgetState extends State<CompassWidget> with SingleTickerProviderStateMixin {
-  StreamSubscription<CompassEvent>? _compassSubscription;
-  StreamSubscription<Position>? _positionSubscription;
+class _CompassWidgetState extends State<CompassWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _scannerController;
 
-  double? _currentHeading;
+  double _currentHeading = 0.0;
   Position? _currentPosition;
-  double _distanceToTarget = 0.0;
-
-  // Controlador para o efeito de "piscar" do ponto amarelo
-  late AnimationController _pulseController;
   bool _hasPermissions = false;
 
   @override
   void initState() {
     super.initState();
-    _startSensors();
-
-    // Animação para fazer o ponto amarelo piscar como no anime
-    _pulseController = AnimationController(
+    // Controlador da animação da "linha do radar" que fica girando
+    _scannerController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
-    )..repeat(reverse: true);
+      duration: const Duration(seconds: 2),
+    )..repeat();
+
+    _initSensors();
   }
 
-  Future<void> _startSensors() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return;
-    }
-
-    permission = await Geolocator.checkPermission();
+  Future<void> _initSensors() async {
+    // Requisitar permissão de localização
+    LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return;
-      }
     }
 
-    if (permission == LocationPermission.deniedForever) {
-      return;
-    }
+    if (permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always) {
+      setState(() => _hasPermissions = true);
 
-    if (mounted) {
-      setState(() {
-        _hasPermissions = true;
-      });
-    }
-
-    if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-      _compassSubscription = FlutterCompass.events?.listen((CompassEvent event) {
-        if (mounted) {
-          setState(() {
-            _currentHeading = event.heading;
-          });
-        }
-      });
-
-      _positionSubscription = Geolocator.getPositionStream(
+      // Ouvir a localização atual do usuário
+      Geolocator.getPositionStream(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
-          distanceFilter: 1, // Atualiza a cada metro
+          distanceFilter: 1,
         ),
       ).listen((Position position) {
-        if (mounted) {
-          setState(() {
-            _currentPosition = position;
-            _distanceToTarget = Geolocator.distanceBetween(
-              position.latitude,
-              position.longitude,
-              widget.destinationLatitude,
-              widget.destinationLongitude,
-            );
-          });
+        if (mounted) setState(() => _currentPosition = position);
+      });
+
+      // Ouvir a bússola do celular (para onde ele está apontando)
+      FlutterCompass.events?.listen((CompassEvent event) {
+        if (mounted && event.heading != null) {
+          setState(() => _currentHeading = event.heading!);
         }
       });
     }
@@ -106,157 +71,115 @@ class _CompassWidgetState extends State<CompassWidget> with SingleTickerProvider
 
   @override
   void dispose() {
-    _compassSubscription?.cancel();
-    _positionSubscription?.cancel();
-    _pulseController.dispose();
+    _scannerController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     if (!_hasPermissions) {
-      return const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Center(
-          child: Text(
-            'Permissão de localização necessária para o radar.',
-            style: TextStyle(color: secondaryTextColor),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
-    }
-
-    if (_currentHeading == null || _currentPosition == null) {
       return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(color: Colors.greenAccent),
-            SizedBox(height: 16),
-            Text('A sintonizar frequências...', style: TextStyle(color: Colors.greenAccent)),
-          ],
+        child: Text(
+          'Permissão de localização necessária para o Radar.',
+          style: TextStyle(
+            color: Colors.redAccent,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
         ),
       );
     }
 
-    // 1. Cálculo do Ângulo
+    if (_currentPosition == null) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF88C928)),
+      );
+    }
+
+    // Calcula a distância e a direção (Bearing) até o alvo
+    final double distance = Geolocator.distanceBetween(
+      _currentPosition!.latitude,
+      _currentPosition!.longitude,
+      widget.targetLatitude,
+      widget.targetLongitude,
+    );
+
     final double bearing = Geolocator.bearingBetween(
       _currentPosition!.latitude,
       _currentPosition!.longitude,
-      widget.destinationLatitude,
-      widget.destinationLongitude,
+      widget.targetLatitude,
+      widget.targetLongitude,
     );
-    double direction = bearing - _currentHeading!;
-    final double directionInRadians = direction * (math.pi / 180);
 
-    // 2. Cálculo da Distância (Para o ponto amarelo aproximar-se do centro)
-    // O raio do radar visual é de cerca de 130 pixels (num contentor de 300x300)
-    const double maxVisualRadius = 130.0;
-
-    // Se estiver mais longe que a distância máxima, prende o ponto na borda
-    double distanceScale = (_distanceToTarget / widget.maxRadarDistance).clamp(0.0, 1.0);
-    double visualDistanceFromCenter = distanceScale * maxVisualRadius;
+    // Ajusta o ângulo do alvo com base na direção que o celular está apontando
+    final double targetAngle = (bearing - _currentHeading) * (math.pi / 180);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // A Carcaça do Radar (Metálica)
+        // A Carcaça Metálica do Radar
         Container(
-          width: 320,
-          height: 320,
+          width: 280,
+          height: 280,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.grey.shade300, // Borda metálica
-            boxShadow: const [
-              BoxShadow(color: Colors.black54, blurRadius: 15, spreadRadius: 5, offset: Offset(0, 8)),
+            color: const Color(
+              0xFFDCDCDC,
+            ), // Cinza clássico da carcaça do Dragon Radar
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.6),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+              const BoxShadow(
+                color: Colors.white,
+                blurRadius: 4,
+                offset: Offset(-2, -2),
+              ), // Bezel highlight
             ],
+            border: Border.all(color: const Color(0xFF8B8B8B), width: 8),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            // O Ecrã Verde do Radar
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF0F380F), // Verde clássico do GameBoy/Radar
-                border: Border.all(color: Colors.black, width: 4),
-              ),
-              child: ClipOval(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // A Grelha Quadriculada (Desenhada com CustomPaint)
-                    CustomPaint(
-                      size: const Size(300, 300),
-                      painter: RadarGridPainter(),
+            padding: const EdgeInsets.all(4.0),
+            // O Visor do Radar
+            child: ClipOval(
+              child: AnimatedBuilder(
+                animation: _scannerController,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: DragonRadarPainter(
+                      scannerAngle: _scannerController.value * 2 * math.pi,
+                      targetAngle: targetAngle,
+                      distance: distance,
                     ),
-
-                    // O PONTO DO TESOURO (BOLA DE CRISTAL)
-                    Transform.rotate(
-                      angle: directionInRadians,
-                      child: Transform.translate(
-                        // Move o ponto para cima (negativo no eixo Y) consoante a distância
-                        offset: Offset(0, -visualDistanceFromCenter),
-                        child: FadeTransition(
-                          opacity: _pulseController,
-                          child: Container(
-                            width: 18,
-                            height: 18,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.yellowAccent,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.yellowAccent.withValues(alpha: 0.8),
-                                  blurRadius: 10,
-                                  spreadRadius: 3,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // O JOGADOR (Triângulo Vermelho no Centro)
-                    const FaIcon(FontAwesomeIcons.locationArrow, // Um ícone que parece um triângulo
-                      color: Colors.redAccent,
-                      size: 24,
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
           ),
         ),
-
-        const SizedBox(height: 32),
-
-        // Painel de Distância Digital
+        const SizedBox(height: 20),
+        // Visor Digital de Distância
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.2), width: 2),
-            boxShadow: [
-              BoxShadow(color: Colors.greenAccent.withValues(alpha: 0.05), blurRadius: 10),
+            color: Colors.black87,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF88C928), width: 2),
+            boxShadow: const [
+              BoxShadow(color: Color(0xFF88C928), blurRadius: 8),
             ],
           ),
-          child: Column(
-            children: [
-              const Text('ALVO DETETADO', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 2)),
-              const SizedBox(height: 8),
-              Text(
-                '${_distanceToTarget.toStringAsFixed(1)} m',
-                style: const TextStyle(
-                  color: Colors.greenAccent,
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Courier', // Fonte com aspeto digital
-                ),
-              ),
-            ],
+          child: Text(
+            '${distance.toStringAsFixed(0)} M',
+            style: const TextStyle(
+              color: Color(0xFF88C928),
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Courier', // Fonte estilo digital
+              letterSpacing: 2,
+            ),
           ),
         ),
       ],
@@ -264,35 +187,141 @@ class _CompassWidgetState extends State<CompassWidget> with SingleTickerProvider
   }
 }
 
-// ==============================================================
-// PINTOR DA GRELHA (Desenha as linhas verdes ao estilo Dragon Ball)
-// ==============================================================
-class RadarGridPainter extends CustomPainter {
+// ---------------------------------------------------------
+// CUSTOM PAINTER - A Magia Gráfica do Radar do Dragão
+// ---------------------------------------------------------
+class DragonRadarPainter extends CustomPainter {
+  final double scannerAngle;
+  final double targetAngle;
+  final double distance;
+
+  DragonRadarPainter({
+    required this.scannerAngle,
+    required this.targetAngle,
+    required this.distance,
+  });
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF306230).withValues(alpha: 0.6) // Verde claro para as linhas
-      ..strokeWidth = 1.5;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
 
-    final centerPaint = Paint()
-      ..color = const Color(0xFF8BAC0F).withValues(alpha: 0.8) // Linha central mais forte
-      ..strokeWidth = 2.0;
+    // 1. Fundo Verde do Radar
+    final bgPaint = Paint()
+      ..shader = RadialGradient(
+        colors: const [Color(0xFF88C928), Color(0xFF426815)],
+        stops: const [0.3, 1.0],
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+    canvas.drawCircle(center, radius, bgPaint);
 
-    const double step = 25.0; // Espaçamento entre as linhas da grelha
+    // 2. Grade Cibernética (Grid Lines)
+    final gridPaint = Paint()
+      ..color = const Color(0xFFB5E655).withValues(alpha: 0.4)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
 
-    // Desenha as linhas verticais e horizontais
-    for (double i = 0; i <= size.width; i += step) {
-      // Desenha as linhas horizontais
-      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
-      // Desenha as linhas verticais
-      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    const int lines = 6;
+    final double step = size.width / lines;
+    for (int i = 1; i < lines; i++) {
+      // Linhas verticais
+      canvas.drawLine(
+        Offset(step * i, 0),
+        Offset(step * i, size.height),
+        gridPaint,
+      );
+      // Linhas horizontais
+      canvas.drawLine(
+        Offset(0, step * i),
+        Offset(size.width, step * i),
+        gridPaint,
+      );
     }
 
-    // Desenha a cruz central mais forte
-    canvas.drawLine(Offset(size.width / 2, 0), Offset(size.width / 2, size.height), centerPaint);
-    canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), centerPaint);
+    // Círculo central da grade
+    canvas.drawCircle(center, radius * 0.3, gridPaint);
+    canvas.drawCircle(center, radius * 0.7, gridPaint);
+
+    // 3. A "Esfera do Dragão" (O Alvo Brilhante)
+    // Limita o alcance visual máximo no radar para 500 metros
+    const double maxRadarRange = 500.0;
+    final double displayRadius = distance > maxRadarRange
+        ? radius * 0.9
+        : (distance / maxRadarRange) * radius;
+
+    // Calcula as coordenadas X e Y usando trigonometria
+    // Subtraímos pi/2 para que o ângulo 0 aponte para "Cima" (Frente do celular)
+    final double targetX =
+        center.dx + displayRadius * math.cos(targetAngle - math.pi / 2);
+    final double targetY =
+        center.dy + displayRadius * math.sin(targetAngle - math.pi / 2);
+    final targetOffset = Offset(targetX, targetY);
+
+    // O Efeito Neon da Esfera
+    final glowPaint = Paint()
+      ..color = Colors.orangeAccent
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawCircle(targetOffset, 12, glowPaint);
+
+    final dotPaint = Paint()
+      ..color = const Color(0xFFFFD700); // Amarelo Dourado
+    canvas.drawCircle(targetOffset, 8, dotPaint);
+
+    // Pequeno centro vermelho (simulando a estrela)
+    final starPaint = Paint()..color = Colors.red;
+    canvas.drawCircle(targetOffset, 3, starPaint);
+
+    // 4. Scanner de Varredura (Sweep Animation)
+    final sweepPaint = Paint()
+      ..shader = SweepGradient(
+        colors: [
+          Colors.transparent,
+          const Color(0xFFB5E655).withValues(alpha: 0.1),
+          const Color(0xFFE8FFB7).withValues(alpha: 0.6),
+        ],
+        stops: const [0.0, 0.8, 1.0],
+        transform: GradientRotation(scannerAngle - math.pi / 2),
+      ).createShader(Rect.fromCircle(center: center, radius: radius))
+      ..style = PaintingStyle.fill;
+
+    // Usar um path para garantir que a varredura não saia do círculo
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      0,
+      2 * math.pi,
+      true,
+      sweepPaint,
+    );
+
+    // Linha forte do scanner
+    final scannerLinePaint = Paint()
+      ..color = const Color(0xFFE8FFB7)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    final lineEndX = center.dx + radius * math.cos(scannerAngle - math.pi / 2);
+    final lineEndY = center.dy + radius * math.sin(scannerAngle - math.pi / 2);
+    canvas.drawLine(center, Offset(lineEndX, lineEndY), scannerLinePaint);
+
+    // 5. O Jogador (Triângulo Vermelho no Centro)
+    final playerPaint = Paint()
+      ..color = Colors.red
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(center.dx, center.dy - 12); // Ponta
+    path.lineTo(center.dx - 8, center.dy + 8); // Esquerda
+    path.lineTo(center.dx, center.dy + 4); // Fenda inferior
+    path.lineTo(center.dx + 8, center.dy + 8); // Direita
+    path.close();
+
+    // Sombra do jogador
+    canvas.drawShadow(path, Colors.black, 4, true);
+    canvas.drawPath(path, playerPaint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant DragonRadarPainter oldDelegate) {
+    return oldDelegate.scannerAngle != scannerAngle ||
+        oldDelegate.targetAngle != targetAngle ||
+        oldDelegate.distance != distance;
+  }
 }
