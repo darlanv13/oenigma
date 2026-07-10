@@ -273,17 +273,33 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
       context: context,
       builder: (context) {
         return StatefulBuilder(builder: (context, setState) {
-          return AlertDialog(
+          return Dialog(
             backgroundColor: darkBackground,
-          title: Text(
-            docId == null ? 'Nova Dica' : 'Editar Dica',
-            style: const TextStyle(color: Colors.white),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
+            insetPadding: const EdgeInsets.all(16),
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.9,
+              constraints: const BoxConstraints(maxWidth: 600),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    docId == null ? 'Nova Dica' : 'Editar Dica',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
                   controller: titleCtrl,
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(labelText: 'Título'),
@@ -347,20 +363,40 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                   TextField(
                     controller: contentUrlCtrl,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'URL do Áudio (Obrigatório)',
+                      suffixIcon: IconButton(
+                        icon: const FaIcon(FontAwesomeIcons.upload, size: 18),
+                        onPressed: () async {
+                          final url = await AdminUploadUtil.pickAndUploadAudio(context);
+                          if (url != null) {
+                            setState(() {
+                              contentUrlCtrl.text = url;
+                            });
+                          }
+                        },
+                      ),
                     ),
                   ),
                 ],
               ],
             ),
           ),
-          actions: [
+        ),
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancelar'),
             ),
+            const SizedBox(width: 8),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryAmber,
+                foregroundColor: Colors.black,
+              ),
               onPressed: () async {
                 if (selectedType == 'image' && contentUrlCtrl.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -433,7 +469,11 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
               child: const Text('Salvar'),
             ),
           ],
-          );
+        ),
+      ],
+    ),
+  ),
+);
         });
       },
     );
