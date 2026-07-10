@@ -120,7 +120,7 @@ class PhaseCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'NÍVEL \${phase.order}',
+                            'NÍVEL ${phase.order}',
                             style: TextStyle(
                               color: isLocked ? secondaryTextColor : (isActive ? primaryAmber : Colors.white),
                               fontSize: 20,
