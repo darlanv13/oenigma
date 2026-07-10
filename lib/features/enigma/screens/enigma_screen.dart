@@ -1051,8 +1051,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   Widget _buildToolsPurchaseButtons() {
-    if (_currentEnigma.type != 'qr_code_gps' && _currentEnigma.type != 'gps')
-      return const SizedBox.shrink();
+    // Só mostre as ferramentas se houver um local de destino definido.
+    if (_destinationLocation == null) return const SizedBox.shrink();
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16),
