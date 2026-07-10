@@ -95,6 +95,8 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                   final title = hint.get<String>('title') ?? 'Sem Título';
                   final description = hint.get<String>('description') ?? '';
                   final type = hint.get<String>('type') ?? 'text';
+                  final linkedEnigmaId = hint.get<String>('linkedEnigmaId');
+                  final linkedEventName = hint.get<String>('linkedEventName');
                   // ignore: unused_local_variable
                   var contentUrl = hint.get<String>('contentUrl') ?? '';
 
@@ -136,12 +138,78 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                               fontSize: 12,
                             ),
                           ),
+                          if (linkedEnigmaId != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Vinculada: ${linkedEventName ?? 'Desconhecido'}',
+                              style: const TextStyle(
+                                color: Colors.greenAccent,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                       isThreeLine: true,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          if (linkedEnigmaId == null)
+                            IconButton(
+                              icon: const FaIcon(
+                                FontAwesomeIcons.link,
+                                color: Colors.green,
+                              ),
+                              tooltip: 'Atribuir a um Enigma',
+                              onPressed: () {
+                                _showAssignHintDialog(context, hintId);
+                              },
+                            )
+                          else
+                            IconButton(
+                              icon: const FaIcon(
+                                FontAwesomeIcons.linkSlash,
+                                color: Colors.redAccent,
+                              ),
+                              tooltip: 'Desvincular do Enigma',
+                              onPressed: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    backgroundColor: darkBackground,
+                                    title: const Text('Desvincular Dica', style: TextStyle(color: Colors.white)),
+                                    content: const Text('Deseja desvincular esta dica do enigma atual?', style: TextStyle(color: secondaryTextColor)),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                                        onPressed: () => Navigator.pop(context, true),
+                                        child: const Text('Desvincular'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  try {
+                                    final response = await ParseCloudFunction('assignHintToEnigma').execute(parameters: {
+                                      'hintId': hintId,
+                                      'enigmaId': null,
+                                    });
+                                    if (response.success && context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dica desvinculada!'), backgroundColor: Colors.green));
+                                      _loadHints();
+                                    } else {
+                                      throw Exception(response.error?.message ?? 'Erro desconhecido');
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e'), backgroundColor: Colors.redAccent));
+                                    }
+                                  }
+                                }
+                              },
+                            ),
                           IconButton(
                             icon: const FaIcon(
                               FontAwesomeIcons.penToSquare,
@@ -478,4 +546,125 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
       },
     );
   }
+void _showAssignHintDialog(BuildContext context, String hintId) {
+    String? selectedEventId;
+    String? selectedEnigmaId;
+    String? selectedEventName;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              backgroundColor: darkBackground,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 400),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Atribuir a um Enigma', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    FutureBuilder<ParseResponse>(
+                      future: QueryBuilder<ParseObject>(ParseObject('Event')).query(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const CircularProgressIndicator();
+                        }
+                        final events = snapshot.data?.results as List<ParseObject>? ?? [];
+                        return DropdownButtonFormField<String>(
+                          value: selectedEventId,
+                          dropdownColor: darkBackground,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: const InputDecoration(labelText: 'Selecione o Evento'),
+                          items: events.map((e) {
+                            return DropdownMenuItem<String>(
+                              value: e.objectId,
+                              child: Text(e.get<String>('title') ?? 'Sem Título', overflow: TextOverflow.ellipsis),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            setState(() {
+                              selectedEventId = val;
+                              selectedEnigmaId = null;
+                              selectedEventName = events.firstWhere((e) => e.objectId == val).get<String>('title');
+                            });
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    if (selectedEventId != null)
+                      FutureBuilder<ParseResponse>(
+                        future: (QueryBuilder<ParseObject>(ParseObject('Enigma'))..whereEqualTo('eventId', selectedEventId)).query(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const CircularProgressIndicator();
+                          }
+                          final enigmas = snapshot.data?.results as List<ParseObject>? ?? [];
+                          if (enigmas.isEmpty) {
+                            return const Text('Nenhum enigma encontrado.', style: TextStyle(color: Colors.white));
+                          }
+                          return DropdownButtonFormField<String>(
+                            value: selectedEnigmaId,
+                            dropdownColor: darkBackground,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: const InputDecoration(labelText: 'Selecione o Enigma'),
+                            items: enigmas.map((e) {
+                              final instr = e.get<String>('instruction') ?? '';
+                              final code = e.get<String>('code') ?? '';
+                              final text = instr.isNotEmpty ? instr : 'Cód: $code';
+                              return DropdownMenuItem<String>(
+                                value: e.objectId,
+                                child: Text(text.length > 30 ? '${text.substring(0, 30)}...' : text),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              setState(() {
+                                selectedEnigmaId = val;
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+                        ElevatedButton(
+                          onPressed: (selectedEnigmaId == null) ? null : () async {
+                            try {
+                              final response = await ParseCloudFunction('assignHintToEnigma').execute(parameters: {
+                                'hintId': hintId,
+                                'enigmaId': selectedEnigmaId,
+                                'eventId': selectedEventId,
+                                'eventName': selectedEventName,
+                              });
+                              if (response.success && context.mounted) {
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dica vinculada com sucesso!'), backgroundColor: Colors.green));
+                                _loadHints();
+                              } else {
+                                throw Exception(response.error?.message ?? 'Erro');
+                              }
+                            } catch(e) {
+                              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e'), backgroundColor: Colors.redAccent));
+                            }
+                          },
+                          child: const Text('Vincular'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
 }
