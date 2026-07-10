@@ -25,15 +25,14 @@ class HomeBannerCarousel extends StatelessWidget {
         final banners = snapshot.data!.results as List<ParseObject>;
 
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: CarouselSlider(
             options: CarouselOptions(
-              height: 150.0,
+              height: 100.0,
               autoPlay: true,
               autoPlayInterval: const Duration(seconds: 5),
               enlargeCenterPage: true,
               viewportFraction: 0.9,
-              aspectRatio: 2.0,
               initialPage: 0,
             ),
             items: banners.map((doc) {

@@ -113,12 +113,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  SliverToBoxAdapter(child: FadeTransition(opacity: _fadeAnimation, child: const HomeBannerCarousel())),
                   SliverToBoxAdapter(
                     child: FadeTransition(
                       opacity: _fadeAnimation,
                       child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
                         child: HomeProfileCard(
                           playerData: playerData,
                           wallet: walletData,
@@ -128,6 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
                   ),
+                  SliverToBoxAdapter(child: FadeTransition(opacity: _fadeAnimation, child: const HomeBannerCarousel())),
                   SliverToBoxAdapter(
                     child: FadeTransition(
                       opacity: _fadeAnimation,
