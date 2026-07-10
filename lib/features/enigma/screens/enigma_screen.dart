@@ -1053,85 +1053,148 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   Widget _buildToolsPurchaseButtons() {
     if (_currentEnigma.type != 'qr_code_gps' && _currentEnigma.type != 'gps')
       return const SizedBox.shrink();
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: const [
+              FaIcon(FontAwesomeIcons.toolbox, color: primaryAmber, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Ferramentas Especiais',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Compre ferramentas para encontrar o local com mais facilidade e não ficar para trás!',
+            style: TextStyle(color: secondaryTextColor, fontSize: 13),
+          ),
+          const SizedBox(height: 16),
           if (!_hasMap)
-            TextButton.icon(
-              onPressed: _isLoading
-                  ? null
-                  : () async {
-                      final bool? confirmed =
-                          await _showPurchaseConfirmationDialog(
-                            20.0,
-                            type: 'Mapa',
-                          );
-                      if (confirmed == true) {
-                        _handleToolPurchase('map');
-                      }
-                    },
-              icon: const FaIcon(
-                FontAwesomeIcons.map,
-                color: Colors.blueAccent,
-              ),
-              label: const Text(
-                'Comprar Mapa (R\$ 20)',
-                style: TextStyle(
-                  color: Colors.blueAccent,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
-              ),
+            _buildToolPurchaseCard(
+              title: 'Mapa Interativo',
+              description: 'Veja um raio no mapa onde o local se encontra.',
+              price: 20.0,
+              type: 'Mapa',
+              toolKey: 'map',
+              icon: FontAwesomeIcons.mapLocationDot,
+              color: Colors.blueAccent,
             ),
-          if (!_hasMap && !_hasCompass) const SizedBox(width: 8),
+          if (!_hasMap && !_hasCompass) const SizedBox(height: 12),
           if (!_hasCompass)
-            TextButton.icon(
-              onPressed: _isLoading
-                  ? null
-                  : () async {
-                      final bool? confirmed =
-                          await _showPurchaseConfirmationDialog(
-                            15.0,
-                            type: 'Bússola',
-                          );
-                      if (confirmed == true) {
-                        _handleToolPurchase('compass');
-                      }
-                    },
-              icon: const FaIcon(
-                FontAwesomeIcons.compass,
-                color: Colors.greenAccent,
-              ),
-              label: const Text(
-                'Comprar Bússola (R\$ 15)',
-                style: TextStyle(
-                  color: Colors.greenAccent,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                backgroundColor: Colors.greenAccent.withValues(alpha: 0.1),
-              ),
+            _buildToolPurchaseCard(
+              title: 'Bússola Digital',
+              description: 'Siga a direção exata até o local.',
+              price: 15.0,
+              type: 'Bússola',
+              toolKey: 'compass',
+              icon: FontAwesomeIcons.compass,
+              color: Colors.greenAccent,
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildToolPurchaseCard({
+    required String title,
+    required String description,
+    required double price,
+    required String type,
+    required String toolKey,
+    required dynamic icon,
+    required Color color,
+  }) {
+    return GestureDetector(
+      onTap: _isLoading
+          ? null
+          : () async {
+              final bool? confirmed = await _showPurchaseConfirmationDialog(
+                price,
+                type: type,
+              );
+              if (confirmed == true) {
+                _handleToolPurchase(toolKey);
+              }
+            },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.02)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: FaIcon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      color: secondaryTextColor,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: primaryAmber.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: primaryAmber.withValues(alpha: 0.5)),
+              ),
+              child: Text(
+                'R\$ ${price.toInt()}',
+                style: const TextStyle(
+                  color: primaryAmber,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

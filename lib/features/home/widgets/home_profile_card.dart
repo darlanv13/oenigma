@@ -27,16 +27,17 @@ class HomeProfileCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [cardColor, cardColor.withValues(alpha: 0.8)],
+          colors: [cardColor, Color(0xFF2C2C2C), cardColor],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: primaryAmber.withValues(alpha: 0.2), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 15,
+            color: primaryAmber.withValues(alpha: 0.05),
+            blurRadius: 20,
+            spreadRadius: 2,
             offset: const Offset(0, 8),
           ),
         ],
@@ -108,15 +109,27 @@ class HomeProfileCard extends StatelessWidget {
                 children: [
                   const Text(
                     'Saldo',
-                    style: TextStyle(color: secondaryTextColor, fontSize: 12),
+                    style: TextStyle(
+                      color: secondaryTextColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.1,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: primaryAmber,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      shadows: [
+                        Shadow(
+                          color: primaryAmber.withValues(alpha: 0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                   ),
                 ],

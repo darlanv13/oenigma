@@ -122,14 +122,25 @@ class _EventCardState extends State<EventCard> {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: primaryAmber,
+                    gradient: const LinearGradient(
+                      colors: [primaryAmber, Color(0xFFFFD54F)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryAmber.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     widget.event.prize,
                     style: const TextStyle(
                       color: darkBackground,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w900,
                       fontSize: 14,
                     ),
                   ),
@@ -146,7 +157,7 @@ class _EventCardState extends State<EventCard> {
                         top: Radius.circular(15),
                       ),
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(
@@ -154,7 +165,10 @@ class _EventCardState extends State<EventCard> {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.25),
+                            color: Colors.black.withValues(alpha: 0.4),
+                            border: Border(
+                              top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,31 +335,49 @@ class _EventCardState extends State<EventCard> {
 
   Widget _buildComingSoonOverlay() {
     return Positioned.fill(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.75),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const FaIcon(
-                FontAwesomeIcons.hourglassHalf,
-                color: secondaryTextColor,
-                size: 50,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.7),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.05),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          blurRadius: 15,
+                        ),
+                      ],
+                    ),
+                    child: const FaIcon(
+                      FontAwesomeIcons.hourglassHalf,
+                      color: Colors.white70,
+                      size: 40,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'EM BREVE',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 22,
+                      letterSpacing: 4,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'EM BREVE',
-                style: TextStyle(
-                  color: secondaryTextColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                  letterSpacing: 2,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
