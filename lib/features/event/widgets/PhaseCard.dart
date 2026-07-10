@@ -30,32 +30,51 @@ class PhaseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Fases bloqueadas ficam acinzentadas, Fases ativas brilham
     final bool isPlayable = !isLocked && !isCompleted;
-    final double scale = isActive ? 1.02 : 1.0;
+    final double scale = isActive ? 1.03 : 1.0;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
+      curve: Curves.easeOutBack,
       transform: Matrix4.diagonal3Values(scale, scale, 1.0),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: cardColor,
+        color: isLocked ? darkBackground : cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: isActive ? Border.all(color: primaryAmber.withValues(alpha: 0.5), width: 2) : null,
+        border: Border.all(
+          color: isActive
+              ? primaryAmber
+              : Colors.white.withValues(alpha: isLocked ? 0.05 : 0.1),
+          width: isActive ? 2 : 1,
+        ),
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: primaryAmber.withValues(alpha: 0.15),
-                  blurRadius: 15,
+                  color: primaryAmber.withValues(alpha: 0.3),
+                  blurRadius: 20,
                   spreadRadius: 2,
+                ),
+                BoxShadow(
+                  color: primaryAmber.withValues(alpha: 0.1),
+                  blurRadius: 40,
+                  spreadRadius: 5,
                 )
               ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
-                )
-              ],
+            : isLocked
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.8),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                    blurStyle: BlurStyle.inner, // Faz parecer "afundado"
+                  )
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -101,16 +120,22 @@ class PhaseCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Nivel \${phase.order}',
+                            'NÍVEL \${phase.order}',
                             style: TextStyle(
-                              color: isLocked ? secondaryTextColor : Colors.white,
+                              color: isLocked ? secondaryTextColor : (isActive ? primaryAmber : Colors.white),
                               fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.1,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 2.0,
+                              shadows: isActive ? [
+                                Shadow(
+                                  color: primaryAmber.withValues(alpha: 0.5),
+                                  blurRadius: 10,
+                                )
+                              ] : [],
                             ),
                           ),
                           if (isPlayable)
-                            const FaIcon(FontAwesomeIcons.chevronRight, color: primaryAmber, size: 16),
+                            const FaIcon(FontAwesomeIcons.chevronRight, color: primaryAmber, size: 18),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -134,13 +159,25 @@ class PhaseCard extends StatelessWidget {
     int completed = isCompleted ? total : (isActive ? currentEnigma - 1 : 0);
     double progress = total == 0 ? 0 : completed / total;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: LinearProgressIndicator(
-        value: progress,
-        backgroundColor: Colors.black.withValues(alpha: 0.3),
-        color: isCompleted ? Colors.greenAccent : primaryAmber,
-        minHeight: 6,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: darkBackground.withValues(alpha: 0.8),
+            blurRadius: 4,
+            blurStyle: BlurStyle.inner,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: LinearProgressIndicator(
+          value: progress,
+          backgroundColor: Colors.black.withValues(alpha: 0.5),
+          color: isCompleted ? Colors.greenAccent : primaryAmber,
+          minHeight: 8,
+        ),
       ),
     );
   }
