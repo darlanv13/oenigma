@@ -263,7 +263,10 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
   }) {
     final titleCtrl = TextEditingController(text: data?['title']);
     final descCtrl = TextEditingController(text: data?['description']);
-    final typeCtrl = TextEditingController(text: data?['type'] ?? 'text');
+    String selectedType = data?['type'] ?? 'text';
+    if (!['text', 'image', 'audio'].contains(selectedType)) {
+      selectedType = 'text';
+    }
     final contentUrlCtrl = TextEditingController(text: data?['contentUrl']);
 
     showDialog(
@@ -285,37 +288,70 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(labelText: 'Título'),
                 ),
-                TextField(
-                  controller: descCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(labelText: 'Descrição'),
-                  maxLines: 2,
-                ),
-                TextField(
-                  controller: typeCtrl,
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: selectedType,
+                  dropdownColor: darkBackground,
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
-                    labelText: 'Tipo (text, image, audio)',
+                    labelText: 'Tipo de Dica',
                   ),
+                  items: const [
+                    DropdownMenuItem(value: 'text', child: Text('Texto')),
+                    DropdownMenuItem(value: 'image', child: Text('Imagem (Foto)')),
+                    DropdownMenuItem(value: 'audio', child: Text('Áudio')),
+                  ],
+                  onChanged: (val) {
+                    setState(() {
+                      selectedType = val!;
+                    });
+                  },
                 ),
-                TextField(
-                  controller: contentUrlCtrl,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    labelText: 'URL do Conteúdo (Opcional)',
-                    suffixIcon: IconButton(
-                      icon: const FaIcon(FontAwesomeIcons.upload, size: 18),
-                      onPressed: () async {
-                        final url = await AdminUploadUtil.pickAndUploadImage(context);
-                        if (url != null) {
-                          setState(() {
-                            contentUrlCtrl.text = url;
-                          });
-                        }
-                      },
+                const SizedBox(height: 12),
+                if (selectedType == 'text')
+                  TextField(
+                    controller: descCtrl,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: 'Descrição / Texto da Dica'),
+                    maxLines: 5,
+                  )
+                else
+                  TextField(
+                    controller: descCtrl,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(labelText: 'Descrição (Opcional)'),
+                    maxLines: 2,
+                  ),
+                if (selectedType == 'image') ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: contentUrlCtrl,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      labelText: 'URL da Foto (Obrigatório)',
+                      suffixIcon: IconButton(
+                        icon: const FaIcon(FontAwesomeIcons.upload, size: 18),
+                        onPressed: () async {
+                          final url = await AdminUploadUtil.pickAndUploadImage(context);
+                          if (url != null) {
+                            setState(() {
+                              contentUrlCtrl.text = url;
+                            });
+                          }
+                        },
+                      ),
                     ),
                   ),
-                ),
+                ] else if (selectedType == 'audio') ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: contentUrlCtrl,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'URL do Áudio (Obrigatório)',
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -326,10 +362,29 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
+                if (selectedType == 'image' && contentUrlCtrl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('A URL da Foto é obrigatória para o tipo Imagem.'),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                  return;
+                }
+                if (selectedType == 'audio' && contentUrlCtrl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('A URL do Áudio é obrigatória para o tipo Áudio.'),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                  return;
+                }
+
                 final newData = {
                   'title': titleCtrl.text,
                   'description': descCtrl.text,
-                  'type': typeCtrl.text,
+                  'type': selectedType,
                   'contentUrl': contentUrlCtrl.text,
                 };
 
