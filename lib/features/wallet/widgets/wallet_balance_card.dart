@@ -14,16 +14,17 @@ class WalletBalanceCard extends StatelessWidget {
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [cardColor, cardColor.withValues(alpha: 0.8)],
+          colors: [cardColor, const Color(0xFF2C2C2C), cardColor],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: primaryAmber.withValues(alpha: 0.2), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
+            color: primaryAmber.withValues(alpha: 0.05),
+            blurRadius: 25,
+            spreadRadius: 2,
             offset: const Offset(0, 10),
           ),
         ],
@@ -35,17 +36,25 @@ class WalletBalanceCard extends StatelessWidget {
             style: TextStyle(
               color: secondaryTextColor,
               fontSize: 16,
+              fontWeight: FontWeight.w600,
               letterSpacing: 1.2,
             ),
           ),
           const SizedBox(height: 16),
           Text(
             'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
-            style: const TextStyle(
+            style: TextStyle(
               color: primaryAmber,
               fontSize: 48,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w900,
               letterSpacing: -1,
+              shadows: [
+                Shadow(
+                  color: primaryAmber.withValues(alpha: 0.4),
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
           ),
         ],

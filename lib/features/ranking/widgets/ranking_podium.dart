@@ -90,16 +90,14 @@ class _PodiumPlace extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: color, width: 3),
-                  boxShadow: isFirstPlace
-                      ? [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.5),
-                            blurRadius: 20,
-                            spreadRadius: 2,
-                          ),
-                        ]
-                      : [],
+                  border: Border.all(color: color, width: isFirstPlace ? 4 : 3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: isFirstPlace ? 0.6 : 0.3),
+                      blurRadius: isFirstPlace ? 25 : 15,
+                      spreadRadius: isFirstPlace ? 4 : 2,
+                    ),
+                  ],
                 ),
                 child: CircleAvatar(
                   radius: isFirstPlace ? 40 : 30,
@@ -129,19 +127,26 @@ class _PodiumPlace extends StatelessWidget {
                 bottom: -12,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
+                    horizontal: 10,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Text(
                     "$placeº",
                     style: const TextStyle(
                       color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 14,
                     ),
                   ),
                 ),
@@ -168,16 +173,24 @@ class _PodiumPlace extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [color.withValues(alpha: 0.8), color.withValues(alpha: 0.3)],
+                colors: [color.withValues(alpha: 0.9), color.withValues(alpha: 0.2)],
               ),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
               border: Border(
-                top: BorderSide(color: color.withValues(alpha: 0.5), width: 1),
-                left: BorderSide(color: color.withValues(alpha: 0.2), width: 1),
-                right: BorderSide(color: color.withValues(alpha: 0.2), width: 1),
+                top: BorderSide(color: color, width: 2),
+                left: BorderSide(color: color.withValues(alpha: 0.5), width: 1),
+                right: BorderSide(color: color.withValues(alpha: 0.5), width: 1),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.2),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                  offset: const Offset(0, -5),
+                ),
+              ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
