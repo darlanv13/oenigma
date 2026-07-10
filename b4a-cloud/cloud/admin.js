@@ -466,3 +466,56 @@ Parse.Cloud.define("deletePhase", async (request) => {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error deleting phase: " + error.message);
   }
 });
+
+Parse.Cloud.define("assignHintToEnigma", async (request) => {
+  const user = request.user;
+  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+
+  const { hintId, enigmaId, eventId, eventName } = request.params;
+
+  if (!hintId) throw new Parse.Error(400, "hintId is required.");
+
+  const Hint = Parse.Object.extend("Hint");
+  const hintQuery = new Parse.Query(Hint);
+  const hint = await hintQuery.get(hintId, { useMasterKey: true });
+
+  const Enigma = Parse.Object.extend("Enigma");
+
+  // Unassign logic
+  if (!enigmaId) {
+    const currentEnigmaId = hint.get("linkedEnigmaId");
+    if (currentEnigmaId) {
+      const enigmaQuery = new Parse.Query(Enigma);
+      try {
+        const oldEnigma = await enigmaQuery.get(currentEnigmaId, { useMasterKey: true });
+        oldEnigma.remove("linkedHints", hintId);
+        await oldEnigma.save(null, { useMasterKey: true });
+      } catch (e) {
+        // Enigma might have been deleted, ignore
+      }
+    }
+    hint.unset("linkedEnigmaId");
+    hint.unset("linkedEventName");
+    hint.unset("linkedEventId");
+    await hint.save(null, { useMasterKey: true });
+    return { success: true };
+  }
+
+  // Assign logic
+  if (hint.get("linkedEnigmaId")) {
+    throw new Parse.Error(400, "Dica já está vinculada a outro enigma. Desvincule primeiro.");
+  }
+
+  const enigmaQuery = new Parse.Query(Enigma);
+  const enigma = await enigmaQuery.get(enigmaId, { useMasterKey: true });
+
+  enigma.addUnique("linkedHints", hintId);
+  await enigma.save(null, { useMasterKey: true });
+
+  hint.set("linkedEnigmaId", enigmaId);
+  hint.set("linkedEventId", eventId);
+  hint.set("linkedEventName", eventName || "Evento");
+  await hint.save(null, { useMasterKey: true });
+
+  return { success: true };
+});
