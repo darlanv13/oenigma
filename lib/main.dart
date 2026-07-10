@@ -50,9 +50,17 @@ class EnigmaCityApp extends StatelessWidget {
           elevation: 0,
           centerTitle: true,
           titleTextStyle: GoogleFonts.orbitron(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: primaryAmber,
+            letterSpacing: 2,
+            shadows: [
+              Shadow(
+                color: primaryAmber.withValues(alpha: 0.5),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
         ),
       ),

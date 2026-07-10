@@ -631,7 +631,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                     size: 28,
                   ),
             label: Text(
-              _isSubscribed ? 'JOGAR AGORA' : 'INSCREVA-SE GRÁTIS',
+              _isSubscribed ? 'ENTRAR NA CAÇADA' : 'INICIAR CAÇADA (GRÁTIS)',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
