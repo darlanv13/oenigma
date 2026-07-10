@@ -388,9 +388,9 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             widget.event.location,
           ),
           _buildInfoPill(
-            FontAwesomeIcons.calendarDay,
-            'Data',
-            widget.event.startDate,
+            FontAwesomeIcons.users,
+            'Jogadores',
+            widget.event.playerCount.toString(),
           ),
 
           // --- WIDGET DE ESTATÍSTICAS CONDICIONAL ---
