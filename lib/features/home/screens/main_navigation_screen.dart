@@ -99,31 +99,60 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           return screens[_selectedIndex];
         },
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: cardColor,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: primaryAmber,
-        unselectedItemColor: secondaryTextColor,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.house),
-            label: 'Início',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: cardColor,
+          border: Border(
+            top: BorderSide(color: primaryAmber.withValues(alpha: 0.3), width: 2),
           ),
-          BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.wallet),
-            label: 'Carteira',
-          ),
-          BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.trophy),
-            label: 'Ranking',
-          ),
-          BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.user),
-            label: 'Perfil',
-          ),
-        ],
+          boxShadow: [
+            BoxShadow(
+              color: primaryAmber.withValues(alpha: 0.1),
+              blurRadius: 15,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.transparent,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: primaryAmber,
+          unselectedItemColor: secondaryTextColor,
+          elevation: 0,
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: FaIcon(FontAwesomeIcons.house),
+              ),
+              label: 'Início',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: FaIcon(FontAwesomeIcons.wallet),
+              ),
+              label: 'Carteira',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: FaIcon(FontAwesomeIcons.trophy),
+              ),
+              label: 'Ranking',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: FaIcon(FontAwesomeIcons.user),
+              ),
+              label: 'Perfil',
+            ),
+          ],
+        ),
       ),
     );
   }
