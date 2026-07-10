@@ -4,7 +4,6 @@ import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class HomeProfileCard extends StatelessWidget {
   final Map<String, dynamic> playerData;
   final UserWalletModel wallet;
@@ -24,7 +23,7 @@ class HomeProfileCard extends StatelessWidget {
     final String firstName = wallet.name.split(' ').first;
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [cardColor, Color(0xFF2C2C2C), cardColor],
@@ -32,7 +31,10 @@ class HomeProfileCard extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: primaryAmber.withValues(alpha: 0.2), width: 1.5),
+        border: Border.all(
+          color: primaryAmber.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: primaryAmber.withValues(alpha: 0.05),
@@ -66,7 +68,8 @@ class HomeProfileCard extends StatelessWidget {
                       ? NetworkImage(wallet.photoURL!)
                       : null,
                   child: (wallet.photoURL == null || wallet.photoURL!.isEmpty)
-                      ? const FaIcon(FontAwesomeIcons.user,
+                      ? const FaIcon(
+                          FontAwesomeIcons.user,
                           color: secondaryTextColor,
                           size: 30,
                         )
@@ -90,7 +93,11 @@ class HomeProfileCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const FaIcon(FontAwesomeIcons.trophy, size: 14, color: primaryAmber),
+                        const FaIcon(
+                          FontAwesomeIcons.trophy,
+                          size: 14,
+                          color: primaryAmber,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'Ranking: #${wallet.lastEventRank ?? '-'}',

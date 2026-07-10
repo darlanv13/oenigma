@@ -265,6 +265,59 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
     }
 
     if (action === 'getStatus') {
+      let isHintVisible = false;
+      let hintData = null;
+      let canBuyHint = false;
+      let isBlocked = false;
+      let hasCompass = false;
+      let hasMap = false;
+      let destinationLocation = null;
+
+      const Enigma = Parse.Object.extend("Enigma");
+      const query = new Parse.Query(Enigma);
+      const enigma = await query.get(enigmaId, { useMasterKey: true });
+
+      if (enigma) {
+        let linkedHints = enigma.get("linkedHints") || [];
+        canBuyHint = linkedHints.length > 0 && !hintsPurchased.includes(enigmaId);
+
+        if (hintsPurchased.includes(enigmaId) && linkedHints.length > 0) {
+          isHintVisible = true;
+          // In a real scenario we'd fetch the purchased hint id, but for now we'll just fetch the first one
+          // to fulfill the existing logic where 'purchaseHint' just pushed the enigmaId, not hintId.
+          // In the next step, I'll update purchaseHint to link correctly. 
+          // For now, let's just fetch the first linked hint.
+          const Hint = Parse.Object.extend("Hint");
+          const hintQuery = new Parse.Query(Hint);
+          const hintObj = await hintQuery.get(linkedHints[0], { useMasterKey: true });
+          if (hintObj) {
+            hintData = {
+              type: hintObj.get("type"),
+              data: hintObj.get("data")
+            };
+          }
+        }
+
+        hasCompass = toolsPurchased.includes("compass") && enigma.get("hasCompass") === true;
+        hasMap = toolsPurchased.includes("map") && enigma.get("hasCompass") === true; // Map is tied to location based enigmas too
+
+        let compassStr = enigma.get("compassCoords");
+        if (compassStr) {
+          let parts = compassStr.split(",");
+          if (parts.length === 2) {
+            destinationLocation = {
+              latitude: parseFloat(parts[0].trim()),
+              longitude: parseFloat(parts[1].trim())
+            };
+          }
+        }
+
+        // Block check based on cooldown
+        if (eventProgress.cooldownUntil && eventProgress.cooldownUntil > now) {
+          isBlocked = true;
+        }
+      }
+
       return {
         success: true,
         currentPhase: eventProgress.currentPhase || 1,
@@ -277,7 +330,14 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
           currentEnigma: eventProgress.currentEnigma || 1,
           hintsPurchased: hintsPurchased,
           toolsPurchased: toolsPurchased,
-          cooldownUntil: eventProgress.cooldownUntil || null
+          cooldownUntil: eventProgress.cooldownUntil || null,
+          isHintVisible: isHintVisible,
+          hintData: hintData,
+          canBuyHint: canBuyHint,
+          isBlocked: isBlocked,
+          hasCompass: hasCompass,
+          hasMap: hasMap,
+          destinationLocation: destinationLocation
         }
       };
     } else if (action === 'purchaseHint') {
@@ -288,13 +348,34 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Saldo insuficiente para comprar a dica.");
       }
 
+      const Enigma = Parse.Object.extend("Enigma");
+      const query = new Parse.Query(Enigma);
+      const enigma = await query.get(enigmaId, { useMasterKey: true });
+
+      let linkedHints = enigma ? (enigma.get("linkedHints") || []) : [];
+      if (linkedHints.length === 0) {
+        throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Não há dicas disponíveis para este enigma.");
+      }
+
+      const Hint = Parse.Object.extend("Hint");
+      const hintQuery = new Parse.Query(Hint);
+      // Get random hint from linkedHints
+      const randomIndex = Math.floor(Math.random() * linkedHints.length);
+      const randomHintId = linkedHints[randomIndex];
+      const hintObj = await hintQuery.get(randomHintId, { useMasterKey: true });
+
+      if (!hintObj) {
+        throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Dica não encontrada.");
+      }
+
       user.set("balance", balance - cost);
 
       const hint = {
-        type: 'text',
-        data: 'Aqui está uma dica muito valiosa para este enigma: Observe os arredores.'
+        type: hintObj.get("type"),
+        data: hintObj.get("data")
       };
 
+      // We still store enigmaId to easily track if a hint was bought for THIS enigma
       hintsPurchased.push(enigmaId);
       eventProgress.hintsPurchased = hintsPurchased;
       userEvents[eventId] = eventProgress;

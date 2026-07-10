@@ -16,7 +16,7 @@ import 'package:oenigma/core/widgets/dialogs/enigma_success_dialog.dart';
 import 'package:oenigma/core/widgets/dialogs/error_dialog.dart';
 import 'package:oenigma/features/enigma/screens/enigma_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
- // Para reutilizar o ScannerScreen
+// Para reutilizar o ScannerScreen
 
 class FindAndWinProgressScreen extends ConsumerStatefulWidget {
   final EventModel event;
@@ -28,8 +28,8 @@ class FindAndWinProgressScreen extends ConsumerStatefulWidget {
       _FindAndWinProgressScreenState();
 }
 
-class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScreen> {
-
+class _FindAndWinProgressScreenState
+    extends ConsumerState<FindAndWinProgressScreen> {
   final TextEditingController _codeController = TextEditingController();
   bool _isLoading = false;
   bool _isBlocked = false; // <-- Adicionado para controlar o cooldown
@@ -39,14 +39,16 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
   @override
   void initState() {
     super.initState();
-    _eventStream = Stream.periodic(const Duration(seconds: 5)).asyncMap((_) async {
-       final query = QueryBuilder<ParseObject>(ParseObject('Event'))
-          ..whereEqualTo('objectId', widget.event.id);
-       final response = await query.query();
-       if (response.success && response.results != null) {
-          return response.results!.first as ParseObject;
-       }
-       return null;
+    _eventStream = Stream.periodic(const Duration(seconds: 5)).asyncMap((
+      _,
+    ) async {
+      final query = QueryBuilder<ParseObject>(ParseObject('Event'))
+        ..whereEqualTo('objectId', widget.event.id);
+      final response = await query.query();
+      if (response.success && response.results != null) {
+        return response.results!.first as ParseObject;
+      }
+      return null;
     });
   }
 
@@ -81,12 +83,14 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
     if (code.isEmpty) return;
     setState(() => _isLoading = true);
     try {
-      final result = await ref.read(enigmaRepositoryProvider).callEnigmaFunction('scan_enigma', {
-        'eventId': widget.event.id,
-        'enigmaId': enigmaId,
-        'code': code,
-        // Não precisamos de phaseOrder para find_and_win
-      });
+      final result = await ref
+          .read(enigmaRepositoryProvider)
+          .callEnigmaFunction('scan_enigma', {
+            'eventId': widget.event.id,
+            'enigmaId': enigmaId,
+            'code': code,
+            // Não precisamos de phaseOrder para find_and_win
+          });
 
       final data = Map<String, dynamic>.from(result.result);
       if (mounted && !(data['success'] as bool)) {
@@ -123,13 +127,18 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
       body: StreamBuilder<ParseObject?>(
         stream: _eventStream,
         builder: (context, eventSnapshot) {
-          if (eventSnapshot.connectionState == ConnectionState.waiting && !eventSnapshot.hasData) {
+          if (eventSnapshot.connectionState == ConnectionState.waiting &&
+              !eventSnapshot.hasData) {
             return const Center(
               child: CircularProgressIndicator(color: primaryAmber),
             );
           }
-          if (eventSnapshot.hasError || !eventSnapshot.hasData || eventSnapshot.data == null) {
-            return const Center(child: Text("Aguardando carregamento ou evento não encontrado."));
+          if (eventSnapshot.hasError ||
+              !eventSnapshot.hasData ||
+              eventSnapshot.data == null) {
+            return const Center(
+              child: Text("Aguardando carregamento ou evento não encontrado."),
+            );
           }
 
           final eventData = eventSnapshot.data!;
@@ -158,15 +167,19 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
           }
 
           return StreamBuilder<ParseObject?>(
-            stream: Stream.periodic(const Duration(seconds: 5)).asyncMap((_) async {
-                final q = QueryBuilder<ParseObject>(ParseObject('Enigma'))
-                  ..whereEqualTo('objectId', currentEnigmaId);
-                final res = await q.query();
-                if(res.success && res.results != null) return res.results!.first as ParseObject;
-                return null;
+            stream: Stream.periodic(const Duration(seconds: 5)).asyncMap((
+              _,
+            ) async {
+              final q = QueryBuilder<ParseObject>(ParseObject('Enigma'))
+                ..whereEqualTo('objectId', currentEnigmaId);
+              final res = await q.query();
+              if (res.success && res.results != null)
+                return res.results!.first as ParseObject;
+              return null;
             }),
             builder: (context, enigmaSnapshot) {
-              if (enigmaSnapshot.connectionState == ConnectionState.waiting && !enigmaSnapshot.hasData) {
+              if (enigmaSnapshot.connectionState == ConnectionState.waiting &&
+                  !enigmaSnapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
               if (!enigmaSnapshot.hasData || enigmaSnapshot.data == null) {
@@ -177,11 +190,11 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
 
               final enigmaData = enigmaSnapshot.data!;
               final enigmaMap = <String, dynamic>{
-                 'id': enigmaData.objectId,
-                 'instruction': enigmaData.get<String>('instruction') ?? '',
-                 'prize': enigmaData.get<num>('prize') ?? 0,
-                 'imageUrl': enigmaData.get<String>('imageUrl'),
-                 'type': enigmaData.get<String>('type') ?? 'text',
+                'id': enigmaData.objectId,
+                'instruction': enigmaData.get<String>('instruction') ?? '',
+                'prize': enigmaData.get<num>('prize') ?? 0,
+                'imageUrl': enigmaData.get<String>('imageUrl'),
+                'type': enigmaData.get<String>('type') ?? 'text',
               };
 
               final enigma = EnigmaModel.fromMap(enigmaMap);
@@ -298,7 +311,7 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
 
   // --- ÁREA DE AÇÃO ATUALIZADA COM VERIFICAÇÃO DE BLOQUEIO ---
   Widget _buildActionArea(EnigmaModel enigma) {
-    final supportedTypes = ['qr_code_gps', 'photo_location', 'text'];
+    final supportedTypes = ['qrcode', 'foto', 'gps', 'text'];
     if (!supportedTypes.contains(enigma.type)) {
       return const SizedBox.shrink();
     }
@@ -309,7 +322,7 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            if (enigma.type == 'qr_code_gps')
+            if (enigma.type == 'qrcode' || enigma.type == 'foto')
               ElevatedButton.icon(
                 onPressed: _isLoading || _isBlocked
                     ? null
@@ -321,7 +334,8 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
                           ),
                         ),
                       ),
-                icon: FaIcon(_isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
+                icon: FaIcon(
+                  _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
                 ),
                 label: Text(_isBlocked ? 'Aguarde' : 'Escanear QR Code'),
                 style: ElevatedButton.styleFrom(
@@ -353,7 +367,10 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
                             height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : FaIcon(_isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.circleCheck,
+                        : FaIcon(
+                            _isBlocked
+                                ? FontAwesomeIcons.clock
+                                : FontAwesomeIcons.circleCheck,
                           ),
                     label: Text(_isBlocked ? 'Aguarde' : 'Validar Resposta'),
                     style: ElevatedButton.styleFrom(

@@ -6,19 +6,22 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class HomeBannerCarousel extends StatelessWidget {
   const HomeBannerCarousel({super.key});
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<ParseResponse>(
-      future: (QueryBuilder<ParseObject>(ParseObject('Banner'))
-            ..whereEqualTo('isActive', true)
-            ..orderByAscending('order'))
-          .query(),
+      future:
+          (QueryBuilder<ParseObject>(ParseObject('Banner'))
+                ..whereEqualTo('isActive', true)
+                ..orderByAscending('order'))
+              .query(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null || snapshot.data!.results!.isEmpty) {
+        if (!snapshot.hasData ||
+            !snapshot.data!.success ||
+            snapshot.data!.results == null ||
+            snapshot.data!.results!.isEmpty) {
           return const SizedBox.shrink(); // Hide if no banners
         }
 
@@ -28,7 +31,8 @@ class HomeBannerCarousel extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: CarouselSlider(
             options: CarouselOptions(
-              height: 100.0,
+              //aspectRatio: 16 / 9,
+              height: 150.0,
               autoPlay: true,
               autoPlayInterval: const Duration(seconds: 5),
               enlargeCenterPage: true,
@@ -42,10 +46,13 @@ class HomeBannerCarousel extends StatelessWidget {
               return GestureDetector(
                 onTap: () async {
                   if (actionUrl.isNotEmpty) {
-                     final Uri url = Uri.parse(actionUrl);
-                     if (await canLaunchUrl(url)) {
-                        await launchUrl(url, mode: LaunchMode.externalApplication);
-                     }
+                    final Uri url = Uri.parse(actionUrl);
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(
+                        url,
+                        mode: LaunchMode.externalApplication,
+                      );
+                    }
                   }
                 },
                 child: Container(
@@ -69,10 +76,21 @@ class HomeBannerCarousel extends StatelessWidget {
                         ? CachedNetworkImage(
                             imageUrl: imageUrl,
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: primaryAmber)),
-                            errorWidget: (context, url, error) => const FaIcon(FontAwesomeIcons.circleExclamation),
+                            placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(
+                                color: primaryAmber,
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => const FaIcon(
+                              FontAwesomeIcons.circleExclamation,
+                            ),
                           )
-                        : const Center(child: FaIcon(FontAwesomeIcons.image, color: secondaryTextColor)),
+                        : const Center(
+                            child: FaIcon(
+                              FontAwesomeIcons.image,
+                              color: secondaryTextColor,
+                            ),
+                          ),
                   ),
                 ),
               );
