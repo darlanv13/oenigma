@@ -216,7 +216,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       _isLoading = true;
     });
     await _fetchInitialStatus();
-    if (mounted && _currentEnigma.type == 'qr_code_gps') {
+    if (mounted &&
+        (_currentEnigma.type == 'foto' || _currentEnigma.type == 'gps')) {
       await _initializeGpsListener();
     }
     if (mounted) {
@@ -847,7 +848,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             ),
           ],
         );
-      case 'qr_code_gps':
+      case 'foto':
+      case 'gps':
+      case 'qrcode':
         return const SizedBox.shrink(); // Tratado na área de ação
       default:
         return const SizedBox.shrink();
@@ -855,7 +858,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   Widget _buildActionArea() {
-    if (_currentEnigma.type == 'qr_code_gps') {
+    if (_currentEnigma.type == 'foto' ||
+        _currentEnigma.type == 'gps' ||
+        _currentEnigma.type == 'qrcode') {
       return _buildQrCodeGpsCard();
     }
     return _buildCodeInputSection();
@@ -921,46 +926,57 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   ),
           ),
           const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _isNear && !_isBlocked
-                  ? () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => ScannerScreen(
-                            onScan: (scannedCode) {
-                              _handleAction('validateCode', code: scannedCode);
-                            },
+          if (_currentEnigma.type == 'qrcode' || _currentEnigma.type == 'foto')
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed:
+                    (_currentEnigma.type == 'qrcode' || _isNear) && !_isBlocked
+                    ? () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ScannerScreen(
+                              onScan: (scannedCode) {
+                                _handleAction(
+                                  'validateCode',
+                                  code: scannedCode,
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                      );
-                    }
-                  : null,
-              icon: FaIcon(
-                _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
-              ),
-              label: Text(
-                _isBlocked
-                    ? 'Aguarde o Cooldown'
-                    : (_isNear ? 'ESCANEAR CÓDIGO' : 'APROXIME-SE DO LOCAL'),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _isNear && !_isBlocked
-                    ? Colors.green
-                    : cardColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                elevation: 0,
-                side: BorderSide(
-                  color: _isNear && !_isBlocked
-                      ? Colors.transparent
-                      : Colors.white10,
+                        );
+                      }
+                    : null,
+                icon: FaIcon(
+                  _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
+                ),
+                label: Text(
+                  _isBlocked
+                      ? 'Aguarde o Cooldown'
+                      : ((_currentEnigma.type == 'qrcode' || _isNear)
+                            ? 'ESCANEAR CÓDIGO'
+                            : 'APROXIME-SE DO LOCAL'),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      (_currentEnigma.type == 'qrcode' || _isNear) &&
+                          !_isBlocked
+                      ? Colors.green
+                      : cardColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                  elevation: 0,
+                  side: BorderSide(
+                    color:
+                        (_currentEnigma.type == 'qrcode' || _isNear) &&
+                            !_isBlocked
+                        ? Colors.transparent
+                        : Colors.white10,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -1051,7 +1067,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   Widget _buildToolsPurchaseButtons() {
-    if (_currentEnigma.type != 'qr_code_gps' && _currentEnigma.type != 'gps')
+    if (_currentEnigma.type != 'foto' && _currentEnigma.type != 'gps')
       return const SizedBox.shrink();
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
