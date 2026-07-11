@@ -1096,30 +1096,140 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         if (_isHintVisible && _hintData != null)
           _buildCard(title: 'PISTA', child: _buildHintContent()),
 
-        if (_hasCompass && _destinationLocation != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: CompassWidget(
-              targetLatitude: _destinationLocation!['latitude']!,
-              targetLongitude: _destinationLocation!['longitude']!,
-              destinationLongitude: _destinationLocation!['longitude']!,
-              destinationLatitude: _destinationLocation!['latitude']!,
-            ),
-          ),
-
-        if (_hasMap && _destinationLocation != null)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: MapRadiusWidget(
-              destinationLatitude: _destinationLocation!['latitude']!,
-              destinationLongitude: _destinationLocation!['longitude']!,
-            ),
-          ),
-
         if (!_isHintVisible && _canBuyHint) _buildHintPurchaseButton(),
 
-        if (!_hasCompass || !_hasMap) _buildToolsPurchaseButtons(),
+        if (_currentEnigma.type == 'foto' || _currentEnigma.type == 'gps')
+          _buildToolsPurchaseButtons(),
       ],
+    );
+  }
+
+  void _openMapDialog() {
+    if (_destinationLocation == null) return;
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: darkBackground,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.blueAccent.withValues(alpha: 0.5),
+              width: 2,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        FaIcon(
+                          FontAwesomeIcons.mapLocationDot,
+                          color: Colors.blueAccent,
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          'Mapa Interativo',
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: secondaryTextColor),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                child: MapRadiusWidget(
+                  destinationLatitude: _destinationLocation!['latitude']!,
+                  destinationLongitude: _destinationLocation!['longitude']!,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openCompassDialog() {
+    if (_destinationLocation == null) return;
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: darkBackground,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.greenAccent.withValues(alpha: 0.5),
+              width: 2,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        FaIcon(
+                          FontAwesomeIcons.compass,
+                          color: Colors.greenAccent,
+                        ),
+                        SizedBox(width: 12),
+                        Text(
+                          'Bússola Digital',
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: secondaryTextColor),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: CompassWidget(
+                  targetLatitude: _destinationLocation!['latitude']!,
+                  targetLongitude: _destinationLocation!['longitude']!,
+                  destinationLongitude: _destinationLocation!['longitude']!,
+                  destinationLatitude: _destinationLocation!['latitude']!,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1199,27 +1309,31 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           style: TextStyle(color: secondaryTextColor, fontSize: 13),
         ),
         const SizedBox(height: 16),
-        if (!_hasMap)
-          _buildToolPurchaseCard(
-            title: 'Mapa Interativo',
-            description: 'Veja um raio no mapa onde o local se encontra.',
-            price: 20.0,
-            type: 'Mapa',
-            toolKey: 'map',
-            icon: FontAwesomeIcons.mapLocationDot,
-            color: Colors.blueAccent,
-          ),
-        if (!_hasMap && !_hasCompass) const SizedBox(height: 12),
-        if (!_hasCompass)
-          _buildToolPurchaseCard(
-            title: 'Bússola Digital',
-            description: 'Siga a direção exata até o local.',
-            price: 15.0,
-            type: 'Bússola',
-            toolKey: 'compass',
-            icon: FontAwesomeIcons.compass,
-            color: Colors.greenAccent,
-          ),
+        _buildToolPurchaseCard(
+          title: 'Mapa Interativo',
+          description: _hasMap
+              ? 'Clique para abrir o Mapa Interativo.'
+              : 'Veja um raio no mapa onde o local se encontra.',
+          price: 20.0,
+          type: 'Mapa',
+          toolKey: 'map',
+          icon: FontAwesomeIcons.mapLocationDot,
+          color: Colors.blueAccent,
+          isPurchased: _hasMap,
+        ),
+        const SizedBox(height: 12),
+        _buildToolPurchaseCard(
+          title: 'Bússola Digital',
+          description: _hasCompass
+              ? 'Clique para abrir a Bússola Digital.'
+              : 'Siga a direção exata até o local.',
+          price: 15.0,
+          type: 'Bússola',
+          toolKey: 'compass',
+          icon: FontAwesomeIcons.compass,
+          color: Colors.greenAccent,
+          isPurchased: _hasCompass,
+        ),
       ],
     );
   }
@@ -1232,17 +1346,26 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     required String toolKey,
     required dynamic icon,
     required Color color,
+    required bool isPurchased,
   }) {
     return GestureDetector(
       onTap: _isLoading
           ? null
           : () async {
-              final bool? confirmed = await _showPurchaseConfirmationDialog(
-                price,
-                type: type,
-              );
-              if (confirmed == true) {
-                _handleToolPurchase(toolKey);
+              if (isPurchased) {
+                if (toolKey == 'map') {
+                  _openMapDialog();
+                } else if (toolKey == 'compass') {
+                  _openCompassDialog();
+                }
+              } else {
+                final bool? confirmed = await _showPurchaseConfirmationDialog(
+                  price,
+                  type: type,
+                );
+                if (confirmed == true) {
+                  _handleToolPurchase(toolKey);
+                }
               }
             },
       child: Container(
@@ -1250,14 +1373,16 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              color.withValues(alpha: 0.1),
+              color.withValues(alpha: isPurchased ? 0.3 : 0.1),
               color.withValues(alpha: 0.02),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          border: Border.all(
+            color: color.withValues(alpha: isPurchased ? 0.6 : 0.3),
+          ),
         ),
         child: Row(
           children: [
@@ -1296,14 +1421,20 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: primaryAmber.withValues(alpha: 0.2),
+                color: isPurchased
+                    ? color
+                    : primaryAmber.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: primaryAmber.withValues(alpha: 0.5)),
+                border: Border.all(
+                  color: isPurchased
+                      ? Colors.transparent
+                      : primaryAmber.withValues(alpha: 0.5),
+                ),
               ),
               child: Text(
-                'R\$ ${price.toInt()}',
-                style: const TextStyle(
-                  color: primaryAmber,
+                isPurchased ? 'ABRIR' : 'R\$ ${price.toInt()}',
+                style: TextStyle(
+                  color: isPurchased ? Colors.white : primaryAmber,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
