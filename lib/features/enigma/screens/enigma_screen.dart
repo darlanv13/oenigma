@@ -1476,8 +1476,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   Widget _buildHintDialogContent() {
-    final String type = _hintData!['type'];
-    final String data = _hintData!['data'];
+    final String type = _hintData!['type']?.toString() ?? 'text';
+    final String data = _hintData!['data']?.toString() ?? '';
 
     if (type == 'photo') {
       return ClipRRect(
