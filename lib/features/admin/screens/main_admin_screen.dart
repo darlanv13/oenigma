@@ -9,6 +9,7 @@ import 'package:oenigma/features/admin/screens/admin_finance_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_fraud_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_tools_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_banners_screen.dart';
+import 'package:oenigma/features/admin/screens/admin_mobile_panel_screen.dart'; // NEW
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
 class MainAdminScreen extends StatefulWidget {
@@ -42,36 +43,15 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
   Widget build(BuildContext context) {
     final bool isDesktop = MediaQuery.of(context).size.width >= 800;
 
+    // NEW: Retorna a tela mobile específica se for dispositivo pequeno
+    if (!isDesktop) {
+      return const AdminMobilePanelScreen();
+    }
+
     return Scaffold(
       key: _key,
       backgroundColor: darkBackground,
-      appBar: isDesktop
-          ? null
-          : AppBar(
-              title: const Text(
-                'O Enigma - Admin Panel',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              backgroundColor: cardColor,
-              elevation: 0,
-              leading: IconButton(
-                icon: const FaIcon(FontAwesomeIcons.bars),
-                onPressed: () {
-                  _key.currentState?.openDrawer();
-                },
-              ),
-              actions: [
-                IconButton(
-                  icon: const FaIcon(FontAwesomeIcons.rightFromBracket),
-                  onPressed: () async {
-                    final user = await ParseUser.currentUser() as ParseUser?;
-                    if (user != null) await user.logout();
-                  },
-                  tooltip: 'Sair do Painel',
-                ),
-              ],
-            ),
-      drawer: !isDesktop ? _AdminSidebar(controller: _controller) : null,
+      appBar: null,
       body: Row(
         children: [
           if (isDesktop) _AdminSidebar(controller: _controller),

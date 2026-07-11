@@ -12,6 +12,21 @@ class AdminUploadUtil {
 
     if (pickedFile == null) return null;
 
+    return _uploadFile(context, pickedFile);
+  }
+
+  static Future<String?> takeAndUploadPhoto(BuildContext context) async {
+    final picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(
+      source: ImageSource.camera,
+    );
+
+    if (pickedFile == null) return null;
+
+    return _uploadFile(context, pickedFile);
+  }
+
+  static Future<String?> _uploadFile(BuildContext context, XFile pickedFile) async {
     bool isShowingDialog = false;
 
     try {
