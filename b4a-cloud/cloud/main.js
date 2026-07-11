@@ -333,20 +333,13 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         hintsPurchased: hintsPurchased,
         toolsPurchased: toolsPurchased,
         cooldownUntil: eventProgress.cooldownUntil || null,
-        result: {
-          currentPhase: eventProgress.currentPhase || 1,
-          currentEnigma: eventProgress.currentEnigma || 1,
-          hintsPurchased: hintsPurchased,
-          toolsPurchased: toolsPurchased,
-          cooldownUntil: eventProgress.cooldownUntil || null,
-          isHintVisible: isHintVisible,
-          hintData: hintData,
-          canBuyHint: canBuyHint,
-          isBlocked: isBlocked,
-          hasCompass: hasCompass,
-          hasMap: hasMap,
-          destinationLocation: destinationLocation
-        }
+        isHintVisible: isHintVisible,
+        hintData: hintData,
+        canBuyHint: canBuyHint,
+        isBlocked: isBlocked,
+        hasCompass: hasCompass,
+        hasMap: hasMap,
+        destinationLocation: destinationLocation
       };
     } else if (action === 'purchaseHint') {
       const pOrder = phaseOrder || eventProgress.currentPhase || 1;

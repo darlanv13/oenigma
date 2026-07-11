@@ -773,68 +773,6 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     return 12742 * asin(sqrt(a)) * 1000;
   }
 
-  Future<void> _saveImageFromUrl(String url) async {
-    var status = await Permission.storage.request();
-    if (status.isGranted) {
-      setState(() => _isLoading = true);
-      try {
-        final response = await http.get(Uri.parse(url));
-        final Uint8List imageBytes = response.bodyBytes;
-        final result = await SaverGallery.saveImage(
-          imageBytes,
-          quality: 80,
-          fileName: 'enigma_dica_${DateTime.now().millisecondsSinceEpoch}.jpg',
-          skipIfExists: false,
-        );
-        if (result.isSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Imagem salva na galeria!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else {
-          throw Exception('Falha ao salvar a imagem: ${result.errorMessage}');
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erro ao salvar imagem.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Permissão para salvar imagem foi negada.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-    }
-  }
-
-  Future<void> _launchMapsUrl(String coordinates) async {
-    final Uri googleMapsUrl = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=$coordinates',
-    );
-    try {
-      if (await canLaunchUrl(googleMapsUrl)) {
-        await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
-      } else {
-        throw 'Não foi possível abrir o mapa.';
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao abrir o mapa: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1094,13 +1032,78 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (_isHintVisible && _hintData != null)
-          _buildCard(title: 'PISTA', child: _buildHintContent()),
+          _buildCard(
+            title: 'PISTA',
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _openHintDialog,
+                icon: const FaIcon(FontAwesomeIcons.eye, color: darkBackground),
+                label: const Text(
+                  'VER DICA',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryAmber,
+                  foregroundColor: darkBackground,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ),
 
         if (!_isHintVisible && _canBuyHint) _buildHintPurchaseButton(),
 
         if (_currentEnigma.type == 'foto' || _currentEnigma.type == 'gps')
           _buildToolsPurchaseButtons(),
       ],
+    );
+  }
+
+  void _openHintDialog() {
+    if (_hintData == null) return;
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: darkBackground,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      FaIcon(FontAwesomeIcons.lightbulb, color: primaryAmber),
+                      SizedBox(width: 12),
+                      Text(
+                        'Pista',
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: secondaryTextColor),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _buildHintDialogContent(),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1469,31 +1472,20 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     );
   }
 
-  Widget _buildHintContent() {
+  Widget _buildHintDialogContent() {
     final String type = _hintData!['type'];
     final String data = _hintData!['data'];
-    Widget hintContent;
-    Widget actionButton;
 
     if (type == 'photo') {
-      hintContent = ClipRRect(
+      return ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Image.network(data),
-      );
-      actionButton = ElevatedButton.icon(
-        onPressed: _isLoading ? null : () => _saveImageFromUrl(data),
-        icon: const FaIcon(FontAwesomeIcons.download),
-        label: const Text('Salvar Imagem'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white10,
-          foregroundColor: Colors.white,
-        ),
       );
     } else if (type == 'gps') {
       final coords = data.split(',');
       final lat = double.tryParse(coords[0]) ?? 0.0;
       final lng = double.tryParse(coords[1]) ?? 0.0;
-      hintContent = SizedBox(
+      return SizedBox(
         height: 200,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
@@ -1513,20 +1505,11 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           ),
         ),
       );
-      actionButton = ElevatedButton.icon(
-        onPressed: () => _launchMapsUrl(data),
-        icon: const FaIcon(FontAwesomeIcons.map),
-        label: const Text('Abrir no Maps'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white10,
-          foregroundColor: Colors.white,
-        ),
-      );
     } else {
-      hintContent = Container(
+      return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: darkBackground,
+          color: Colors.white10,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -1534,29 +1517,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           style: const TextStyle(color: textColor, fontSize: 16, height: 1.5),
         ),
       );
-      actionButton = ElevatedButton.icon(
-        onPressed: () {
-          Clipboard.setData(ClipboardData(text: data));
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Copiado para a área de transferência!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        },
-        icon: const FaIcon(FontAwesomeIcons.copy),
-        label: const Text('Copiar Texto'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white10,
-          foregroundColor: Colors.white,
-        ),
-      );
     }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [hintContent, const SizedBox(height: 16), actionButton],
-    );
   }
 
   Widget _buildCodeInputSection() {
