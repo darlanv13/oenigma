@@ -102,6 +102,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   final eventId = event.objectId!;
                   final title = event.get<String>('title') ?? 'Sem Título';
                   final status = event.get<String>('status') ?? 'draft';
+                  final eventType = event.get<String>('eventType') ?? 'classic';
                   final isPublished = status == 'open';
                   final prizePool = event.get<num>('prizePool') ?? 0;
 
@@ -171,16 +172,28 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                 ),
                                 label: const Text('Editar'),
                               ),
-                              TextButton.icon(
-                                onPressed: () {
-                                  _showPhasesDialog(context, eventId);
-                                },
-                                icon: const FaIcon(
-                                  FontAwesomeIcons.listOl,
-                                  size: 16,
+                              if (eventType == 'find_and_win')
+                                TextButton.icon(
+                                  onPressed: () {
+                                    _showFindAndWinEnigmasDialog(context, eventId);
+                                  },
+                                  icon: const FaIcon(
+                                    FontAwesomeIcons.puzzlePiece,
+                                    size: 16,
+                                  ),
+                                  label: const Text('Enigmas'),
+                                )
+                              else
+                                TextButton.icon(
+                                  onPressed: () {
+                                    _showPhasesDialog(context, eventId);
+                                  },
+                                  icon: const FaIcon(
+                                    FontAwesomeIcons.listOl,
+                                    size: 16,
+                                  ),
+                                  label: const Text('Fases'),
                                 ),
-                                label: const Text('Fases'),
-                              ),
                               TextButton.icon(
                                 onPressed: () {
                                   _toggleEventStatus(eventId, status);
@@ -812,7 +825,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
   Widget _buildEnigmasList(
     String eventId,
-    String phaseId,
+    String? phaseId,
     VoidCallback onRefresh,
   ) {
     return Padding(
@@ -826,14 +839,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
           ),
           const SizedBox(height: 12),
           FutureBuilder<ParseResponse>(
-            future:
-                (QueryBuilder<ParseObject>(ParseObject('Enigma'))
-                      ..whereEqualTo(
-                        'phase',
-                        (ParseObject('Phase')..objectId = phaseId).toPointer(),
-                      )
-                      ..orderByAscending('order'))
-                    .query(),
+            future: () {
+              var query = QueryBuilder<ParseObject>(ParseObject('Enigma'));
+              if (phaseId != null) {
+                query.whereEqualTo(
+                  'phase',
+                  (ParseObject('Phase')..objectId = phaseId).toPointer(),
+                );
+              } else {
+                query.whereEqualTo('eventId', eventId);
+              }
+              query.orderByAscending('order');
+              return query.query();
+            }(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Text(
@@ -1082,10 +1100,80 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     );
   }
 
+  void _showFindAndWinEnigmasDialog(BuildContext context, String eventId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: darkBackground,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: 800,
+            constraints: const BoxConstraints(maxHeight: 600),
+            padding: const EdgeInsets.all(24),
+            child: StatefulBuilder(
+              builder: (context, setStateEnigmas) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Enigmas do Evento',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const FaIcon(FontAwesomeIcons.xmark, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        _showEnigmaEditDialog(
+                          context,
+                          eventId,
+                          null,
+                          onSaved: () {
+                            setStateEnigmas(() {});
+                          },
+                        );
+                      },
+                      icon: const FaIcon(FontAwesomeIcons.plus, size: 16),
+                      label: const Text('Novo Enigma'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryAmber,
+                        foregroundColor: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: _buildEnigmasList(eventId, null, () {
+                        setStateEnigmas(() {});
+                      }),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showEnigmaEditDialog(
     BuildContext context,
     String eventId,
-    String phaseId, {
+    String? phaseId, {
     String? docId,
     Map<String, dynamic>? data,
     VoidCallback? onSaved,
@@ -1424,7 +1512,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                           ).execute(
                                             parameters: {
                                               'eventId': eventId,
-                                              'phaseId': phaseId,
+                                              'phaseId': phaseId ?? '',
                                               'data': newData,
                                             },
                                           );
