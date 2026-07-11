@@ -875,7 +875,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               Lottie.asset('assets/animations/no_enigma.json', height: 60),
             if (_currentEnigma.imageUrl != null) const SizedBox(height: 8),
             Text(
-              _currentEnigma.instruction,
+              _currentEnigma.instruction.toUpperCase(),
               style: const TextStyle(
                 fontSize: 14,
                 color: textColor,
@@ -921,7 +921,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             Lottie.asset('assets/animations/no_enigma.json', height: 60),
           const SizedBox(height: 8),
           Text(
-            _currentEnigma.instruction,
+            _currentEnigma.instruction.toUpperCase(),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 14, color: textColor, height: 1.4),
           ),
@@ -1312,11 +1312,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'Compre ferramentas para encontrar o local com mais facilidade e não ficar para trás!',
-          style: TextStyle(color: secondaryTextColor, fontSize: 13),
-        ),
+        if (!_hasMap || !_hasCompass) ...[
+          const SizedBox(height: 8),
+          const Text(
+            'Compre ferramentas para encontrar o local com mais facilidade e não ficar para trás!',
+            style: TextStyle(color: secondaryTextColor, fontSize: 13),
+          ),
+        ],
         const SizedBox(height: 16),
         Row(
           children: [
@@ -1365,24 +1367,49 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     required Color color,
     required bool isPurchased,
   }) {
+    if (isPurchased) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: _isLoading
+              ? null
+              : () {
+                  if (toolKey == 'map') {
+                    _openMapDialog();
+                  } else if (toolKey == 'compass') {
+                    _openCompassDialog();
+                  }
+                },
+          icon: FaIcon(icon, size: 14, color: Colors.white),
+          label: Text(
+            'ABRIR ${type.toUpperCase()}',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: color,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          ),
+        ),
+      );
+    }
+
     return GestureDetector(
       onTap: _isLoading
           ? null
           : () async {
-              if (isPurchased) {
-                if (toolKey == 'map') {
-                  _openMapDialog();
-                } else if (toolKey == 'compass') {
-                  _openCompassDialog();
-                }
-              } else {
-                final bool? confirmed = await _showPurchaseConfirmationDialog(
-                  price,
-                  type: type,
-                );
-                if (confirmed == true) {
-                  _handleToolPurchase(toolKey);
-                }
+              final bool? confirmed = await _showPurchaseConfirmationDialog(
+                price,
+                type: type,
+              );
+              if (confirmed == true) {
+                _handleToolPurchase(toolKey);
               }
             },
       child: Container(
@@ -1390,7 +1417,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              color.withValues(alpha: isPurchased ? 0.3 : 0.1),
+              color.withValues(alpha: 0.1),
               color.withValues(alpha: 0.02),
             ],
             begin: Alignment.topLeft,
@@ -1398,7 +1425,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           ),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: color.withValues(alpha: isPurchased ? 0.6 : 0.3),
+            color: color.withValues(alpha: 0.3),
           ),
         ),
         child: Column(
@@ -1431,55 +1458,27 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               ),
             ),
             const SizedBox(height: 8),
-            isPurchased
-                ? ElevatedButton.icon(
-                    onPressed: _isLoading
-                        ? null
-                        : () {
-                            if (toolKey == 'map') {
-                              _openMapDialog();
-                            } else if (toolKey == 'compass') {
-                              _openCompassDialog();
-                            }
-                          },
-                    icon: FaIcon(icon, size: 14, color: Colors.white),
-                    label: const Text(
-                      'ABRIR',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: color,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                  )
-                : Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: primaryAmber.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: primaryAmber.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    child: Text(
-                      'R\$ ${price.toInt()}',
-                      style: const TextStyle(
-                        color: primaryAmber,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: primaryAmber.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: primaryAmber.withValues(alpha: 0.5),
+                ),
+              ),
+              child: Text(
+                'R\$ ${price.toInt()}',
+                style: const TextStyle(
+                  color: primaryAmber,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
           ],
         ),
       ),
