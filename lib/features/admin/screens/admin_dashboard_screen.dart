@@ -27,9 +27,12 @@ class AdminDashboardScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           dashboardData.when(
-            data: (data) => Row(
+            data: (data) => Wrap(
+              spacing: 16,
+              runSpacing: 16,
               children: [
-                Expanded(
+                SizedBox(
+                  width: 250,
                   child: _buildStatCard(
                     'Usuários Ativos',
                     data['users']?.toString() ?? '...',
@@ -37,8 +40,8 @@ class AdminDashboardScreen extends ConsumerWidget {
                     Colors.blue,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
+                SizedBox(
+                  width: 250,
                   child: _buildStatCard(
                     'Eventos Ativos',
                     data['activeEvents']?.toString() ?? '...',
@@ -46,8 +49,8 @@ class AdminDashboardScreen extends ConsumerWidget {
                     Colors.green,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
+                SizedBox(
+                  width: 250,
                   child: _buildStatCard(
                     'Depósitos Totais',
                     data['totalDeposits']?.toString() ?? '...',
@@ -55,8 +58,8 @@ class AdminDashboardScreen extends ConsumerWidget {
                     primaryAmber,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
+                SizedBox(
+                  width: 250,
                   child: _buildStatCard(
                     'Saques Pendentes',
                     data['pendingWithdrawals']?.toString() ?? '...',
