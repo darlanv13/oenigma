@@ -43,6 +43,7 @@ dependencies:
   
   # === PACOTE DO PARSE ADICIONADO AQUI ===
   parse_server_sdk_flutter: ^10.4.0
+  sidebarx: ^0.17.2
 
 # === CORREÇÃO DE CONFLITO DE DEPENDÊNCIAS ===
 dependency_overrides:

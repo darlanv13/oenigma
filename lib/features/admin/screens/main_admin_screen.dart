@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:sidebarx/sidebarx.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/admin/screens/admin_dashboard_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_events_screen.dart';
@@ -18,8 +19,8 @@ class MainAdminScreen extends StatefulWidget {
 }
 
 class _MainAdminScreenState extends State<MainAdminScreen> {
-  int _selectedIndex = 0;
-  bool _isExpanded = true;
+  final _controller = SidebarXController(selectedIndex: 0, extended: true);
+  final _key = GlobalKey<ScaffoldState>();
 
   final List<Widget> _screens = const [
     AdminDashboardScreen(),
@@ -31,152 +32,63 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
     AdminBannersScreen(),
   ];
 
-  final List<NavigationRailDestination> _destinations = const [
-    NavigationRailDestination(
-      icon: FaIcon(FontAwesomeIcons.chartPie),
-      selectedIcon: FaIcon(FontAwesomeIcons.chartPie, color: primaryAmber),
-      label: Text('Dashboard'),
-    ),
-    NavigationRailDestination(
-      icon: FaIcon(FontAwesomeIcons.calendarCheck),
-      selectedIcon: FaIcon(FontAwesomeIcons.calendarCheck, color: primaryAmber),
-      label: Text('Gestão de Eventos'),
-    ),
-    NavigationRailDestination(
-      icon: FaIcon(FontAwesomeIcons.users),
-      selectedIcon: FaIcon(FontAwesomeIcons.users, color: primaryAmber),
-      label: Text('Usuários & Carteira'),
-    ),
-    NavigationRailDestination(
-      icon: FaIcon(FontAwesomeIcons.moneyBillWave),
-      selectedIcon: FaIcon(FontAwesomeIcons.moneyBillWave, color: primaryAmber),
-      label: Text('Financeiro'),
-    ),
-    NavigationRailDestination(
-      icon: FaIcon(FontAwesomeIcons.shieldHalved),
-      selectedIcon: FaIcon(FontAwesomeIcons.shieldHalved, color: primaryAmber),
-      label: Text('Monitor de Fraude'),
-    ),
-    NavigationRailDestination(
-      icon: FaIcon(FontAwesomeIcons.toolbox),
-      selectedIcon: FaIcon(FontAwesomeIcons.toolbox, color: primaryAmber),
-      label: Text('Dicas & Ferramentas'),
-    ),
-    NavigationRailDestination(
-      icon: FaIcon(FontAwesomeIcons.images),
-      selectedIcon: FaIcon(FontAwesomeIcons.images, color: primaryAmber),
-      label: Text('Gestão de Banners'),
-    ),
-  ];
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final bool isDesktop = MediaQuery.of(context).size.width >= 800;
-    if (!isDesktop && _isExpanded) {
-      _isExpanded = false;
-    }
 
     return Scaffold(
+      key: _key,
       backgroundColor: darkBackground,
-      appBar: AppBar(
-        title: const Text(
-          'O Enigma - Admin Panel',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: cardColor,
-        elevation: 0,
-        leading: isDesktop
-            ? IconButton(
+      appBar: isDesktop
+          ? null
+          : AppBar(
+              title: const Text(
+                'O Enigma - Admin Panel',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              backgroundColor: cardColor,
+              elevation: 0,
+              leading: IconButton(
                 icon: const FaIcon(FontAwesomeIcons.bars),
                 onPressed: () {
-                  setState(() {
-                    _isExpanded = !_isExpanded;
-                  });
+                  _key.currentState?.openDrawer();
                 },
-              )
-            : null,
-        actions: [
-          IconButton(
-            icon: const FaIcon(FontAwesomeIcons.rightFromBracket),
-            onPressed: () async {
-              final user = await ParseUser.currentUser() as ParseUser?;
-              if (user != null) await user.logout();
-            },
-            tooltip: 'Sair do Painel',
-          ),
-        ],
-      ),
-      drawer: !isDesktop
-          ? Drawer(
-              backgroundColor: cardColor,
-              child: ListView(
-                children: [
-                  const DrawerHeader(
-                    decoration: BoxDecoration(color: primaryAmber),
-                    child: Center(
-                      child: Text(
-                        'Admin Menu',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  for (int i = 0; i < _destinations.length; i++)
-                    ListTile(
-                      leading: _destinations[i].icon,
-                      title: _destinations[i].label,
-                      selected: _selectedIndex == i,
-                      selectedColor: primaryAmber,
-                      onTap: () {
-                        setState(() => _selectedIndex = i);
-                        Navigator.pop(context);
-                      },
-                    ),
-                ],
               ),
-            )
-          : null,
+              actions: [
+                IconButton(
+                  icon: const FaIcon(FontAwesomeIcons.rightFromBracket),
+                  onPressed: () async {
+                    final user = await ParseUser.currentUser() as ParseUser?;
+                    if (user != null) await user.logout();
+                  },
+                  tooltip: 'Sair do Painel',
+                ),
+              ],
+            ),
+      drawer: !isDesktop ? _AdminSidebar(controller: _controller) : null,
       body: Row(
         children: [
-          if (isDesktop)
-            NavigationRail(
-              backgroundColor: cardColor,
-              selectedIndex: _selectedIndex,
-              onDestinationSelected: (int index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
-              extended: _isExpanded,
-              selectedIconTheme: const IconThemeData(color: primaryAmber),
-              selectedLabelTextStyle: const TextStyle(
-                color: primaryAmber,
-                fontWeight: FontWeight.bold,
-              ),
-              unselectedIconTheme: const IconThemeData(
-                color: secondaryTextColor,
-              ),
-              unselectedLabelTextStyle: const TextStyle(
-                color: secondaryTextColor,
-              ),
-              destinations: _destinations,
-            ),
-          if (isDesktop)
-            const VerticalDivider(
-              thickness: 1,
-              width: 1,
-              color: Colors.white12,
-            ),
+          if (isDesktop) _AdminSidebar(controller: _controller),
           Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: Container(
-                key: ValueKey<int>(_selectedIndex),
-                padding: const EdgeInsets.all(24.0),
-                child: _screens[_selectedIndex],
+            child: Center(
+              child: AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: Container(
+                      key: ValueKey<int>(_controller.selectedIndex),
+                      padding: const EdgeInsets.all(24.0),
+                      child: _screens[_controller.selectedIndex],
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -185,3 +97,156 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
     );
   }
 }
+
+class _AdminSidebar extends StatelessWidget {
+  const _AdminSidebar({
+    Key? key,
+    required SidebarXController controller,
+  })  : _controller = controller,
+        super(key: key);
+
+  final SidebarXController _controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SidebarX(
+      controller: _controller,
+      theme: SidebarXTheme(
+        margin: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        hoverColor: primaryAmber.withOpacity(0.1),
+        textStyle: TextStyle(color: secondaryTextColor),
+        selectedTextStyle: const TextStyle(color: darkBackground, fontWeight: FontWeight.bold),
+        hoverTextStyle: const TextStyle(
+          color: primaryAmber,
+          fontWeight: FontWeight.w500,
+        ),
+        itemTextPadding: const EdgeInsets.only(left: 30),
+        selectedItemTextPadding: const EdgeInsets.only(left: 30),
+        itemDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: cardColor),
+        ),
+        selectedItemDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: primaryAmber.withOpacity(0.37),
+          ),
+          gradient: const LinearGradient(
+            colors: [primaryAmber, primaryAmber],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.28),
+              blurRadius: 30,
+            )
+          ],
+        ),
+        iconTheme: IconThemeData(
+          color: secondaryTextColor,
+          size: 20,
+        ),
+        selectedIconTheme: const IconThemeData(
+          color: darkBackground,
+          size: 20,
+        ),
+      ),
+      extendedTheme: const SidebarXTheme(
+        width: 250,
+        decoration: BoxDecoration(
+          color: cardColor,
+        ),
+      ),
+      footerDivider: divider,
+      headerBuilder: (context, extended) {
+        return SafeArea(
+          child: SizedBox(
+            height: 100,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: extended
+                  ? const Text(
+                      'Admin Panel',
+                      style: TextStyle(
+                        color: primaryAmber,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : const FaIcon(
+                      FontAwesomeIcons.shieldHalved,
+                      color: primaryAmber,
+                      size: 40,
+                    ),
+            ),
+          ),
+        );
+      },
+      footerBuilder: (context, extended) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: IconButton(
+            icon: FaIcon(
+              FontAwesomeIcons.rightFromBracket,
+              color: secondaryTextColor,
+            ),
+            onPressed: () async {
+              final user = await ParseUser.currentUser() as ParseUser?;
+              if (user != null) await user.logout();
+            },
+            tooltip: 'Sair do Painel',
+          ),
+        );
+      },
+      items: [
+        SidebarXItem(
+          iconWidget: const FaIcon(FontAwesomeIcons.chartPie, size: 20),
+          label: 'Dashboard',
+          onTap: () => _handleItemTap(context),
+        ),
+        SidebarXItem(
+          iconWidget: const FaIcon(FontAwesomeIcons.calendarCheck, size: 20),
+          label: 'Gestão de Eventos',
+          onTap: () => _handleItemTap(context),
+        ),
+        SidebarXItem(
+          iconWidget: const FaIcon(FontAwesomeIcons.users, size: 20),
+          label: 'Usuários & Carteira',
+          onTap: () => _handleItemTap(context),
+        ),
+        SidebarXItem(
+          iconWidget: const FaIcon(FontAwesomeIcons.moneyBillWave, size: 20),
+          label: 'Financeiro',
+          onTap: () => _handleItemTap(context),
+        ),
+        SidebarXItem(
+          iconWidget: const FaIcon(FontAwesomeIcons.shieldHalved, size: 20),
+          label: 'Monitor de Fraude',
+          onTap: () => _handleItemTap(context),
+        ),
+        SidebarXItem(
+          iconWidget: const FaIcon(FontAwesomeIcons.toolbox, size: 20),
+          label: 'Dicas & Ferramentas',
+          onTap: () => _handleItemTap(context),
+        ),
+        SidebarXItem(
+          iconWidget: const FaIcon(FontAwesomeIcons.images, size: 20),
+          label: 'Gestão de Banners',
+          onTap: () => _handleItemTap(context),
+        ),
+      ],
+    );
+  }
+
+  void _handleItemTap(BuildContext context) {
+    final bool isDesktop = MediaQuery.of(context).size.width >= 800;
+    if (!isDesktop) {
+      Navigator.of(context).pop();
+    }
+  }
+}
+
+const divider = Divider(color: Colors.white24, height: 1);
