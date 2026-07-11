@@ -790,7 +790,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       body: _isLoading && !_isHintVisible
           ? const Center(child: CircularProgressIndicator(color: primaryAmber))
           : SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -807,7 +807,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
 
   Widget _buildCard({required String title, required Widget child}) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(24),
@@ -869,8 +869,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 child: Image.network(_currentEnigma.imageUrl!),
               )
             else if (_currentEnigma.type != 'text')
-              Lottie.asset('assets/animations/no_enigma.json', height: 150),
-            if (_currentEnigma.imageUrl != null) const SizedBox(height: 20),
+              Lottie.asset('assets/animations/no_enigma.json', height: 80),
+            if (_currentEnigma.imageUrl != null) const SizedBox(height: 8),
             Text(
               _currentEnigma.instruction,
               style: const TextStyle(
@@ -912,8 +912,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               child: Image.network(_currentEnigma.imageUrl!),
             )
           else
-            Lottie.asset('assets/animations/no_enigma.json', height: 150),
-          const SizedBox(height: 16),
+            Lottie.asset('assets/animations/no_enigma.json', height: 80),
+          const SizedBox(height: 8),
           Text(
             _currentEnigma.instruction,
             textAlign: TextAlign.center,
@@ -1312,30 +1312,38 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           style: TextStyle(color: secondaryTextColor, fontSize: 13),
         ),
         const SizedBox(height: 16),
-        _buildToolPurchaseCard(
-          title: 'Mapa Interativo',
-          description: _hasMap
-              ? 'Clique para abrir o Mapa Interativo.'
-              : 'Veja um raio no mapa onde o local se encontra.',
-          price: 20.0,
-          type: 'Mapa',
-          toolKey: 'map',
-          icon: FontAwesomeIcons.mapLocationDot,
-          color: Colors.blueAccent,
-          isPurchased: _hasMap,
-        ),
-        const SizedBox(height: 12),
-        _buildToolPurchaseCard(
-          title: 'Bússola Digital',
-          description: _hasCompass
-              ? 'Clique para abrir a Bússola Digital.'
-              : 'Siga a direção exata até o local.',
-          price: 15.0,
-          type: 'Bússola',
-          toolKey: 'compass',
-          icon: FontAwesomeIcons.compass,
-          color: Colors.greenAccent,
-          isPurchased: _hasCompass,
+        Row(
+          children: [
+            Expanded(
+              child: _buildToolPurchaseCard(
+                title: 'Mapa Interativo',
+                description: _hasMap
+                    ? 'Clique para abrir o Mapa Interativo.'
+                    : 'Veja um raio no mapa onde o local se encontra.',
+                price: 20.0,
+                type: 'Mapa',
+                toolKey: 'map',
+                icon: FontAwesomeIcons.mapLocationDot,
+                color: Colors.blueAccent,
+                isPurchased: _hasMap,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildToolPurchaseCard(
+                title: 'Bússola Digital',
+                description: _hasCompass
+                    ? 'Clique para abrir a Bússola Digital.'
+                    : 'Siga a direção exata até o local.',
+                price: 15.0,
+                type: 'Bússola',
+                toolKey: 'compass',
+                icon: FontAwesomeIcons.compass,
+                color: Colors.greenAccent,
+                isPurchased: _hasCompass,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -1372,7 +1380,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               }
             },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -1387,40 +1395,36 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             color: color.withValues(alpha: isPurchased ? 0.6 : 0.3),
           ),
         ),
-        child: Row(
+        child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
-              child: FaIcon(icon, color: color, size: 24),
+              child: FaIcon(icon, color: color, size: 20),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: textColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description,
-                    style: const TextStyle(
-                      color: secondaryTextColor,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
               ),
             ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: secondaryTextColor,
+                fontSize: 10,
+              ),
+            ),
+            const SizedBox(height: 8),
             isPurchased
                 ? ElevatedButton.icon(
                     onPressed: _isLoading
@@ -1432,12 +1436,12 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                               _openCompassDialog();
                             }
                           },
-                    icon: FaIcon(icon, size: 16, color: Colors.white),
-                    label: Text(
-                      'ABRIR ${type.toUpperCase()}',
-                      style: const TextStyle(
+                    icon: FaIcon(icon, size: 14, color: Colors.white),
+                    label: const Text(
+                      'ABRIR',
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        fontSize: 12,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
@@ -1446,12 +1450,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                   )
                 : Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: 8,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
                       color: primaryAmber.withValues(alpha: 0.2),
@@ -1465,7 +1470,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       style: const TextStyle(
                         color: primaryAmber,
                         fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        fontSize: 12,
                       ),
                     ),
                   ),
