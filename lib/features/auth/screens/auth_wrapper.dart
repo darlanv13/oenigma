@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/features/home/screens/main_navigation_screen.dart';
 import 'package:oenigma/features/auth/screens/login_screen.dart';
-import 'package:oenigma/features/admin/screens/admin_auth_wrapper.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -27,7 +26,7 @@ class AuthWrapper extends ConsumerWidget {
             final bool isDesktop = kIsWeb || screenWidth > 800;
 
             if (isDesktop) {
-              return const AdminAuthWrapper();
+              return const MainNavigationScreen();
             } else {
               return _buildAdminMobileBlockedScreen(context);
             }
