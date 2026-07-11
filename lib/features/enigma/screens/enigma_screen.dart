@@ -422,12 +422,68 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       final success = data['success'] ?? false;
 
       if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              data['message'] ?? "Ferramenta comprada com sucesso!",
+        await _fetchInitialStatus();
+
+        if (!mounted) return;
+
+        // Show usage instructions dialog
+        showDialog(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            backgroundColor: cardColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            backgroundColor: Colors.green,
+            title: Text(
+              toolType == 'compass' ? 'Bússola Ativada!' : 'Mapa Ativado!',
+              style: const TextStyle(
+                color: primaryAmber,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FaIcon(
+                  toolType == 'compass'
+                      ? FontAwesomeIcons.compass
+                      : FontAwesomeIcons.mapLocationDot,
+                  size: 48,
+                  color: toolType == 'compass'
+                      ? Colors.greenAccent
+                      : Colors.blueAccent,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  toolType == 'compass'
+                      ? 'A Bússola Digital (Estilo Radar) já está na sua tela!\n\n1. O triângulo vermelho no centro é você.\n2. O ponto brilhante é o seu alvo.\n3. Gire o celular para alinhar sua direção (linha do scanner) com o alvo e siga em frente.\n4. A distância digital mostrará quantos metros faltam.'
+                      : 'O Mapa Interativo já está na sua tela!\n\n1. Você verá um círculo azul desenhado no mapa.\n2. O seu alvo está em algum lugar dentro deste raio.\n3. Dirija-se até a área marcada e procure atentamente pelo local exato do enigma.',
+                  style: const TextStyle(color: textColor, height: 1.5),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryAmber,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text(
+                    'ENTENDI',
+                    style: TextStyle(
+                      color: darkBackground,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       }
