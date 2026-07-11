@@ -222,18 +222,22 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     // Solicita permissão e inicializa o GPS *antes* de buscar o status.
     // Isso evita o conflito de múltiplas permissões sendo solicitadas simultaneamente
     // caso o status retorne _hasCompass=true ou _hasMap=true.
-    if (_currentEnigma.type == 'foto' || _currentEnigma.type == 'gps') {
-      await _initializeGpsListener();
-    }
+    try {
+      if (_currentEnigma.type == 'foto' || _currentEnigma.type == 'gps') {
+        await _initializeGpsListener();
+      }
 
-    if (mounted) {
-      await _fetchInitialStatus();
-    }
-
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        await _fetchInitialStatus();
+      }
+    } catch (e) {
+      debugPrint("Erro na inicialização do enigma: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -936,35 +940,47 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   ),
           ),
           const SizedBox(height: 20),
-          if (_currentEnigma.type == 'qrcode' || _currentEnigma.type == 'foto')
+          if (_currentEnigma.type == 'qrcode' ||
+              _currentEnigma.type == 'foto' ||
+              _currentEnigma.type == 'gps')
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed:
                     (_currentEnigma.type == 'qrcode' || _isNear) && !_isBlocked
                     ? () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => ScannerScreen(
-                              onScan: (scannedCode) {
-                                _handleAction(
-                                  'validateCode',
-                                  code: scannedCode,
-                                );
-                              },
+                        if (_currentEnigma.type == 'gps') {
+                          _handleAction('validateCode', code: 'gps');
+                        } else {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => ScannerScreen(
+                                onScan: (scannedCode) {
+                                  _handleAction(
+                                    'validateCode',
+                                    code: scannedCode,
+                                  );
+                                },
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        }
                       }
                     : null,
                 icon: FaIcon(
-                  _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
+                  _isBlocked
+                      ? FontAwesomeIcons.clock
+                      : (_currentEnigma.type == 'gps'
+                            ? FontAwesomeIcons.locationDot
+                            : FontAwesomeIcons.qrcode),
                 ),
                 label: Text(
                   _isBlocked
                       ? 'Aguarde o Cooldown'
                       : ((_currentEnigma.type == 'qrcode' || _isNear)
-                            ? 'ESCANEAR CÓDIGO'
+                            ? (_currentEnigma.type == 'gps'
+                                  ? 'CONFIRMAR LOCALIZAÇÃO'
+                                  : 'ESCANEAR CÓDIGO')
                             : 'APROXIME-SE DO LOCAL'),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -1079,54 +1095,51 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   Widget _buildToolsPurchaseButtons() {
     if (_currentEnigma.type != 'foto' && _currentEnigma.type != 'gps')
       return const SizedBox.shrink();
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            children: const [
-              FaIcon(FontAwesomeIcons.toolbox, color: primaryAmber, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Ferramentas Especiais',
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: const [
+            FaIcon(FontAwesomeIcons.toolbox, color: primaryAmber, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Ferramentas Especiais',
+              style: TextStyle(
+                color: textColor,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Compre ferramentas para encontrar o local com mais facilidade e não ficar para trás!',
-            style: TextStyle(color: secondaryTextColor, fontSize: 13),
-          ),
-          const SizedBox(height: 16),
-          if (!_hasMap)
-            _buildToolPurchaseCard(
-              title: 'Mapa Interativo',
-              description: 'Veja um raio no mapa onde o local se encontra.',
-              price: 20.0,
-              type: 'Mapa',
-              toolKey: 'map',
-              icon: FontAwesomeIcons.mapLocationDot,
-              color: Colors.blueAccent,
             ),
-          if (!_hasMap && !_hasCompass) const SizedBox(height: 12),
-          if (!_hasCompass)
-            _buildToolPurchaseCard(
-              title: 'Bússola Digital',
-              description: 'Siga a direção exata até o local.',
-              price: 15.0,
-              type: 'Bússola',
-              toolKey: 'compass',
-              icon: FontAwesomeIcons.compass,
-              color: Colors.greenAccent,
-            ),
-        ],
-      ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Compre ferramentas para encontrar o local com mais facilidade e não ficar para trás!',
+          style: TextStyle(color: secondaryTextColor, fontSize: 13),
+        ),
+        const SizedBox(height: 16),
+        if (!_hasMap)
+          _buildToolPurchaseCard(
+            title: 'Mapa Interativo',
+            description: 'Veja um raio no mapa onde o local se encontra.',
+            price: 20.0,
+            type: 'Mapa',
+            toolKey: 'map',
+            icon: FontAwesomeIcons.mapLocationDot,
+            color: Colors.blueAccent,
+          ),
+        if (!_hasMap && !_hasCompass) const SizedBox(height: 12),
+        if (!_hasCompass)
+          _buildToolPurchaseCard(
+            title: 'Bússola Digital',
+            description: 'Siga a direção exata até o local.',
+            price: 15.0,
+            type: 'Bússola',
+            toolKey: 'compass',
+            icon: FontAwesomeIcons.compass,
+            color: Colors.greenAccent,
+          ),
+      ],
     );
   }
 
