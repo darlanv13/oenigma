@@ -1,7 +1,4 @@
-import 'dart:io';
-
 import 'package:flutter/foundation.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -334,9 +331,15 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               decoration: InputDecoration(
                                 labelText: 'URL do Ícone (Lottie/Image)',
                                 suffixIcon: IconButton(
-                                  icon: const FaIcon(FontAwesomeIcons.upload, size: 18),
+                                  icon: const FaIcon(
+                                    FontAwesomeIcons.upload,
+                                    size: 18,
+                                  ),
                                   onPressed: () async {
-                                    final url = await AdminUploadUtil.pickAndUploadImage(context);
+                                    final url =
+                                        await AdminUploadUtil.pickAndUploadImage(
+                                          context,
+                                        );
                                     if (url != null) {
                                       setState(() {
                                         iconCtrl.text = url;
@@ -1194,9 +1197,15 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                 decoration: InputDecoration(
                                   labelText: 'URL da Foto do Local',
                                   suffixIcon: IconButton(
-                                    icon: const FaIcon(FontAwesomeIcons.upload, size: 18),
+                                    icon: const FaIcon(
+                                      FontAwesomeIcons.upload,
+                                      size: 18,
+                                    ),
                                     onPressed: () async {
-                                      final url = await AdminUploadUtil.pickAndUploadImage(context);
+                                      final url =
+                                          await AdminUploadUtil.pickAndUploadImage(
+                                            context,
+                                          );
                                       if (url != null) {
                                         setState(() {
                                           photoUrlCtrl.text = url;
