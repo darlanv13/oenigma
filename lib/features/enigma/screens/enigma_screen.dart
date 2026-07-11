@@ -214,12 +214,22 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       _isNear = false;
       _isBlocked = false;
       _isLoading = true;
+      _hasCompass = false;
+      _hasMap = false;
+      _destinationLocation = null;
     });
-    await _fetchInitialStatus();
-    if (mounted &&
-        (_currentEnigma.type == 'foto' || _currentEnigma.type == 'gps')) {
+
+    // Solicita permissão e inicializa o GPS *antes* de buscar o status.
+    // Isso evita o conflito de múltiplas permissões sendo solicitadas simultaneamente
+    // caso o status retorne _hasCompass=true ou _hasMap=true.
+    if (_currentEnigma.type == 'foto' || _currentEnigma.type == 'gps') {
       await _initializeGpsListener();
     }
+
+    if (mounted) {
+      await _fetchInitialStatus();
+    }
+
     if (mounted) {
       setState(() {
         _isLoading = false;
