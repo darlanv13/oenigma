@@ -298,8 +298,8 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
           }
         }
 
-        hasCompass = toolsPurchased.includes("compass") && enigma.get("hasCompass") === true;
-        hasMap = toolsPurchased.includes("map") && enigma.get("hasCompass") === true; // Map is tied to location based enigmas too
+        hasCompass = toolsPurchased.includes("compass");
+        hasMap = toolsPurchased.includes("map");
 
         let compassStr = enigma.get("compassCoords");
         if (compassStr) {
@@ -308,6 +308,14 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
             destinationLocation = {
               latitude: parseFloat(parts[0].trim()),
               longitude: parseFloat(parts[1].trim())
+            };
+          }
+        } else {
+          let loc = enigma.get("location");
+          if (loc && loc.latitude && loc.longitude) {
+            destinationLocation = {
+              latitude: loc.latitude,
+              longitude: loc.longitude
             };
           }
         }
