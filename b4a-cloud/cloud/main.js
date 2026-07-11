@@ -383,7 +383,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
       user.set("events", userEvents);
       await user.save(null, { useMasterKey: true });
 
-      return { success: true, hint: hint, message: "Dica comprada com sucesso." };
+      return { success: true, hint: { type: hint.get("type"), data: hint.get("data") }, message: "Dica comprada com sucesso." };
 
     } else if (action === 'purchaseTool') {
       let cost = 0;
