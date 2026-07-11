@@ -795,9 +795,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildEnigmaCard(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
                   _buildHintSection(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
                   _buildActionArea(),
                 ],
               ),
@@ -810,7 +810,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(
@@ -845,7 +845,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           child,
         ],
       ),
@@ -864,19 +864,22 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           children: [
             if (_currentEnigma.imageUrl != null &&
                 _currentEnigma.imageUrl!.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.network(_currentEnigma.imageUrl!),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 120),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.network(_currentEnigma.imageUrl!, fit: BoxFit.contain),
+                ),
               )
             else if (_currentEnigma.type != 'text')
-              Lottie.asset('assets/animations/no_enigma.json', height: 80),
+              Lottie.asset('assets/animations/no_enigma.json', height: 60),
             if (_currentEnigma.imageUrl != null) const SizedBox(height: 8),
             Text(
               _currentEnigma.instruction,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: textColor,
-                height: 1.6,
+                height: 1.4,
               ),
             ),
           ],
@@ -907,21 +910,24 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         children: [
           if (_currentEnigma.imageUrl != null &&
               _currentEnigma.imageUrl!.isNotEmpty)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.network(_currentEnigma.imageUrl!),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 120),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(_currentEnigma.imageUrl!, fit: BoxFit.contain),
+              ),
             )
           else
-            Lottie.asset('assets/animations/no_enigma.json', height: 80),
+            Lottie.asset('assets/animations/no_enigma.json', height: 60),
           const SizedBox(height: 8),
           Text(
             _currentEnigma.instruction,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: textColor, height: 1.5),
+            style: const TextStyle(fontSize: 14, color: textColor, height: 1.4),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: darkBackground,
               borderRadius: BorderRadius.circular(12),
@@ -958,7 +964,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     ),
                   ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           if (_currentEnigma.type == 'qrcode' ||
               _currentEnigma.type == 'foto' ||
               _currentEnigma.type == 'gps')
@@ -1009,7 +1015,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       ? Colors.green
                       : cardColor,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   textStyle: const TextStyle(fontWeight: FontWeight.bold),
                   elevation: 0,
                   side: BorderSide(
@@ -1038,15 +1044,15 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _openHintDialog,
-                icon: const FaIcon(FontAwesomeIcons.eye, color: darkBackground),
+                icon: const FaIcon(FontAwesomeIcons.eye, color: darkBackground, size: 16),
                 label: const Text(
                   'VER DICA',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryAmber,
                   foregroundColor: darkBackground,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1276,7 +1282,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           ),
         ),
         style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -1546,8 +1552,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               enabled: !_isBlocked,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 28,
-                letterSpacing: 8,
+                fontSize: 20,
+                letterSpacing: 4,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'monospace',
                 color: _isBlocked ? secondaryTextColor : textColor,
@@ -1558,11 +1564,11 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   color: secondaryTextColor.withValues(alpha: 0.3),
                   letterSpacing: 2,
                   fontFamily: 'Poppins',
-                  fontSize: 24,
+                  fontSize: 18,
                 ),
                 filled: true,
                 fillColor: darkBackground,
-                contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
@@ -1574,7 +1580,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -1587,7 +1593,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryAmber,
                 foregroundColor: darkBackground,
-                padding: const EdgeInsets.symmetric(vertical: 18),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -1596,8 +1602,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               ),
               child: _isLoading
                   ? const SizedBox(
-                      width: 24,
-                      height: 24,
+                      width: 20,
+                      height: 20,
                       child: CircularProgressIndicator(
                         color: darkBackground,
                         strokeWidth: 3,
@@ -1606,7 +1612,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   : Text(
                       _isBlocked ? 'Aguarde...' : 'ENVIAR RESPOSTA',
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1,
                       ),
