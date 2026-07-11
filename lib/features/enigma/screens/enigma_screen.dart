@@ -1418,28 +1418,51 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isPurchased
-                    ? color
-                    : primaryAmber.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isPurchased
-                      ? Colors.transparent
-                      : primaryAmber.withValues(alpha: 0.5),
-                ),
-              ),
-              child: Text(
-                isPurchased ? 'ABRIR' : 'R\$ ${price.toInt()}',
-                style: TextStyle(
-                  color: isPurchased ? Colors.white : primaryAmber,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ),
+            isPurchased
+                ? ElevatedButton.icon(
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            if (toolKey == 'map') {
+                              _openMapDialog();
+                            } else if (toolKey == 'compass') {
+                              _openCompassDialog();
+                            }
+                          },
+                    icon: FaIcon(icon, size: 16, color: Colors.white),
+                    label: Text(
+                      'ABRIR ${type.toUpperCase()}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: color,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  )
+                : Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: primaryAmber.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: primaryAmber.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Text(
+                      'R\$ ${price.toInt()}',
+                      style: const TextStyle(
+                        color: primaryAmber,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
           ],
         ),
       ),
