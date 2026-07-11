@@ -33,8 +33,11 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 16,
+          runSpacing: 16,
           children: [
             const Text(
               'Gestão de Dicas (Caixa Global)',
