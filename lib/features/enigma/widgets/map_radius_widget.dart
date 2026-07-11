@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
+import 'package:geolocator/geolocator.dart'; // <-- IMPORT DO GEOLOCATOR ADICIONADO
 import 'dart:math' as math;
 
 class MapRadiusWidget extends StatefulWidget {
@@ -19,6 +19,7 @@ class MapRadiusWidget extends StatefulWidget {
 
 class _MapRadiusWidgetState extends State<MapRadiusWidget> {
   late LatLng _obfuscatedCenter;
+  bool _hasLocationPermission = false; // <-- VARIÁVEL DE CONTROLE ADICIONADA
 
   @override
   void initState() {
@@ -28,19 +29,35 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget> {
       widget.destinationLongitude,
       150.0, // Mova o centro em até 150 metros do ponto real
     );
+    _checkLocationPermission(); // <-- INICIA A CHECAGEM DE PERMISSÃO
+  }
+
+  // NOVA FUNÇÃO: Checa se a EnigmaScreen já liberou o GPS
+  Future<void> _checkLocationPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always) {
+      if (mounted) {
+        setState(() {
+          _hasLocationPermission = true;
+        });
+      }
+    }
   }
 
   // Gera um ponto aleatório perto do destino para ser o centro do círculo
   // Isso impede que o usuário apenas vá para o centro exato do círculo desenhado
-  LatLng _generateObfuscatedLocation(double lat, double lng, double maxRadiusMeters) {
+  LatLng _generateObfuscatedLocation(
+    double lat,
+    double lng,
+    double maxRadiusMeters,
+  ) {
     final random = math.Random();
-
     // Converte o raio de metros para graus aproximados (1 grau ~ 111km)
     final radiusInDegrees = maxRadiusMeters / 111000.0;
 
     final u = random.nextDouble();
     final v = random.nextDouble();
-
     final w = radiusInDegrees * math.sqrt(u);
     final t = 2 * math.pi * v;
     final x = w * math.cos(t);
@@ -58,7 +75,10 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget> {
       height: 300,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.3), width: 2),
+        border: Border.all(
+          color: Colors.blueAccent.withValues(alpha: 0.3),
+          width: 2,
+        ),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
@@ -67,8 +87,9 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget> {
             target: _obfuscatedCenter,
             zoom: 15.5,
           ),
-          myLocationEnabled: true,
-          myLocationButtonEnabled: true,
+          // MODIFICADO AQUI: Só ativa a bolinha azul se já tiver permissão
+          myLocationEnabled: _hasLocationPermission,
+          myLocationButtonEnabled: _hasLocationPermission,
           circles: {
             Circle(
               circleId: const CircleId('search_area'),

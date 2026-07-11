@@ -40,11 +40,9 @@ class _CompassWidgetState extends State<CompassWidget>
   }
 
   Future<void> _initSensors() async {
-    // Requisitar permissão de localização
+    // A permissão já foi solicitada e garantida pela EnigmaScreen antes de abrir este widget.
+    // Aqui só precisamos confirmar se ela está ativa para ligar os sensores.
     LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
 
     if (permission == LocationPermission.whileInUse ||
         permission == LocationPermission.always) {

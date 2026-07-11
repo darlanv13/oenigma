@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import 'dart:math' show cos, sqrt, asin, pi, sin;
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
@@ -9,7 +10,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart' hide Marker;
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:location/location.dart';
 
 import 'package:oenigma/features/certificate/screens/winner_certificate_screen.dart';
 import 'package:oenigma/core/widgets/dialogs/completion_dialog.dart';
@@ -162,8 +162,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
 
   bool _isLoading = false;
   bool _canBuyHint = false;
-  final Location _location = Location();
-  StreamSubscription<LocationData>? _locationSubscription;
+  StreamSubscription<Position>? _locationSubscription;
   bool _isNear = false;
   double? _distance;
   bool _isHintVisible = false;
@@ -609,59 +608,85 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   Future<void> _initializeGpsListener() async {
-    bool serviceEnabled = await _location.serviceEnabled();
+    // 1. Verifica se o serviço de GPS (hardware) está ativado no celular
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      serviceEnabled = await _location.requestService();
-      if (!serviceEnabled) return;
+      // Como o Geolocator não liga o GPS diretamente, o ideal é pedir para o usuário ligar
+      await Geolocator.openLocationSettings();
+      return;
     }
-    PermissionStatus permissionGranted = await _location.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await _location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) return;
-    }
-    _locationSubscription = _location.onLocationChanged.listen((
-      currentLocation,
-    ) {
-      if (!mounted || _currentEnigma.location == null) return;
 
-      if (currentLocation.isMock == true) {
-        setState(() {
-          _distance = null;
-          _isNear = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              '⚠️ Localização falsa (Fake GPS) detectada! Por favor, desative para jogar.',
-            ),
-            backgroundColor: Colors.redAccent,
-            duration: Duration(seconds: 5),
-          ),
-        );
-        // Log to Admin Fraud Monitor
-        ParseUser.currentUser().then((user) {
-          if (user != null && user is ParseUser) {
-            final log = ParseObject('FraudLog')
-              ..set('objectId', user.objectId)
-              ..set('eventId', widget.event.id)
-              ..set('enigmaId', _currentEnigma.id)
-              ..set('reason', 'Fake GPS Detectado');
-            log.save();
-          }
-        });
-        return;
+    // 2. Verifica e solicita as permissões do aplicativo
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return; // Usuário negou a permissão
       }
-      final distanceInMeters = _calculateDistance(
-        currentLocation.latitude!,
-        currentLocation.longitude!,
-        _currentEnigma.location!.latitude,
-        _currentEnigma.location!.longitude,
-      );
-      setState(() {
-        _distance = distanceInMeters;
-        _isNear = distanceInMeters <= 100;
-      });
-    });
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return; // Usuário negou permanentemente
+    }
+
+    // 3. Inicia o "ouvinte" de localização em tempo real
+    _locationSubscription =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 1, // Dispara atualização a cada 1 metro
+          ),
+        ).listen((Position currentLocation) {
+          // Verifica se a tela ainda existe e se o enigma tem localização
+          if (!mounted || _currentEnigma.location == null) return;
+
+          // 4. Bloqueio de Fake GPS (No Geolocator a propriedade chama 'isMocked')
+          if (currentLocation.isMocked) {
+            setState(() {
+              _distance = null;
+              _isNear = false;
+            });
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  '⚠️ Localização falsa (Fake GPS) detectada! Por favor, desative para jogar.',
+                ),
+                backgroundColor: Colors.redAccent,
+                duration: Duration(seconds: 5),
+              ),
+            );
+
+            // Log de Fraude enviado ao Back4App (Mantido igual ao seu original)
+            ParseUser.currentUser().then((user) {
+              if (user != null && user is ParseUser) {
+                final log = ParseObject('FraudLog')
+                  ..set('objectId', user.objectId)
+                  ..set('eventId', widget.event.id)
+                  ..set('enigmaId', _currentEnigma.id)
+                  ..set('reason', 'Fake GPS Detectado');
+                log.save();
+              }
+            });
+            return; // Para a execução para não liberar a distância
+          }
+
+          // 5. Calcula a distância
+          // o que deixa o app mais rápido do que rodar uma matemática customizada no Dart.
+          final distanceInMeters = Geolocator.distanceBetween(
+            currentLocation.latitude,
+            currentLocation.longitude,
+            _currentEnigma.location!.latitude,
+            _currentEnigma.location!.longitude,
+          );
+
+          setState(() {
+            _distance = distanceInMeters;
+            _isNear =
+                distanceInMeters <=
+                100; // Valida se está a 100m ou menos do alvo
+          });
+        });
   }
 
   double _calculateDistance(
