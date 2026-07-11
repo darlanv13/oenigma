@@ -16,7 +16,7 @@ void main() async {
   await initializeDateFormatting('pt_BR', null);
   await Parse().initialize(
     'ThUDHY1ayK6ah9JFm9YLHTDF9FKMHTU096eqkDKK', // Replace with valid App ID
-    'https://parseapi.back4app.com', // Replace with valid Server URL
+    'https://parseapi.back4app.com', // Replace with valid Server URLrsrs
     clientKey:
         'ZyTU944E8jmtJuDu4lL2mh5tcQR7AErvhL0xNY5d', // Replace with valid Client Key
     autoSendSessionId: true,
