@@ -1446,7 +1446,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     ),
                   )
                 : Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: primaryAmber.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
