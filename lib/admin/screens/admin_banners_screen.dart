@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-import '../../core/utils/admin_colors.dart';
+import '../../core/utils/app_colors.dart';
 import '../utils/admin_upload_util.dart';
 
 class AdminBannersScreen extends StatefulWidget {

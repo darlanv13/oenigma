@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
-import 'package:oenigma/core/utils/admin_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class AdminFraudScreen extends StatefulWidget {
