@@ -11,6 +11,7 @@ import 'package:oenigma/features/admin/screens/admin_tools_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_banners_screen.dart';
 import 'package:oenigma/features/admin/screens/admin_mobile_panel_screen.dart'; // NEW
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'package:oenigma/features/auth/screens/login_screen.dart';
 
 class MainAdminScreen extends StatefulWidget {
   const MainAdminScreen({super.key});
@@ -80,10 +81,9 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
 
 class _AdminSidebar extends StatelessWidget {
   const _AdminSidebar({
-    Key? key,
+    super.key,
     required SidebarXController controller,
-  })  : _controller = controller,
-        super(key: key);
+  })  : _controller = controller;
 
   final SidebarXController _controller;
 
@@ -176,6 +176,11 @@ class _AdminSidebar extends StatelessWidget {
             onPressed: () async {
               final user = await ParseUser.currentUser() as ParseUser?;
               if (user != null) await user.logout();
+              if (context.mounted) {
+                 Navigator.of(context).pushReplacement(
+                   MaterialPageRoute(builder: (context) => const LoginScreen()),
+                 );
+              }
             },
             tooltip: 'Sair do Painel',
           ),
@@ -183,37 +188,37 @@ class _AdminSidebar extends StatelessWidget {
       },
       items: [
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.chartPie, size: 20),
+          iconBuilder: (selected, hovered) => const FaIcon(FontAwesomeIcons.chartPie, size: 20),
           label: 'Dashboard',
           onTap: () => _handleItemTap(context),
         ),
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.calendarCheck, size: 20),
+          iconBuilder: (selected, hovered) => const FaIcon(FontAwesomeIcons.calendarCheck, size: 20),
           label: 'Gestão de Eventos',
           onTap: () => _handleItemTap(context),
         ),
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.users, size: 20),
+          iconBuilder: (selected, hovered) => const FaIcon(FontAwesomeIcons.users, size: 20),
           label: 'Usuários & Carteira',
           onTap: () => _handleItemTap(context),
         ),
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.moneyBillWave, size: 20),
+          iconBuilder: (selected, hovered) => const FaIcon(FontAwesomeIcons.moneyBillWave, size: 20),
           label: 'Financeiro',
           onTap: () => _handleItemTap(context),
         ),
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.shieldHalved, size: 20),
+          iconBuilder: (selected, hovered) => const FaIcon(FontAwesomeIcons.shieldHalved, size: 20),
           label: 'Monitor de Fraude',
           onTap: () => _handleItemTap(context),
         ),
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.toolbox, size: 20),
+          iconBuilder: (selected, hovered) => const FaIcon(FontAwesomeIcons.toolbox, size: 20),
           label: 'Dicas & Ferramentas',
           onTap: () => _handleItemTap(context),
         ),
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.images, size: 20),
+          iconBuilder: (selected, hovered) => const FaIcon(FontAwesomeIcons.images, size: 20),
           label: 'Gestão de Banners',
           onTap: () => _handleItemTap(context),
         ),
