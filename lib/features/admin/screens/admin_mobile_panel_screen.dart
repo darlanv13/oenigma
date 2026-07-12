@@ -4,6 +4,7 @@ import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:oenigma/features/admin/utils/admin_upload_util.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:oenigma/features/auth/screens/login_screen.dart';
 
 class AdminMobilePanelScreen extends StatefulWidget {
   const AdminMobilePanelScreen({super.key});
@@ -42,6 +43,12 @@ class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
             onPressed: () async {
               final user = await ParseUser.currentUser() as ParseUser?;
               if (user != null) await user.logout();
+              if (context.mounted) {
+                 Navigator.of(context).pushAndRemoveUntil(
+                   MaterialPageRoute(builder: (context) => const LoginScreen()),
+                   (route) => false,
+                 );
+              }
             },
             tooltip: 'Sair do Painel',
           ),

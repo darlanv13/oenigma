@@ -535,3 +535,22 @@ Parse.Cloud.define("assignHintToEnigma", async (request) => {
 
   return { success: true };
 });
+
+Parse.Cloud.define("updateUserRole", async (request) => {
+  const admin = request.user;
+  if (!admin || !admin.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+
+  const { objectId, role } = request.params;
+  if (!objectId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "objectId is required.");
+  if (!role) throw new Parse.Error(Parse.Error.INVALID_QUERY, "role is required.");
+
+  try {
+    const query = new Parse.Query(Parse.User);
+    const user = await query.get(objectId, { useMasterKey: true });
+    user.set("role", role);
+    await user.save(null, { useMasterKey: true });
+    return { success: true, message: "User role updated successfully." };
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error updating user role: " + error.message);
+  }
+});

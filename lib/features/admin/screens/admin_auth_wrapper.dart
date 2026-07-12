@@ -26,7 +26,7 @@ class AdminAuthWrapper extends ConsumerWidget {
         final isAdmin = user.get<bool>('isAdmin') ?? false;
         final role = user.get<String>('role') ?? 'player';
 
-        if (!isAdmin && role != 'admin') {
+        if (!isAdmin && role != 'admin' && role != 'creator') {
           return _buildAccessDenied(context);
         }
 
