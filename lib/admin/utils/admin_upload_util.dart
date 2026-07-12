@@ -26,14 +26,10 @@ class AdminUploadUtil {
     return _uploadFile(context, pickedFile);
   }
 
-<<<<<<< HEAD:lib/admin/utils/admin_upload_util.dart
   static Future<String?> _uploadFile(
     BuildContext context,
     XFile pickedFile,
   ) async {
-=======
-  static Future<String?> _uploadFile(BuildContext context, XFile pickedFile) async {
->>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/utils/admin_upload_util.dart
     bool isShowingDialog = false;
 
     try {

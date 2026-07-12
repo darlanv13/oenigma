@@ -1,29 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
-import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oenigma/admin/screens/admin_banners_screen.dart';
+import 'package:oenigma/admin/screens/admin_dashboard_screen.dart';
+import 'package:oenigma/admin/screens/admin_events_screen.dart';
+import 'package:oenigma/admin/screens/admin_finance_screen.dart';
+import 'package:oenigma/admin/screens/admin_fraud_screen.dart';
+import 'package:oenigma/admin/screens/admin_mobile_panel_screen.dart';
+import 'package:oenigma/admin/screens/admin_tools_screen.dart';
+import 'package:oenigma/admin/screens/admin_users_screen.dart';
 import 'package:sidebarx/sidebarx.dart';
-<<<<<<< HEAD:lib/admin/screens/main_admin_screen.dart
-import 'admin_banners_screen.dart';
-import 'admin_dashboard_screen.dart';
-import 'admin_events_screen.dart';
-import 'admin_finance_screen.dart';
-import 'admin_fraud_screen.dart';
-import 'admin_mobile_panel_screen.dart';
-import 'admin_tools_screen.dart';
-import 'admin_users_screen.dart';
-=======
 import 'package:oenigma/core/utils/app_colors.dart';
-import 'package:oenigma/features/admin/screens/admin_dashboard_screen.dart';
-import 'package:oenigma/features/admin/screens/admin_events_screen.dart';
-import 'package:oenigma/features/admin/screens/admin_users_screen.dart';
-import 'package:oenigma/features/admin/screens/admin_finance_screen.dart';
-import 'package:oenigma/features/admin/screens/admin_fraud_screen.dart';
-import 'package:oenigma/features/admin/screens/admin_tools_screen.dart';
-import 'package:oenigma/features/admin/screens/admin_banners_screen.dart';
-import 'package:oenigma/features/admin/screens/admin_mobile_panel_screen.dart'; // NEW
+import 'package:oenigma/features/admin/screens/admin_dashboard_screen.dart'; // NEW
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
->>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/main_admin_screen.dart
+import 'package:oenigma/features/auth/screens/login_screen.dart';
 
 class MainAdminScreen extends StatefulWidget {
   const MainAdminScreen({super.key});
@@ -92,9 +81,8 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
 }
 
 class _AdminSidebar extends StatelessWidget {
-  const _AdminSidebar({Key? key, required SidebarXController controller})
-    : _controller = controller,
-      super(key: key);
+  const _AdminSidebar({super.key, required SidebarXController controller})
+    : _controller = controller;
 
   final SidebarXController _controller;
 
@@ -108,7 +96,7 @@ class _AdminSidebar extends StatelessWidget {
           color: cardColor,
           borderRadius: BorderRadius.circular(20),
         ),
-        hoverColor: primaryAmber.withValues(alpha: 0.1),
+        hoverColor: primaryAmber.withOpacity(0.1),
         textStyle: TextStyle(color: secondaryTextColor),
         selectedTextStyle: const TextStyle(
           color: darkBackground,
@@ -126,13 +114,10 @@ class _AdminSidebar extends StatelessWidget {
         ),
         selectedItemDecoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: primaryAmber.withValues(alpha: 0.37)),
+          border: Border.all(color: primaryAmber.withOpacity(0.37)),
           gradient: const LinearGradient(colors: [primaryAmber, primaryAmber]),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.28),
-              blurRadius: 30,
-            ),
+            BoxShadow(color: Colors.black.withOpacity(0.28), blurRadius: 30),
           ],
         ),
         iconTheme: IconThemeData(color: secondaryTextColor, size: 20),
@@ -178,6 +163,11 @@ class _AdminSidebar extends StatelessWidget {
             onPressed: () async {
               final user = await ParseUser.currentUser() as ParseUser?;
               if (user != null) await user.logout();
+              if (context.mounted) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              }
             },
             tooltip: 'Sair do Painel',
           ),
@@ -185,37 +175,44 @@ class _AdminSidebar extends StatelessWidget {
       },
       items: [
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.chartPie, size: 20),
+          iconBuilder: (selected, hovered) =>
+              const FaIcon(FontAwesomeIcons.chartPie, size: 20),
           label: 'Dashboard',
           onTap: () => _handleItemTap(context),
         ),
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.calendarCheck, size: 20),
+          iconBuilder: (selected, hovered) =>
+              const FaIcon(FontAwesomeIcons.calendarCheck, size: 20),
           label: 'Gestão de Eventos',
           onTap: () => _handleItemTap(context),
         ),
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.users, size: 20),
+          iconBuilder: (selected, hovered) =>
+              const FaIcon(FontAwesomeIcons.users, size: 20),
           label: 'Usuários & Carteira',
           onTap: () => _handleItemTap(context),
         ),
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.moneyBillWave, size: 20),
+          iconBuilder: (selected, hovered) =>
+              const FaIcon(FontAwesomeIcons.moneyBillWave, size: 20),
           label: 'Financeiro',
           onTap: () => _handleItemTap(context),
         ),
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.shieldHalved, size: 20),
+          iconBuilder: (selected, hovered) =>
+              const FaIcon(FontAwesomeIcons.shieldHalved, size: 20),
           label: 'Monitor de Fraude',
           onTap: () => _handleItemTap(context),
         ),
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.toolbox, size: 20),
+          iconBuilder: (selected, hovered) =>
+              const FaIcon(FontAwesomeIcons.toolbox, size: 20),
           label: 'Dicas & Ferramentas',
           onTap: () => _handleItemTap(context),
         ),
         SidebarXItem(
-          iconWidget: const FaIcon(FontAwesomeIcons.images, size: 20),
+          iconBuilder: (selected, hovered) =>
+              const FaIcon(FontAwesomeIcons.images, size: 20),
           label: 'Gestão de Banners',
           onTap: () => _handleItemTap(context),
         ),

@@ -1,8 +1,5 @@
-<<<<<<< HEAD:lib/admin/screens/admin_users_screen.dart
-import 'package:oenigma/core/utils/app_colors.dart';
-=======
 import 'package:flutter/foundation.dart';
->>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_users_screen.dart
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -159,13 +156,25 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               role == 'creator'
                                   ? FontAwesomeIcons.camera
                                   : FontAwesomeIcons.userPen,
-                              color: role == 'creator' ? primaryAmber : Colors.grey,
+                              color: role == 'creator'
+                                  ? primaryAmber
+                                  : Colors.grey,
                             ),
                             onPressed: () async {
-                              final newRole = role == 'creator' ? 'player' : 'creator';
+                              final newRole = role == 'creator'
+                                  ? 'player'
+                                  : 'creator';
                               try {
                                 // Simplified update mechanism. Ideally, use a cloud function dedicated to updating roles
-                                final response = await ParseCloudFunction('updateUserRole').execute(parameters: {'objectId': objectId, 'role': newRole});
+                                final response =
+                                    await ParseCloudFunction(
+                                      'updateUserRole',
+                                    ).execute(
+                                      parameters: {
+                                        'objectId': objectId,
+                                        'role': newRole,
+                                      },
+                                    );
                                 if (!response.success) {
                                   // Fallback to basic object update if the function doesn't exist, though modifying users might require Master Key
                                 }
@@ -186,12 +195,18 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               } catch (e) {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Erro ao atualizar creator (Requer backend setup): $e')),
+                                    SnackBar(
+                                      content: Text(
+                                        'Erro ao atualizar creator (Requer backend setup): $e',
+                                      ),
+                                    ),
                                   );
                                 }
                               }
                             },
-                            tooltip: role == 'creator' ? 'Revogar Creator' : 'Tornar Creator',
+                            tooltip: role == 'creator'
+                                ? 'Revogar Creator'
+                                : 'Tornar Creator',
                           ),
                           IconButton(
                             icon: FaIcon(
