@@ -105,7 +105,6 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   final photoURL = user['photoURL'] as String?;
                   final isAdmin = user['isAdmin'] ?? false;
                   final isBanned = user['isBanned'] ?? false;
-                  final role = user['role'] ?? 'player';
 
                   return Card(
                     color: cardColor,
@@ -135,7 +134,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         ),
                       ),
                       subtitle: Text(
-                        '$email${isAdmin ? " • Admin" : ""}${role == "creator" ? " • Creator" : ""}${isBanned ? " • Banido" : ""}',
+                        '$email${isAdmin ? " • Admin" : ""}${isBanned ? " • Banido" : ""}',
                         style: const TextStyle(color: secondaryTextColor),
                       ),
                       trailing: Row(
@@ -150,63 +149,6 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               // Action to view/edit wallet
                             },
                             tooltip: 'Ver Carteira',
-                          ),
-                          IconButton(
-                            icon: FaIcon(
-                              role == 'creator'
-                                  ? FontAwesomeIcons.camera
-                                  : FontAwesomeIcons.userPen,
-                              color: role == 'creator'
-                                  ? primaryAmber
-                                  : Colors.grey,
-                            ),
-                            onPressed: () async {
-                              final newRole = role == 'creator'
-                                  ? 'player'
-                                  : 'creator';
-                              try {
-                                // Simplified update mechanism. Ideally, use a cloud function dedicated to updating roles
-                                final response =
-                                    await ParseCloudFunction(
-                                      'updateUserRole',
-                                    ).execute(
-                                      parameters: {
-                                        'objectId': objectId,
-                                        'role': newRole,
-                                      },
-                                    );
-                                if (!response.success) {
-                                  // Fallback to basic object update if the function doesn't exist, though modifying users might require Master Key
-                                }
-                                setState(() {
-                                  _usersFuture = _fetchUsers();
-                                });
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        role == 'creator'
-                                            ? 'Creator revogado.'
-                                            : 'Creator concedido.',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Erro ao atualizar creator (Requer backend setup): $e',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              }
-                            },
-                            tooltip: role == 'creator'
-                                ? 'Revogar Creator'
-                                : 'Tornar Creator',
                           ),
                           IconButton(
                             icon: FaIcon(

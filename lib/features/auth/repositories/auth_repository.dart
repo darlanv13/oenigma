@@ -61,7 +61,7 @@ class AuthRepository {
         final isAdmin = loggedUser.get<bool>('isAdmin') ?? false;
         final role = loggedUser.get<String>('role') ?? 'player';
 
-        if (role == 'admin' || role == 'creator' || isAdmin) {
+        if (role == 'admin' || isAdmin) {
           _currentUser = loggedUser;
           _authStateController.add(_currentUser);
           return null;
