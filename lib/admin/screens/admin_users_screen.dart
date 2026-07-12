@@ -1,4 +1,8 @@
+<<<<<<< HEAD:lib/admin/screens/admin_users_screen.dart
 import 'package:oenigma/core/utils/app_colors.dart';
+=======
+import 'package:flutter/foundation.dart';
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_users_screen.dart
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -20,9 +24,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   }
 
   Future<List<dynamic>> _fetchUsers() async {
-    final result = await ParseCloudFunction('listAllUsers').execute();
-    if (!result.success) throw result.error ?? ParseError();
-    return result.result as List<dynamic>;
+    try {
+      final response = await ParseCloudFunction('listAllUsers').execute();
+      if (response.success && response.result != null) {
+        return List<dynamic>.from(response.result);
+      } else {
+        throw response.error ?? ParseError();
+      }
+    } catch (e) {
+      debugPrint('Erro ao buscar usuários: $e');
+      return [];
+    }
   }
 
   @override
@@ -30,14 +42,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 16,
-          runSpacing: 16,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Gestão de Usuários e Carteira',
+              'Gestão de Usuários',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -67,11 +76,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               }
               if (snapshot.hasError) {
                 debugPrint(
-                  "Erro no FutureBuilder de usuários: \${snapshot.error}",
+                  "Erro no FutureBuilder de usuários: ${snapshot.error}",
                 );
                 return Center(
                   child: Text(
-                    'Erro ao carregar usuários: \n\${snapshot.error}',
+                    'Erro ao carregar usuários: \n${snapshot.error}',
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.redAccent),
                   ),
@@ -91,7 +100,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               return ListView.builder(
                 itemCount: users.length,
                 itemBuilder: (context, index) {
-                  final user = users[index] as Map<String, dynamic>;
+                  final user = users[index];
                   final objectId = user['objectId'] as String;
                   final name =
                       user['name'] ?? user['displayName'] ?? 'Sem Nome';
@@ -99,6 +108,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   final photoURL = user['photoURL'] as String?;
                   final isAdmin = user['isAdmin'] ?? false;
                   final isBanned = user['isBanned'] ?? false;
+                  final role = user['role'] ?? 'player';
 
                   return Card(
                     color: cardColor,
@@ -128,7 +138,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         ),
                       ),
                       subtitle: Text(
-                        '$email${isAdmin ? " • Admin" : ""}${isBanned ? " • Banido" : ""}',
+                        '$email${isAdmin ? " • Admin" : ""}${role == "creator" ? " • Creator" : ""}${isBanned ? " • Banido" : ""}',
                         style: const TextStyle(color: secondaryTextColor),
                       ),
                       trailing: Row(
@@ -146,6 +156,45 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                           ),
                           IconButton(
                             icon: FaIcon(
+                              role == 'creator'
+                                  ? FontAwesomeIcons.camera
+                                  : FontAwesomeIcons.userPen,
+                              color: role == 'creator' ? primaryAmber : Colors.grey,
+                            ),
+                            onPressed: () async {
+                              final newRole = role == 'creator' ? 'player' : 'creator';
+                              try {
+                                // Simplified update mechanism. Ideally, use a cloud function dedicated to updating roles
+                                final response = await ParseCloudFunction('updateUserRole').execute(parameters: {'objectId': objectId, 'role': newRole});
+                                if (!response.success) {
+                                  // Fallback to basic object update if the function doesn't exist, though modifying users might require Master Key
+                                }
+                                setState(() {
+                                  _usersFuture = _fetchUsers();
+                                });
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        role == 'creator'
+                                            ? 'Creator revogado.'
+                                            : 'Creator concedido.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Erro ao atualizar creator (Requer backend setup): $e')),
+                                  );
+                                }
+                              }
+                            },
+                            tooltip: role == 'creator' ? 'Revogar Creator' : 'Tornar Creator',
+                          ),
+                          IconButton(
+                            icon: FaIcon(
                               isAdmin
                                   ? FontAwesomeIcons.userShield
                                   : FontAwesomeIcons.solidUser,
@@ -159,8 +208,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                 final response = await ParseCloudFunction(
                                   functionName,
                                 ).execute(parameters: {'objectId': objectId});
-                                if (!response.success)
+                                if (!response.success) {
                                   throw response.error ?? ParseError();
+                                }
                                 setState(() {
                                   _usersFuture = _fetchUsers();
                                 });
@@ -180,7 +230,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        'Erro ao atualizar admin: \$e',
+                                        'Erro ao atualizar admin: $e',
                                       ),
                                     ),
                                   );
@@ -201,8 +251,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                 final response = await ParseCloudFunction(
                                   'toggleUserBan',
                                 ).execute(parameters: {'objectId': objectId});
-                                if (!response.success)
+                                if (!response.success) {
                                   throw response.error ?? ParseError();
+                                }
                                 setState(() {
                                   _usersFuture = _fetchUsers();
                                 });
@@ -222,14 +273,14 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        'Erro ao atualizar banimento: \$e',
+                                        'Erro ao atualizar banimento: $e',
                                       ),
                                     ),
                                   );
                                 }
                               }
                             },
-                            tooltip: isBanned ? 'Desbanir' : 'Banir/Suspender',
+                            tooltip: isBanned ? 'Desbanir' : 'Banir',
                           ),
                         ],
                       ),

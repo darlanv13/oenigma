@@ -3,8 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-
-import '../utils/admin_upload_util.dart';
+import 'package:oenigma/features/auth/screens/login_screen.dart';
 
 class AdminMobilePanelScreen extends StatefulWidget {
   const AdminMobilePanelScreen({super.key});
@@ -43,6 +42,12 @@ class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
             onPressed: () async {
               final user = await ParseUser.currentUser() as ParseUser?;
               if (user != null) await user.logout();
+              if (context.mounted) {
+                 Navigator.of(context).pushAndRemoveUntil(
+                   MaterialPageRoute(builder: (context) => const LoginScreen()),
+                   (route) => false,
+                 );
+              }
             },
             tooltip: 'Sair do Painel',
           ),
@@ -99,46 +104,23 @@ class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
                 color: cardColor,
                 margin: const EdgeInsets.only(bottom: 16),
                 child: ListTile(
-                  title: Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  subtitle: Text(
-                    eventType,
-                    style: const TextStyle(color: Colors.white70),
-                  ),
+                  title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  subtitle: Text(eventType, style: const TextStyle(color: Colors.white70)),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: FaIcon(
-                          isPublished
-                              ? FontAwesomeIcons.eye
-                              : FontAwesomeIcons.eyeSlash,
-                          color: isPublished ? Colors.green : Colors.grey,
-                          size: 20,
-                        ),
+                        icon: FaIcon(isPublished ? FontAwesomeIcons.eye : FontAwesomeIcons.eyeSlash, color: isPublished ? Colors.green : Colors.grey, size: 20),
                         onPressed: () => _toggleEventStatus(eventId, status),
                       ),
                       IconButton(
-                        icon: const FaIcon(
-                          FontAwesomeIcons.penToSquare,
-                          color: Colors.blue,
-                          size: 20,
-                        ),
-                        onPressed: () => _showMobileEventDialog(
-                          context,
-                          docId: eventId,
-                          data: _parseObjectToMap(event),
-                        ),
+                        icon: const FaIcon(FontAwesomeIcons.penToSquare, color: Colors.blue, size: 20),
+                        onPressed: () => _showMobileEventDialog(context, docId: eventId, data: _parseObjectToMap(event)),
                       ),
                     ],
                   ),
                   onTap: () {
-                    _showMobileEnigmasDialog(context, eventId, eventType);
+                     _showMobileEnigmasDialog(context, eventId, eventType);
                   },
                 ),
               );
@@ -172,11 +154,7 @@ class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
     }
   }
 
-  void _showMobileEventDialog(
-    BuildContext context, {
-    String? docId,
-    Map<String, dynamic>? data,
-  }) {
+  void _showMobileEventDialog(BuildContext context, {String? docId, Map<String, dynamic>? data}) {
     final titleCtrl = TextEditingController(text: data?['title']);
     final descCtrl = TextEditingController(text: data?['description']);
     String selectedEventType = data?['eventType'] ?? 'classic';
@@ -230,27 +208,17 @@ class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
                     TextField(
                       controller: locationCtrl,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        labelText: 'Local (Cidade) *',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Local (Cidade) *'),
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       value: selectedEventType,
                       dropdownColor: cardColor,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        labelText: 'Tipo de Evento',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Tipo de Evento'),
                       items: const [
-                        DropdownMenuItem(
-                          value: 'classic',
-                          child: Text('Classic'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'find_and_win',
-                          child: Text('Find & Win'),
-                        ),
+                        DropdownMenuItem(value: 'classic', child: Text('Classic')),
+                        DropdownMenuItem(value: 'find_and_win', child: Text('Find & Win')),
                       ],
                       onChanged: (val) {
                         setState(() {
@@ -268,10 +236,7 @@ class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
                       onPressed: () async {
                         if (locationCtrl.text.trim().isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('O local é obrigatório.'),
-                              backgroundColor: Colors.red,
-                            ),
+                            const SnackBar(content: Text('O local é obrigatório.'), backgroundColor: Colors.red),
                           );
                           return;
                         }
@@ -286,6 +251,7 @@ class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
                         };
                         try {
                           if (docId == null) {
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                             final response = await ParseCloudFunction(
                               'createOrUpdateEvent',
                             ).execute(parameters: {'data': newData});
@@ -295,6 +261,12 @@ class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
                             await ParseCloudFunction(
                               'createOrUpdateEvent',
                             ).execute(
+=======
+                            final response = await ParseCloudFunction('createOrUpdateEvent').execute(parameters: {'data': newData});
+                            if (!response.success) throw response.error ?? ParseError();
+                          } else {
+                            await ParseCloudFunction('createOrUpdateEvent').execute(
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                               parameters: {'eventId': docId, 'data': newData},
                             );
                           }
@@ -306,6 +278,7 @@ class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
                           debugPrint('Erro ao salvar evento: $e');
                         }
                       },
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                       child: const Text(
                         'Salvar Evento',
                         style: TextStyle(
@@ -313,6 +286,9 @@ class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+=======
+                      child: const Text('Salvar Evento', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -325,6 +301,7 @@ class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
     );
   }
 
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
   void _showMobileEnigmasDialog(
     BuildContext context,
     String eventId,
@@ -335,6 +312,13 @@ class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
       MaterialPageRoute(
         builder: (context) =>
             _MobileEnigmaListScreen(eventId: eventId, eventType: eventType),
+=======
+  void _showMobileEnigmasDialog(BuildContext context, String eventId, String eventType) {
+     Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _MobileEnigmaListScreen(eventId: eventId, eventType: eventType),
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
       ),
     );
   }
@@ -344,6 +328,7 @@ class _MobileEnigmaListScreen extends StatefulWidget {
   final String eventId;
   final String eventType;
 
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
   const _MobileEnigmaListScreen({
     required this.eventId,
     required this.eventType,
@@ -352,6 +337,12 @@ class _MobileEnigmaListScreen extends StatefulWidget {
   @override
   State<_MobileEnigmaListScreen> createState() =>
       _MobileEnigmaListScreenState();
+=======
+  const _MobileEnigmaListScreen({required this.eventId, required this.eventType});
+
+  @override
+  State<_MobileEnigmaListScreen> createState() => _MobileEnigmaListScreenState();
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
 }
 
 class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
@@ -366,10 +357,14 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
   void _loadEnigmas() {
     setState(() {
       final query = QueryBuilder<ParseObject>(ParseObject('Enigma'))
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
         ..whereEqualTo(
           'event',
           (ParseObject('Event')..objectId = widget.eventId).toPointer(),
         )
+=======
+        ..whereEqualTo('event', (ParseObject('Event')..objectId = widget.eventId).toPointer())
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
         ..orderByAscending('order');
       _enigmasFuture = query.query();
     });
@@ -404,6 +399,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
           if (snapshot.hasError ||
               !snapshot.hasData ||
               !snapshot.data!.success ||
@@ -414,6 +410,10 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                 style: TextStyle(color: secondaryTextColor),
               ),
             );
+=======
+          if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.success || snapshot.data!.results == null) {
+            return const Center(child: Text('Nenhum enigma encontrado.', style: TextStyle(color: secondaryTextColor)));
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
           }
 
           final enigmas = snapshot.data!.results as List<ParseObject>;
@@ -432,6 +432,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                 child: ListTile(
                   leading: CircleAvatar(
                     backgroundColor: primaryAmber,
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                     child: Text(
                       order.toString(),
                       style: const TextStyle(color: Colors.black),
@@ -441,10 +442,16 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                     'Tipo: $type',
                     style: const TextStyle(color: Colors.white),
                   ),
+=======
+                    child: Text(order.toString(), style: const TextStyle(color: Colors.black)),
+                  ),
+                  title: Text('Tipo: $type', style: const TextStyle(color: Colors.white)),
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                         icon: const FaIcon(
                           FontAwesomeIcons.penToSquare,
                           color: Colors.blue,
@@ -471,6 +478,18 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                                 },
                               );
                           if (response.success) _loadEnigmas();
+=======
+                        icon: const FaIcon(FontAwesomeIcons.penToSquare, color: Colors.blue, size: 20),
+                        onPressed: () => _showMobileEnigmaEditDialog(context, enigma.objectId, _parseObjectToMap(enigma)),
+                      ),
+                      IconButton(
+                        icon: const FaIcon(FontAwesomeIcons.trash, color: Colors.redAccent, size: 20),
+                        onPressed: () async {
+                           final response = await ParseCloudFunction('deleteEnigma').execute(
+                              parameters: {'eventId': widget.eventId, 'enigmaId': enigma.objectId!},
+                           );
+                           if (response.success) _loadEnigmas();
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                         },
                       ),
                     ],
@@ -484,6 +503,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
     );
   }
 
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
   void _showMobileEnigmaEditDialog(
     BuildContext context,
     String? docId,
@@ -501,23 +521,41 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
     final prizeCtrl = TextEditingController(
       text: data?['prize']?.toString() ?? '0',
     );
+=======
+  void _showMobileEnigmaEditDialog(BuildContext context, String? docId, Map<String, dynamic>? data) {
+    final instructionCtrl = TextEditingController(text: data?['instruction']);
+    final codeCtrl = TextEditingController(text: data?['code']);
+    final photoUrlCtrl = TextEditingController(text: data?['photoUrl']);
+    final compassCoordsCtrl = TextEditingController(text: data?['compassCoords']);
+    final orderCtrl = TextEditingController(text: data?['order']?.toString() ?? '1');
+    final prizeCtrl = TextEditingController(text: data?['prize']?.toString() ?? '0');
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
 
     String selectedType = data?['type'] ?? 'foto';
     bool hasCompass = data?['hasCompass'] ?? false;
     bool isSaving = false;
 
     List<dynamic> linkedHints = List.from(data?['linkedHints'] ?? []);
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
     final Future<ParseResponse> hintsFuture = QueryBuilder<ParseObject>(
       ParseObject('Hint'),
     ).query();
+=======
+    final Future<ParseResponse> hintsFuture = QueryBuilder<ParseObject>(ParseObject('Hint')).query();
+
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: darkBackground,
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+=======
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
@@ -535,11 +573,15 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                   children: [
                     Text(
                       docId == null ? 'Novo Enigma' : 'Editar Enigma',
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
+=======
+                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -549,9 +591,13 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                           child: TextField(
                             controller: orderCtrl,
                             style: const TextStyle(color: Colors.white),
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                             decoration: const InputDecoration(
                               labelText: 'Ordem',
                             ),
+=======
+                            decoration: const InputDecoration(labelText: 'Ordem'),
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                             keyboardType: TextInputType.number,
                           ),
                         ),
@@ -561,6 +607,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                             value: selectedType,
                             dropdownColor: cardColor,
                             style: const TextStyle(color: Colors.white),
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                             decoration: const InputDecoration(
                               labelText: 'Tipo',
                             ),
@@ -584,6 +631,16 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                             ],
                             onChanged: (val) =>
                                 setState(() => selectedType = val!),
+=======
+                            decoration: const InputDecoration(labelText: 'Tipo'),
+                            items: const [
+                              DropdownMenuItem(value: 'text', child: Text('Texto')),
+                              DropdownMenuItem(value: 'gps', child: Text('GPS')),
+                              DropdownMenuItem(value: 'qrcode', child: Text('QR Code')),
+                              DropdownMenuItem(value: 'foto', child: Text('Foto')),
+                            ],
+                            onChanged: (val) => setState(() => selectedType = val!),
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                           ),
                         ),
                       ],
@@ -592,18 +649,26 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                     TextField(
                       controller: instructionCtrl,
                       style: const TextStyle(color: Colors.white),
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                       decoration: const InputDecoration(
                         labelText: 'Instruções',
                       ),
+=======
+                      decoration: const InputDecoration(labelText: 'Instruções'),
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                       maxLines: 2,
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: prizeCtrl,
                       style: const TextStyle(color: Colors.white),
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                       decoration: const InputDecoration(
                         labelText: 'Prêmio (R\$)',
                       ),
+=======
+                      decoration: const InputDecoration(labelText: 'Prêmio (R\$)'),
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 12),
@@ -611,9 +676,13 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                       controller: codeCtrl,
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                         labelText: selectedType == 'gps'
                             ? 'Coordenadas Alvo (Lat, Lng)'
                             : 'Código/Senha',
+=======
+                        labelText: selectedType == 'gps' ? 'Coordenadas Alvo (Lat, Lng)' : 'Código/Senha',
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                       ),
                     ),
                     if (selectedType == 'gps') ...[
@@ -621,6 +690,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                       ElevatedButton.icon(
                         onPressed: () async {
                           try {
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                             bool serviceEnabled =
                                 await Geolocator.isLocationServiceEnabled();
                             if (!serviceEnabled) {
@@ -700,6 +770,59 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                         'Habilitar Bússola?',
                         style: TextStyle(color: Colors.white),
                       ),
+=======
+                            bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+                            if (!serviceEnabled) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ative a localização do dispositivo.')));
+                              return;
+                            }
+                            LocationPermission permission = await Geolocator.checkPermission();
+                            if (permission == LocationPermission.denied) {
+                              permission = await Geolocator.requestPermission();
+                              if (permission == LocationPermission.denied) return;
+                            }
+                            if (permission == LocationPermission.deniedForever) return;
+
+                            setState(() => isSaving = true);
+                            Position position = await Geolocator.getCurrentPosition();
+                            setState(() {
+                              codeCtrl.text = '${position.latitude}, ${position.longitude}';
+                              isSaving = false;
+                            });
+                          } catch (e) {
+                             setState(() => isSaving = false);
+                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+                          }
+                        },
+                        icon: const FaIcon(FontAwesomeIcons.locationCrosshairs, size: 16),
+                        label: const Text('Capturar Localização Atual'),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
+                      )
+                    ],
+                    if (selectedType == 'foto') ...[
+                       const SizedBox(height: 12),
+                       TextField(
+                          controller: photoUrlCtrl,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: const InputDecoration(labelText: 'URL da Foto'),
+                       ),
+                       const SizedBox(height: 8),
+                       ElevatedButton.icon(
+                        onPressed: () async {
+                           final url = await AdminUploadUtil.takeAndUploadPhoto(context);
+                           if (url != null) {
+                             setState(() => photoUrlCtrl.text = url);
+                           }
+                        },
+                        icon: const FaIcon(FontAwesomeIcons.camera, size: 16),
+                        label: const Text('Tirar Foto do Local'),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
+                      )
+                    ],
+                    const SizedBox(height: 12),
+                    SwitchListTile(
+                      title: const Text('Habilitar Bússola?', style: TextStyle(color: Colors.white)),
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                       value: hasCompass,
                       onChanged: (val) => setState(() => hasCompass = val),
                       activeColor: primaryAmber,
@@ -709,14 +832,19 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                       TextField(
                         controller: compassCoordsCtrl,
                         style: const TextStyle(color: Colors.white),
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                         decoration: const InputDecoration(
                           labelText: 'Coordenadas da Bússola',
                         ),
+=======
+                        decoration: const InputDecoration(labelText: 'Coordenadas da Bússola'),
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
                         onPressed: () async {
                           try {
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                             bool serviceEnabled =
                                 await Geolocator.isLocationServiceEnabled();
                             if (!serviceEnabled) {
@@ -753,11 +881,34 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                           backgroundColor: Colors.blueGrey,
                         ),
                       ),
+=======
+                            bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+                            if (!serviceEnabled) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ative a localização.')));
+                              return;
+                            }
+                            LocationPermission permission = await Geolocator.checkPermission();
+                            if (permission == LocationPermission.denied) {
+                              permission = await Geolocator.requestPermission();
+                              if (permission == LocationPermission.denied) return;
+                            }
+                            Position position = await Geolocator.getCurrentPosition();
+                            setState(() {
+                              compassCoordsCtrl.text = '${position.latitude}, ${position.longitude}';
+                            });
+                          } catch (e) {}
+                        },
+                        icon: const FaIcon(FontAwesomeIcons.locationCrosshairs, size: 16),
+                        label: const Text('Capturar Localização Atual (Bússola)'),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
+                      )
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                     ],
 
                     const SizedBox(height: 16),
                     const Divider(color: Colors.white24),
                     const SizedBox(height: 12),
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                     const Text(
                       'Dicas Vinculadas (Hints Pool)',
                       style: TextStyle(
@@ -803,6 +954,34 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                           }).toList(),
                         );
                       },
+=======
+                    const Text('Dicas Vinculadas (Hints Pool)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    FutureBuilder<ParseResponse>(
+                      future: hintsFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+                        if (!snapshot.hasData || snapshot.data!.results == null) return const Text('Nenhuma dica.', style: TextStyle(color: Colors.white));
+
+                        final allHints = snapshot.data!.results as List<ParseObject>;
+                        return Column(
+                          children: allHints.map((doc) {
+                             final hintId = doc.objectId!;
+                             final isSelected = linkedHints.contains(hintId);
+                             return CheckboxListTile(
+                               title: Text(doc.get<String>('title') ?? 'Dica', style: const TextStyle(color: Colors.white)),
+                               value: isSelected,
+                               activeColor: primaryAmber,
+                               onChanged: (val) {
+                                 setState(() {
+                                    if (val == true) linkedHints.add(hintId);
+                                    else linkedHints.remove(hintId);
+                                 });
+                               },
+                             );
+                          }).toList(),
+                        );
+                      }
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                     ),
 
                     const SizedBox(height: 24),
@@ -812,6 +991,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
+<<<<<<< HEAD:lib/admin/screens/admin_mobile_panel_screen.dart
                       onPressed: isSaving
                           ? null
                           : () async {
@@ -901,6 +1081,65 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+=======
+                      onPressed: isSaving ? null : () async {
+                        if (hasCompass && compassCoordsCtrl.text.trim().isEmpty) {
+                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coordenadas da bússola obrigatórias se habilitada.')));
+                           return;
+                        }
+                        setState(() => isSaving = true);
+                        try {
+                           final newData = {
+                              'order': int.tryParse(orderCtrl.text) ?? 1,
+                              'code': codeCtrl.text,
+                              'instruction': instructionCtrl.text,
+                              'type': selectedType,
+                              'prize': num.tryParse(prizeCtrl.text) ?? 0,
+                              'hasCompass': hasCompass,
+                              'compassCoords': hasCompass ? compassCoordsCtrl.text.trim() : '',
+                              'linkedHints': linkedHints,
+                           };
+                           if (selectedType == 'foto') {
+                              newData['photoUrl'] = photoUrlCtrl.text;
+                           }
+
+                           ParseResponse response;
+                           if (docId == null) {
+                             response = await ParseCloudFunction('createOrUpdateEnigma').execute(
+                               parameters: {
+                                 'eventId': widget.eventId,
+                                 'phaseId': '', // For simplicity in mobile, assuming find_and_win or generic handling
+                                 'data': newData,
+                               }
+                             );
+                           } else {
+                             response = await ParseCloudFunction('createOrUpdateEnigma').execute(
+                               parameters: {
+                                 'eventId': widget.eventId,
+                                 'enigmaId': docId,
+                                 'data': newData,
+                               }
+                             );
+                           }
+
+                           if (response.success) {
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                                _loadEnigmas();
+                              }
+                           } else {
+                             throw Exception(response.error?.message);
+                           }
+                        } catch (e) {
+                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+                        } finally {
+                           setState(() => isSaving = false);
+                        }
+                      },
+                      child: isSaving
+                        ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(color: Colors.black))
+                        : const Text('Salvar Enigma', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/admin_mobile_panel_screen.dart
                     ),
                     const SizedBox(height: 24),
                   ],

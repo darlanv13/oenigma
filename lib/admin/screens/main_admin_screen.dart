@@ -3,6 +3,7 @@ import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:sidebarx/sidebarx.dart';
+<<<<<<< HEAD:lib/admin/screens/main_admin_screen.dart
 import 'admin_banners_screen.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_events_screen.dart';
@@ -11,6 +12,18 @@ import 'admin_fraud_screen.dart';
 import 'admin_mobile_panel_screen.dart';
 import 'admin_tools_screen.dart';
 import 'admin_users_screen.dart';
+=======
+import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:oenigma/features/admin/screens/admin_dashboard_screen.dart';
+import 'package:oenigma/features/admin/screens/admin_events_screen.dart';
+import 'package:oenigma/features/admin/screens/admin_users_screen.dart';
+import 'package:oenigma/features/admin/screens/admin_finance_screen.dart';
+import 'package:oenigma/features/admin/screens/admin_fraud_screen.dart';
+import 'package:oenigma/features/admin/screens/admin_tools_screen.dart';
+import 'package:oenigma/features/admin/screens/admin_banners_screen.dart';
+import 'package:oenigma/features/admin/screens/admin_mobile_panel_screen.dart'; // NEW
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+>>>>>>> origin/feature/mobile-admin-creation-panel-3405278983593723524:lib/features/admin/screens/main_admin_screen.dart
 
 class MainAdminScreen extends StatefulWidget {
   const MainAdminScreen({super.key});
