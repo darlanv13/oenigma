@@ -4,16 +4,17 @@ import 'package:oenigma/admin/utils/admin_upload_util.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:oenigma/features/auth/screens/login_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oenigma/features/auth/providers/auth_provider.dart';
 
-class AdminMobilePanelScreen extends StatefulWidget {
+class AdminMobilePanelScreen extends ConsumerStatefulWidget {
   const AdminMobilePanelScreen({super.key});
 
   @override
-  State<AdminMobilePanelScreen> createState() => _AdminMobilePanelScreenState();
+  ConsumerState<AdminMobilePanelScreen> createState() => _AdminMobilePanelScreenState();
 }
 
-class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
+class _AdminMobilePanelScreenState extends ConsumerState<AdminMobilePanelScreen> {
   late Future<ParseResponse> _eventsFuture;
 
   @override
@@ -41,14 +42,7 @@ class _AdminMobilePanelScreenState extends State<AdminMobilePanelScreen> {
           IconButton(
             icon: const FaIcon(FontAwesomeIcons.rightFromBracket),
             onPressed: () async {
-              final user = await ParseUser.currentUser() as ParseUser?;
-              if (user != null) await user.logout();
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
+              await ref.read(authRepositoryProvider).signOut();
             },
             tooltip: 'Sair do Painel',
           ),

@@ -5,7 +5,7 @@ import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'admin/screens/main_admin_screen.dart';
+import 'admin/screens/admin_auth_wrapper.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,7 +51,7 @@ class AdminApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const MainAdminScreen(),
+      home: const AdminAuthWrapper(),
     );
   }
 }

@@ -10,9 +10,8 @@ import 'package:oenigma/admin/screens/admin_tools_screen.dart';
 import 'package:oenigma/admin/screens/admin_users_screen.dart';
 import 'package:sidebarx/sidebarx.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
-import 'package:oenigma/features/admin/screens/admin_dashboard_screen.dart'; // NEW
-import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
-import 'package:oenigma/features/auth/screens/login_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:oenigma/features/auth/providers/auth_provider.dart';
 
 class MainAdminScreen extends StatefulWidget {
   const MainAdminScreen({super.key});
@@ -80,14 +79,14 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
   }
 }
 
-class _AdminSidebar extends StatelessWidget {
+class _AdminSidebar extends ConsumerWidget {
   const _AdminSidebar({super.key, required SidebarXController controller})
     : _controller = controller;
 
   final SidebarXController _controller;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SidebarX(
       controller: _controller,
       theme: SidebarXTheme(
@@ -161,13 +160,7 @@ class _AdminSidebar extends StatelessWidget {
               color: secondaryTextColor,
             ),
             onPressed: () async {
-              final user = await ParseUser.currentUser() as ParseUser?;
-              if (user != null) await user.logout();
-              if (context.mounted) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-              }
+              await ref.read(authRepositoryProvider).signOut();
             },
             tooltip: 'Sair do Painel',
           ),

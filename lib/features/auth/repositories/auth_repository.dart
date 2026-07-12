@@ -61,7 +61,7 @@ class AuthRepository {
         final isAdmin = loggedUser.get<bool>('isAdmin') ?? false;
         final role = loggedUser.get<String>('role') ?? 'player';
 
-        if (role == 'admin' || isAdmin) {
+        if (role == 'admin' || role == 'creator' || isAdmin) {
           _currentUser = loggedUser;
           _authStateController.add(_currentUser);
           return null;
@@ -122,10 +122,13 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
-    if (_currentUser != null) {
+    final user = await ParseUser.currentUser() as ParseUser?;
+    if (user != null) {
+      await user.logout();
+    } else if (_currentUser != null) {
       await _currentUser!.logout();
-      _currentUser = null;
-      _authStateController.add(null);
     }
+    _currentUser = null;
+    _authStateController.add(null);
   }
 }

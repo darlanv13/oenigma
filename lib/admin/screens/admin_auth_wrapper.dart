@@ -24,7 +24,7 @@ class AdminAuthWrapper extends ConsumerWidget {
         final role = user.get<String>('role') ?? 'player';
 
         if (!isAdmin && role != 'admin' && role != 'creator') {
-          return _buildAccessDenied(context);
+          return _buildAccessDenied(context, ref);
         }
 
         return const MainAdminScreen();
@@ -40,7 +40,7 @@ class AdminAuthWrapper extends ConsumerWidget {
     );
   }
 
-  Widget _buildAccessDenied(BuildContext context) {
+  Widget _buildAccessDenied(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: darkBackground,
       body: Center(
@@ -83,21 +83,7 @@ class AdminAuthWrapper extends ConsumerWidget {
 
             ElevatedButton(
               onPressed: () async {
-                // 1. Pega o usuário logado atualmente
-                final currentUser = await ParseUser.currentUser() as ParseUser?;
-
-                // 2. Faz o logout para limpar o cache do celular
-                if (currentUser != null) {
-                  await currentUser.logout();
-                }
-
-                // 3. Redireciona o usuário de volta para a tela de Login
-                // (Dependendo de como configurou o seu GoRouter ou Navigator, ajuste a rota abaixo)
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => const AdminLoginScreen(),
-                  ),
-                );
+                await ref.read(authRepositoryProvider).signOut();
               },
               child: const Text("Sair e Fazer Login"),
             ),
