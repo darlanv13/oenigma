@@ -13,6 +13,9 @@ class EnigmaModel {
   final double hintPrice;
   final double prize;
   final int order;
+  final List<String> characteristics;
+  final String? status;
+  final DateTime? closedAt;
 
   EnigmaModel({
     required this.id,
@@ -26,6 +29,9 @@ class EnigmaModel {
     this.hintPrice = 0.0,
     this.prize = 0.0,
     this.order = 1,
+    this.characteristics = const [],
+    this.status,
+    this.closedAt,
   });
 
   EnigmaModel copyWith({
@@ -39,6 +45,9 @@ class EnigmaModel {
     String? hintData,
     double? prize,
     int? order,
+    List<String>? characteristics,
+    String? status,
+    DateTime? closedAt,
   }) {
     return EnigmaModel(
       id: id ?? this.id,
@@ -51,6 +60,9 @@ class EnigmaModel {
       hintData: hintData ?? this.hintData,
       prize: prize ?? this.prize,
       order: order ?? this.order,
+      characteristics: characteristics ?? this.characteristics,
+      status: status ?? this.status,
+      closedAt: closedAt ?? this.closedAt,
     );
   }
 
@@ -75,6 +87,11 @@ class EnigmaModel {
       hintData: map['hintData'],
       prize: (map['prize'] as num?)?.toDouble() ?? 0.0,
       order: map['order'] ?? 1,
+      characteristics: (map['characteristics'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      status: map['status'],
+      closedAt: map['closedAt'] != null
+          ? (map['closedAt'] is DateTime ? map['closedAt'] : DateTime.tryParse(map['closedAt'].toString()))
+          : null,
     );
   }
 
@@ -92,6 +109,9 @@ class EnigmaModel {
       'hintPrice': hintPrice, // Importante para sua monetização
       'prize': prize,
       'order': order,
+      'characteristics': characteristics,
+      'status': status,
+      'closedAt': closedAt?.toIso8601String(),
     };
   }
 }

@@ -426,6 +426,11 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
           // Recompensa Instantânea: add to balance immediately
           user.set("balance", balance + enigmaPrize);
 
+          // Atualizar status do enigma para bloquear para outros jogadores
+          enigma.set("status", "closed");
+          enigma.set("closedAt", new Date());
+          await enigma.save(null, { useMasterKey: true });
+
           // Registrar que enigma foi concluído no histórico
           let solvedEnigmas = eventProgress.solvedEnigmas || [];
           solvedEnigmas.push(enigmaId);
