@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oenigma/admin/utils/admin_upload_util.dart';
@@ -11,10 +13,12 @@ class AdminMobilePanelScreen extends ConsumerStatefulWidget {
   const AdminMobilePanelScreen({super.key});
 
   @override
-  ConsumerState<AdminMobilePanelScreen> createState() => _AdminMobilePanelScreenState();
+  ConsumerState<AdminMobilePanelScreen> createState() =>
+      _AdminMobilePanelScreenState();
 }
 
-class _AdminMobilePanelScreenState extends ConsumerState<AdminMobilePanelScreen> {
+class _AdminMobilePanelScreenState
+    extends ConsumerState<AdminMobilePanelScreen> {
   late Future<ParseResponse> _eventsFuture;
 
   @override
@@ -138,7 +142,11 @@ class _AdminMobilePanelScreenState extends ConsumerState<AdminMobilePanelScreen>
                     ],
                   ),
                   onTap: () {
-                    _showMobileEnigmasDialog(context, eventId, eventType);
+                    if (eventType == 'classic') {
+                      _showMobilePhasesDialog(context, eventId, eventType);
+                    } else {
+                      _showMobileEnigmasDialog(context, eventId, eventType);
+                    }
                   },
                 ),
               );
@@ -325,6 +333,20 @@ class _AdminMobilePanelScreenState extends ConsumerState<AdminMobilePanelScreen>
     );
   }
 
+  void _showMobilePhasesDialog(
+    BuildContext context,
+    String eventId,
+    String eventType,
+  ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            _MobilePhaseListScreen(eventId: eventId, eventType: eventType),
+      ),
+    );
+  }
+
   void _showMobileEnigmasDialog(
     BuildContext context,
     String eventId,
@@ -340,13 +362,312 @@ class _AdminMobilePanelScreenState extends ConsumerState<AdminMobilePanelScreen>
   }
 }
 
+class _MobilePhaseListScreen extends StatefulWidget {
+  final String eventId;
+  final String eventType;
+
+  const _MobilePhaseListScreen({
+    required this.eventId,
+    required this.eventType,
+  });
+
+  @override
+  State<_MobilePhaseListScreen> createState() => _MobilePhaseListScreenState();
+}
+
+class _MobilePhaseListScreenState extends State<_MobilePhaseListScreen> {
+  late Future<ParseResponse> _phasesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPhases();
+  }
+
+  void _loadPhases() {
+    setState(() {
+      final query = QueryBuilder<ParseObject>(ParseObject('Phase'))
+        ..whereEqualTo(
+          'event',
+          (ParseObject('Event')..objectId = widget.eventId).toPointer(),
+        )
+        ..orderByAscending('order');
+      _phasesFuture = query.query();
+    });
+  }
+
+  Map<String, dynamic> _parseObjectToMap(ParseObject obj) {
+    final map = <String, dynamic>{};
+    obj.toJson().forEach((key, value) {
+      map[key] = value;
+    });
+    return map;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: darkBackground,
+      appBar: AppBar(
+        title: const Text('Fases do Evento'),
+        backgroundColor: cardColor,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showMobilePhaseEditDialog(context, null, null);
+        },
+        backgroundColor: primaryAmber,
+        child: const FaIcon(FontAwesomeIcons.plus, color: Colors.black),
+      ),
+      body: FutureBuilder<ParseResponse>(
+        future: _phasesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError ||
+              !snapshot.hasData ||
+              !snapshot.data!.success ||
+              snapshot.data!.results == null) {
+            return const Center(
+              child: Text(
+                'Nenhuma fase encontrada.',
+                style: TextStyle(color: secondaryTextColor),
+              ),
+            );
+          }
+
+          final phases = snapshot.data!.results as List<ParseObject>;
+
+          return ListView.builder(
+            itemCount: phases.length,
+            padding: const EdgeInsets.all(16),
+            itemBuilder: (context, index) {
+              final phase = phases[index];
+              final phaseId = phase.objectId!;
+              final order = phase.get<num>('order') ?? 0;
+              final isBlocked = phase.get<bool>('isBlocked') ?? false;
+
+              return Card(
+                color: cardColor,
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: primaryAmber,
+                    child: Text(
+                      order.toString(),
+                      style: const TextStyle(color: Colors.black),
+                    ),
+                  ),
+                  title: Text(
+                    'Fase $order',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  subtitle: Text(
+                    isBlocked ? 'Bloqueada' : 'Desbloqueada',
+                    style: TextStyle(
+                      color: isBlocked ? Colors.redAccent : Colors.green,
+                    ),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const FaIcon(
+                          FontAwesomeIcons.penToSquare,
+                          color: Colors.blue,
+                          size: 20,
+                        ),
+                        onPressed: () => _showMobilePhaseEditDialog(
+                          context,
+                          phaseId,
+                          _parseObjectToMap(phase),
+                        ),
+                      ),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => _MobileEnigmaListScreen(
+                          eventId: widget.eventId,
+                          eventType: widget.eventType,
+                          phaseId: phaseId,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  void _showMobilePhaseEditDialog(
+    BuildContext context,
+    String? docId,
+    Map<String, dynamic>? data,
+  ) {
+    final orderCtrl = TextEditingController(
+      text: data?['order']?.toString() ?? '1',
+    );
+    bool isBlocked = data?['isBlocked'] ?? false;
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: darkBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 24,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      docId == null ? 'Nova Fase' : 'Editar Fase',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: orderCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(labelText: 'Ordem'),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 12),
+                    SwitchListTile(
+                      title: const Text(
+                        'Fase Bloqueada?',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      subtitle: const Text(
+                        'Os jogadores não poderão ver os enigmas desta fase até que ela seja desbloqueada.',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                      value: isBlocked,
+                      onChanged: (val) => setState(() => isBlocked = val),
+                      activeColor: primaryAmber,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryAmber,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      onPressed: isSaving
+                          ? null
+                          : () async {
+                              setState(() => isSaving = true);
+                              try {
+                                final newData = {
+                                  'order': int.tryParse(orderCtrl.text) ?? 1,
+                                  'isBlocked': isBlocked,
+                                };
+
+                                ParseResponse response;
+                                if (docId == null) {
+                                  response =
+                                      await ParseCloudFunction(
+                                        'createOrUpdatePhase',
+                                      ).execute(
+                                        parameters: {
+                                          'eventId': widget.eventId,
+                                          'data': newData,
+                                        },
+                                      );
+                                } else {
+                                  response =
+                                      await ParseCloudFunction(
+                                        'createOrUpdatePhase',
+                                      ).execute(
+                                        parameters: {
+                                          'eventId': widget.eventId,
+                                          'phaseId': docId,
+                                          'data': newData,
+                                        },
+                                      );
+                                }
+
+                                if (response.success) {
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                    _loadPhases();
+                                  }
+                                } else {
+                                  throw Exception(response.error?.message);
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Erro: $e')),
+                                );
+                              } finally {
+                                setState(() => isSaving = false);
+                              }
+                            },
+                      child: isSaving
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(
+                                color: Colors.black,
+                              ),
+                            )
+                          : const Text(
+                              'Salvar Fase',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
 class _MobileEnigmaListScreen extends StatefulWidget {
   final String eventId;
   final String eventType;
+  final String? phaseId;
 
   const _MobileEnigmaListScreen({
     required this.eventId,
     required this.eventType,
+    this.phaseId,
   });
 
   @override
@@ -365,12 +686,19 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
 
   void _loadEnigmas() {
     setState(() {
-      final query = QueryBuilder<ParseObject>(ParseObject('Enigma'))
-        ..whereEqualTo(
+      final query = QueryBuilder<ParseObject>(ParseObject('Enigma'));
+      if (widget.phaseId != null) {
+        query.whereEqualTo(
+          'phase',
+          (ParseObject('Phase')..objectId = widget.phaseId).toPointer(),
+        );
+      } else {
+        query.whereEqualTo(
           'event',
           (ParseObject('Event')..objectId = widget.eventId).toPointer(),
-        )
-        ..orderByAscending('order');
+        );
+      }
+      query.orderByAscending('order');
       _enigmasFuture = query.query();
     });
   }
@@ -392,8 +720,18 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
         backgroundColor: cardColor,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showMobileEnigmaEditDialog(context, null, null);
+        onPressed: () async {
+          int nextOrder = 1;
+          final currentSnapshot = await _enigmasFuture;
+          if (currentSnapshot.success && currentSnapshot.results != null) {
+            nextOrder = currentSnapshot.results!.length + 1;
+          }
+          _showMobileEnigmaEditDialog(
+            context,
+            null,
+            null,
+            nextOrder: nextOrder,
+          );
         },
         backgroundColor: primaryAmber,
         child: const FaIcon(FontAwesomeIcons.plus, color: Colors.black),
@@ -484,19 +822,33 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
     );
   }
 
+  String _generateRandomName() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rnd = Random();
+    return String.fromCharCodes(
+      Iterable.generate(6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
+    );
+  }
+
   void _showMobileEnigmaEditDialog(
     BuildContext context,
     String? docId,
-    Map<String, dynamic>? data,
-  ) {
-    final instructionCtrl = TextEditingController(text: data?['instruction']);
+    Map<String, dynamic>? data, {
+    int? nextOrder,
+  }) {
+    final instructionCtrl = TextEditingController(
+      text:
+          data?['instruction'] ?? (docId == null ? _generateRandomName() : ''),
+    );
     final codeCtrl = TextEditingController(text: data?['code']);
     final photoUrlCtrl = TextEditingController(text: data?['photoUrl']);
     final compassCoordsCtrl = TextEditingController(
       text: data?['compassCoords'],
     );
     final orderCtrl = TextEditingController(
-      text: data?['order']?.toString() ?? '1',
+      text:
+          data?['order']?.toString() ??
+          (docId == null && nextOrder != null ? nextOrder.toString() : '1'),
     );
     final prizeCtrl = TextEditingController(
       text: data?['prize']?.toString() ?? '0',
@@ -852,8 +1204,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                                       ).execute(
                                         parameters: {
                                           'eventId': widget.eventId,
-                                          'phaseId':
-                                              '', // For simplicity in mobile, assuming find_and_win or generic handling
+                                          'phaseId': widget.phaseId ?? '',
                                           'data': newData,
                                         },
                                       );

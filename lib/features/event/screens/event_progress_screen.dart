@@ -4,24 +4,22 @@ import 'package:oenigma/features/event/providers/event_repository_provider.dart'
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
-
-
 import 'package:oenigma/core/utils/app_colors.dart';
 import '../widgets/PhaseCard.dart';
 import '../widgets/progress_header.dart';
 
 class EventProgressScreen extends ConsumerStatefulWidget {
   final EventModel event;
+
   const EventProgressScreen({super.key, required this.event});
+
   @override
-  ConsumerState<EventProgressScreen> createState() => _EventProgressScreenState();
+  ConsumerState<EventProgressScreen> createState() =>
+      _EventProgressScreenState();
 }
 
 class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
-
-
   late Future<void> _dataFuture;
-
   List<PhaseModel> _phases = [];
   int _currentPhase = 1;
   int _currentEnigma = 1;
@@ -33,16 +31,19 @@ class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
   }
 
   Future<void> _loadEventData() async {
-    final phases = await ref.read(eventRepositoryProvider).getPhasesForEvent(widget.event.id);
+    final phases = await ref
+        .read(eventRepositoryProvider)
+        .getPhasesForEvent(widget.event.id);
+
     if (!mounted) return;
 
     final userId = ref.read(authRepositoryProvider).currentUser?.objectId;
     if (userId == null) throw Exception("Usuário não autenticado.");
 
-    final progress = await ref.read(eventRepositoryProvider).getPlayerProgress(
-      userId,
-      widget.event.id,
-    );
+    final progress = await ref
+        .read(eventRepositoryProvider)
+        .getPlayerProgress(userId, widget.event.id);
+
     if (!mounted) return;
 
     setState(() {
@@ -56,9 +57,13 @@ class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.event.name),
+        title: Text(
+          widget.event.name,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: darkBackground,
         elevation: 0,
+        centerTitle: true,
       ),
       backgroundColor: darkBackground,
       body: FutureBuilder<void>(
@@ -69,15 +74,20 @@ class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
               child: CircularProgressIndicator(color: primaryAmber),
             );
           }
+
           if (snapshot.hasError) {
             return Center(child: Text('Erro: ${snapshot.error}'));
           }
+
           return RefreshIndicator(
             onRefresh: _loadEventData,
             color: primaryAmber,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 16.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -85,18 +95,22 @@ class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
                     totalPhases: _phases.length,
                     completedPhases: _currentPhase - 1,
                   ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'FASES DO EVENTO',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: secondaryTextColor,
-                      letterSpacing: 1.5,
+                  const SizedBox(height: 32),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 4.0),
+                    child: Text(
+                      'FASES DO EVENTO',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: secondaryTextColor,
+                        letterSpacing: 1.5,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildPhasesList(), // Alterado de Grid para List
+                  _buildPhasesList(),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -106,7 +120,6 @@ class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
     );
   }
 
-  // MODIFICADO: De GridView para ListView
   Widget _buildPhasesList() {
     return ListView.separated(
       itemCount: _phases.length,

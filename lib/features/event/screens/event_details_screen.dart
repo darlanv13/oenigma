@@ -2,11 +2,10 @@ import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/features/event/providers/event_repository_provider.dart';
-
 import 'package:lottie/lottie.dart';
 import 'dart:ui';
-import 'package:oenigma/core/models/event_model.dart';
 
+import 'package:oenigma/core/models/event_model.dart';
 import '../screens/event_progress_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'find_and_win_progress_screen.dart';
@@ -30,7 +29,6 @@ class EventDetailsScreen extends ConsumerStatefulWidget {
 class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   late final Future<LottieComposition> _composition;
   Future<Map<String, int>>? _statsFuture;
-
   bool _isSubscribed = false;
   bool _isLoading = false;
 
@@ -71,8 +69,8 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         .getChallengeCountForEvent(widget.event.id);
     return {
       'total': count,
-      'solved': 0,
-    }; // O progresso é individual no modo clássico
+      'solved': 0, // O progresso é individual no modo clássico
+    };
   }
 
   // Função para lidar com a inscrição
@@ -81,10 +79,8 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     if (confirmed != true) return;
 
     setState(() => _isLoading = true);
-
     try {
       await ref.read(eventRepositoryProvider).subscribeToEvent(widget.event.id);
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -148,12 +144,11 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     );
   }
 
-  // Dialog de saldo insuficiente CORRIGIDO
+  // Dialog de saldo insuficiente
   void _showInsufficientFundsDialog() {
     showDialog(
-      context: context, // Usa o contexto da TELA (State)
+      context: context,
       builder: (dialogContext) => AlertDialog(
-        // Renomeado para dialogContext
         backgroundColor: cardColor,
         title: const Text(
           'Saldo Insuficiente',
@@ -172,12 +167,9 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           ),
           ElevatedButton(
             onPressed: () async {
-              // 1. Fecha o dialog de "Saldo Insuficiente" usando o contexto DELE
               Navigator.of(dialogContext).pop();
-
               if (!mounted) return;
 
-              // 2. Mostra o loading usando o contexto da TELA (que ainda existe)
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -187,21 +179,17 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               );
 
               try {
-                // 3. Busca os dados da carteira
-
                 if (mounted) {
-                  // 4. Fecha o loading (usando context da tela, que é o pai do loading agora)
                   Navigator.of(context).pop();
-
-                  // 5. Navega para a tela da carteira
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => WalletScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const WalletScreen(),
+                    ),
                   );
                 }
               } catch (e) {
-                // Caso ocorra erro, fecha o loading e avisa
                 if (mounted) {
-                  Navigator.of(context).pop(); // Fecha loading
+                  Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text("Erro ao carregar carteira: $e"),
@@ -240,9 +228,18 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           SliverToBoxAdapter(
             child: Container(
               transform: Matrix4.translationValues(0.0, -30.0, 0.0),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: darkBackground,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(30),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    blurRadius: 20,
+                    offset: const Offset(0, -10),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,7 +257,12 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           ),
         ],
       ),
-      bottomSheet: _buildBottomCtaButton(context),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: _buildBottomCtaButton(context),
+        ),
+      ),
     );
   }
 
@@ -289,7 +291,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                   } else if (snapshot.hasError) {
                     return Lottie.asset('assets/animations/no_enigma.json');
                   }
-
                   return const Center(
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
@@ -304,7 +305,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 size: 150,
                 color: primaryAmber,
               ),
-            // O gradiente continua o mesmo
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -339,28 +339,45 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               color: textColor,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // --- ÍCONE SUBSTITUÍDO PELA ANIMAÇÃO LOTTIE ---
               Lottie.asset(
-                'assets/animations/trofel.json', // Animação de "check"
-                height: 60,
-                width: 60,
+                'assets/animations/trofel.json',
+                height: 48,
+                width: 48,
                 repeat: true,
               ),
-              const SizedBox(width: 4), // Espaçamento ajustado
-              const Text(
-                'Prêmio:',
-                style: TextStyle(color: secondaryTextColor, fontSize: 16),
-              ),
               const SizedBox(width: 8),
-              Text(
-                widget.event.prize,
-                style: const TextStyle(
-                  color: primaryAmber,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: primaryAmber.withValues(alpha: 0.1),
+                  border: Border.all(
+                    color: primaryAmber.withValues(alpha: 0.3),
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Prêmio Total: ',
+                      style: TextStyle(color: secondaryTextColor, fontSize: 14),
+                    ),
+                    Text(
+                      widget.event.prize,
+                      style: const TextStyle(
+                        color: primaryAmber,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -370,7 +387,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     );
   }
 
-  // --- WIDGET DE INFORMAÇÕES ATUALIZADO ---
   Widget _buildInfoGrid() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -392,8 +408,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             'Jogadores',
             widget.event.playerCount.toString(),
           ),
-
-          // --- WIDGET DE ESTATÍSTICAS CONDICIONAL ---
           FutureBuilder<Map<String, int>>(
             future: _statsFuture,
             builder: (context, snapshot) {
@@ -402,11 +416,10 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 final total = snapshot.data?['total'] ?? 0;
                 return _buildInfoPill(
                   FontAwesomeIcons.bullseye,
-                  'Enigmas Resolvidos',
+                  'Resolvidos',
                   '$solved / $total',
                 );
               } else {
-                // Modo Clássico
                 final total = snapshot.data?['total'] ?? 0;
                 return _buildInfoPill(
                   FontAwesomeIcons.filter,
@@ -416,7 +429,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               }
             },
           ),
-
           _buildInfoPill(FontAwesomeIcons.coins, 'Inscrição', 'Grátis'),
         ],
       ),
@@ -425,20 +437,27 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
 
   Widget _buildInfoPill(dynamic icon, String label, String value) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(15),
+      borderRadius: BorderRadius.circular(16),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: cardColor.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(15),
+            color: cardColor.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
           child: Row(
             children: [
-          FaIcon(icon, color: secondaryTextColor, size: 24),
-          const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: primaryAmber.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: FaIcon(icon, color: primaryAmber, size: 18),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -448,7 +467,9 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                       label,
                       style: const TextStyle(
                         color: secondaryTextColor,
-                        fontSize: 12,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -488,7 +509,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            // A descrição completa do evento pode ser usada aqui
             widget.event.fullDescription,
             style: TextStyle(
               color: textColor.withValues(alpha: 0.8),
@@ -544,137 +564,115 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       );
     }
 
-    // Lógica principal: Jogar ou Inscrever-se
     return Container(
-      color: darkBackground,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        decoration: BoxDecoration(
-          color: cardColor.withValues(alpha: 0.95),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          boxShadow: [
-            BoxShadow(
-              color: primaryAmber.withValues(
-                alpha: _isSubscribed ? 0.05 : 0.15,
-              ),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: _isSubscribed
-                ? const LinearGradient(colors: [Colors.green, Colors.lightGreen])
-                : const LinearGradient(colors: [primaryAmber, Color(0xFFFFD54F)]),
-            boxShadow: [
-              BoxShadow(
-                color: _isSubscribed
-                    ? Colors.green.withValues(alpha: 0.4)
-                    : primaryAmber.withValues(alpha: 0.4),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        gradient: _isSubscribed
+            ? const LinearGradient(colors: [Colors.green, Colors.lightGreen])
+            : const LinearGradient(colors: [primaryAmber, Color(0xFFFFD54F)]),
+        boxShadow: [
+          BoxShadow(
+            color: _isSubscribed
+                ? Colors.green.withValues(alpha: 0.3)
+                : primaryAmber.withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              foregroundColor: _isSubscribed ? Colors.white : Colors.black,
-              shadowColor: Colors.transparent,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-            onPressed: _isLoading
-                ? null
-                : () {
-                  if (_isSubscribed) {
-                    // Verifica o tipo de evento para decidir para onde navegar
-                    if (widget.event.eventType == 'find_and_win') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              FindAndWinProgressScreen(event: widget.event),
-                        ),
-                      );
-                    } else {
-                      // Navegação padrão para o modo clássico
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              EventProgressScreen(event: widget.event),
-                        ),
-                      );
-                    }
+        ],
+      ),
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: _isSubscribed ? Colors.white : Colors.black,
+          shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+        onPressed: _isLoading
+            ? null
+            : () {
+                if (_isSubscribed) {
+                  if (widget.event.eventType == 'find_and_win') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            FindAndWinProgressScreen(event: widget.event),
+                      ),
+                    );
                   } else {
-                    _handleSubscription();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            EventProgressScreen(event: widget.event),
+                      ),
+                    );
                   }
-                },
-          icon: _isLoading
-              ? Container(
-                  width: 24,
-                  height: 24,
-                  child: const CircularProgressIndicator(
-                    color: darkBackground,
-                    strokeWidth: 2,
-                  ),
-                )
-              : FaIcon(
-                    _isSubscribed
-                        ? FontAwesomeIcons.play
-                        : FontAwesomeIcons.rightToBracket,
-                    size: 28,
-                  ),
-            label: Text(
-              _isSubscribed ? 'ENTRAR NA CAÇADA' : 'INICIAR CAÇADA (GRÁTIS)',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.2,
+                } else {
+                  _handleSubscription();
+                }
+              },
+        icon: _isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: darkBackground,
+                  strokeWidth: 2,
+                ),
+              )
+            : FaIcon(
+                _isSubscribed
+                    ? FontAwesomeIcons.play
+                    : FontAwesomeIcons.rightToBracket,
+                size: 28,
               ),
-            ),
+        label: Text(
+          _isSubscribed ? 'ENTRAR NA CAÇADA' : 'INICIAR CAÇADA (GRÁTIS)',
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.2,
           ),
         ),
       ),
     );
   }
 
-  // Widget auxiliar para botões desabilitados
   Widget _buildDisabledButton({required dynamic icon, required String label}) {
     return Container(
-      color: darkBackground,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-          border: Border(
-            top: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade800,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.grey.shade500,
+          shadowColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
           ),
         ),
-        child: ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey.shade800,
-            foregroundColor: Colors.grey.shade500,
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
-          onPressed: null,
-          icon: FaIcon(icon, size: 24),
-          label: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.1,
-            ),
+        onPressed: null,
+        icon: FaIcon(icon, size: 24),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.1,
           ),
         ),
       ),
