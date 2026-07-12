@@ -6,11 +6,8 @@ import 'package:intl/intl.dart';
 
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
+import 'package:oenigma/core/models/phase_model.dart'; // MOCK PHASE MODEL
 import 'package:oenigma/core/utils/app_colors.dart';
-import 'package:oenigma/features/enigma/providers/enigma_repository_provider.dart';
-import 'package:oenigma/core/widgets/dialogs/cooldown_dialog.dart';
-import 'package:oenigma/core/widgets/dialogs/enigma_success_dialog.dart';
-import 'package:oenigma/core/widgets/dialogs/error_dialog.dart';
 import 'package:oenigma/features/enigma/screens/enigma_screen.dart';
 
 class FindAndWinProgressScreen extends ConsumerStatefulWidget {
@@ -102,8 +99,26 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
           return;
         }
 
-        // Use standard Enigma validation dialog logic reusing what we have or push to a detail
-        _showValidationDialog(enigma);
+        // Mock a Phase for Find & Win compat
+        final mockPhase = PhaseModel(
+          id: 'find_and_win',
+          order: 1,
+          enigmas: [enigma],
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EnigmaScreen(
+              event: widget.event,
+              phase: mockPhase,
+              initialEnigma: enigma,
+              onEnigmaSolved: () {
+                // Return handling or rebuild handled by stream
+              },
+            ),
+          ),
+        );
       },
       child: AnimatedBuilder(
         animation: _animationController,
@@ -184,121 +199,6 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
         },
       ),
     );
-  }
-
-  void _showValidationDialog(EnigmaModel enigma) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final codeController = TextEditingController();
-        bool isLoading = false;
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              backgroundColor: darkBackground,
-              title: const Text('Resolver Enigma', style: TextStyle(color: primaryAmber)),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(enigma.instruction, style: const TextStyle(color: Colors.white)),
-                  const SizedBox(height: 16),
-                  if (enigma.type == 'qrcode' || enigma.type == 'foto')
-                    ElevatedButton.icon(
-                      onPressed: () {
-                         Navigator.pop(context);
-                         Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ScannerScreen(
-                              onScan: (scannedCode) {
-                                  Navigator.pop(context);
-                                  _validateCode(enigma.id, scannedCode);
-                              }
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const FaIcon(FontAwesomeIcons.qrcode, size: 16),
-                      label: const Text('Escanear QR Code'),
-                      style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
-                    )
-                  else
-                    TextField(
-                      controller: codeController,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: "Sua resposta",
-                        hintStyle: TextStyle(color: Colors.grey),
-                      ),
-                    ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-                ),
-                if (enigma.type != 'qrcode' && enigma.type != 'foto')
-                  ElevatedButton(
-                    onPressed: isLoading ? null : () async {
-                      if (codeController.text.isEmpty) return;
-                      setStateDialog(() => isLoading = true);
-                      final code = codeController.text.trim();
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                      }
-                      await _validateCode(enigma.id, code);
-                    },
-                    style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
-                    child: isLoading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.black)) : const Text('Validar'),
-                  ),
-              ],
-            );
-          }
-        );
-      },
-    );
-  }
-
-  Future<void> _validateCode(String enigmaId, String code) async {
-    try {
-      final result = await ref.read(enigmaRepositoryProvider).callEnigmaFunction('scan_enigma', {
-        'eventId': widget.event.id,
-        'enigmaId': enigmaId,
-        'code': code,
-      });
-
-      final data = Map<String, dynamic>.from(result.result);
-      if (mounted && !(data['success'] as bool)) {
-        final message = data['message'] ?? "Código incorreto.";
-        if (data['cooldownUntil'] != null) {
-          final cooldownUntil = DateTime.parse(data['cooldownUntil'].toString());
-          if (cooldownUntil.isAfter(DateTime.now())) {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (_) => CooldownDialog(
-                cooldownUntil: cooldownUntil,
-                onCooldownFinished: () {},
-              ),
-            );
-          }
-        } else {
-          showErrorDialog(context, message: message);
-        }
-      } else if (mounted) {
-        showEnigmaSuccessDialog(
-          context,
-          onContinue: () {
-            Navigator.of(context).pop();
-          },
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        showErrorDialog(context, message: "Ocorreu um erro: ${e.toString()}");
-      }
-    }
   }
 
   @override
