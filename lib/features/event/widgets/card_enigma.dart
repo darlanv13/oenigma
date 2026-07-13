@@ -111,7 +111,7 @@ class CardEnigma extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        enigma.instruction,
+                        enigma.title.isNotEmpty ? enigma.title : enigma.instruction,
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,

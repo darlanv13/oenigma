@@ -1187,6 +1187,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final orderCtrl = TextEditingController(
       text: data?['order']?.toString() ?? '1',
     );
+    final titleCtrl = TextEditingController(text: data?['title']);
     final codeCtrl = TextEditingController(text: data?['code']);
     final instructionCtrl = TextEditingController(text: data?['instruction']);
     final prizeCtrl = TextEditingController(
@@ -1333,6 +1334,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                 labelText: selectedType == 'gps'
                                     ? 'Coordenadas Alvo (Lat, Lng)'
                                     : 'Código (Senha/Resposta)',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: titleCtrl,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                labelText: 'Título do Enigma',
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -1549,6 +1558,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                     final newData = {
                                       'order':
                                           int.tryParse(orderCtrl.text) ?? 1,
+                                      'title': titleCtrl.text,
                                       'code': codeCtrl.text,
                                       'instruction': instructionCtrl.text,
                                       'type': selectedType,

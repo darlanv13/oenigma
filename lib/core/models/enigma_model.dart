@@ -5,6 +5,7 @@ class EnigmaModel {
   final String id;
   final String type;
   final String instruction;
+  final String title;
   final String code;
   final String? imageUrl;
   final ParseGeoPoint? location;
@@ -21,6 +22,7 @@ class EnigmaModel {
     required this.id,
     required this.type,
     required this.instruction,
+    this.title = '',
     required this.code,
     this.imageUrl,
     this.location,
@@ -38,6 +40,7 @@ class EnigmaModel {
     String? id,
     String? type,
     String? instruction,
+    String? title,
     String? code,
     String? imageUrl,
     ParseGeoPoint? location,
@@ -53,6 +56,7 @@ class EnigmaModel {
       id: id ?? this.id,
       type: type ?? this.type,
       instruction: instruction ?? this.instruction,
+      title: title ?? this.title,
       code: code ?? this.code,
       imageUrl: imageUrl ?? this.imageUrl,
       location: location ?? this.location,
@@ -80,6 +84,7 @@ class EnigmaModel {
       id: map['id'] ?? '',
       type: map['type'] ?? 'text',
       instruction: map['instruction'] ?? '',
+      title: map['title'] ?? '',
       code: map['code'] ?? '',
       imageUrl: map['imageUrl'],
       location: parsedLocation,
@@ -101,6 +106,7 @@ class EnigmaModel {
       'id': id,
       'type': type,
       'instruction': instruction,
+      'title': title,
       'code': code,
       'imageUrl': imageUrl,
       'location': location, // O Back4App/Parse aceita ParseGeoPoint direto
