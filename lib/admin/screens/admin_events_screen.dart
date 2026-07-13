@@ -348,7 +348,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               controller: iconCtrl,
                               style: const TextStyle(color: Colors.white),
                               decoration: InputDecoration(
-                                labelText: 'URL do Ícone (Lottie/Image)',
+                                labelText: 'URL da Imagem de Fundo',
                                 suffixIcon: IconButton(
                                   icon: const FaIcon(
                                     FontAwesomeIcons.upload,
