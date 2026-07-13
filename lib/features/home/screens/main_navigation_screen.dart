@@ -156,16 +156,17 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             BottomNavigationBarItem(
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
-                child: SvgNavIcon(
-                  assetPath: 'assets/icon/maps.svg',
-                  color: Colors.grey,
+                child: Opacity(
+                  opacity: 0.5,
+                  child: SvgNavIcon(
+                    assetPath: 'assets/icon/maps.svg',
+                  ),
                 ),
               ),
               activeIcon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: SvgNavIcon(
                   assetPath: 'assets/icon/maps.svg',
-                  color: Color(0xFFFFD54F),
                 ),
               ),
               label: 'Explorar',
@@ -173,16 +174,17 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             BottomNavigationBarItem(
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
-                child: SvgNavIcon(
-                  assetPath: 'assets/icon/chest.svg',
-                  color: Colors.grey,
+                child: Opacity(
+                  opacity: 0.5,
+                  child: SvgNavIcon(
+                    assetPath: 'assets/icon/chest.svg',
+                  ),
                 ),
               ),
               activeIcon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: SvgNavIcon(
                   assetPath: 'assets/icon/chest.svg',
-                  color: Color(0xFFFFD54F),
                 ),
               ),
               label: 'Tesouro',
@@ -190,16 +192,17 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             BottomNavigationBarItem(
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
-                child: SvgNavIcon(
-                  assetPath: 'assets/icon/ship.svg',
-                  color: Colors.grey,
+                child: Opacity(
+                  opacity: 0.5,
+                  child: SvgNavIcon(
+                    assetPath: 'assets/icon/ship.svg',
+                  ),
                 ),
               ),
               activeIcon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: SvgNavIcon(
                   assetPath: 'assets/icon/ship.svg',
-                  color: Color(0xFFFFD54F),
                 ),
               ),
               label: 'Ranking',
@@ -207,16 +210,17 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             BottomNavigationBarItem(
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
-                child: SvgNavIcon(
-                  assetPath: 'assets/icon/pirate.svg',
-                  color: Colors.grey,
+                child: Opacity(
+                  opacity: 0.5,
+                  child: SvgNavIcon(
+                    assetPath: 'assets/icon/pirate.svg',
+                  ),
                 ),
               ),
               activeIcon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: SvgNavIcon(
                   assetPath: 'assets/icon/pirate.svg',
-                  color: Color(0xFFFFD54F),
                 ),
               ),
               label: 'Perfil',

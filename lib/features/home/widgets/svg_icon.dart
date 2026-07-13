@@ -3,13 +3,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 class SvgNavIcon extends StatelessWidget {
   final String assetPath;
-  final Color color;
+  final Color? color;
   final double size;
 
   const SvgNavIcon({
     super.key,
     required this.assetPath,
-    required this.color,
+    this.color,
     this.size = 24.0,
   });
 
@@ -19,7 +19,7 @@ class SvgNavIcon extends StatelessWidget {
       assetPath,
       width: size,
       height: size,
-      colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      colorFilter: color != null ? ColorFilter.mode(color!, BlendMode.srcIn) : null,
     );
   }
 }
