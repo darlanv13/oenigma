@@ -158,8 +158,14 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: SvgNavIcon(
                   assetPath: 'assets/icon/maps.svg',
-                  color: Colors
-                      .white, // a cor será sobrescrita pelo BottomNavigationBar
+                  color: Colors.grey,
+                ),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(
+                  assetPath: 'assets/icon/maps.svg',
+                  color: Color(0xFFFFD54F),
                 ),
               ),
               label: 'Explorar',
@@ -169,7 +175,14 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: SvgNavIcon(
                   assetPath: 'assets/icon/chest.svg',
-                  color: Colors.white,
+                  color: Colors.grey,
+                ),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(
+                  assetPath: 'assets/icon/chest.svg',
+                  color: Color(0xFFFFD54F),
                 ),
               ),
               label: 'Tesouro',
@@ -179,7 +192,14 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: SvgNavIcon(
                   assetPath: 'assets/icon/ship.svg',
-                  color: Colors.white,
+                  color: Colors.grey,
+                ),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(
+                  assetPath: 'assets/icon/ship.svg',
+                  color: Color(0xFFFFD54F),
                 ),
               ),
               label: 'Ranking',
@@ -189,7 +209,14 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: SvgNavIcon(
                   assetPath: 'assets/icon/pirate.svg',
-                  color: Colors.white,
+                  color: Colors.grey,
+                ),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(
+                  assetPath: 'assets/icon/pirate.svg',
+                  color: Color(0xFFFFD54F),
                 ),
               ),
               label: 'Perfil',
