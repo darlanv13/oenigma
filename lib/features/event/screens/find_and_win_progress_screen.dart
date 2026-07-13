@@ -40,6 +40,7 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
           final doc = e as ParseObject;
           return EnigmaModel.fromMap({
             'id': doc.objectId,
+            'title': doc.get<String>('title') ?? '',
             'instruction': doc.get<String>('instruction') ?? '',
             'prize': doc.get<num>('prize') ?? 0,
             'imageUrl': doc.get<String>('imageUrl'),
