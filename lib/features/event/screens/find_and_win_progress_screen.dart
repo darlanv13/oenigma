@@ -98,10 +98,10 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
           return GridView.builder(
             padding: const EdgeInsets.all(16),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.0,
+              crossAxisCount: 3,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.85,
             ),
             itemCount: visibleEnigmas.length,
             itemBuilder: (context, index) {

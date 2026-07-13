@@ -112,23 +112,32 @@ class CardEnigma extends StatelessWidget {
                     children: [
                       Text(
                         enigma.title.isNotEmpty ? enigma.title : enigma.instruction,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                      ),
-                      const Spacer(),
-                      Text(
-                        currencyFormat.format(enigma.prize),
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Colors.black),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 8),
+                      const Spacer(),
+                      const Center(
+                        child: FaIcon(
+                          FontAwesomeIcons.sackDollar,
+                          size: 36,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        currencyFormat.format(enigma.prize),
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Colors.black),
+                        textAlign: TextAlign.center,
+                      ),
+                      const Spacer(),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: enigma.characteristics.map((char) {
                           return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                            child: FaIcon(_getIconForCharacteristic(char), size: 14, color: Colors.black54),
+                            padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                            child: FaIcon(_getIconForCharacteristic(char), size: 10, color: Colors.black54),
                           );
                         }).toList(),
                       ),
