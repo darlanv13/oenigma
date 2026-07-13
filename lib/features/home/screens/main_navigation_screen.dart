@@ -157,7 +157,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: SvgNavIcon(
-                  assetPath: 'assets/icons/maps.svg',
+                  assetPath: 'assets/icon/maps.svg',
                   color: Colors
                       .white, // a cor será sobrescrita pelo BottomNavigationBar
                 ),
@@ -168,7 +168,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: SvgNavIcon(
-                  assetPath: 'assets/icons/chest.svg',
+                  assetPath: 'assets/icon/chest.svg',
                   color: Colors.white,
                 ),
               ),
@@ -178,7 +178,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: SvgNavIcon(
-                  assetPath: 'assets/icons/ship.svg',
+                  assetPath: 'assets/icon/ship.svg',
                   color: Colors.white,
                 ),
               ),
@@ -188,7 +188,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: SvgNavIcon(
-                  assetPath: 'assets/icons/pirate.svg',
+                  assetPath: 'assets/icon/pirate.svg',
                   color: Colors.white,
                 ),
               ),
