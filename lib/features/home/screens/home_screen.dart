@@ -115,10 +115,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   SliverToBoxAdapter(
                     child: FadeTransition(
                       opacity: _fadeAnimation,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          child: Image.asset(
+                            'assets/icon/icon.png',
+                            height: 60,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(
                           16.0,
-                          16.0,
+                          8.0,
                           16.0,
                           8.0,
                         ),
@@ -184,26 +199,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       );
     }
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.75, // Ajustado para melhor proporção
+    return SliverToBoxAdapter(
+      child: SizedBox(
+        height: 280, // Ajuste a altura conforme necessário
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          itemCount: events.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: SizedBox(
+                width: 200, // Largura fixa para cada card no modo horizontal
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: EventCard(
+                    event: events[index],
+                    playerData: playerData,
+                    onReturn: _reloadData,
+                  ),
+                ),
+              ),
+            );
+          },
         ),
-        delegate: SliverChildBuilderDelegate((context, index) {
-          // Adiciona uma animação escalonada simples
-          return FadeTransition(
-            opacity: _fadeAnimation,
-            child: EventCard(
-              event: events[index],
-              playerData: playerData,
-              onReturn: _reloadData,
-            ),
-          );
-        }, childCount: events.length),
       ),
     );
   }
