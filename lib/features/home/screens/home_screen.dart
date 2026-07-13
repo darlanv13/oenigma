@@ -10,7 +10,6 @@ import '../widgets/events_section_header.dart';
 import 'package:oenigma/features/home/widgets/home_banner_carousel.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
   @override
@@ -60,7 +59,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const FaIcon(FontAwesomeIcons.circleExclamation,
+                const FaIcon(
+                  FontAwesomeIcons.circleExclamation,
                   size: 48,
                   color: Colors.redAccent,
                 ),
@@ -98,8 +98,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             final UserWalletModel walletData = UserWalletModel.fromMap(
               Map<String, dynamic>.from(data['walletData']),
             );
-            final Map<String, dynamic> playerData =
-                data['playerData'] != null
+            final Map<String, dynamic> playerData = data['playerData'] != null
                 ? Map<String, dynamic>.from(data['playerData'])
                 : {};
             final List<dynamic> allPlayers = data['allPlayers'] ?? [];
@@ -117,7 +116,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     child: FadeTransition(
                       opacity: _fadeAnimation,
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+                        padding: const EdgeInsets.fromLTRB(
+                          16.0,
+                          16.0,
+                          16.0,
+                          8.0,
+                        ),
                         child: HomeProfileCard(
                           playerData: playerData,
                           wallet: walletData,
@@ -127,17 +131,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
                   ),
-                  SliverToBoxAdapter(child: FadeTransition(opacity: _fadeAnimation, child: const HomeBannerCarousel())),
+                  SliverToBoxAdapter(
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: const HomeBannerCarousel(),
+                    ),
+                  ),
                   SliverToBoxAdapter(
                     child: FadeTransition(
                       opacity: _fadeAnimation,
                       child: const Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          20.0,
-                          16.0,
-                          20.0,
-                          8.0,
-                        ),
+                        padding: EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 8.0),
                         child: EventsSectionHeader(),
                       ),
                     ),
@@ -164,7 +168,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             padding: EdgeInsets.all(40.0),
             child: Column(
               children: [
-                FaIcon(FontAwesomeIcons.calendarXmark, size: 40, color: secondaryTextColor),
+                FaIcon(
+                  FontAwesomeIcons.calendarXmark,
+                  size: 40,
+                  color: secondaryTextColor,
+                ),
                 SizedBox(height: 16),
                 Text(
                   'Nenhum evento ativo no momento.',

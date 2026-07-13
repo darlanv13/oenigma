@@ -5,7 +5,7 @@ import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
-import '../widgets/PhaseCard.dart';
+import 'package:oenigma/features/event/widgets/phase_card.dart';
 import '../widgets/progress_header.dart';
 
 class EventProgressScreen extends ConsumerStatefulWidget {

@@ -40,7 +40,7 @@ class _EventCardState extends State<EventCard> {
   String _formatDate(String dateStr) {
     try {
       final date = DateFormat('dd/MM/yyyy').parse(dateStr);
-      return DateFormat("d 'de' MMMM", 'pt_BR').format(date);
+      return DateFormat("d 'de' MMM", 'pt_BR').format(date);
     } catch (e) {
       return dateStr;
     }
@@ -64,15 +64,22 @@ class _EventCardState extends State<EventCard> {
       child: Container(
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Design base do card
+              // Animação de Fundo
               Positioned.fill(
                 child: Container(
                   color: darkBackground,
@@ -97,29 +104,35 @@ class _EventCardState extends State<EventCard> {
                       : const SizedBox(),
                 ),
               ),
+
+              // Gradiente escurecedor para leitura
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.black.withValues(alpha: 0.8),
-                        Colors.black.withValues(alpha: 0.2),
-                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.9),
+                        Colors.black.withValues(alpha: 0.1),
+                        Colors.black.withValues(
+                          alpha: 0.3,
+                        ), // Topo ligeiramente escuro para o badge
                       ],
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
-                      stops: const [0.0, 0.6, 1.0],
+                      stops: const [0.0, 0.5, 1.0],
                     ),
                   ),
                 ),
               ),
+
+              // DESTAQUE DO PRÊMIO (O que brilha na tela)
               Positioned(
                 top: 12,
                 left: 12,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
+                    horizontal: 12,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
@@ -129,126 +142,138 @@ class _EventCardState extends State<EventCard> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryAmber.withValues(alpha: 0.3),
-                        blurRadius: 8,
+                        color: primaryAmber.withValues(alpha: 0.5),
+                        blurRadius: 12,
                         offset: const Offset(0, 2),
                       ),
                     ],
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Text(
-                    widget.event.prize,
-                    style: const TextStyle(
-                      color: darkBackground,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 14,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const FaIcon(
+                        FontAwesomeIcons.gift,
+                        color: darkBackground,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        widget.event.prize,
+                        style: const TextStyle(
+                          color: darkBackground,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
+
+              // Informações do Evento (Bottom)
               Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
-                child: Column(
-                  children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(15),
-                      ),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.4),
-                            border: Border(
-                              top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.event.name,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  const FaIcon(
-                                    FontAwesomeIcons.locationDot,
-                                    color: secondaryTextColor,
-                                    size: 12,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    widget.event.location.isNotEmpty &&
-                                            widget.event.location !=
-                                                'Local não definido'
-                                        ? widget.event.location
-                                        : _formatDate(widget.event.startDate),
-                                    style: const TextStyle(
-                                      color: secondaryTextColor,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        border: Border(
+                          top: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.1),
                           ),
                         ),
                       ),
-                    ),
-                    Container(
-                      color: cardColor,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Inscrição:',
-                            style: TextStyle(
-                              color: secondaryTextColor,
-                              fontSize: 13,
-                            ),
-                          ),
                           Text(
-                            widget.event.price == 0
-                                ? "Grátis"
-                                : "R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}",
-                            style: TextStyle(
+                            widget.event.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const FaIcon(
+                                FontAwesomeIcons.locationDot,
+                                color: secondaryTextColor,
+                                size: 10,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  widget.event.location.isNotEmpty &&
+                                          widget.event.location !=
+                                              'Local não definido'
+                                      ? widget.event.location
+                                      : _formatDate(widget.event.startDate),
+                                  style: const TextStyle(
+                                    color: secondaryTextColor,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          // Botão virtual / Status de Inscrição
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            decoration: BoxDecoration(
                               color: widget.event.price == 0
-                                  ? Colors.green
-                                  : textColor,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                                  ? Colors.green.withValues(alpha: 0.2)
+                                  : primaryAmber.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: widget.event.price == 0
+                                    ? Colors.green.withValues(alpha: 0.5)
+                                    : primaryAmber.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                widget.event.price == 0
+                                    ? "ENTRADA GRÁTIS"
+                                    : "INSCRIÇÃO: R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}",
+                                style: TextStyle(
+                                  color: widget.event.price == 0
+                                      ? Colors.greenAccent
+                                      : primaryAmber,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
 
-              // --- OVERLAYS DE STATUS ---
+              // Overlays de Status (Finalizado/Em Breve)
               if (widget.event.status == 'closed')
                 _buildFinishedOverlay(context, widget.event),
-
               if (widget.event.status == 'dev') _buildComingSoonOverlay(),
             ],
           ),
@@ -257,13 +282,12 @@ class _EventCardState extends State<EventCard> {
     );
   }
 
+  // Mantidos iguais os métodos _buildFinishedOverlay e _buildComingSoonOverlay...
   Widget _buildFinishedOverlay(BuildContext context, EventModel event) {
-    // CORREÇÃO APLICADA AQUI
     final String winnerFirstName = event.winnerName?.split(' ').first ?? '';
-
     return Positioned.fill(
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
           child: Container(
@@ -314,7 +338,7 @@ class _EventCardState extends State<EventCard> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            winnerFirstName, // Exibe apenas o primeiro nome
+                            winnerFirstName,
                             style: const TextStyle(
                               color: textColor,
                               fontSize: 16,
@@ -336,7 +360,7 @@ class _EventCardState extends State<EventCard> {
   Widget _buildComingSoonOverlay() {
     return Positioned.fill(
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
           child: Container(
