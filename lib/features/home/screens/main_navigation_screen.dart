@@ -156,41 +156,56 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             BottomNavigationBarItem(
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
-                child: SvgNavIcon(
-                  assetPath: 'assets/icons/maps.svg',
-                  color: Colors
-                      .white, // a cor será sobrescrita pelo BottomNavigationBar
+                child: Opacity(
+                  opacity: 0.5,
+                  child: SvgNavIcon(assetPath: 'assets/icon/maps.svg'),
                 ),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(assetPath: 'assets/icon/maps.svg'),
               ),
               label: 'Explorar',
             ),
             BottomNavigationBarItem(
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
-                child: SvgNavIcon(
-                  assetPath: 'assets/icons/chest.svg',
-                  color: Colors.white,
+                child: Opacity(
+                  opacity: 0.5,
+                  child: SvgNavIcon(assetPath: 'assets/icon/chest.svg'),
                 ),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(assetPath: 'assets/icon/chest.svg'),
               ),
               label: 'Tesouro',
             ),
             BottomNavigationBarItem(
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
-                child: SvgNavIcon(
-                  assetPath: 'assets/icons/ship.svg',
-                  color: Colors.white,
+                child: Opacity(
+                  opacity: 0.5,
+                  child: SvgNavIcon(assetPath: 'assets/icon/ship.svg'),
                 ),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(assetPath: 'assets/icon/ship.svg'),
               ),
               label: 'Ranking',
             ),
             BottomNavigationBarItem(
               icon: Padding(
                 padding: EdgeInsets.only(bottom: 4.0),
-                child: SvgNavIcon(
-                  assetPath: 'assets/icons/pirate.svg',
-                  color: Colors.white,
+                child: Opacity(
+                  opacity: 0.5,
+                  child: SvgNavIcon(assetPath: 'assets/icon/pirate.svg'),
                 ),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(assetPath: 'assets/icon/pirate.svg'),
               ),
               label: 'Perfil',
             ),
