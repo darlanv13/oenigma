@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 
 class ProfileBadgesSection extends StatelessWidget {
   final Map<String, dynamic> playerData;
-
   const ProfileBadgesSection({super.key, required this.playerData});
 
   List<Map<String, dynamic>> _calculateBadges() {
@@ -13,57 +10,54 @@ class ProfileBadgesSection extends StatelessWidget {
     final events = playerData['events'] ?? {};
     final winnerEvents = playerData['winnerEvents'] ?? [];
 
-    // 1. Desbravador (Has participated in at least 1 event)
     if (events.isNotEmpty) {
       badges.add({
         'title': 'Desbravador',
         'icon': FontAwesomeIcons.compass,
         'color': Colors.blueAccent,
-        'description': 'Entrou em um evento pela primeira vez.'
+        'description': 'Entrou em um evento pela primeira vez.',
       });
     } else {
       badges.add({
         'title': 'Desbravador',
         'icon': FontAwesomeIcons.compass,
-        'color': Colors.grey,
+        'color': Colors.grey.shade800,
         'description': 'Ainda não participou de nenhum evento.',
-        'locked': true
+        'locked': true,
       });
     }
 
-    // 2. Primeiro Sangue (Won an event)
     if (winnerEvents.isNotEmpty) {
       badges.add({
-        'title': 'Primeiro Sangue',
+        'title': '1º Sangue',
         'icon': FontAwesomeIcons.medal,
-        'color': primaryAmber,
-        'description': 'Venceu um evento em 1º lugar.'
+        'color': const Color(0xFFFFD54F),
+        'description': 'Venceu um evento em 1º lugar.',
       });
     } else {
       badges.add({
-        'title': 'Primeiro Sangue',
+        'title': '1º Sangue',
         'icon': FontAwesomeIcons.medal,
-        'color': Colors.grey,
+        'color': Colors.grey.shade800,
         'description': 'Ainda não venceu nenhum evento.',
-        'locked': true
+        'locked': true,
       });
     }
 
-    // 3. Veterano (Participated in 5+ events)
     if (events.length >= 5) {
       badges.add({
         'title': 'Veterano',
         'icon': FontAwesomeIcons.fire,
         'color': Colors.deepOrangeAccent,
-        'description': 'Participou de 5 ou mais eventos.'
+        'description': 'Participou de 5 ou mais eventos.',
       });
     } else {
       badges.add({
         'title': 'Veterano',
         'icon': FontAwesomeIcons.fire,
-        'color': Colors.grey,
+        'color': Colors.grey.shade800,
         'description': 'Participe de 5 eventos para desbloquear.',
-        'locked': true
+        'locked': true,
       });
     }
 
@@ -74,27 +68,44 @@ class ProfileBadgesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final badges = _calculateBadges();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'CONQUISTAS & MEDALHAS',
-          style: TextStyle(
-            color: secondaryTextColor,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white10),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              FaIcon(
+                FontAwesomeIcons.award,
+                color: Color(0xFFFFD54F),
+                size: 16,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'CONQUISTAS & MEDALHAS',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
           ),
-          child: Row(
+          const SizedBox(height: 20),
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: badges.map((badge) {
               final bool isLocked = badge['locked'] == true;
@@ -102,22 +113,33 @@ class ProfileBadgesSection extends StatelessWidget {
                 message: badge['description'],
                 child: Column(
                   children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: badge['color'].withValues(alpha: 0.2),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isLocked
+                            ? Colors.transparent
+                            : badge['color'].withValues(alpha: 0.1),
+                        border: Border.all(
+                          color: isLocked
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : badge['color'].withValues(alpha: 0.3),
+                          width: 2,
+                        ),
+                      ),
                       child: FaIcon(
                         badge['icon'],
-                        size: 30,
-                        color: badge['color'],
+                        size: 28,
+                        color: isLocked ? Colors.grey.shade700 : badge['color'],
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       badge['title'],
                       style: TextStyle(
-                        color: isLocked ? Colors.grey : Colors.white,
+                        color: isLocked ? Colors.grey.shade600 : Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                     ),
                   ],
@@ -125,8 +147,8 @@ class ProfileBadgesSection extends StatelessWidget {
               );
             }).toList(),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

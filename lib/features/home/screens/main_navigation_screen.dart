@@ -5,6 +5,7 @@ import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/features/home/providers/home_events_provider.dart';
 import 'package:oenigma/features/home/screens/home_screen.dart';
+import 'package:oenigma/features/home/widgets/svg_icon.dart';
 import 'package:oenigma/features/profile/screens/profile_screen.dart';
 import 'package:oenigma/features/ranking/screens/ranking_screen.dart';
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
@@ -154,45 +155,42 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           items: const [
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 6.0),
-                child: FaIcon(FontAwesomeIcons.house, size: 20),
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(
+                  assetPath: 'assets/icons/maps.svg',
+                  color: Colors
+                      .white, // a cor será sobrescrita pelo BottomNavigationBar
+                ),
               ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 6.0),
-                child: FaIcon(FontAwesomeIcons.house, size: 22),
-              ),
-              label: 'Início',
+              label: 'Explorar',
             ),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 6.0),
-                child: FaIcon(FontAwesomeIcons.wallet, size: 20),
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(
+                  assetPath: 'assets/icons/chest.svg',
+                  color: Colors.white,
+                ),
               ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 6.0),
-                child: FaIcon(FontAwesomeIcons.wallet, size: 22),
-              ),
-              label: 'Carteira',
+              label: 'Tesouro',
             ),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 6.0),
-                child: FaIcon(FontAwesomeIcons.trophy, size: 20),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 6.0),
-                child: FaIcon(FontAwesomeIcons.trophy, size: 22),
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(
+                  assetPath: 'assets/icons/ship.svg',
+                  color: Colors.white,
+                ),
               ),
               label: 'Ranking',
             ),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 6.0),
-                child: FaIcon(FontAwesomeIcons.user, size: 20),
-              ),
-              activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 6.0),
-                child: FaIcon(FontAwesomeIcons.user, size: 22),
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(
+                  assetPath: 'assets/icons/pirate.svg',
+                  color: Colors.white,
+                ),
               ),
               label: 'Perfil',
             ),

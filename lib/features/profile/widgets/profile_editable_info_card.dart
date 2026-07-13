@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 
 class ProfileEditableInfoCard extends StatelessWidget {
   final Map<String, dynamic> playerData;
@@ -24,9 +22,16 @@ class ProfileEditableInfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cardColor,
+        color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Form(
         key: formKey,
@@ -56,33 +61,49 @@ class ProfileEditableInfoCard extends StatelessWidget {
               icon: FontAwesomeIcons.mobileScreenButton,
             ),
             const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
               child: ElevatedButton(
                 onPressed: isLoading ? null : onSave,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryAmber,
-                  foregroundColor: darkBackground,
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(30),
                   ),
-                  elevation: 0,
+                  minimumSize: const Size(double.infinity, 50),
                 ),
                 child: isLoading
                     ? const SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                          color: darkBackground,
+                          color: Colors.black,
                           strokeWidth: 2,
                         ),
                       )
                     : const Text(
                         'SALVAR ALTERAÇÕES',
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.0,
+                          fontSize: 14,
                         ),
                       ),
               ),
@@ -110,24 +131,38 @@ class _InfoRow extends StatelessWidget {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: FaIcon(icon, color: secondaryTextColor, size: 20),
+          child: FaIcon(icon, color: Colors.grey, size: 16),
         ),
         const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(color: secondaryTextColor, fontSize: 12),
-            ),
-            const SizedBox(height: 2),
-            Text(value, style: const TextStyle(color: textColor, fontSize: 16)),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value.isNotEmpty ? value : 'Não informado',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -149,24 +184,27 @@ class _TextFormField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
-      style: const TextStyle(color: textColor),
+      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       decoration: InputDecoration(
-        prefixIcon: FaIcon(icon, color: secondaryTextColor, size: 20),
-        labelText: label,
-        labelStyle: const TextStyle(color: secondaryTextColor),
-        filled: true,
-        fillColor: darkBackground,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+        prefixIcon: Padding(
+          padding: const EdgeInsets.all(14.0),
+          child: FaIcon(icon, color: Colors.grey, size: 18),
         ),
-        enabledBorder: OutlineInputBorder(
+        labelText: label,
+        labelStyle: const TextStyle(
+          color: Colors.grey,
+          fontWeight: FontWeight.bold,
+        ),
+        filled: true,
+        fillColor: const Color(0xFF121212), // Fundo mais profundo que o card
+        contentPadding: const EdgeInsets.symmetric(vertical: 16),
+        border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryAmber),
+          borderSide: const BorderSide(color: Color(0xFFFFD54F), width: 1.5),
         ),
       ),
     );

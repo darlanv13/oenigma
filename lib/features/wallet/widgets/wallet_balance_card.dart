@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 
 class WalletBalanceCard extends StatelessWidget {
   final UserWalletModel wallet;
@@ -13,45 +12,48 @@ class WalletBalanceCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [cardColor, const Color(0xFF2C2C2C), cardColor],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: const Color(0xFF1E1E1E), // Fundo painel escuro
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: primaryAmber.withValues(alpha: 0.2), width: 1.5),
+        border: Border.all(
+          color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: primaryAmber.withValues(alpha: 0.05),
-            blurRadius: 25,
-            spreadRadius: 2,
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 20,
             offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: const Color(0xFFFFD54F).withValues(alpha: 0.05),
+            blurRadius: 30,
+            spreadRadius: 2,
           ),
         ],
       ),
       child: Column(
         children: [
           const Text(
-            'Saldo Disponível',
+            'SALDO DISPONÍVEL',
             style: TextStyle(
-              color: secondaryTextColor,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.2,
+              color: Colors.grey,
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.5,
             ),
           ),
           const SizedBox(height: 16),
           Text(
             'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
             style: TextStyle(
-              color: primaryAmber,
+              color: const Color(0xFFFFD54F),
               fontSize: 48,
               fontWeight: FontWeight.w900,
               letterSpacing: -1,
               shadows: [
                 Shadow(
-                  color: primaryAmber.withValues(alpha: 0.4),
-                  blurRadius: 15,
+                  color: const Color(0xFFFFD54F).withValues(alpha: 0.5),
+                  blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
               ],

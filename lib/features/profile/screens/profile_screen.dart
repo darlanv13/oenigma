@@ -5,7 +5,6 @@ import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/features/profile/providers/profile_repository_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/profile/widgets/profile_account_actions.dart';
 import 'package:oenigma/features/profile/widgets/profile_editable_info_card.dart';
 import 'package:oenigma/features/profile/widgets/profile_header.dart';
@@ -65,7 +64,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
       String? photoURL;
       if (_selectedImage != null) {
-        photoURL = await ref.read(profileRepositoryProvider).uploadFile('profile_pictures/$userId/profile_image.jpg', await _selectedImage!.readAsBytes());
+        photoURL = await ref
+            .read(profileRepositoryProvider)
+            .uploadFile(
+              'profile_pictures/$userId/profile_image.jpg',
+              await _selectedImage!.readAsBytes(),
+            );
       }
       final dataToUpdate = {
         'phone': _phoneController.text,
@@ -74,7 +78,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (photoURL != null) dataToUpdate['photoURL'] = photoURL;
 
       try {
-        await ref.read(profileRepositoryProvider).updateUserProfile(userId, dataToUpdate);
+        await ref
+            .read(profileRepositoryProvider)
+            .updateUserProfile(userId, dataToUpdate);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -85,10 +91,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         }
       } catch (e) {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Erro: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.redAccent,
             ),
           );
         }
@@ -106,10 +112,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            error ?? 'E-mail de recuperação enviado para $email',
-          ),
-          backgroundColor: error == null ? Colors.green : Colors.red,
+          content: Text(error ?? 'E-mail de recuperação enviado para $email'),
+          backgroundColor: error == null ? Colors.green : Colors.redAccent,
         ),
       );
     }
@@ -120,14 +124,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final String email = widget.playerData['email'] ?? widget.walletData.email;
 
     return Scaffold(
-      backgroundColor: darkBackground,
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         title: const Text(
-          'Meu Perfil',
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+          'PERFIL DO JOGADOR',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: Color(0xFFFFD54F),
+            letterSpacing: 1.5,
+            fontSize: 18,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF121212),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -141,7 +150,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onPickImage: _pickImage,
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -160,7 +169,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     onSave: _saveProfile,
                   ),
                   const SizedBox(height: 32),
-                  const ProfileSectionHeader(title: 'CONTA'),
+                  const ProfileSectionHeader(title: 'CONTA & SEGURANÇA'),
                   ProfileAccountActions(
                     email: email,
                     onResetPassword: _resetPassword,

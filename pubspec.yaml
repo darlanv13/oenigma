@@ -44,6 +44,7 @@ dependencies:
   # === PACOTE DO PARSE ADICIONADO AQUI ===
   parse_server_sdk_flutter: ^10.4.0
   sidebarx: ^0.17.2
+  flutter_svg: ^2.3.0
 
 # === CORREÇÃO DE CONFLITO DE DEPENDÊNCIAS ===
 dependency_overrides:
@@ -66,7 +67,12 @@ flutter:
     - assets/animations/error.json
     - assets/animations/reset_senha.json
     # Certifique-se de que a imagem do ícone existe nesta pasta:
-    # - assets/icon/icon.png 
+    - assets/icon/chest.svg
+    - assets/icon/compass.svg
+    - assets/icon/ship.svg
+    - assets/icon/money.svg
+    - assets/icon/maps.svg
+    - assets/icon/pirate.svg
 
 # =======================================================
 # AQUI ESTÁ A PARTE QUE FALTAVA (CONFIGURAÇÃO DOS ÍCONES)

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class WalletSectionHeader extends StatelessWidget {
   final String title;
@@ -12,21 +12,18 @@ class WalletSectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 16.0, left: 4.0),
       child: Row(
         children: [
-          Container(
-            width: 4,
-            height: 16,
-            decoration: BoxDecoration(
-              color: primaryAmber,
-              borderRadius: BorderRadius.circular(2),
-            ),
+          const FaIcon(
+            FontAwesomeIcons.caretRight,
+            color: Color(0xFFFFD54F),
+            size: 16,
           ),
           const SizedBox(width: 8),
           Text(
             title,
             style: const TextStyle(
-              color: secondaryTextColor,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
               letterSpacing: 1.5,
             ),
           ),
