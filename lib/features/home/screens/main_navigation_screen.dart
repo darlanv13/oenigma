@@ -14,7 +14,8 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
+  ConsumerState<MainNavigationScreen> createState() =>
+      _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
@@ -32,16 +33,15 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     return Scaffold(
       backgroundColor: darkBackground,
-      extendBody: true,
       body: homeDataAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: primaryAmber),
-        ),
+        loading: () =>
+            const Center(child: CircularProgressIndicator(color: primaryAmber)),
         error: (error, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const FaIcon(FontAwesomeIcons.circleExclamation,
+              const FaIcon(
+                FontAwesomeIcons.circleExclamation,
                 size: 48,
                 color: Colors.redAccent,
               ),
@@ -88,74 +88,73 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             const HomeScreen(),
             const WalletScreen(),
             RankingScreen(
-              availableEvents: events.where((e) => e.status != 'closed').toList(),
+              availableEvents: events
+                  .where((e) => e.status != 'closed')
+                  .toList(),
               allPlayers: allPlayers,
             ),
-            ProfileScreen(
-              playerData: playerData,
-              walletData: walletData,
-            ),
+            ProfileScreen(playerData: playerData, walletData: walletData),
           ];
 
           return screens[_selectedIndex];
         },
       ),
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: primaryAmber.withValues(alpha: 0.3), width: 2),
+          border: Border(
+            top: BorderSide(
+              color: primaryAmber.withValues(alpha: 0.3),
+              width: 2,
+            ),
+          ),
           boxShadow: [
             BoxShadow(
               color: primaryAmber.withValues(alpha: 0.1),
               blurRadius: 15,
-              offset: const Offset(0, 5),
+              offset: const Offset(0, -5),
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: BottomNavigationBar(
-            backgroundColor: Colors.transparent,
-            type: BottomNavigationBarType.fixed,
-            selectedItemColor: primaryAmber,
-            unselectedItemColor: secondaryTextColor,
-            elevation: 0,
-            currentIndex: _selectedIndex,
-            onTap: _onItemTapped,
-            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-            items: const [
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.0),
-                  child: FaIcon(FontAwesomeIcons.house),
-                ),
-                label: 'Início',
+        child: BottomNavigationBar(
+          backgroundColor: Colors.transparent,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: primaryAmber,
+          unselectedItemColor: secondaryTextColor,
+          elevation: 0,
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: FaIcon(FontAwesomeIcons.house),
               ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.0),
-                  child: FaIcon(FontAwesomeIcons.wallet),
-                ),
-                label: 'Carteira',
+              label: 'Início',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: FaIcon(FontAwesomeIcons.wallet),
               ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.0),
-                  child: FaIcon(FontAwesomeIcons.trophy),
-                ),
-                label: 'Ranking',
+              label: 'Carteira',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: FaIcon(FontAwesomeIcons.trophy),
               ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4.0),
-                  child: FaIcon(FontAwesomeIcons.user),
-                ),
-                label: 'Perfil',
+              label: 'Ranking',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: FaIcon(FontAwesomeIcons.user),
               ),
-            ],
-          ),
+              label: 'Perfil',
+            ),
+          ],
         ),
       ),
     );
