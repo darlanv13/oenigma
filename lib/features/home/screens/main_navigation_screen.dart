@@ -32,6 +32,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     return Scaffold(
       backgroundColor: darkBackground,
+      extendBody: true,
       body: homeDataAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: primaryAmber),
@@ -100,58 +101,61 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         },
       ),
       bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         decoration: BoxDecoration(
           color: cardColor,
-          border: Border(
-            top: BorderSide(color: primaryAmber.withValues(alpha: 0.3), width: 2),
-          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: primaryAmber.withValues(alpha: 0.3), width: 2),
           boxShadow: [
             BoxShadow(
               color: primaryAmber.withValues(alpha: 0.1),
               blurRadius: 15,
-              offset: const Offset(0, -5),
+              offset: const Offset(0, 5),
             ),
           ],
         ),
-        child: BottomNavigationBar(
-          backgroundColor: Colors.transparent,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: primaryAmber,
-          unselectedItemColor: secondaryTextColor,
-          elevation: 0,
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
-                child: FaIcon(FontAwesomeIcons.house),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BottomNavigationBar(
+            backgroundColor: Colors.transparent,
+            type: BottomNavigationBarType.fixed,
+            selectedItemColor: primaryAmber,
+            unselectedItemColor: secondaryTextColor,
+            elevation: 0,
+            currentIndex: _selectedIndex,
+            onTap: _onItemTapped,
+            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+            items: const [
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 4.0),
+                  child: FaIcon(FontAwesomeIcons.house),
+                ),
+                label: 'Início',
               ),
-              label: 'Início',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
-                child: FaIcon(FontAwesomeIcons.wallet),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 4.0),
+                  child: FaIcon(FontAwesomeIcons.wallet),
+                ),
+                label: 'Carteira',
               ),
-              label: 'Carteira',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
-                child: FaIcon(FontAwesomeIcons.trophy),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 4.0),
+                  child: FaIcon(FontAwesomeIcons.trophy),
+                ),
+                label: 'Ranking',
               ),
-              label: 'Ranking',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
-                child: FaIcon(FontAwesomeIcons.user),
+              BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 4.0),
+                  child: FaIcon(FontAwesomeIcons.user),
+                ),
+                label: 'Perfil',
               ),
-              label: 'Perfil',
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
