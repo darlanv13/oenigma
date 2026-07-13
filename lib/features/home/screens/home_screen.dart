@@ -9,6 +9,7 @@ import '../widgets/home_profile_card.dart';
 import '../widgets/events_section_header.dart';
 import 'package:oenigma/features/home/widgets/home_banner_carousel.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -146,7 +147,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
                   ),
-                  _buildEventsGrid(events, playerData),
+                  _buildEventsCarousel(events, playerData, context),
                   const SliverToBoxAdapter(child: SizedBox(height: 40)),
                 ],
               ),
@@ -157,9 +158,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Widget _buildEventsGrid(
+  Widget _buildEventsCarousel(
     List<EventModel> events,
     Map<String, dynamic> playerData,
+    BuildContext context,
   ) {
     if (events.isEmpty) {
       return const SliverToBoxAdapter(
@@ -184,26 +186,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       );
     }
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.75, // Ajustado para melhor proporção
+
+    return SliverToBoxAdapter(
+      child: CarouselSlider(
+        options: CarouselOptions(
+          height: MediaQuery.of(context).size.height * 0.55,
+          viewportFraction: 0.85,
+          enlargeCenterPage: true,
+          enableInfiniteScroll: false,
         ),
-        delegate: SliverChildBuilderDelegate((context, index) {
-          // Adiciona uma animação escalonada simples
-          return FadeTransition(
-            opacity: _fadeAnimation,
-            child: EventCard(
-              event: events[index],
-              playerData: playerData,
-              onReturn: _reloadData,
-            ),
+        items: events.map((e) {
+          return Builder(
+            builder: (BuildContext context) {
+              return FadeTransition(
+                opacity: _fadeAnimation,
+                child: EventCard(
+                  event: e,
+                  playerData: playerData,
+                  onReturn: _reloadData,
+                ),
+              );
+            },
           );
-        }, childCount: events.length),
+        }).toList(),
       ),
     );
   }
