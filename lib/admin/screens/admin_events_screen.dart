@@ -319,7 +319,6 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                     decoration: const InputDecoration(
                                       labelText: 'Prêmio (R\$)',
                                     ),
-
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -330,7 +329,6 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                     decoration: const InputDecoration(
                                       labelText: 'Ordem',
                                     ),
-
                                   ),
                                 ),
                               ],
@@ -348,7 +346,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               controller: iconCtrl,
                               style: const TextStyle(color: Colors.white),
                               decoration: InputDecoration(
-                                labelText: 'URL do Ícone (Lottie/Image)',
+                                labelText: 'URL da Imagem de Fundo',
                                 suffixIcon: IconButton(
                                   icon: const FaIcon(
                                     FontAwesomeIcons.upload,
@@ -990,7 +988,6 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               decoration: const InputDecoration(
                                 labelText: 'Ordem',
                               ),
-
                             ),
                             const SizedBox(height: 12),
                             SwitchListTile(
@@ -1206,15 +1203,29 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       selectedType = 'text';
     }
 
-    List<String> selectedCharacteristics = List<String>.from(data?['characteristics'] ?? []);
+    List<String> selectedCharacteristics = List<String>.from(
+      data?['characteristics'] ?? [],
+    );
     final availableCharacteristics = [
       {'key': 'nado', 'label': 'Nado', 'icon': FontAwesomeIcons.personSwimming},
-      {'key': 'corrida', 'label': 'Corrida', 'icon': FontAwesomeIcons.personRunning},
+      {
+        'key': 'corrida',
+        'label': 'Corrida',
+        'icon': FontAwesomeIcons.personRunning,
+      },
       {'key': 'camera', 'label': 'Câmera', 'icon': FontAwesomeIcons.camera},
       {'key': 'noite', 'label': 'Noite', 'icon': FontAwesomeIcons.moon},
       {'key': 'dia', 'label': 'Dia', 'icon': FontAwesomeIcons.sun},
-      {'key': 'exploracao', 'label': 'Exploração', 'icon': FontAwesomeIcons.compass},
-      {'key': 'escalada', 'label': 'Escalada', 'icon': FontAwesomeIcons.mountain},
+      {
+        'key': 'exploracao',
+        'label': 'Exploração',
+        'icon': FontAwesomeIcons.compass,
+      },
+      {
+        'key': 'escalada',
+        'label': 'Escalada',
+        'icon': FontAwesomeIcons.mountain,
+      },
     ];
 
     List<dynamic> linkedHints = List.from(data?['linkedHints'] ?? []);
@@ -1261,7 +1272,6 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               decoration: const InputDecoration(
                                 labelText: 'Ordem',
                               ),
-
                             ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
@@ -1360,7 +1370,6 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               decoration: const InputDecoration(
                                 labelText: 'Prêmio (R\$)',
                               ),
-
                             ),
 
                             const SizedBox(height: 16),
@@ -1425,12 +1434,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               spacing: 8,
                               runSpacing: 8,
                               children: availableCharacteristics.map((char) {
-                                final isSelected = selectedCharacteristics.contains(char['key'] as String);
+                                final isSelected = selectedCharacteristics
+                                    .contains(char['key'] as String);
                                 return FilterChip(
                                   label: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      FaIcon(char['icon'] as dynamic, size: 14, color: isSelected ? Colors.black : Colors.white),
+                                      FaIcon(
+                                        char['icon'] as dynamic,
+                                        size: 14,
+                                        color: isSelected
+                                            ? Colors.black
+                                            : Colors.white,
+                                      ),
                                       const SizedBox(width: 8),
                                       Text(char['label'] as String),
                                     ],
@@ -1439,16 +1455,24 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                   selectedColor: primaryAmber,
                                   checkmarkColor: Colors.black,
                                   labelStyle: TextStyle(
-                                    color: isSelected ? Colors.black : Colors.white,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    color: isSelected
+                                        ? Colors.black
+                                        : Colors.white,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
                                   ),
                                   backgroundColor: cardColor,
                                   onSelected: (bool selected) {
                                     setState(() {
                                       if (selected) {
-                                        selectedCharacteristics.add(char['key'] as String);
+                                        selectedCharacteristics.add(
+                                          char['key'] as String,
+                                        );
                                       } else {
-                                        selectedCharacteristics.remove(char['key'] as String);
+                                        selectedCharacteristics.remove(
+                                          char['key'] as String,
+                                        );
                                       }
                                     });
                                   },
@@ -1565,7 +1589,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                       'prize':
                                           num.tryParse(prizeCtrl.text) ?? 0,
                                       'linkedHints': linkedHints,
-                                      'characteristics': selectedCharacteristics,
+                                      'characteristics':
+                                          selectedCharacteristics,
 
                                       // Salvando as novas chaves no Back4App
                                       'hasCompass': hasCompass,

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui';
-import 'package:lottie/lottie.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lottie/lottie.dart'; // Mantido caso o lottie do overlay em baixo use
 import 'package:oenigma/core/models/event_model.dart';
 import '../screens/event_details_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -24,19 +25,6 @@ class EventCard extends StatefulWidget {
 }
 
 class _EventCardState extends State<EventCard> {
-  late final Future<LottieComposition> _composition;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.event.icon.isNotEmpty &&
-        Uri.tryParse(widget.event.icon)?.isAbsolute == true) {
-      _composition = NetworkLottie(widget.event.icon).load();
-    } else {
-      _composition = AssetLottie('assets/animations/no_enigma.json').load();
-    }
-  }
-
   String _formatDate(String dateStr) {
     try {
       final date = DateFormat('dd/MM/yyyy').parse(dateStr);
@@ -79,29 +67,35 @@ class _EventCardState extends State<EventCard> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Animação de Fundo
+              // Imagem de Fundo
               Positioned.fill(
                 child: Container(
                   color: darkBackground,
                   child: widget.event.icon.isNotEmpty
-                      ? FutureBuilder<LottieComposition>(
-                          future: _composition,
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) {
-                              return Lottie(
-                                composition: snapshot.data!,
-                                fit: BoxFit.scaleDown,
-                              );
-                            }
-                            return const Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: primaryAmber,
-                              ),
-                            );
-                          },
+                      ? CachedNetworkImage(
+                          imageUrl: widget.event.icon,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: primaryAmber,
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => const Center(
+                            child: FaIcon(
+                              FontAwesomeIcons.image,
+                              color: secondaryTextColor,
+                              size: 40,
+                            ),
+                          ),
                         )
-                      : const SizedBox(),
+                      : const Center(
+                          child: FaIcon(
+                            FontAwesomeIcons.image,
+                            color: secondaryTextColor,
+                            size: 40,
+                          ),
+                        ),
                 ),
               ),
 
