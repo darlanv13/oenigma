@@ -63,7 +63,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
     final walletAsync = ref.watch(walletProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(
           'CARTEIRA',
@@ -75,7 +75,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
           ),
         ),
         centerTitle: true,
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: walletAsync.when(
@@ -131,7 +131,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
           return RefreshIndicator(
             onRefresh: _refreshWalletData,
             color: const Color(0xFFFFD54F),
-            backgroundColor: const Color(0xFF1E1E1E),
+
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),

@@ -74,7 +74,7 @@ class _FindAndWinProgressScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: Colors.transparent,
       body: StreamBuilder<List<EnigmaModel>>(
         stream: _enigmasStream,
         builder: (context, snapshot) {
@@ -94,7 +94,7 @@ class _FindAndWinProgressScreenState
               // Header elegante
               SliverAppBar(
                 expandedHeight: 120.0,
-                backgroundColor: const Color(0xFF121212),
+                backgroundColor: Colors.transparent,
                 pinned: true,
                 elevation: 0,
                 leading: Padding(

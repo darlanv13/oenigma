@@ -64,7 +64,7 @@ class ProfileHeader extends StatelessWidget {
                   ),
                   child: CircleAvatar(
                     radius: 55,
-                    backgroundColor: const Color(0xFF121212),
+                    backgroundColor: Colors.transparent,
                     backgroundImage: selectedImage != null
                         ? FileImage(selectedImage!)
                         : (playerData['photoURL'] != null &&

@@ -61,11 +61,11 @@ class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
           widget.event.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: darkBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
       ),
-      backgroundColor: darkBackground,
+      backgroundColor: Colors.transparent,
       body: FutureBuilder<void>(
         future: _dataFuture,
         builder: (context, snapshot) {

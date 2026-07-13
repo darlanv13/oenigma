@@ -62,7 +62,7 @@ class HomeProfileCard extends StatelessWidget {
             ),
             child: CircleAvatar(
               radius: 26,
-              backgroundColor: const Color(0xFF121212),
+              backgroundColor: Colors.transparent,
               backgroundImage:
                   (wallet.photoURL != null && wallet.photoURL!.isNotEmpty)
                   ? NetworkImage(wallet.photoURL!)

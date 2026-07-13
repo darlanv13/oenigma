@@ -32,7 +32,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final homeDataAsync = ref.watch(homeEventsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: Colors.transparent,
       body: homeDataAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: Color(0xFFFFD54F)),
@@ -158,7 +158,19 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: Opacity(
                   opacity: 0.5,
+<<<<<<< HEAD
                   child: SvgNavIcon(assetPath: 'assets/icon/maps.svg'),
+=======
+                  child: SvgNavIcon(
+                    assetPath: 'assets/icon/maps.svg',
+                  ),
+                ),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(
+                  assetPath: 'assets/icon/maps.svg',
+>>>>>>> origin/fix-navigation-icon-paths-9420818126627960228
                 ),
               ),
               activeIcon: Padding(
@@ -172,7 +184,19 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: Opacity(
                   opacity: 0.5,
+<<<<<<< HEAD
                   child: SvgNavIcon(assetPath: 'assets/icon/chest.svg'),
+=======
+                  child: SvgNavIcon(
+                    assetPath: 'assets/icon/chest.svg',
+                  ),
+                ),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(
+                  assetPath: 'assets/icon/chest.svg',
+>>>>>>> origin/fix-navigation-icon-paths-9420818126627960228
                 ),
               ),
               activeIcon: Padding(
@@ -186,7 +210,15 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: Opacity(
                   opacity: 0.5,
-                  child: SvgNavIcon(assetPath: 'assets/icon/ship.svg'),
+                  child: SvgNavIcon(
+                    assetPath: 'assets/icon/ship.svg',
+                  ),
+                ),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(
+                  assetPath: 'assets/icon/ship.svg',
                 ),
               ),
               activeIcon: Padding(
@@ -200,7 +232,19 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 padding: EdgeInsets.only(bottom: 4.0),
                 child: Opacity(
                   opacity: 0.5,
+<<<<<<< HEAD
                   child: SvgNavIcon(assetPath: 'assets/icon/pirate.svg'),
+=======
+                  child: SvgNavIcon(
+                    assetPath: 'assets/icon/pirate.svg',
+                  ),
+                ),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 4.0),
+                child: SvgNavIcon(
+                  assetPath: 'assets/icon/pirate.svg',
+>>>>>>> origin/fix-navigation-icon-paths-9420818126627960228
                 ),
               ),
               activeIcon: Padding(

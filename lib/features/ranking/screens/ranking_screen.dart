@@ -102,7 +102,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
   Widget build(BuildContext context) {
     if (widget.availableEvents.isEmpty) {
       return Scaffold(
-        backgroundColor: darkBackground,
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: const Text('Ranking Global'),
           backgroundColor: Colors.transparent,
@@ -128,7 +128,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
     }
 
     return Scaffold(
-      backgroundColor: darkBackground,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(
           'Tabela de Classificação',
