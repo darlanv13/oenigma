@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -31,7 +30,6 @@ class HomeBannerCarousel extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: CarouselSlider(
             options: CarouselOptions(
-              //aspectRatio: 16 / 9,
               height: 150.0,
               autoPlay: true,
               autoPlayInterval: const Duration(seconds: 5),
@@ -59,36 +57,40 @@ class HomeBannerCarousel extends StatelessWidget {
                   width: MediaQuery.of(context).size.width,
                   margin: const EdgeInsets.symmetric(horizontal: 5.0),
                   decoration: BoxDecoration(
-                    color: cardColor,
+                    color: const Color(0xFF1E1E1E), // Fundo escuro premium
                     borderRadius: BorderRadius.circular(16.0),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
+                        color: Colors.black.withValues(alpha: 0.4),
                         spreadRadius: 1,
-                        blurRadius: 5,
-                        offset: const Offset(0, 3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
                       ),
                     ],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16.0),
+                    borderRadius: BorderRadius.circular(15.0),
                     child: imageUrl.isNotEmpty
                         ? CachedNetworkImage(
                             imageUrl: imageUrl,
                             fit: BoxFit.cover,
                             placeholder: (context, url) => const Center(
                               child: CircularProgressIndicator(
-                                color: primaryAmber,
+                                color: Color(0xFFFFD54F),
                               ),
                             ),
                             errorWidget: (context, url, error) => const FaIcon(
                               FontAwesomeIcons.circleExclamation,
+                              color: Colors.grey,
                             ),
                           )
                         : const Center(
                             child: FaIcon(
                               FontAwesomeIcons.image,
-                              color: secondaryTextColor,
+                              color: Colors.grey,
                             ),
                           ),
                   ),

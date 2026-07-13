@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'dart:ui';
 
 import '../widgets/card_enigma.dart';
 
@@ -73,62 +74,146 @@ class _FindAndWinProgressScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.event.name)),
+      backgroundColor: const Color(0xFF121212),
       body: StreamBuilder<List<EnigmaModel>>(
         stream: _enigmasStream,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting &&
-              !snapshot.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(color: primaryAmber),
-            );
-          }
-
           final enigmas = snapshot.data ?? [];
           final visibleEnigmas = enigmas.where((e) {
             if (e.status != 'closed') return true;
             if (e.closedAt != null &&
-                DateTime.now().difference(e.closedAt!).inMinutes < 15)
+                DateTime.now().difference(e.closedAt!).inMinutes < 15) {
               return true;
+            }
             return false;
           }).toList();
 
-          if (visibleEnigmas.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FaIcon(FontAwesomeIcons.flag, size: 60, color: primaryAmber),
-                  SizedBox(height: 16),
-                  Text(
-                    "Evento Finalizado!",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          return CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Header elegante
+              SliverAppBar(
+                expandedHeight: 120.0,
+                backgroundColor: const Color(0xFF121212),
+                pinned: true,
+                elevation: 0,
+                leading: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    child: IconButton(
+                      icon: const FaIcon(
+                        FontAwesomeIcons.chevronLeft,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
                   ),
-                  Text(
-                    "Todos os enigmas foram resolvidos.",
-                    style: TextStyle(color: secondaryTextColor),
+                ),
+                flexibleSpace: FlexibleSpaceBar(
+                  centerTitle: true,
+                  title: Text(
+                    widget.event.name,
+                    style: const TextStyle(
+                      color: Color(0xFFFFD54F),
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      letterSpacing: 0.5,
+                    ),
                   ),
-                ],
+                  background: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF1E1E1E),
+                          const Color(0xFF121212),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            );
-          }
 
-          return GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.85,
-            ),
-            itemCount: visibleEnigmas.length,
-            itemBuilder: (context, index) {
-              return CardEnigma(
-                enigma: visibleEnigmas[index],
-                event: widget.event,
-                animation: _animationController,
-              );
-            },
+              // Indicador de Carregamento Inicial
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  !snapshot.hasData)
+                const SliverFillRemaining(
+                  child: Center(
+                    child: CircularProgressIndicator(color: Color(0xFFFFD54F)),
+                  ),
+                )
+              // Estado Vazio (Finalizado)
+              else if (visibleEnigmas.isEmpty)
+                SliverFillRemaining(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.05),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          child: const FaIcon(
+                            FontAwesomeIcons.flagCheckered,
+                            size: 50,
+                            color: Color(0xFFFFD54F),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text(
+                          "CAÇADA ENCERRADA!",
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "Todos os tesouros e enigmas deste evento já foram encontrados.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 16,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              // Grade de Enigmas
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                  sliver: SliverGrid(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 16,
+                      childAspectRatio:
+                          0.65, // Proporção mais alta para acomodar os badges
+                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      return CardEnigma(
+                        enigma: visibleEnigmas[index],
+                        event: widget.event,
+                        animation: _animationController,
+                      );
+                    }, childCount: visibleEnigmas.length),
+                  ),
+                ),
+            ],
           );
         },
       ),

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/home/providers/home_events_provider.dart';
 import 'package:oenigma/features/home/screens/home_screen.dart';
 import 'package:oenigma/features/profile/screens/profile_screen.dart';
@@ -32,10 +31,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final homeDataAsync = ref.watch(homeEventsProvider);
 
     return Scaffold(
-      backgroundColor: darkBackground,
+      backgroundColor: const Color(0xFF121212),
       body: homeDataAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator(color: primaryAmber)),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: Color(0xFFFFD54F)),
+        ),
         error: (error, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -48,7 +48,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               const SizedBox(height: 16),
               const Text(
                 'Erro ao carregar dados.',
-                style: TextStyle(color: Colors.white, fontSize: 16),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 8),
               Padding(
@@ -62,11 +66,24 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: () => ref.refresh(homeEventsProvider.future),
-                icon: const FaIcon(FontAwesomeIcons.rotateRight),
-                label: const Text("Tentar Novamente"),
+                icon: const FaIcon(
+                  FontAwesomeIcons.rotateRight,
+                  color: Colors.black,
+                ),
+                label: const Text(
+                  "TENTAR NOVAMENTE",
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryAmber,
+                  backgroundColor: const Color(0xFFFFD54F),
                   foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ],
@@ -101,17 +118,19 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: cardColor,
+          color: const Color(0xFF1E1E1E), // Fundo escuro premium
           border: Border(
             top: BorderSide(
-              color: primaryAmber.withValues(alpha: 0.3),
-              width: 2,
+              color: const Color(
+                0xFFFFD54F,
+              ).withValues(alpha: 0.2), // Borda dourada sutil
+              width: 1,
             ),
           ),
           boxShadow: [
             BoxShadow(
-              color: primaryAmber.withValues(alpha: 0.1),
-              blurRadius: 15,
+              color: Colors.black.withValues(alpha: 0.6),
+              blurRadius: 20,
               offset: const Offset(0, -5),
             ),
           ],
@@ -119,38 +138,61 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         child: BottomNavigationBar(
           backgroundColor: Colors.transparent,
           type: BottomNavigationBarType.fixed,
-          selectedItemColor: primaryAmber,
-          unselectedItemColor: secondaryTextColor,
+          selectedItemColor: const Color(0xFFFFD54F), // Dourado
+          unselectedItemColor: Colors.grey,
           elevation: 0,
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w900,
+            fontSize: 12,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 11,
+          ),
           items: const [
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
-                child: FaIcon(FontAwesomeIcons.house),
+                padding: EdgeInsets.only(bottom: 6.0),
+                child: FaIcon(FontAwesomeIcons.house, size: 20),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 6.0),
+                child: FaIcon(FontAwesomeIcons.house, size: 22),
               ),
               label: 'Início',
             ),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
-                child: FaIcon(FontAwesomeIcons.wallet),
+                padding: EdgeInsets.only(bottom: 6.0),
+                child: FaIcon(FontAwesomeIcons.wallet, size: 20),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 6.0),
+                child: FaIcon(FontAwesomeIcons.wallet, size: 22),
               ),
               label: 'Carteira',
             ),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
-                child: FaIcon(FontAwesomeIcons.trophy),
+                padding: EdgeInsets.only(bottom: 6.0),
+                child: FaIcon(FontAwesomeIcons.trophy, size: 20),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 6.0),
+                child: FaIcon(FontAwesomeIcons.trophy, size: 22),
               ),
               label: 'Ranking',
             ),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
-                child: FaIcon(FontAwesomeIcons.user),
+                padding: EdgeInsets.only(bottom: 6.0),
+                child: FaIcon(FontAwesomeIcons.user, size: 20),
+              ),
+              activeIcon: Padding(
+                padding: EdgeInsets.only(bottom: 6.0),
+                child: FaIcon(FontAwesomeIcons.user, size: 22),
               ),
               label: 'Perfil',
             ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/event/widgets/event_card.dart';
 import 'package:oenigma/features/home/providers/home_events_provider.dart';
 import '../widgets/home_profile_card.dart';
@@ -50,11 +49,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final homeDataAsync = ref.watch(homeEventsProvider);
 
     return Scaffold(
-      backgroundColor: darkBackground,
+      backgroundColor: const Color(0xFF121212),
       body: SafeArea(
         child: homeDataAsync.when(
           loading: () => const Center(
-            child: CircularProgressIndicator(color: primaryAmber),
+            child: CircularProgressIndicator(color: Color(0xFFFFD54F)),
           ),
           error: (error, stack) => Center(
             child: Column(
@@ -68,7 +67,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const SizedBox(height: 16),
                 const Text(
                   'Erro ao carregar dados.',
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Padding(
@@ -82,11 +85,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: _reloadData,
-                  icon: const FaIcon(FontAwesomeIcons.rotateRight),
-                  label: const Text("Tentar Novamente"),
+                  icon: const FaIcon(
+                    FontAwesomeIcons.rotateRight,
+                    color: Colors.black,
+                  ),
+                  label: const Text(
+                    "TENTAR NOVAMENTE",
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryAmber,
+                    backgroundColor: const Color(0xFFFFD54F),
                     foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 ),
               ],
@@ -108,8 +120,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
             return RefreshIndicator(
               onRefresh: _reloadData,
-              color: primaryAmber,
-              backgroundColor: cardColor,
+              color: const Color(0xFFFFD54F),
+              backgroundColor: const Color(0xFF1E1E1E),
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
@@ -164,21 +176,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     BuildContext context,
   ) {
     if (events.isEmpty) {
-      return const SliverToBoxAdapter(
+      return SliverToBoxAdapter(
         child: Center(
           child: Padding(
-            padding: EdgeInsets.all(40.0),
+            padding: const EdgeInsets.all(40.0),
             child: Column(
               children: [
-                FaIcon(
-                  FontAwesomeIcons.calendarXmark,
-                  size: 40,
-                  color: secondaryTextColor,
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.05),
+                  ),
+                  child: const FaIcon(
+                    FontAwesomeIcons.calendarXmark,
+                    size: 40,
+                    color: Colors.grey,
+                  ),
                 ),
-                SizedBox(height: 16),
-                Text(
+                const SizedBox(height: 16),
+                const Text(
                   'Nenhum evento ativo no momento.',
-                  style: TextStyle(color: secondaryTextColor),
+                  style: TextStyle(color: Colors.grey, fontSize: 16),
                 ),
               ],
             ),

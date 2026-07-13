@@ -2,8 +2,9 @@ import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/features/event/providers/event_repository_provider.dart';
-import 'package:lottie/lottie.dart';
 import 'dart:ui';
+import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:oenigma/core/models/event_model.dart';
 import '../screens/event_progress_screen.dart';
@@ -27,7 +28,6 @@ class EventDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
-  late final Future<LottieComposition> _composition;
   Future<Map<String, int>>? _statsFuture;
   bool _isSubscribed = false;
   bool _isLoading = false;
@@ -37,15 +37,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     super.initState();
     _isSubscribed = widget.playerData['events']?[widget.event.id] != null;
 
-    // Carrega a animação do header
-    if (widget.event.icon.isNotEmpty &&
-        Uri.tryParse(widget.event.icon)?.isAbsolute == true) {
-      _composition = NetworkLottie(widget.event.icon).load();
-    } else {
-      _composition = AssetLottie('assets/animations/no_enigma.json').load();
-    }
-
-    // --- LÓGICA DE CARREGAMENTO CONDICIONAL ---
+    // Lógica de carregamento condicional
     if (widget.event.eventType == 'find_and_win') {
       _statsFuture = _getFindAndWinStats();
     } else {
@@ -67,13 +59,18 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     final count = await ref
         .read(eventRepositoryProvider)
         .getChallengeCountForEvent(widget.event.id);
-    return {
-      'total': count,
-      'solved': 0, // O progresso é individual no modo clássico
-    };
+    return {'total': count, 'solved': 0};
   }
 
-  // Função para lidar com a inscrição
+  String _formatDate(String dateStr) {
+    try {
+      final date = DateFormat('dd/MM/yyyy').parse(dateStr);
+      return DateFormat("d 'de' MMM", 'pt_BR').format(date);
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
   Future<void> _handleSubscription() async {
     final confirmed = await _showSubscriptionConfirmationDialog();
     if (confirmed != true) return;
@@ -98,7 +95,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(e.message ?? "Ocorreu um erro."),
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.redAccent,
             ),
           );
         }
@@ -110,33 +107,40 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     }
   }
 
-  // Dialog de confirmação
   Future<bool?> _showSubscriptionConfirmationDialog() {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: cardColor,
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Confirmar Inscrição',
-          style: TextStyle(color: primaryAmber),
+          style: TextStyle(
+            color: Color(0xFFFFD54F),
+            fontWeight: FontWeight.bold,
+          ),
         ),
         content: Text(
           'Confirma a sua inscrição no evento "${widget.event.name}"?',
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(color: secondaryTextColor),
-            ),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: primaryAmber),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFD54F),
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text(
               'CONFIRMAR',
-              style: TextStyle(color: darkBackground),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -144,26 +148,33 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     );
   }
 
-  // Dialog de saldo insuficiente
   void _showInsufficientFundsDialog() {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: cardColor,
-        title: const Text(
-          'Saldo Insuficiente',
-          style: TextStyle(color: primaryAmber),
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            FaIcon(FontAwesomeIcons.wallet, color: Color(0xFFFFD54F), size: 20),
+            SizedBox(width: 10),
+            Text(
+              'Saldo Insuficiente',
+              style: TextStyle(
+                color: Color(0xFFFFD54F),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         content: const Text(
           'Você não tem saldo para se inscrever. Deseja adicionar créditos à sua carteira?',
+          style: TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text(
-              'Depois',
-              style: TextStyle(color: secondaryTextColor),
-            ),
+            child: const Text('Depois', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -174,7 +185,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 context: context,
                 barrierDismissible: false,
                 builder: (_) => const Center(
-                  child: CircularProgressIndicator(color: primaryAmber),
+                  child: CircularProgressIndicator(color: Color(0xFFFFD54F)),
                 ),
               );
 
@@ -193,16 +204,22 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text("Erro ao carregar carteira: $e"),
-                      backgroundColor: Colors.red,
+                      backgroundColor: Colors.redAccent,
                     ),
                   );
                 }
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: primaryAmber),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFD54F),
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text(
               'RECARREGAR',
-              style: TextStyle(color: darkBackground),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -212,175 +229,252 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isFindAndWin = widget.event.eventType == 'find_and_win';
+    final eventTitle = isFindAndWin ? "Ache & Ganhe" : "Modo Clássico";
+
     return Scaffold(
-      backgroundColor: darkBackground,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 320.0,
-            floating: false,
-            pinned: true,
-            backgroundColor: darkBackground,
-            elevation: 0,
-            leading: _buildBackButton(context),
-            flexibleSpace: FlexibleSpaceBar(background: _buildHeaderImage()),
-          ),
-          SliverToBoxAdapter(
-            child: Container(
-              transform: Matrix4.translationValues(0.0, -30.0, 0.0),
-              decoration: BoxDecoration(
-                color: darkBackground,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(30),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    blurRadius: 20,
-                    offset: const Offset(0, -10),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  _buildTitleSection(),
-                  const SizedBox(height: 24),
-                  _buildInfoGrid(),
-                  const SizedBox(height: 32),
-                  _buildDescriptionSection(),
-                  const SizedBox(height: 120),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-          child: _buildBottomCtaButton(context),
-        ),
-      ),
-    );
-  }
-
-  // --- WIDGETS AUXILIARES PARA O NOVO DESIGN ---
-
-  Widget _buildHeaderImage() {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        height: 320,
-        decoration: const BoxDecoration(color: cardColor),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (widget.event.icon.isNotEmpty)
-              FutureBuilder<LottieComposition>(
-                future: _composition,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return Lottie(
-                      composition: snapshot.data!,
-                      fit: BoxFit.scaleDown,
-                    );
-                  } else if (snapshot.hasError) {
-                    return Lottie.asset('assets/animations/no_enigma.json');
-                  }
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: primaryAmber,
-                    ),
-                  );
-                },
-              )
-            else
-              const FaIcon(
-                FontAwesomeIcons.circleQuestion,
-                size: 150,
-                color: primaryAmber,
-              ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    darkBackground.withValues(alpha: 0.8),
-                    darkBackground.withValues(alpha: 0.4),
-                    Colors.transparent,
-                  ],
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  stops: const [0.0, 0.5, 1.0],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTitleSection() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: const Color(0xFF121212),
+      body: Stack(
         children: [
-          Text(
-            widget.event.name,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Lottie.asset(
-                'assets/animations/trofel.json',
-                height: 48,
-                width: 48,
-                repeat: true,
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: primaryAmber.withValues(alpha: 0.1),
-                  border: Border.all(
-                    color: primaryAmber.withValues(alpha: 0.3),
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // HEADER IMERSIVO COM A MESMA IMAGEM DO CARD
+              SliverAppBar(
+                expandedHeight: 350.0,
+                floating: false,
+                pinned: true,
+                backgroundColor: const Color(0xFF121212),
+                elevation: 0,
+                leading: _buildBackButton(context),
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Imagem de Fundo (Mesma lógica do EventCard)
+                      widget.event.icon.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: widget.event.icon,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFFFFD54F),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) =>
+                                  const Center(
+                                    child: FaIcon(
+                                      FontAwesomeIcons.image,
+                                      color: Colors.grey,
+                                      size: 40,
+                                    ),
+                                  ),
+                            )
+                          : Container(color: Colors.grey.shade900),
+
+                      // Gradiente escurecedor
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF121212),
+                              const Color(0xFF121212).withValues(alpha: 0.8),
+                              Colors.transparent,
+                            ],
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            stops: const [0.0, 0.3, 1.0],
+                          ),
+                        ),
+                      ),
+
+                      // Badge Principal de Prêmio
+                      Positioned(
+                        top: MediaQuery.of(context).padding.top + 16,
+                        right: 20,
+                        child: _buildMainBadge(),
+                      ),
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Row(
+              ),
+
+              // CORPO DA TELA (Painel Escuro)
+              SliverToBoxAdapter(
+                child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    const Text(
-                      'Prêmio Total: ',
-                      style: TextStyle(color: secondaryTextColor, fontSize: 14),
+                    Container(
+                      margin: const EdgeInsets.only(top: 50),
+                      padding: const EdgeInsets.fromLTRB(
+                        24,
+                        60,
+                        24,
+                        120,
+                      ), // Espaço extra p/ botão fixo
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E1E),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(32),
+                        ),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.05),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            blurRadius: 20,
+                            offset: const Offset(0, -10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Center(
+                            child: Column(
+                              children: [
+                                Text(
+                                  eventTitle,
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFFFFD54F),
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  widget.event.name,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          _buildInfoGrid(),
+                          const SizedBox(height: 32),
+                          _buildDescriptionSection(),
+                        ],
+                      ),
                     ),
-                    Text(
-                      widget.event.prize,
-                      style: const TextStyle(
-                        color: primaryAmber,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.0,
+
+                    // ÍCONE 3D CENTRALIZADO E FLUTUANTE
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          height: 100,
+                          width: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.6),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: const Center(
+                            child: FaIcon(
+                              FontAwesomeIcons.sackDollar,
+                              size: 70,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
             ],
+          ),
+
+          // BOTÃO FIXO (NEON) NO RODAPÉ
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF121212).withValues(alpha: 0.0),
+                    const Color(0xFF121212).withValues(alpha: 0.9),
+                    const Color(0xFF121212),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              child: _buildBottomCtaButton(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- WIDGETS AUXILIARES DO NOVO DESIGN ---
+
+  Widget _buildMainBadge() {
+    return SizedBox(
+      width: 75,
+      height: 95,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Container(
+            width: 55,
+            height: 80,
+            decoration: const BoxDecoration(
+              color: Color(0xFF6B1A2C),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(8)),
+            ),
+          ),
+          Positioned(
+            top: 10,
+            child: Container(
+              width: 65,
+              height: 65,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const RadialGradient(
+                  colors: [Color(0xFF8B233C), Color(0xFF4A101C)],
+                ),
+                border: Border.all(color: const Color(0xFFFFD54F), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  widget.event.prize.replaceAll('R\$', 'R\$\n'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFFFFD54F),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                    height: 1.1,
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -388,136 +482,145 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 
   Widget _buildInfoGrid() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 2.5,
-        children: [
-          _buildInfoPill(
-            FontAwesomeIcons.locationDot,
-            'Local',
-            widget.event.location,
-          ),
-          _buildInfoPill(
-            FontAwesomeIcons.users,
-            'Jogadores',
-            widget.event.playerCount.toString(),
-          ),
-          FutureBuilder<Map<String, int>>(
-            future: _statsFuture,
-            builder: (context, snapshot) {
-              if (widget.event.eventType == 'find_and_win') {
-                final solved = snapshot.data?['solved'] ?? 0;
-                final total = snapshot.data?['total'] ?? 0;
-                return _buildInfoPill(
-                  FontAwesomeIcons.bullseye,
-                  'Resolvidos',
-                  '$solved / $total',
-                );
-              } else {
-                final total = snapshot.data?['total'] ?? 0;
-                return _buildInfoPill(
-                  FontAwesomeIcons.filter,
-                  'Fases',
-                  total.toString(),
-                );
-              }
-            },
-          ),
-          _buildInfoPill(FontAwesomeIcons.coins, 'Inscrição', 'Grátis'),
-        ],
-      ),
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      padding: EdgeInsets.zero,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 2.6,
+      children: [
+        _buildInfoPill(
+          FontAwesomeIcons.locationDot,
+          'Local',
+          widget.event.location.isNotEmpty
+              ? widget.event.location
+              : 'Não definido',
+        ),
+        _buildInfoPill(
+          FontAwesomeIcons.calendarDay,
+          'Data',
+          _formatDate(widget.event.startDate),
+        ),
+        FutureBuilder<Map<String, int>>(
+          future: _statsFuture,
+          builder: (context, snapshot) {
+            if (widget.event.eventType == 'find_and_win') {
+              final solved = snapshot.data?['solved'] ?? 0;
+              final total = snapshot.data?['total'] ?? 0;
+              return _buildInfoPill(
+                FontAwesomeIcons.bullseye,
+                'Progresso',
+                '$solved / $total',
+                isHighlight: true,
+              );
+            } else {
+              final total = snapshot.data?['total'] ?? 0;
+              return _buildInfoPill(
+                FontAwesomeIcons.filter,
+                'Fases',
+                total.toString(),
+                isHighlight: true,
+              );
+            }
+          },
+        ),
+        _buildInfoPill(
+          FontAwesomeIcons.users,
+          'Jogadores',
+          widget.event.playerCount.toString(),
+        ),
+      ],
     );
   }
 
-  Widget _buildInfoPill(dynamic icon, String label, String value) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: cardColor.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+  Widget _buildInfoPill(
+    dynamic icon,
+    String label,
+    String value, {
+    bool isHighlight = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: isHighlight
+                  ? const Color(0xFFFFD54F).withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: FaIcon(
+              icon,
+              color: isHighlight ? const Color(0xFFFFD54F) : Colors.grey,
+              size: 14,
+            ),
           ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: primaryAmber.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                child: FaIcon(icon, color: primaryAmber, size: 18),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        color: secondaryTextColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      value,
-                      style: const TextStyle(
-                        color: textColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: isHighlight ? const Color(0xFFFFD54F) : Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildDescriptionSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'SOBRE O EVENTO',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: secondaryTextColor,
-              letterSpacing: 1.2,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'SOBRE A CAÇADA',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            color: Colors.grey,
+            letterSpacing: 1.5,
           ),
-          const SizedBox(height: 8),
-          Text(
-            widget.event.fullDescription,
-            style: TextStyle(
-              color: textColor.withValues(alpha: 0.8),
-              fontSize: 16,
-              height: 1.5,
-            ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          widget.event.fullDescription.isNotEmpty
+              ? widget.event.fullDescription
+              : 'Prepare-se para uma jornada épica. Siga as pistas, desvende os enigmas e encontre o tesouro antes dos outros jogadores.',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.8),
+            fontSize: 15,
+            height: 1.5,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -564,79 +667,109 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: _isSubscribed
-            ? const LinearGradient(colors: [Colors.green, Colors.lightGreen])
-            : const LinearGradient(colors: [primaryAmber, Color(0xFFFFD54F)]),
-        boxShadow: [
-          BoxShadow(
-            color: _isSubscribed
-                ? Colors.green.withValues(alpha: 0.3)
-                : primaryAmber.withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          foregroundColor: _isSubscribed ? Colors.white : Colors.black,
-          shadowColor: Colors.transparent,
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-        ),
-        onPressed: _isLoading
-            ? null
-            : () {
-                if (_isSubscribed) {
-                  if (widget.event.eventType == 'find_and_win') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            FindAndWinProgressScreen(event: widget.event),
-                      ),
-                    );
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            EventProgressScreen(event: widget.event),
-                      ),
-                    );
-                  }
+    final bool isFree = widget.event.price == 0;
+
+    // Determina o gradiente do botão com base no status de inscrição e preço
+    List<Color> buttonGradient;
+    Color shadowColor;
+
+    if (_isSubscribed) {
+      buttonGradient = [const Color(0xFF4CAF50), const Color(0xFF2E7D32)];
+      shadowColor = Colors.green;
+    } else if (isFree) {
+      buttonGradient = [const Color(0xFF4CAF50), const Color(0xFF2E7D32)];
+      shadowColor = Colors.green;
+    } else {
+      buttonGradient = [const Color(0xFFFFD54F), const Color(0xFFF57F17)];
+      shadowColor = const Color(0xFFFFD54F);
+    }
+
+    return GestureDetector(
+      onTap: _isLoading
+          ? null
+          : () {
+              if (_isSubscribed) {
+                if (widget.event.eventType == 'find_and_win') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          FindAndWinProgressScreen(event: widget.event),
+                    ),
+                  );
                 } else {
-                  _handleSubscription();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          EventProgressScreen(event: widget.event),
+                    ),
+                  );
                 }
-              },
-        icon: _isLoading
-            ? const SizedBox(
+              } else {
+                _handleSubscription();
+              }
+            },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        height: 60,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: buttonGradient,
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+            color: shadowColor.withValues(alpha: 0.5),
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor.withValues(alpha: 0.4),
+              blurRadius: 20,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_isLoading)
+              const SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
-                  color: darkBackground,
+                  color: Colors.black,
                   strokeWidth: 2,
                 ),
               )
-            : FaIcon(
+            else ...[
+              Text(
+                _isSubscribed
+                    ? 'ENTRAR NA CAÇADA'
+                    : (isFree
+                          ? 'INICIAR CAÇADA (GRÁTIS)'
+                          : "INSCRIÇÃO: R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}"),
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const SizedBox(width: 10),
+              FaIcon(
                 _isSubscribed
                     ? FontAwesomeIcons.play
-                    : FontAwesomeIcons.rightToBracket,
-                size: 28,
+                    : (isFree
+                          ? FontAwesomeIcons.lockOpen
+                          : FontAwesomeIcons.lock),
+                size: 16,
+                color: Colors.black,
               ),
-        label: Text(
-          _isSubscribed ? 'ENTRAR NA CAÇADA' : 'INICIAR CAÇADA (GRÁTIS)',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.2,
-          ),
+            ],
+          ],
         ),
       ),
     );
@@ -644,37 +777,37 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
 
   Widget _buildDisabledButton({required dynamic icon, required String label}) {
     return Container(
+      height: 60,
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
+        color: Colors.grey.shade900,
         borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.1),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: ElevatedButton.icon(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          foregroundColor: Colors.grey.shade500,
-          shadowColor: Colors.transparent,
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              color: Colors.grey,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.2,
+            ),
           ),
-        ),
-        onPressed: null,
-        icon: FaIcon(icon, size: 24),
-        label: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.1,
-          ),
-        ),
+          const SizedBox(width: 10),
+          FaIcon(icon, size: 16, color: Colors.grey),
+        ],
       ),
     );
   }
