@@ -840,6 +840,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
       text:
           data?['instruction'] ?? (docId == null ? _generateRandomName() : ''),
     );
+    final titleCtrl = TextEditingController(text: data?['title']);
     final codeCtrl = TextEditingController(text: data?['code']);
     final photoUrlCtrl = TextEditingController(text: data?['photoUrl']);
     final compassCoordsCtrl = TextEditingController(
@@ -857,6 +858,17 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
     String selectedType = data?['type'] ?? 'foto';
     bool hasCompass = data?['hasCompass'] ?? false;
     bool isSaving = false;
+
+    List<String> selectedCharacteristics = List<String>.from(data?['characteristics'] ?? []);
+    final availableCharacteristics = [
+      {'key': 'nado', 'label': 'Nado', 'icon': FontAwesomeIcons.personSwimming},
+      {'key': 'corrida', 'label': 'Corrida', 'icon': FontAwesomeIcons.personRunning},
+      {'key': 'camera', 'label': 'Câmera', 'icon': FontAwesomeIcons.camera},
+      {'key': 'noite', 'label': 'Noite', 'icon': FontAwesomeIcons.moon},
+      {'key': 'dia', 'label': 'Dia', 'icon': FontAwesomeIcons.sun},
+      {'key': 'exploracao', 'label': 'Exploração', 'icon': FontAwesomeIcons.compass},
+      {'key': 'escalada', 'label': 'Escalada', 'icon': FontAwesomeIcons.mountain},
+    ];
 
     List<dynamic> linkedHints = List.from(data?['linkedHints'] ?? []);
     final Future<ParseResponse> hintsFuture = QueryBuilder<ParseObject>(
@@ -939,6 +951,14 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: titleCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: 'Título do Enigma',
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -1111,6 +1131,52 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                     const Divider(color: Colors.white24),
                     const SizedBox(height: 12),
                     const Text(
+                      'Características do Enigma',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: availableCharacteristics.map((char) {
+                        final isSelected = selectedCharacteristics.contains(char['key'] as String);
+                        return FilterChip(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              FaIcon(char['icon'] as dynamic, size: 14, color: isSelected ? Colors.black : Colors.white),
+                              const SizedBox(width: 8),
+                              Text(char['label'] as String),
+                            ],
+                          ),
+                          selected: isSelected,
+                          selectedColor: primaryAmber,
+                          checkmarkColor: Colors.black,
+                          labelStyle: TextStyle(
+                            color: isSelected ? Colors.black : Colors.white,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          backgroundColor: cardColor,
+                          onSelected: (bool selected) {
+                            setState(() {
+                              if (selected) {
+                                selectedCharacteristics.add(char['key'] as String);
+                              } else {
+                                selectedCharacteristics.remove(char['key'] as String);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+
+                    const SizedBox(height: 16),
+                    const Divider(color: Colors.white24),
+                    const SizedBox(height: 12),
+                    const Text(
                       'Dicas Vinculadas (Hints Pool)',
                       style: TextStyle(
                         color: Colors.white,
@@ -1182,6 +1248,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                               try {
                                 final newData = {
                                   'order': int.tryParse(orderCtrl.text) ?? 1,
+                                  'title': titleCtrl.text,
                                   'code': codeCtrl.text,
                                   'instruction': instructionCtrl.text,
                                   'type': selectedType,
@@ -1191,6 +1258,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                                       ? compassCoordsCtrl.text.trim()
                                       : '',
                                   'linkedHints': linkedHints,
+                                  'characteristics': selectedCharacteristics,
                                 };
                                 if (selectedType == 'foto') {
                                   newData['photoUrl'] = photoUrlCtrl.text;
