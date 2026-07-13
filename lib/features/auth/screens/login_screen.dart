@@ -70,39 +70,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        RichText(
-          textAlign: TextAlign.center,
-          text: const TextSpan(
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 4,
-            ),
-            children: <TextSpan>[
-              TextSpan(
-                text: 'ENIGMA\n',
-                style: TextStyle(color: textColor),
-              ),
-              TextSpan(
-                text: 'CITY',
-                style: TextStyle(
-                  color: primaryAmber,
-                  fontSize: 19,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
+        Image.asset(
+          'assets/icon/icon.png',
+          height: 120,
+          fit: BoxFit.contain,
         ),
         const SizedBox(height: 20),
-        const Text(
-          "",
-          style: TextStyle(
-            color: textColor,
-            fontSize: 32,
-            fontWeight: FontWeight.w300,
-          ),
-        ),
       ],
     );
   }
