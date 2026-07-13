@@ -14,10 +14,13 @@ class FindAndWinProgressScreen extends ConsumerStatefulWidget {
   const FindAndWinProgressScreen({super.key, required this.event});
 
   @override
-  ConsumerState<FindAndWinProgressScreen> createState() => _FindAndWinProgressScreenState();
+  ConsumerState<FindAndWinProgressScreen> createState() =>
+      _FindAndWinProgressScreenState();
 }
 
-class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScreen> with SingleTickerProviderStateMixin {
+class _FindAndWinProgressScreenState
+    extends ConsumerState<FindAndWinProgressScreen>
+    with SingleTickerProviderStateMixin {
   late final Stream<List<EnigmaModel>> _enigmasStream;
   late AnimationController _animationController;
 
@@ -29,9 +32,14 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
 
-    _enigmasStream = Stream.periodic(const Duration(seconds: 5)).asyncMap((_) async {
+    _enigmasStream = Stream.periodic(const Duration(seconds: 5)).asyncMap((
+      _,
+    ) async {
       final query = QueryBuilder<ParseObject>(ParseObject('Enigma'))
-        ..whereEqualTo('event', (ParseObject('Event')..objectId = widget.event.id).toPointer())
+        ..whereEqualTo(
+          'event',
+          (ParseObject('Event')..objectId = widget.event.id).toPointer(),
+        )
         ..orderByAscending('order');
 
       final response = await query.query();
@@ -40,6 +48,7 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
           final doc = e as ParseObject;
           return EnigmaModel.fromMap({
             'id': doc.objectId,
+            'title': doc.get<String>('title') ?? '',
             'instruction': doc.get<String>('instruction') ?? '',
             'prize': doc.get<num>('prize') ?? 0,
             'imageUrl': doc.get<String>('imageUrl'),
@@ -61,8 +70,6 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
     super.dispose();
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,14 +77,19 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
       body: StreamBuilder<List<EnigmaModel>>(
         stream: _enigmasStream,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator(color: primaryAmber));
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              !snapshot.hasData) {
+            return const Center(
+              child: CircularProgressIndicator(color: primaryAmber),
+            );
           }
 
           final enigmas = snapshot.data ?? [];
           final visibleEnigmas = enigmas.where((e) {
             if (e.status != 'closed') return true;
-            if (e.closedAt != null && DateTime.now().difference(e.closedAt!).inMinutes < 15) return true;
+            if (e.closedAt != null &&
+                DateTime.now().difference(e.closedAt!).inMinutes < 15)
+              return true;
             return false;
           }).toList();
 
@@ -88,8 +100,14 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
                 children: [
                   FaIcon(FontAwesomeIcons.flag, size: 60, color: primaryAmber),
                   SizedBox(height: 16),
-                  Text("Evento Finalizado!", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                  Text("Todos os enigmas foram resolvidos.", style: TextStyle(color: secondaryTextColor)),
+                  Text(
+                    "Evento Finalizado!",
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    "Todos os enigmas foram resolvidos.",
+                    style: TextStyle(color: secondaryTextColor),
+                  ),
                 ],
               ),
             );
@@ -98,10 +116,10 @@ class _FindAndWinProgressScreenState extends ConsumerState<FindAndWinProgressScr
           return GridView.builder(
             padding: const EdgeInsets.all(16),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.0,
+              crossAxisCount: 3,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.85,
             ),
             itemCount: visibleEnigmas.length,
             itemBuilder: (context, index) {

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -52,7 +51,7 @@ class CardEnigma extends StatelessWidget {
       if (difference.inMinutes < 15) {
         isTemporarilyBlocked = true;
       } else {
-        return const SizedBox.shrink();
+        return const SizedBox.shrink(); // Hide completely if more than 15 mins
       }
     }
 
@@ -75,6 +74,7 @@ class CardEnigma extends StatelessWidget {
           return;
         }
 
+        // Mock a Phase for Find & Win compat
         final mockPhase = PhaseModel(
           id: 'find_and_win',
           order: 1,
@@ -88,7 +88,9 @@ class CardEnigma extends StatelessWidget {
               event: event,
               phase: mockPhase,
               initialEnigma: enigma,
-              onEnigmaSolved: () {},
+              onEnigmaSolved: () {
+                // Return handling or rebuild handled by stream
+              },
             ),
           ),
         );
@@ -135,38 +137,45 @@ class CardEnigma extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        enigma.title.isNotEmpty
-                            ? enigma.title
-                            : enigma.instruction,
+                        enigma.title.isNotEmpty ? enigma.title : enigma.title,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 12,
                           color: Colors.black87,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
                       ),
                       const Spacer(),
+                      const Center(
+                        child: FaIcon(
+                          FontAwesomeIcons.sackDollar,
+                          size: 36,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
                       Text(
                         currencyFormat.format(enigma.prize),
                         style: const TextStyle(
                           fontWeight: FontWeight.w900,
-                          fontSize: 18,
+                          fontSize: 14,
                           color: Colors.black,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 8),
+                      const Spacer(),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: enigma.characteristics.map((char) {
                           return Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 4.0,
+                              horizontal: 2.0,
                             ),
                             child: FaIcon(
                               _getIconForCharacteristic(char),
-                              size: 14,
+                              size: 10,
                               color: Colors.black54,
                             ),
                           );
