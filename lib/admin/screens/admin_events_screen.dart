@@ -319,7 +319,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                     decoration: const InputDecoration(
                                       labelText: 'Prêmio (R\$)',
                                     ),
-                                    keyboardType: TextInputType.number,
+
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -330,7 +330,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                     decoration: const InputDecoration(
                                       labelText: 'Ordem',
                                     ),
-                                    keyboardType: TextInputType.number,
+
                                   ),
                                 ),
                               ],
@@ -990,7 +990,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               decoration: const InputDecoration(
                                 labelText: 'Ordem',
                               ),
-                              keyboardType: TextInputType.number,
+
                             ),
                             const SizedBox(height: 12),
                             SwitchListTile(
@@ -1261,7 +1261,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               decoration: const InputDecoration(
                                 labelText: 'Ordem',
                               ),
-                              keyboardType: TextInputType.number,
+
                             ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
@@ -1360,7 +1360,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               decoration: const InputDecoration(
                                 labelText: 'Prêmio (R\$)',
                               ),
-                              keyboardType: TextInputType.number,
+
                             ),
 
                             const SizedBox(height: 16),

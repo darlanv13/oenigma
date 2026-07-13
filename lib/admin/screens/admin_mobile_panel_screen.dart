@@ -557,7 +557,7 @@ class _MobilePhaseListScreenState extends State<_MobilePhaseListScreen> {
                       controller: orderCtrl,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(labelText: 'Ordem'),
-                      keyboardType: TextInputType.number,
+
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile(
@@ -916,7 +916,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                             decoration: const InputDecoration(
                               labelText: 'Ordem',
                             ),
-                            keyboardType: TextInputType.number,
+
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -976,7 +976,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Prêmio (R\$)',
                       ),
-                      keyboardType: TextInputType.number,
+
                     ),
                     const SizedBox(height: 12),
                     TextField(

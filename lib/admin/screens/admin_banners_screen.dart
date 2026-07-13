@@ -332,7 +332,7 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                       controller: orderCtrl,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(labelText: 'Ordem'),
-                      keyboardType: TextInputType.number,
+
                     ),
                     SwitchListTile(
                       title: const Text(
