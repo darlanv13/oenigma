@@ -319,7 +319,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                     decoration: const InputDecoration(
                                       labelText: 'Prêmio (R\$)',
                                     ),
-                                    keyboardType: TextInputType.number,
+
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -330,7 +330,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                     decoration: const InputDecoration(
                                       labelText: 'Ordem',
                                     ),
-                                    keyboardType: TextInputType.number,
+
                                   ),
                                 ),
                               ],
@@ -990,7 +990,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               decoration: const InputDecoration(
                                 labelText: 'Ordem',
                               ),
-                              keyboardType: TextInputType.number,
+
                             ),
                             const SizedBox(height: 12),
                             SwitchListTile(
@@ -1187,6 +1187,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final orderCtrl = TextEditingController(
       text: data?['order']?.toString() ?? '1',
     );
+    final titleCtrl = TextEditingController(text: data?['title']);
     final codeCtrl = TextEditingController(text: data?['code']);
     final instructionCtrl = TextEditingController(text: data?['instruction']);
     final prizeCtrl = TextEditingController(
@@ -1260,7 +1261,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               decoration: const InputDecoration(
                                 labelText: 'Ordem',
                               ),
-                              keyboardType: TextInputType.number,
+
                             ),
                             const SizedBox(height: 12),
                             DropdownButtonFormField<String>(
@@ -1337,6 +1338,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             ),
                             const SizedBox(height: 12),
                             TextField(
+                              controller: titleCtrl,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                labelText: 'Título do Enigma',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
                               controller: instructionCtrl,
                               style: const TextStyle(color: Colors.white),
                               decoration: const InputDecoration(
@@ -1351,7 +1360,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               decoration: const InputDecoration(
                                 labelText: 'Prêmio (R\$)',
                               ),
-                              keyboardType: TextInputType.number,
+
                             ),
 
                             const SizedBox(height: 16),
@@ -1549,6 +1558,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                     final newData = {
                                       'order':
                                           int.tryParse(orderCtrl.text) ?? 1,
+                                      'title': titleCtrl.text,
                                       'code': codeCtrl.text,
                                       'instruction': instructionCtrl.text,
                                       'type': selectedType,
