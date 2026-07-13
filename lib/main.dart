@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/features/auth/screens/auth_wrapper.dart';
 import 'package:oenigma/features/auth/screens/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:oenigma/core/widgets/app_background.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,10 +44,10 @@ class EnigmaCityApp extends StatelessWidget {
       title: 'O Enigma',
       theme: ThemeData.dark().copyWith(
         primaryColor: primaryAmber,
-        scaffoldBackgroundColor: darkBackground,
+        scaffoldBackgroundColor: Colors.transparent,
         textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
         appBarTheme: AppBarTheme(
-          backgroundColor: darkBackground,
+          backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
           titleTextStyle: GoogleFonts.orbitron(
@@ -64,6 +65,12 @@ class EnigmaCityApp extends StatelessWidget {
           ),
         ),
       ),
+      builder: (context, child) {
+        return AppBackground(
+          opacity: 0.1, // Tom de opacidade desejado pelo usuário (10%)
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: hasSeenOnboarding ? const AuthWrapper() : const OnboardingScreen(),
     );
   }

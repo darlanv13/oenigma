@@ -46,13 +46,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text(
           'Aponte para o QR Code',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF1E1E1E),
+
         elevation: 0,
       ),
       body: Stack(
@@ -352,7 +352,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
@@ -416,7 +416,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
@@ -477,7 +477,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         showDialog(
           context: context,
           builder: (dialogContext) => AlertDialog(
-            backgroundColor: const Color(0xFF1E1E1E),
+
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
@@ -603,7 +603,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 context: context,
                 barrierDismissible: false,
                 builder: (dialogContext) => Dialog(
-                  backgroundColor: const Color(0xFF1E1E1E),
+
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
@@ -763,7 +763,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(
           widget.phase.id == 'find_and_win'
@@ -775,7 +775,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           ),
         ),
         centerTitle: true,
-        backgroundColor: const Color(0xFF1E1E1E),
+
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -1140,7 +1140,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -1187,7 +1187,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
@@ -1246,7 +1246,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(

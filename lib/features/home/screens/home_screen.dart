@@ -49,7 +49,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final homeDataAsync = ref.watch(homeEventsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: homeDataAsync.when(
           loading: () => const Center(
@@ -121,7 +121,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             return RefreshIndicator(
               onRefresh: _reloadData,
               color: const Color(0xFFFFD54F),
-              backgroundColor: const Color(0xFF1E1E1E),
+
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [

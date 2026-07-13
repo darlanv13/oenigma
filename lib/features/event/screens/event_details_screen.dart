@@ -111,7 +111,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Confirmar Inscrição',
@@ -152,7 +152,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
@@ -233,7 +233,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     final eventTitle = isFindAndWin ? "Ache & Ganhe" : "Modo Clássico";
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           CustomScrollView(
@@ -244,7 +244,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 expandedHeight: 350.0,
                 floating: false,
                 pinned: true,
-                backgroundColor: const Color(0xFF121212),
+                backgroundColor: Colors.transparent,
                 elevation: 0,
                 leading: _buildBackButton(context),
                 flexibleSpace: FlexibleSpaceBar(

@@ -73,6 +73,7 @@ flutter:
     - assets/icon/money.svg
     - assets/icon/maps.svg
     - assets/icon/pirate.svg
+    - assets/images/background.png
 
 # =======================================================
 # AQUI ESTÁ A PARTE QUE FALTAVA (CONFIGURAÇÃO DOS ÍCONES)

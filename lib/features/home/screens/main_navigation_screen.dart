@@ -32,7 +32,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final homeDataAsync = ref.watch(homeEventsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: Colors.transparent,
       body: homeDataAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: Color(0xFFFFD54F)),
