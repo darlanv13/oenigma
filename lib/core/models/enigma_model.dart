@@ -8,6 +8,7 @@ class EnigmaModel {
   final String title;
   final String code;
   final String? imageUrl;
+  final String? audioUrl;
   final ParseGeoPoint? location;
   final String? hintType;
   final String? hintData;
@@ -25,6 +26,7 @@ class EnigmaModel {
     this.title = '',
     required this.code,
     this.imageUrl,
+    this.audioUrl,
     this.location,
     this.hintType,
     this.hintData,
@@ -43,6 +45,7 @@ class EnigmaModel {
     String? title,
     String? code,
     String? imageUrl,
+    String? audioUrl,
     ParseGeoPoint? location,
     ValueGetter<String?>? hintType,
     String? hintData,
@@ -59,6 +62,7 @@ class EnigmaModel {
       title: title ?? this.title,
       code: code ?? this.code,
       imageUrl: imageUrl ?? this.imageUrl,
+      audioUrl: audioUrl ?? this.audioUrl,
       location: location ?? this.location,
       hintType: hintType != null ? hintType() : this.hintType,
       hintData: hintData ?? this.hintData,
@@ -87,6 +91,7 @@ class EnigmaModel {
       title: map['title'] ?? '',
       code: map['code'] ?? '',
       imageUrl: map['imageUrl'],
+      audioUrl: map['audioUrl'],
       location: parsedLocation,
       hintType: map['hintType'],
       hintData: map['hintData'],
@@ -109,6 +114,7 @@ class EnigmaModel {
       'title': title,
       'code': code,
       'imageUrl': imageUrl,
+      'audioUrl': audioUrl,
       'location': location, // O Back4App/Parse aceita ParseGeoPoint direto
       'hintType': hintType,
       'hintData': hintData,

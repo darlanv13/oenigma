@@ -1190,7 +1190,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final prizeCtrl = TextEditingController(
       text: data?['prize']?.toString() ?? '0',
     );
-    final photoUrlCtrl = TextEditingController(text: data?['photoUrl']);
+    final photoUrlCtrl = TextEditingController(text: data?['imageUrl']);
+    final audioUrlCtrl = TextEditingController(text: data?['audioUrl']);
 
     // NOVOS CONTROLADORES: Bússola e Coordenadas Obrigatórias
     bool hasCompass = data?['hasCompass'] ?? false;
@@ -1199,8 +1200,15 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     );
 
     String selectedType = data?['type'] ?? 'text';
-    if (!['text', 'gps', 'qrcode', 'foto'].contains(selectedType)) {
+    if (!['text', 'gps', 'qrcode'].contains(selectedType)) {
       selectedType = 'text';
+    }
+
+    String selectedMediaType = 'none';
+    if (data?['imageUrl'] != null && data?['imageUrl'].toString().isNotEmpty == true) {
+      selectedMediaType = 'image';
+    } else if (data?['audioUrl'] != null && data?['audioUrl'].toString().isNotEmpty == true) {
+      selectedMediaType = 'audio';
     }
 
     List<String> selectedCharacteristics = List<String>.from(
@@ -1288,17 +1296,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                 ),
                                 DropdownMenuItem(
                                   value: 'gps',
-                                  child: Text('GPS (Coordenada Oculta)'),
+                                  child: Text('GPS + QR Code'),
                                 ),
                                 DropdownMenuItem(
                                   value: 'qrcode',
                                   child: Text('QR Code Simples'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'foto',
-                                  child: Text(
-                                    'Foto (Achar Local + Ler QR Code)',
-                                  ),
                                 ),
                               ],
                               onChanged: (val) {
@@ -1308,13 +1310,50 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               },
                             ),
 
-                            if (selectedType == 'foto') ...[
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              value: selectedMediaType,
+                              dropdownColor: darkBackground,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                labelText: 'Tipo de Mídia',
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'none',
+                                  child: Text('Nenhuma'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'image',
+                                  child: Text('Imagem'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'audio',
+                                  child: Text('Áudio'),
+                                ),
+                              ],
+                              onChanged: (val) {
+                                setState(() {
+                                  selectedMediaType = val!;
+                                  if (selectedMediaType == 'none') {
+                                    photoUrlCtrl.clear();
+                                    audioUrlCtrl.clear();
+                                  } else if (selectedMediaType == 'image') {
+                                    audioUrlCtrl.clear();
+                                  } else if (selectedMediaType == 'audio') {
+                                    photoUrlCtrl.clear();
+                                  }
+                                });
+                              },
+                            ),
+
+                            if (selectedMediaType == 'image') ...[
                               const SizedBox(height: 12),
                               TextField(
                                 controller: photoUrlCtrl,
                                 style: const TextStyle(color: Colors.white),
                                 decoration: InputDecoration(
-                                  labelText: 'URL da Foto do Local',
+                                  labelText: 'URL da Imagem',
                                   suffixIcon: IconButton(
                                     icon: const FaIcon(
                                       FontAwesomeIcons.upload,
@@ -1328,6 +1367,32 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                       if (url != null) {
                                         setState(() {
                                           photoUrlCtrl.text = url;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ] else if (selectedMediaType == 'audio') ...[
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: audioUrlCtrl,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: InputDecoration(
+                                  labelText: 'URL do Áudio',
+                                  suffixIcon: IconButton(
+                                    icon: const FaIcon(
+                                      FontAwesomeIcons.upload,
+                                      size: 18,
+                                    ),
+                                    onPressed: () async {
+                                      final url =
+                                          await AdminUploadUtil.pickAndUploadAudio(
+                                            context,
+                                          );
+                                      if (url != null) {
+                                        setState(() {
+                                          audioUrlCtrl.text = url;
                                         });
                                       }
                                     },
@@ -1597,11 +1662,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                       'compassCoords': hasCompass
                                           ? compassCoordsCtrl.text.trim()
                                           : '',
+                                      'imageUrl': photoUrlCtrl.text,
+                                      'audioUrl': audioUrlCtrl.text,
                                     };
-
-                                    if (selectedType == 'foto') {
-                                      newData['photoUrl'] = photoUrlCtrl.text;
-                                    }
 
                                     ParseResponse response;
                                     if (docId == null) {
