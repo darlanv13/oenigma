@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.3" />
+    </filter>
+  </defs>
+  <g transform="translate(200, 45)" filter="url(#shadow)">
+    <text x="0" y="0" font-family="Georgia, serif" font-weight="bold" font-size="36" fill="#E8E8E8" text-anchor="middle" letter-spacing="5">ENIGMA</text>
+    <text x="0" y="38" font-family="Georgia, serif" font-weight="bold" font-size="30" fill="#FFC107" text-anchor="middle" letter-spacing="4">CITY</text>
+    <line x1="-80" y1="52" x2="80" y2="52" stroke="#FFC107" stroke-width="1.5" opacity="0.3" />
+    <polygon points="0,48 4,52 0,56 -4,52" fill="#FFC107" opacity="0.5" />
+  </g>
+</svg>

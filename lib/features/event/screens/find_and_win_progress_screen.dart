@@ -91,7 +91,7 @@ class _FindAndWinProgressScreenState
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // Header elegante
+              // Header Transparente para valorizar o mapa
               SliverAppBar(
                 expandedHeight: 120.0,
                 backgroundColor: Colors.transparent,
@@ -100,7 +100,7 @@ class _FindAndWinProgressScreenState
                 leading: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: CircleAvatar(
-                    backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    backgroundColor: Colors.black.withValues(alpha: 0.5),
                     child: IconButton(
                       icon: const FaIcon(
                         FontAwesomeIcons.chevronLeft,
@@ -113,21 +113,35 @@ class _FindAndWinProgressScreenState
                 ),
                 flexibleSpace: FlexibleSpaceBar(
                   centerTitle: true,
-                  title: Text(
-                    widget.event.name,
-                    style: const TextStyle(
-                      color: Color(0xFFFFD54F),
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
-                      letterSpacing: 0.5,
+                  title: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      widget.event.name,
+                      style: const TextStyle(
+                        color: Color(0xFFFFD54F),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                        letterSpacing: 0.5,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                   background: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF1E1E1E),
-                          const Color(0xFF121212),
+                          const Color(0xFF121212).withValues(alpha: 0.9),
+                          Colors.transparent,
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -136,6 +150,8 @@ class _FindAndWinProgressScreenState
                   ),
                 ),
               ),
+
+              // Header elegante
 
               // Indicador de Carregamento Inicial
               if (snapshot.connectionState == ConnectionState.waiting &&

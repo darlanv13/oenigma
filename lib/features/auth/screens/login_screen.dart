@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
@@ -70,37 +71,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        RichText(
-          textAlign: TextAlign.center,
-          text: const TextSpan(
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 4,
-            ),
-            children: <TextSpan>[
-              TextSpan(
-                text: 'ENIGMA\n',
-                style: TextStyle(color: textColor),
-              ),
-              TextSpan(
-                text: 'CITY',
-                style: TextStyle(
-                  color: primaryAmber,
-                  fontSize: 19,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
+        SvgPicture.asset(
+          'assets/icon/logo_enigma_city.svg',
+          width: 560,
+          height: 160,
         ),
         const SizedBox(height: 20),
         const Text(
-          "",
+          "Encontre o tesouro escondido",
           style: TextStyle(
             color: textColor,
-            fontSize: 32,
-            fontWeight: FontWeight.w300,
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+            letterSpacing: 2,
           ),
         ),
       ],

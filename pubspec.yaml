@@ -71,9 +71,14 @@ flutter:
     - assets/icon/compass.svg
     - assets/icon/ship.svg
     - assets/icon/money.svg
+    - assets/icon/logo_enigma_city.svg
     - assets/icon/maps.svg
     - assets/icon/pirate.svg
     - assets/images/background.png
+  fonts:
+    - family: Georgia
+      fonts:
+        - asset: assets/fonts/Georgia.ttf
 
 # =======================================================
 # AQUI ESTÁ A PARTE QUE FALTAVA (CONFIGURAÇÃO DOS ÍCONES)

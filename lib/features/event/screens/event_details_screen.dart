@@ -111,7 +111,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'Confirmar Inscrição',
@@ -152,7 +151,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [

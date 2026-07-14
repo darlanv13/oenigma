@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.4" />
+    </filter>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD54F" />
+      <stop offset="100%" stop-color="#FFC107" />
+    </linearGradient>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <!-- Círculo externo -->
+    <circle cx="50" cy="50" r="45" fill="#2C2C2C" stroke="url(#goldGrad)" stroke-width="3.5" />
+    <circle cx="50" cy="50" r="39" fill="none" stroke="#FFC107" stroke-width="1.2" stroke-dasharray="3,3" opacity="0.5" />
+
+    <!-- Rosa dos ventos – 4 pontas principais -->
+    <!-- Norte (dourado) -->
+    <polygon points="50,12 56,32 44,32" fill="#FFC107" />
+    <!-- Sul (cinza prateado) -->
+    <polygon points="50,88 56,68 44,68" fill="#A0A0A0" />
+    <!-- Leste (cinza) -->
+    <polygon points="88,50 68,56 68,44" fill="#A0A0A0" />
+    <!-- Oeste (cinza) -->
+    <polygon points="12,50 32,56 32,44" fill="#A0A0A0" />
+
+    <!-- Pontas secundárias (menores) – intercaladas -->
+    <polygon points="50,22 54,36 46,36" fill="#BDBDBD" opacity="0.5" />
+    <polygon points="50,78 54,64 46,64" fill="#BDBDBD" opacity="0.5" />
+    <polygon points="78,50 64,54 64,46" fill="#BDBDBD" opacity="0.5" />
+    <polygon points="22,50 36,54 36,46" fill="#BDBDBD" opacity="0.5" />
+
+    <!-- Linhas cruzadas (agulhas) -->
+    <line x1="28" y1="28" x2="72" y2="72" stroke="#FFC107" stroke-width="1.8" opacity="0.35" />
+    <line x1="72" y1="28" x2="28" y2="72" stroke="#FFC107" stroke-width="1.8" opacity="0.35" />
+
+    <!-- Centro da bússola -->
+    <circle cx="50" cy="50" r="8" fill="#FFC107" />
+    <circle cx="50" cy="50" r="4" fill="#2C2C2C" />
+    <!-- Pequeno brilho no centro -->
+    <circle cx="48" cy="48" r="1.5" fill="#FFF" opacity="0.6" />
+  </g>
+</svg>
