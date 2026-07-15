@@ -13,18 +13,52 @@ class AdminUsersScreen extends StatefulWidget {
 
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
   late Future<List<dynamic>> _usersFuture;
+  List<dynamic> _allUsers = [];
+  List<dynamic> _filteredUsers = [];
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _usersFuture = _fetchUsers();
+    _searchController.addListener(_filterUsers);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterUsers() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      if (query.isEmpty) {
+        _filteredUsers = List.from(_allUsers);
+      } else {
+        _filteredUsers = _allUsers.where((user) {
+          final name = (user['name'] ?? user['displayName'] ?? '').toString().toLowerCase();
+          final email = (user['email'] ?? '').toString().toLowerCase();
+          final cpf = (user['cpf'] ?? '').toString().toLowerCase();
+          final phone = (user['phone'] ?? '').toString().toLowerCase();
+          return name.contains(query) || email.contains(query) || cpf.contains(query) || phone.contains(query);
+        }).toList();
+      }
+    });
   }
 
   Future<List<dynamic>> _fetchUsers() async {
     try {
       final response = await ParseCloudFunction('listAllUsers').execute();
       if (response.success && response.result != null) {
-        return List<dynamic>.from(response.result);
+        final usersList = List<dynamic>.from(response.result);
+        if (mounted) {
+          setState(() {
+            _allUsers = usersList;
+            _filterUsers();
+          });
+        }
+        return usersList;
       } else {
         throw response.error ?? ParseError();
       }
@@ -57,11 +91,29 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               ),
               onPressed: () {
                 setState(() {
+                  _searchController.clear();
                   _usersFuture = _fetchUsers();
                 });
               },
             ),
           ],
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _searchController,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Buscar por Nome, Email, CPF ou Telefone...',
+            hintStyle: const TextStyle(color: Colors.grey),
+            prefixIcon: const Icon(Icons.search, color: Colors.grey),
+            filled: true,
+            fillColor: cardColor,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          ),
         ),
         const SizedBox(height: 24),
         Expanded(
@@ -83,7 +135,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   ),
                 );
               }
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              if (!snapshot.hasData || _allUsers.isEmpty) {
                 return const Center(
                   child: Text(
                     'Nenhum usuário encontrado.',
@@ -92,16 +144,25 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 );
               }
 
-              final users = snapshot.data!;
+              if (_filteredUsers.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'Nenhum usuário corresponde à busca.',
+                    style: TextStyle(color: secondaryTextColor),
+                  ),
+                );
+              }
 
               return ListView.builder(
-                itemCount: users.length,
+                itemCount: _searchController.text.isEmpty && _filteredUsers.length > 5 ? 5 : _filteredUsers.length,
                 itemBuilder: (context, index) {
-                  final user = users[index];
+                  final user = _filteredUsers[index];
                   final objectId = user['objectId'] as String;
                   final name =
                       user['name'] ?? user['displayName'] ?? 'Sem Nome';
                   final email = user['email'] ?? 'Sem Email';
+                  final cpf = user['cpf'] ?? '';
+                  final phone = user['phone'] ?? '';
                   final photoURL = user['photoURL'] as String?;
                   final isAdmin = user['isAdmin'] ?? false;
                   final isBanned = user['isBanned'] ?? false;
@@ -134,9 +195,22 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               : null,
                         ),
                       ),
-                      subtitle: Text(
-                        '$email${isAdmin ? " • Admin" : ""}${role == "creator" ? " • Creator" : ""}${isBanned ? " • Banido" : ""}',
-                        style: const TextStyle(color: secondaryTextColor),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$email${isAdmin ? " • Admin" : ""}${role == "creator" ? " • Creator" : ""}${isBanned ? " • Banido" : ""}',
+                            style: const TextStyle(color: secondaryTextColor),
+                          ),
+                          if (cpf.toString().isNotEmpty || phone.toString().isNotEmpty)
+                            Text(
+                              [
+                                if (cpf.toString().isNotEmpty) 'CPF: $cpf',
+                                if (phone.toString().isNotEmpty) 'Tel: $phone',
+                              ].join(' • '),
+                              style: const TextStyle(color: Colors.grey, fontSize: 12),
+                            ),
+                        ],
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,

@@ -47,6 +47,8 @@ Parse.Cloud.define("listAllUsers", async (request) => {
         isAdmin: user.get("isAdmin") || false,
         isBanned: user.get("isBanned") || false,
         photoURL: user.get("photoURL") || null,
+        cpf: user.get("cpf") || "",
+        phone: user.get("phone") || "",
         walletBalance: user.get("balance") || 0,
         createdAt: user.createdAt
       };
