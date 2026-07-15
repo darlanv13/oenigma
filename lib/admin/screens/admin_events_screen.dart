@@ -1406,11 +1406,20 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               controller: codeCtrl,
                               style: const TextStyle(color: Colors.white),
                               decoration: InputDecoration(
-                                labelText: selectedType == 'gps'
-                                    ? 'Coordenadas Alvo (Lat, Lng)'
-                                    : 'Código (Senha/Resposta)',
+                                labelText: 'Código (Senha/Resposta)',
                               ),
                             ),
+                            if (selectedType == 'gps') ...[
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: compassCoordsCtrl,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: const InputDecoration(
+                                  labelText: 'Coordenadas Alvo do GPS (Lat, Lng)',
+                                  hintText: '-23.5505, -46.6333',
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 12),
                             TextField(
                               controller: titleCtrl,
@@ -1628,12 +1637,12 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               ? null
                               : () async {
                                   // 🔴 REGRA DE VALIDAÇÃO OBRIGATÓRIA DA BÚSSOLA 🔴
-                                  if (hasCompass &&
+                                  if ((hasCompass || selectedType == 'gps') &&
                                       compassCoordsCtrl.text.trim().isEmpty) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text(
-                                          'Erro: Ao habilitar a Bússola, insira as coordenadas correspondentes!',
+                                          'Erro: Coordenadas do GPS são obrigatórias!',
                                         ),
                                         backgroundColor: Colors.redAccent,
                                       ),
@@ -1659,7 +1668,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
                                       // Salvando as novas chaves no Back4App
                                       'hasCompass': hasCompass,
-                                      'compassCoords': hasCompass
+                                      'compassCoords': (hasCompass || selectedType == 'gps')
                                           ? compassCoordsCtrl.text.trim()
                                           : '',
                                       'imageUrl': photoUrlCtrl.text,
