@@ -45,6 +45,7 @@ dependencies:
   parse_server_sdk_flutter: ^10.4.0
   sidebarx: ^0.17.2
   flutter_svg: ^2.3.0
+  audioplayers: ^6.7.1
 
 # === CORREÇÃO DE CONFLITO DE DEPENDÊNCIAS ===
 dependency_overrides:

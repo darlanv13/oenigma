@@ -8,6 +8,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lottie/lottie.dart' hide Marker;
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:audioplayers/audioplayers.dart';
+
+import 'package:oenigma/features/certificate/screens/winner_certificate_screen.dart';
+import 'package:oenigma/core/widgets/dialogs/completion_dialog.dart';
+import 'package:oenigma/core/widgets/dialogs/cooldown_dialog.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
@@ -263,7 +268,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     });
 
     try {
-      if (_currentEnigma.type == 'foto' || _currentEnigma.type == 'gps') {
+      if (_currentEnigma.type == 'gps') {
         await _initializeGpsListener();
       }
       if (mounted) {
@@ -843,50 +848,125 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   Widget _buildEnigmaContent() {
-    switch (_currentEnigma.type) {
-      case 'photo_location':
-      case 'text':
-        return Column(
-          children: [
-            if (_currentEnigma.imageUrl != null &&
-                _currentEnigma.imageUrl!.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.network(
-                  _currentEnigma.imageUrl!,
-                  fit: BoxFit.cover,
+    return Column(
+      children: [
+        Text(
+          _currentEnigma.instruction,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+            height: 1.5,
+          ),
+        ),
+
+        if ((_currentEnigma.imageUrl != null &&
+                _currentEnigma.imageUrl!.isNotEmpty) ||
+            (_currentEnigma.audioUrl != null &&
+                _currentEnigma.audioUrl!.isNotEmpty)) ...[
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (_currentEnigma.imageUrl != null &&
+                  _currentEnigma.imageUrl!.isNotEmpty)
+                _buildMediaButton(
+                  icon: FontAwesomeIcons.image,
+                  label: 'Ver Imagem',
+                  color: Colors.blueAccent,
+                  onPressed: () => _showMediaDialog(
+                    context,
+                    type: 'image',
+                    url: _currentEnigma.imageUrl!,
+                  ),
                 ),
-              )
-            else if (_currentEnigma.type != 'text')
-              Lottie.asset('assets/animations/no_enigma.json', height: 80),
 
-            if (_currentEnigma.imageUrl != null) const SizedBox(height: 16),
+              if ((_currentEnigma.imageUrl != null &&
+                      _currentEnigma.imageUrl!.isNotEmpty) &&
+                  (_currentEnigma.audioUrl != null &&
+                      _currentEnigma.audioUrl!.isNotEmpty))
+                const SizedBox(width: 16),
 
-            Text(
-              _currentEnigma.instruction,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-                height: 1.5,
-              ),
-            ),
-          ],
+              if (_currentEnigma.audioUrl != null &&
+                  _currentEnigma.audioUrl!.isNotEmpty)
+                _buildMediaButton(
+                  icon: FontAwesomeIcons.play,
+                  label: 'Ouvir Áudio',
+                  color: Colors.orangeAccent,
+                  onPressed: () => _showMediaDialog(
+                    context,
+                    type: 'audio',
+                    url: _currentEnigma.audioUrl!,
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildMediaButton({
+    required dynamic icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return ElevatedButton.icon(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color.withValues(alpha: 0.1),
+        foregroundColor: color,
+        side: BorderSide(color: color, width: 1.5),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+      ),
+      onPressed: onPressed,
+      icon: FaIcon(icon, size: 16),
+      label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+    );
+  }
+
+  void _showMediaDialog(
+    BuildContext context, {
+    required String type,
+    required String url,
+  }) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: type == 'image'
+              ? _buildImageDialog(url)
+              : _AudioDialog(url: url),
         );
-      case 'foto':
-      case 'gps':
-      case 'qrcode':
-        return const SizedBox.shrink();
-      default:
-        return const SizedBox.shrink();
-    }
+      },
+    );
+  }
+
+  Widget _buildImageDialog(String url) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        alignment: Alignment.topRight,
+        children: [
+          Image.network(url, fit: BoxFit.contain),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white, size: 30),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildActionArea() {
-    if (_currentEnigma.type == 'foto' ||
-        _currentEnigma.type == 'gps' ||
-        _currentEnigma.type == 'qrcode') {
+    if (_currentEnigma.type == 'gps' || _currentEnigma.type == 'qrcode') {
       return _buildQrCodeGpsCard();
     }
     return _buildCodeInputSection();
@@ -898,170 +978,134 @@ class _EnigmaScreenState extends State<EnigmaScreen>
 
     return _buildCard(
       title: 'Missão de Campo',
-      icon: FontAwesomeIcons.mapLocationDot,
+      icon: FontAwesomeIcons.mapLocationDot as dynamic,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (_currentEnigma.imageUrl != null &&
-              _currentEnigma.imageUrl!.isNotEmpty)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.network(_currentEnigma.imageUrl!, fit: BoxFit.cover),
-            )
-          else
-            Lottie.asset('assets/animations/no_enigma.json', height: 80),
-
-          const SizedBox(height: 16),
-
-          Text(
-            _currentEnigma.instruction,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-              height: 1.5,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF121212),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-            ),
-            child: _distance == null
-                ? const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.grey,
+          if (_currentEnigma.type == 'gps') ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF121212),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              ),
+              child: _distance == null
+                  ? const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.grey,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: 12),
-                      Text(
-                        "Buscando satélites...",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontWeight: FontWeight.bold,
+                        SizedBox(width: 12),
+                        Text(
+                          "Buscando satélites...",
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ],
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      FaIcon(
-                        _isNear
-                            ? FontAwesomeIcons.locationCrosshairs
-                            : FontAwesomeIcons.route,
-                        color: _isNear
-                            ? Colors.greenAccent
-                            : const Color(0xFFFFD54F),
-                        size: 16,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        _isNear
-                            ? "VOCÊ CHEGOU!"
-                            : "Distância: ${_distance!.toStringAsFixed(0)} metros",
-                        style: TextStyle(
-                          fontSize: 16,
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        FaIcon(
+                          _isNear
+                              ? FontAwesomeIcons.locationCrosshairs
+                              : FontAwesomeIcons.route,
                           color: _isNear
                               ? Colors.greenAccent
                               : const Color(0xFFFFD54F),
-                          fontWeight: FontWeight.w900,
+                          size: 16,
                         ),
-                      ),
-                    ],
-                  ),
-          ),
-
-          const SizedBox(height: 24),
-
-          if (_currentEnigma.type == 'qrcode' ||
-              _currentEnigma.type == 'foto' ||
-              _currentEnigma.type == 'gps')
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                gradient: isActionReady
-                    ? const LinearGradient(
-                        colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
-                      )
-                    : const LinearGradient(
-                        colors: [Color(0xFF424242), Color(0xFF212121)],
-                      ),
-                boxShadow: [
-                  if (isActionReady)
-                    BoxShadow(
-                      color: Colors.green.withValues(alpha: 0.4),
-                      blurRadius: 15,
-                      spreadRadius: 2,
+                        const SizedBox(width: 10),
+                        Text(
+                          _isNear
+                              ? "VOCÊ CHEGOU!"
+                              : "Distância: ${_distance!.toStringAsFixed(0)} metros",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: _isNear
+                                ? Colors.greenAccent
+                                : const Color(0xFFFFD54F),
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
                     ),
-                ],
-              ),
-              child: ElevatedButton.icon(
-                onPressed: isActionReady
-                    ? () {
-                        if (_currentEnigma.type == 'gps') {
-                          _handleAction('validateCode', code: 'gps');
-                        } else {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => ScannerScreen(
-                                onScan: (scannedCode) => _handleAction(
-                                  'validateCode',
-                                  code: scannedCode,
-                                ),
-                              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: isActionReady
+                  ? const LinearGradient(
+                      colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
+                    )
+                  : const LinearGradient(
+                      colors: [Color(0xFF424242), Color(0xFF212121)],
+                    ),
+              boxShadow: [
+                if (isActionReady)
+                  BoxShadow(
+                    color: Colors.green.withValues(alpha: 0.4),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                  ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed: isActionReady
+                  ? () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ScannerScreen(
+                            onScan: (scannedCode) => _handleAction(
+                              'validateCode',
+                              code: scannedCode,
                             ),
-                          );
-                        }
-                      }
-                    : null,
-                icon: FaIcon(
-                  _isBlocked
-                      ? FontAwesomeIcons.clock
-                      : (_currentEnigma.type == 'gps'
-                            ? FontAwesomeIcons.locationDot
-                            : FontAwesomeIcons.qrcode),
+                          ),
+                        ),
+                      );
+                    }
+                  : null,
+              icon: FaIcon(
+                _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
+                color: isActionReady ? Colors.white : Colors.grey,
+                size: 20,
+              ),
+              label: Text(
+                _isBlocked
+                    ? 'COOLDOWN ATIVO'
+                    : (isActionReady
+                          ? 'ESCANEAR CÓDIGO'
+                          : 'APROXIME-SE DO ALVO'),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
                   color: isActionReady ? Colors.white : Colors.grey,
-                  size: 20,
                 ),
-                label: Text(
-                  _isBlocked
-                      ? 'COOLDOWN ATIVO'
-                      : (isActionReady
-                            ? (_currentEnigma.type == 'gps'
-                                  ? 'CONFIRMAR LOCAL'
-                                  : 'ESCANEAR CÓDIGO')
-                            : 'APROXIME-SE DO ALVO'),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.0,
-                    color: isActionReady ? Colors.white : Colors.grey,
-                  ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  minimumSize: const Size(double.infinity, 50),
-                ),
+                minimumSize: const Size(double.infinity, 50),
               ),
             ),
+          ),
         ],
       ),
     );
@@ -1116,8 +1160,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           ),
 
         if (!_isHintVisible && _canBuyHint) _buildHintPurchaseButton(),
-        if (_currentEnigma.type == 'foto' || _currentEnigma.type == 'gps')
-          _buildToolsPurchaseButtons(),
+        if (_currentEnigma.type == 'gps') _buildToolsPurchaseButtons(),
       ],
     );
   }
@@ -1641,6 +1684,180 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         color: _isBlocked ? Colors.grey : Colors.black,
                       ),
                     ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AudioDialog extends StatefulWidget {
+  final String url;
+
+  const _AudioDialog({required this.url});
+
+  @override
+  State<_AudioDialog> createState() => _AudioDialogState();
+}
+
+class _AudioDialogState extends State<_AudioDialog> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (mounted) {
+        setState(() {
+          _isPlaying = state == PlayerState.playing;
+        });
+      }
+    });
+
+    _audioPlayer.onDurationChanged.listen((newDuration) {
+      if (mounted) {
+        setState(() {
+          _duration = newDuration;
+        });
+      }
+    });
+
+    _audioPlayer.onPositionChanged.listen((newPosition) {
+      if (mounted) {
+        setState(() {
+          _position = newPosition;
+        });
+      }
+    });
+
+    _initAudio();
+  }
+
+  Future<void> _initAudio() async {
+    await _audioPlayer.setSourceUrl(widget.url);
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  String _formatDuration(Duration d) {
+    String minutes = d.inMinutes.toString().padLeft(2, '0');
+    String seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.orangeAccent.withValues(alpha: 0.3),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  FaIcon(FontAwesomeIcons.music, color: Colors.orangeAccent),
+                  SizedBox(width: 12),
+                  Text(
+                    'Pista em Áudio',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.grey),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFF121212),
+            ),
+            child: IconButton(
+              iconSize: 48,
+              color: Colors.orangeAccent,
+              icon: FaIcon(
+                _isPlaying ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
+              ),
+              onPressed: () async {
+                if (_isPlaying) {
+                  await _audioPlayer.pause();
+                } else {
+                  await _audioPlayer.play(UrlSource(widget.url));
+                }
+              },
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: Colors.orangeAccent,
+              inactiveTrackColor: Colors.white24,
+              thumbColor: Colors.orangeAccent,
+              overlayColor: Colors.orangeAccent.withValues(alpha: 0.2),
+              trackHeight: 4.0,
+            ),
+            child: Slider(
+              min: 0,
+              max: _duration.inSeconds.toDouble() > 0
+                  ? _duration.inSeconds.toDouble()
+                  : 1.0,
+              value: _position.inSeconds.toDouble().clamp(
+                0.0,
+                _duration.inSeconds.toDouble() > 0
+                    ? _duration.inSeconds.toDouble()
+                    : 1.0,
+              ),
+              onChanged: (value) async {
+                final position = Duration(seconds: value.toInt());
+                await _audioPlayer.seek(position);
+              },
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _formatDuration(_position),
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+                Text(
+                  _formatDuration(_duration),
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ],
             ),
           ),
         ],
