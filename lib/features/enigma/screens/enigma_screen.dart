@@ -1,28 +1,25 @@
-import 'dart:ui';
-import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'dart:async';
-import 'dart:math' show cos, sqrt, asin, pi, sin;
-import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'dart:math' show pi, sin;
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lottie/lottie.dart' hide Marker;
 import 'package:mobile_scanner/mobile_scanner.dart';
-
-import 'package:oenigma/features/certificate/screens/winner_certificate_screen.dart';
-import 'package:oenigma/core/widgets/dialogs/completion_dialog.dart';
-import 'package:oenigma/core/widgets/dialogs/cooldown_dialog.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
+import 'package:oenigma/core/widgets/dialogs/completion_dialog.dart';
+import 'package:oenigma/core/widgets/dialogs/cooldown_dialog.dart';
+import 'package:oenigma/features/certificate/screens/winner_certificate_screen.dart';
+import 'package:oenigma/features/enigma/repositories/enigma_repository.dart';
 import 'package:oenigma/features/enigma/widgets/compass_widget.dart';
 import 'package:oenigma/features/enigma/widgets/map_radius_widget.dart';
-import 'package:oenigma/features/enigma/repositories/enigma_repository.dart';
-
 import 'package:oenigma/features/event/repositories/event_repository.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
-
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
 // --- TELA DE SCANNER ---
 class ScannerScreen extends StatefulWidget {
@@ -352,7 +349,6 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
@@ -416,7 +412,6 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
@@ -477,7 +472,6 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         showDialog(
           context: context,
           builder: (dialogContext) => AlertDialog(
-
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
@@ -538,10 +532,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     } on ParseError catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message ?? "Ocorreu um erro."),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -603,7 +594,6 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 context: context,
                 barrierDismissible: false,
                 builder: (dialogContext) => Dialog(
-
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
@@ -683,15 +673,12 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         }
       }
     } on ParseError catch (e) {
-      if (e.message?.contains('saldo') == true ||
-          e.message?.contains('Saldo insuficiente') == true) {
+      if (e.message.contains('saldo') == true ||
+          e.message.contains('Saldo insuficiente') == true) {
         _showInsufficientFundsDialog();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message ?? 'Erro desconhecido.'),
-            backgroundColor: Colors.redAccent,
-          ),
+          SnackBar(content: Text(e.message), backgroundColor: Colors.redAccent),
         );
       }
     } finally {
@@ -1140,7 +1127,6 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     showDialog(
       context: context,
       builder: (context) => Dialog(
-
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -1187,7 +1173,6 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     showDialog(
       context: context,
       builder: (context) => Dialog(
-
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
@@ -1246,7 +1231,6 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     showDialog(
       context: context,
       builder: (context) => Dialog(
-
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(

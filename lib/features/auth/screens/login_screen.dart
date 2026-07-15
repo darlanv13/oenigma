@@ -58,6 +58,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              //_buildHeaderBusula(),
+              const SizedBox(height: 1),
               _buildHeader(),
               const SizedBox(height: 48),
               _buildLoginForm(),
@@ -71,21 +73,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        SvgPicture.asset(
-          'assets/icon/logo_enigma_city.svg',
-          width: 560,
-          height: 160,
-        ),
-        const SizedBox(height: 20),
-        const Text(
-          "Encontre o tesouro escondido",
-          style: TextStyle(
-            color: textColor,
-            fontSize: 14,
-            fontStyle: FontStyle.italic,
-            letterSpacing: 2,
-          ),
-        ),
+        Image.asset('assets/images/logo_enigma_city.png', scale: 0.1), //
+        const SizedBox(height: 1),
+      ],
+    );
+  }
+
+  Widget _buildHeaderBusula() {
+    return Column(
+      children: [
+        Image.asset('assets/images/compass_icon.png', scale: 4.5), //
+        const SizedBox(height: 1),
       ],
     );
   }

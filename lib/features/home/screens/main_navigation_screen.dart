@@ -118,7 +118,9 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         },
       ),
       bottomNavigationBar: Container(
+        margin: const EdgeInsets.all(12),
         decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(50),
           color: const Color(0xFF1E1E1E), // Fundo escuro premium
           border: Border(
             top: BorderSide(

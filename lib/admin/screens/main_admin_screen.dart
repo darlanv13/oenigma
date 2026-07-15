@@ -95,7 +95,7 @@ class _AdminSidebar extends ConsumerWidget {
           color: cardColor,
           borderRadius: BorderRadius.circular(20),
         ),
-        hoverColor: primaryAmber.withOpacity(0.1),
+        hoverColor: primaryAmber.withValues(alpha: 0.1),
         textStyle: TextStyle(color: secondaryTextColor),
         selectedTextStyle: const TextStyle(
           color: darkBackground,
@@ -113,10 +113,13 @@ class _AdminSidebar extends ConsumerWidget {
         ),
         selectedItemDecoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: primaryAmber.withOpacity(0.37)),
+          border: Border.all(color: primaryAmber.withValues(alpha: 0.37)),
           gradient: const LinearGradient(colors: [primaryAmber, primaryAmber]),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.28), blurRadius: 30),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.28),
+              blurRadius: 30,
+            ),
           ],
         ),
         iconTheme: IconThemeData(color: secondaryTextColor, size: 20),
