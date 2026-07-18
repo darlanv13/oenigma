@@ -4,7 +4,6 @@ import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/features/home/screens/main_navigation_screen.dart';
-import 'package:oenigma/features/auth/screens/login_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -35,7 +34,7 @@ class AuthWrapper extends ConsumerWidget {
           // Regular users go to the game
           return const MainNavigationScreen();
         } else {
-          return const LoginScreen();
+          return const MainNavigationScreen();
         }
       },
       loading: () => const Scaffold(

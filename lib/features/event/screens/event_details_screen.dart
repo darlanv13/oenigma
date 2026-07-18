@@ -8,10 +8,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:oenigma/core/models/event_model.dart';
 import '../screens/event_progress_screen.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'find_and_win_progress_screen.dart';
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oenigma/features/auth/screens/login_screen.dart' as oenigma_login_screen;
 
 class EventDetailsScreen extends ConsumerStatefulWidget {
   final EventModel event;
@@ -72,6 +72,12 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 
   Future<void> _handleSubscription() async {
+    // Verifica se é um usuário convidado (visitante)
+    if (widget.playerData.isEmpty || widget.playerData['name'] == null) {
+      _showLoginRequiredDialog();
+      return;
+    }
+
     final confirmed = await _showSubscriptionConfirmationDialog();
     if (confirmed != true) return;
 
@@ -89,12 +95,12 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       }
     } on ParseError catch (e) {
       if (mounted) {
-        if (e.message.contains('saldo') == true) {
+        if (e.message.contains('saldo')) {
           _showInsufficientFundsDialog();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.message ?? "Ocorreu um erro."),
+              content: Text(e.message),
               backgroundColor: Colors.redAccent,
             ),
           );
@@ -139,6 +145,60 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             ),
             child: const Text(
               'CONFIRMAR',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLoginRequiredDialog() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            FaIcon(FontAwesomeIcons.userLock, color: Color(0xFFFFD54F), size: 20),
+            SizedBox(width: 10),
+            Text(
+              'Login Necessário',
+              style: TextStyle(
+                color: Color(0xFFFFD54F),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Você precisa criar uma conta ou fazer login para iniciar a caçada.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const oenigma_login_screen.LoginScreen(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFD54F),
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'FAZER LOGIN',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
