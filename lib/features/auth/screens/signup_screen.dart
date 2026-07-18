@@ -78,7 +78,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             SnackBar(content: Text(error), backgroundColor: Colors.red),
           );
         } else {
-          Navigator.of(context).pop();
+          Navigator.of(context).popUntil((route) => route.isFirst);
         }
         setState(() => _isLoading = false);
       }

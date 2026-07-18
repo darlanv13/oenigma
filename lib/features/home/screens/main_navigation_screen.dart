@@ -6,6 +6,7 @@ import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/features/home/providers/home_events_provider.dart';
 import 'package:oenigma/features/home/screens/home_screen.dart';
 import 'package:oenigma/features/home/widgets/svg_icon.dart';
+import 'package:oenigma/features/auth/screens/login_screen.dart';
 import 'package:oenigma/features/profile/screens/profile_screen.dart';
 import 'package:oenigma/features/ranking/screens/ranking_screen.dart';
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
@@ -102,16 +103,18 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               : {};
           final List<dynamic> allPlayers = data['allPlayers'] ?? [];
 
+          final bool isGuest = walletData.objectId == "visitante";
+
           final List<Widget> screens = [
             const HomeScreen(),
-            const WalletScreen(),
+            isGuest ? const LoginScreen() : const WalletScreen(),
             RankingScreen(
               availableEvents: events
                   .where((e) => e.status != 'closed')
                   .toList(),
               allPlayers: allPlayers,
             ),
-            ProfileScreen(playerData: playerData, walletData: walletData),
+            isGuest ? const LoginScreen() : ProfileScreen(playerData: playerData, walletData: walletData),
           ];
 
           return screens[_selectedIndex];

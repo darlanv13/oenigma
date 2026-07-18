@@ -43,6 +43,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(error), backgroundColor: Colors.red),
           );
+        } else {
+          Navigator.of(context).popUntil((route) => route.isFirst);
         }
         setState(() => _isLoading = false);
       }
