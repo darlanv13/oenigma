@@ -1,5 +1,21 @@
 {
   "projects": {
     "default": "enigmaweb-82979"
-  }
+  },
+  "targets": {
+    "enigmaweb-82979": {
+      "hosting": {
+        "admin": [
+          "enigmacityadmin"
+        ],
+        "app": [
+          "enigmacityapp"
+        ],
+        "promo": [
+          "enigmacitypromo"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
