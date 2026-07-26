@@ -281,6 +281,9 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         let linkedHints = enigma.get("linkedHints") || [];
         canBuyHint = linkedHints.length > 0 && !hintsPurchased.includes(enigmaId);
 
+        let compassDuration = enigma.get("compassDuration") || 0;
+        let compassPrice = enigma.get("compassPrice") || 15.0;
+
         if (hintsPurchased.includes(enigmaId) && linkedHints.length > 0) {
           isHintVisible = true;
           // In a real scenario we'd fetch the purchased hint id, but for now we'll just fetch the first one
@@ -339,7 +342,9 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         isBlocked: isBlocked,
         hasCompass: hasCompass,
         hasMap: hasMap,
-        destinationLocation: destinationLocation
+        destinationLocation: destinationLocation,
+        compassDuration: enigma ? (enigma.get("compassDuration") || 0) : 0,
+        compassPrice: enigma ? (enigma.get("compassPrice") || 15.0) : 15.0
       };
     } else if (action === 'purchaseHint') {
       const pOrder = phaseOrder || eventProgress.currentPhase || 1;
@@ -385,10 +390,33 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
 
       return { success: true, hint: hint, message: "Dica comprada com sucesso." };
 
+    } else if (action === 'consumeTool') {
+      if (!toolType) throw new Parse.Error(Parse.Error.INVALID_QUERY, "toolType is required.");
+
+      const index = toolsPurchased.indexOf(toolType);
+      if (index > -1) {
+        toolsPurchased.splice(index, 1);
+        eventProgress.toolsPurchased = toolsPurchased;
+        userEvents[eventId] = eventProgress;
+        user.set("events", userEvents);
+        await user.save(null, { useMasterKey: true });
+      }
+
+      return { success: true, message: "Ferramenta consumida." };
+
     } else if (action === 'purchaseTool') {
+      let enigma = null;
+      if (enigmaId) {
+        const Enigma = Parse.Object.extend("Enigma");
+        const query = new Parse.Query(Enigma);
+        enigma = await query.get(enigmaId, { useMasterKey: true });
+      }
+
       let cost = 0;
       if (toolType === 'map') cost = 20.0;
-      else if (toolType === 'compass') cost = 15.0;
+      else if (toolType === 'compass') {
+         cost = enigma ? (enigma.get("compassPrice") || 15.0) : 15.0;
+      }
       else throw new Parse.Error(Parse.Error.INVALID_QUERY, "Invalid tool type.");
 
       if (balance < cost) {
