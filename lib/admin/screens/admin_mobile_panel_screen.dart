@@ -846,6 +846,12 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
     final compassCoordsCtrl = TextEditingController(
       text: data?['compassCoords'],
     );
+    final compassPriceCtrl = TextEditingController(
+      text: data?['compassPrice']?.toString() ?? '15.0',
+    );
+    final compassDurationCtrl = TextEditingController(
+      text: data?['compassDuration']?.toString() ?? '0',
+    );
     final orderCtrl = TextEditingController(
       text:
           data?['order']?.toString() ??
@@ -1085,6 +1091,34 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                           labelText: 'Coordenadas da Bússola',
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: compassPriceCtrl,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                labelText: 'Preço',
+                                prefixText: 'R\$ ',
+                              ),
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: compassDurationCtrl,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                labelText: 'Tempo (s)',
+                                helperText: '0=Sem limite',
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
                         onPressed: () async {
@@ -1257,6 +1291,8 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                                   'compassCoords': hasCompass
                                       ? compassCoordsCtrl.text.trim()
                                       : '',
+                                  'compassPrice': double.tryParse(compassPriceCtrl.text.replaceAll(',', '.')) ?? 15.0,
+                                  'compassDuration': int.tryParse(compassDurationCtrl.text) ?? 0,
                                   'linkedHints': linkedHints,
                                   'characteristics': selectedCharacteristics,
                                 };

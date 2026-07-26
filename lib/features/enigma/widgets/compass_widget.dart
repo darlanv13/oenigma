@@ -9,6 +9,7 @@ class CompassWidget extends StatefulWidget {
   final double targetLongitude;
   final int durationSeconds;
   final VoidCallback onTimeUp;
+  final Function(int) onTick;
 
   const CompassWidget({
     super.key,
@@ -18,6 +19,7 @@ class CompassWidget extends StatefulWidget {
     required double destinationLatitude,
     required this.durationSeconds,
     required this.onTimeUp,
+    required this.onTick,
   });
 
   @override
@@ -52,19 +54,15 @@ class _CompassWidgetState extends State<CompassWidget>
   }
 
   void _startTimer() {
+    // If duration is 0, it means infinite usage, so no timer.
     if (_remainingSeconds <= 0) {
-      // Defer calling onTimeUp so it doesn't run during initState
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          widget.onTimeUp();
-        }
-      });
       return;
     }
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
           _remainingSeconds--;
+          widget.onTick(_remainingSeconds);
           if (_remainingSeconds <= 0) {
             timer.cancel();
             widget.onTimeUp();

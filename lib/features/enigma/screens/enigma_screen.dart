@@ -224,6 +224,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   Map<String, double>? _destinationLocation;
   int _compassDuration = 0;
   double _compassPrice = 15.0;
+  int? _compassRemainingSeconds;
 
   // Animation Controller for Shake Effect
   late AnimationController _shakeController;
@@ -267,6 +268,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       _hasCompass = false;
       _hasMap = false;
       _destinationLocation = null;
+      _compassRemainingSeconds = null;
     });
 
     try {
@@ -346,6 +348,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   (statusData['destinationLocation']['longitude'] as num)
                       .toDouble(),
             };
+          }
+          if (_compassRemainingSeconds == null) {
+            _compassRemainingSeconds = _compassDuration;
           }
         });
         if (_isBlocked && statusData['cooldownUntil'] != null) {
@@ -1337,13 +1342,17 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 targetLongitude: _destinationLocation!['longitude']!,
                 destinationLongitude: _destinationLocation!['longitude']!,
                 destinationLatitude: _destinationLocation!['latitude']!,
-                durationSeconds: _compassDuration,
+                durationSeconds: _compassRemainingSeconds ?? _compassDuration,
+                onTick: (int remaining) {
+                  _compassRemainingSeconds = remaining;
+                },
                 onTimeUp: () {
                   if (Navigator.canPop(dialogContext)) {
                     Navigator.of(dialogContext).pop();
 
                     setState(() {
                       _hasCompass = false;
+                      _compassRemainingSeconds = null;
                     });
 
                     _handleAction('consumeTool', toolType: 'compass');
