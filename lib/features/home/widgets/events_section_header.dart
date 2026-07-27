@@ -1,47 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class EventsSectionHeader extends StatelessWidget {
   const EventsSectionHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFD54F).withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
-            ),
+        Text(
+          "ESCOLHA SUA CAÇADA",
+          style: GoogleFonts.orbitron(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: const Color(
+              0xFFD6B570,
+            ), // Destaque na cor do tema em dourado apagado
+            letterSpacing: 1.2,
           ),
-          child: const FaIcon(
-            FontAwesomeIcons.mapLocationDot,
-            color: Color(0xFFFFD54F),
-            size: 16,
-          ),
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text(
-              "ESCOLHA SUA CAÇADA",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFFFFD54F), // Destaque na cor do tema
-                letterSpacing: 1.2,
-              ),
-            ),
-            SizedBox(height: 2),
-            Text(
-              "Eventos disponíveis no momento",
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-          ],
+        const SizedBox(height: 8),
+        const Text(
+          "Eventos disponíveis no momento",
+          style: TextStyle(
+            fontSize: 12,
+            color: Color(0xFF9E8B61),
+            fontWeight: FontWeight.w500,
+          ),
+          textAlign: TextAlign.center,
         ),
       ],
     );

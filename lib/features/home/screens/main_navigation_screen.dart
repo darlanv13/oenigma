@@ -10,6 +10,7 @@ import 'package:oenigma/features/auth/screens/login_screen.dart';
 import 'package:oenigma/features/profile/screens/profile_screen.dart';
 import 'package:oenigma/features/ranking/screens/ranking_screen.dart';
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key});
@@ -114,32 +115,23 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   .toList(),
               allPlayers: allPlayers,
             ),
-            isGuest ? const LoginScreen() : ProfileScreen(playerData: playerData, walletData: walletData),
+            isGuest
+                ? const LoginScreen()
+                : ProfileScreen(playerData: playerData, walletData: walletData),
           ];
 
           return screens[_selectedIndex];
         },
       ),
       bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(50),
-          color: const Color(0xFF1E1E1E), // Fundo escuro premium
+          color: Colors.transparent, // Fundo escuro premium
           border: Border(
             top: BorderSide(
-              color: const Color(
-                0xFFFFD54F,
-              ).withValues(alpha: 0.2), // Borda dourada sutil
+              color: Colors.white.withValues(alpha: 0.1),
               width: 1,
             ),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.6),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
         ),
         child: BottomNavigationBar(
           backgroundColor: Colors.transparent,
@@ -149,70 +141,72 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           elevation: 0,
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
-          selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 12,
+          selectedLabelStyle: GoogleFonts.orbitron(
+            fontWeight: FontWeight.w700,
+            fontSize: 10,
+            letterSpacing: 1.0,
           ),
-          unselectedLabelStyle: const TextStyle(
+          unselectedLabelStyle: GoogleFonts.orbitron(
             fontWeight: FontWeight.w500,
-            fontSize: 11,
+            fontSize: 10,
+            letterSpacing: 1.0,
           ),
           items: const [
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
+                padding: EdgeInsets.only(bottom: 8.0, top: 12.0),
                 child: Opacity(
                   opacity: 0.5,
                   child: SvgNavIcon(assetPath: 'assets/icon/maps.svg'),
                 ),
               ),
               activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
+                padding: EdgeInsets.only(bottom: 8.0, top: 12.0),
                 child: SvgNavIcon(assetPath: 'assets/icon/maps.svg'),
               ),
-              label: 'Explorar',
+              label: 'EXPLORAR',
             ),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
+                padding: EdgeInsets.only(bottom: 8.0, top: 12.0),
                 child: Opacity(
                   opacity: 0.5,
                   child: SvgNavIcon(assetPath: 'assets/icon/chest.svg'),
                 ),
               ),
               activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
+                padding: EdgeInsets.only(bottom: 8.0, top: 12.0),
                 child: SvgNavIcon(assetPath: 'assets/icon/chest.svg'),
               ),
-              label: 'Tesouro',
+              label: 'TESOURO',
             ),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
+                padding: EdgeInsets.only(bottom: 8.0, top: 12.0),
                 child: Opacity(
                   opacity: 0.5,
                   child: SvgNavIcon(assetPath: 'assets/icon/ship.svg'),
                 ),
               ),
               activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
+                padding: EdgeInsets.only(bottom: 8.0, top: 12.0),
                 child: SvgNavIcon(assetPath: 'assets/icon/ship.svg'),
               ),
-              label: 'Ranking',
+              label: 'RANKING',
             ),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
+                padding: EdgeInsets.only(bottom: 8.0, top: 12.0),
                 child: Opacity(
                   opacity: 0.5,
                   child: SvgNavIcon(assetPath: 'assets/icon/pirate.svg'),
                 ),
               ),
               activeIcon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
+                padding: EdgeInsets.only(bottom: 8.0, top: 12.0),
                 child: SvgNavIcon(assetPath: 'assets/icon/pirate.svg'),
               ),
-              label: 'Perfil',
+              label: 'PERFIL',
             ),
           ],
         ),
