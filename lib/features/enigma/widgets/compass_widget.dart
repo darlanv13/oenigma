@@ -1,11 +1,15 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 
 class CompassWidget extends StatefulWidget {
   final double targetLatitude;
   final double targetLongitude;
+  final int durationSeconds;
+  final VoidCallback onTimeUp;
+  final Function(int) onTick;
 
   const CompassWidget({
     super.key,
@@ -13,6 +17,9 @@ class CompassWidget extends StatefulWidget {
     required this.targetLongitude,
     required double destinationLongitude,
     required double destinationLatitude,
+    required this.durationSeconds,
+    required this.onTimeUp,
+    required this.onTick,
   });
 
   @override
@@ -27,9 +34,15 @@ class _CompassWidgetState extends State<CompassWidget>
   Position? _currentPosition;
   bool _hasPermissions = false;
 
+  late int _remainingSeconds;
+  Timer? _countdownTimer;
+
   @override
   void initState() {
     super.initState();
+
+    _remainingSeconds = widget.durationSeconds;
+
     // Controlador da animação da "linha do radar" que fica girando
     _scannerController = AnimationController(
       vsync: this,
@@ -37,6 +50,26 @@ class _CompassWidgetState extends State<CompassWidget>
     )..repeat();
 
     _initSensors();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    // If duration is 0, it means infinite usage, so no timer.
+    if (_remainingSeconds <= 0) {
+      return;
+    }
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _remainingSeconds--;
+          widget.onTick(_remainingSeconds);
+          if (_remainingSeconds <= 0) {
+            timer.cancel();
+            widget.onTimeUp();
+          }
+        });
+      }
+    });
   }
 
   Future<void> _initSensors() async {
@@ -70,7 +103,14 @@ class _CompassWidgetState extends State<CompassWidget>
   @override
   void dispose() {
     _scannerController.dispose();
+    _countdownTimer?.cancel();
     super.dispose();
+  }
+
+  String _formatTime(int seconds) {
+    final int min = seconds ~/ 60;
+    final int sec = seconds % 60;
+    return '${min.toString().padLeft(2, '0')}:${sec.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -115,6 +155,32 @@ class _CompassWidgetState extends State<CompassWidget>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (widget.durationSeconds > 0)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Colors.redAccent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.redAccent, width: 2),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.timer, color: Colors.redAccent, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  _formatTime(_remainingSeconds),
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Courier',
+                  ),
+                ),
+              ],
+            ),
+          ),
         // A Carcaça Metálica do Radar
         Container(
           width: 280,

@@ -1198,6 +1198,12 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final compassCoordsCtrl = TextEditingController(
       text: data?['compassCoords'],
     );
+    final compassPriceCtrl = TextEditingController(
+      text: data?['compassPrice']?.toString() ?? '15.0',
+    );
+    final compassDurationCtrl = TextEditingController(
+      text: data?['compassDuration']?.toString() ?? '0',
+    );
 
     String selectedType = data?['type'] ?? 'text';
     if (!['text', 'gps', 'qrcode'].contains(selectedType)) {
@@ -1491,6 +1497,42 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                   hintStyle: TextStyle(color: Colors.white38),
                                 ),
                               ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: compassPriceCtrl,
+                                      style: const TextStyle(color: Colors.white),
+                                      decoration: InputDecoration(
+                                        labelText: 'Preço (R\$)',
+                                        prefixIcon: const Icon(Icons.attach_money, color: Colors.greenAccent),
+                                        filled: true,
+                                        fillColor: Colors.white10,
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: TextFormField(
+                                      controller: compassDurationCtrl,
+                                      style: const TextStyle(color: Colors.white),
+                                      decoration: InputDecoration(
+                                        labelText: 'Tempo (Segundos)',
+                                        prefixIcon: const Icon(Icons.timer, color: Colors.redAccent),
+                                        filled: true,
+                                        fillColor: Colors.white10,
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                        helperText: '0 = Infinito',
+                                        helperStyle: const TextStyle(color: Colors.grey),
+                                      ),
+                                      keyboardType: TextInputType.number,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
 
                             const SizedBox(height: 16),
@@ -1671,6 +1713,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                       'compassCoords': (hasCompass || selectedType == 'gps')
                                           ? compassCoordsCtrl.text.trim()
                                           : '',
+                                      'compassPrice': double.tryParse(compassPriceCtrl.text.replaceAll(',', '.')) ?? 15.0,
+                                      'compassDuration': int.tryParse(compassDurationCtrl.text) ?? 0,
                                       'imageUrl': photoUrlCtrl.text,
                                       'audioUrl': audioUrlCtrl.text,
                                     };

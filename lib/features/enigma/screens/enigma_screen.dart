@@ -222,6 +222,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   bool _hasCompass = false;
   bool _hasMap = false;
   Map<String, double>? _destinationLocation;
+  int _compassDuration = 0;
+  double _compassPrice = 15.0;
+  int? _compassRemainingSeconds;
 
   // Animation Controller for Shake Effect
   late AnimationController _shakeController;
@@ -265,6 +268,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       _hasCompass = false;
       _hasMap = false;
       _destinationLocation = null;
+      _compassRemainingSeconds = null;
     });
 
     try {
@@ -331,6 +335,11 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           _isBlocked = statusData['isBlocked'] ?? false;
           _hasCompass = statusData['hasCompass'] ?? false;
           _hasMap = statusData['hasMap'] ?? false;
+          _compassDuration = statusData['compassDuration'] ?? _currentEnigma.compassDuration;
+          _compassPrice = (statusData['compassPrice'] as num?)?.toDouble() ?? _currentEnigma.compassPrice;
+          if (_compassPrice == 0.0) {
+            _compassPrice = 15.0; // fallback if unset in backend
+          }
           if (statusData['destinationLocation'] != null) {
             _destinationLocation = {
               'latitude': (statusData['destinationLocation']['latitude'] as num)
@@ -339,6 +348,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   (statusData['destinationLocation']['longitude'] as num)
                       .toDouble(),
             };
+          }
+          if (_compassRemainingSeconds == null) {
+            _compassRemainingSeconds = _compassDuration;
           }
         });
         if (_isBlocked && statusData['cooldownUntil'] != null) {
@@ -545,7 +557,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     }
   }
 
-  Future<void> _handleAction(String action, {String? code}) async {
+  Future<void> _handleAction(String action, {String? code, String? toolType}) async {
     setState(() => _isLoading = true);
     try {
       final result = await _enigmaRepository.callEnigmaFunction(action, {
@@ -553,6 +565,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         'phaseOrder': widget.phase.order,
         'enigmaId': _currentEnigma.id,
         if (code != null) 'code': code,
+        if (toolType != null) 'toolType': toolType,
       });
 
       if (!mounted) return;
@@ -561,7 +574,11 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       final success = data['success'] ?? false;
 
       if (success) {
-        if (action == 'purchaseHint') {
+        if (action == 'consumeTool') {
+          // If we consumed a tool successfully, no other UI updates besides setting _isLoading = false needed here
+          // because local state _hasCompass is handled before calling this method.
+          return;
+        } else if (action == 'purchaseHint') {
           setState(() {
             _isHintVisible = true;
             _hintData = Map<String, dynamic>.from(data['hint']);
@@ -798,25 +815,29 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     required Widget child,
     dynamic icon,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        boxShadow: [
-          BoxShadow(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.4),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                children: [
               if (icon != null) ...[
                 FaIcon(icon, color: const Color(0xFFFFD54F), size: 16),
                 const SizedBox(width: 10),
@@ -830,11 +851,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   letterSpacing: 1.5,
                 ),
               ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              child,
             ],
           ),
-          const SizedBox(height: 16),
-          child,
-        ],
+        ),
       ),
     );
   }
@@ -1048,7 +1071,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               borderRadius: BorderRadius.circular(30),
               gradient: isActionReady
                   ? const LinearGradient(
-                      colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
+                      colors: [Color(0xFF00FFFF), Color(0xFF0088FF)],
                     )
                   : const LinearGradient(
                       colors: [Color(0xFF424242), Color(0xFF212121)],
@@ -1056,7 +1079,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               boxShadow: [
                 if (isActionReady)
                   BoxShadow(
-                    color: Colors.green.withValues(alpha: 0.4),
+                    color: const Color(0xFF00FFFF).withValues(alpha: 0.4),
                     blurRadius: 15,
                     spreadRadius: 2,
                   ),
@@ -1273,7 +1296,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     if (_destinationLocation == null) return;
     showDialog(
       context: context,
-      builder: (context) => Dialog(
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
@@ -1308,7 +1332,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   ),
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.grey),
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => Navigator.of(dialogContext).pop(),
                   ),
                 ],
               ),
@@ -1318,6 +1342,29 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 targetLongitude: _destinationLocation!['longitude']!,
                 destinationLongitude: _destinationLocation!['longitude']!,
                 destinationLatitude: _destinationLocation!['latitude']!,
+                durationSeconds: _compassRemainingSeconds ?? _compassDuration,
+                onTick: (int remaining) {
+                  _compassRemainingSeconds = remaining;
+                },
+                onTimeUp: () {
+                  if (Navigator.canPop(dialogContext)) {
+                    Navigator.of(dialogContext).pop();
+
+                    setState(() {
+                      _hasCompass = false;
+                      _compassRemainingSeconds = null;
+                    });
+
+                    _handleAction('consumeTool', toolType: 'compass');
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('O tempo da bússola acabou!'),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                  }
+                },
               ),
             ],
           ),
@@ -1411,7 +1458,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             Expanded(
               child: _buildToolPurchaseCard(
                 title: 'BÚSSOLA',
-                price: 15.0,
+                price: _compassPrice,
                 type: 'Bússola',
                 toolKey: 'compass',
                 icon: FontAwesomeIcons.compass,
