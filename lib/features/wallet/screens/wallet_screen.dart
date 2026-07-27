@@ -3,16 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:oenigma/core/models/user_wallet_model.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/wallet/providers/wallet_provider.dart';
 import 'package:oenigma/features/wallet/widgets/wallet_balance_card.dart';
 import 'package:oenigma/features/wallet/widgets/wallet_credit_options_sheet.dart';
 import 'package:oenigma/features/wallet/widgets/wallet_history_list.dart';
-import 'package:oenigma/features/wallet/widgets/wallet_profile_header.dart';
-import 'package:oenigma/features/wallet/widgets/wallet_prizes_section.dart';
-import 'package:oenigma/features/wallet/widgets/wallet_section_header.dart';
 
 class WalletScreen extends ConsumerStatefulWidget {
   const WalletScreen({super.key});
@@ -89,29 +86,41 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const FaIcon(
-              FontAwesomeIcons.gem,
-              color: Color(0xFFFFD54F),
-              size: 18,
+        leading: Container(
+          margin: const EdgeInsets.all(8.0),
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.1),
+              width: 1,
             ),
-            const SizedBox(width: 10),
-            const Text(
-              'O TESOURO',
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                color: Color(0xFFFFD54F),
-                letterSpacing: 2.0,
-                fontSize: 18,
-              ),
+          ),
+          child: IconButton(
+            icon: const FaIcon(
+              FontAwesomeIcons.angleLeft,
+              color: Color(0xFFD6B570),
+              size: 16,
             ),
-          ],
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+            },
+          ),
         ),
-        centerTitle: true,
+        title: Text(
+          'Carteira',
+          style: GoogleFonts.orbitron(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        titleSpacing: 0,
       ),
       body: walletAsync.when(
         loading: () => const Center(
@@ -179,17 +188,41 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 16),
-                      WalletProfileHeader(wallet: walletData),
-                      const SizedBox(height: 24),
-                      WalletBalanceCard(wallet: walletData),
-                      const SizedBox(height: 24),
-                      _buildActionButtons(walletData),
-                      const SizedBox(height: 40),
-                      const WalletSectionHeader(title: 'MEUS PRÊMIOS'),
-                      WalletPrizesSection(wallet: walletData),
+                      WalletBalanceCard(
+                        wallet: walletData,
+                        onDeposit: () => _showAddFundsDialog(walletData),
+                        onWithdraw: () => _showWithdrawDialog(walletData),
+                      ),
                       const SizedBox(height: 32),
-                      const WalletSectionHeader(title: 'HISTÓRICO RECENTE'),
+                      Text(
+                        'ÚLTIMAS TRANSAÇÕES',
+                        style: GoogleFonts.orbitron(
+                          color: const Color(0xFFD6B570),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       WalletHistoryList(wallet: walletData),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          FaIcon(
+                            FontAwesomeIcons.shieldHalved,
+                            color: Color(0xFFD6B570),
+                            size: 12,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            "Transações seguras",
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -199,104 +232,6 @@ class _WalletScreenState extends ConsumerState<WalletScreen>
           );
         },
       ),
-    );
-  }
-
-  Widget _buildActionButtons(UserWalletModel wallet) {
-    return Row(
-      children: [
-        // BOTÃO DE DEPÓSITO (Dourado)
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: ElevatedButton.icon(
-              onPressed: () => _showAddFundsDialog(wallet),
-              icon: const FaIcon(
-                FontAwesomeIcons.coins,
-                color: Colors.black,
-                size: 16,
-              ),
-              label: const Text(
-                'DEPOSITAR',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                  letterSpacing: 1.0,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        // BOTÃO DE SAQUE (Escuro/Platinado)
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: const Color(0xFF1E1E1E),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.1),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: ElevatedButton.icon(
-              onPressed: () => _showWithdrawDialog(wallet),
-              icon: const FaIcon(
-                FontAwesomeIcons.handHoldingDollar,
-                color: Colors.white,
-                size: 16,
-              ),
-              label: const Text(
-                'SACAR',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                  letterSpacing: 1.0,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

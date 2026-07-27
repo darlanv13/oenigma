@@ -11,6 +11,7 @@ import 'package:oenigma/features/profile/widgets/profile_header.dart';
 import 'package:oenigma/features/profile/widgets/profile_section_header.dart';
 import 'package:oenigma/features/profile/widgets/profile_stats_section.dart';
 import 'package:oenigma/features/profile/widgets/profile_badges_section.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> playerData;
@@ -126,18 +127,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text(
-          'PERFIL DO JOGADOR',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            color: Color(0xFFFFD54F),
-            letterSpacing: 1.5,
-            fontSize: 18,
+        automaticallyImplyLeading: false,
+        title: Text(
+          'Perfil',
+          style: GoogleFonts.orbitron(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            fontSize: 20,
           ),
         ),
-        centerTitle: true,
+        centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        titleSpacing: 16,
       ),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),

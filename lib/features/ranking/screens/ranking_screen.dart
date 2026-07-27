@@ -7,7 +7,7 @@ import 'package:oenigma/features/ranking/widgets/ranking_event_selector.dart';
 import 'package:oenigma/features/ranking/widgets/ranking_list.dart';
 import 'package:oenigma/features/ranking/widgets/ranking_podium.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 
 class RankingScreen extends ConsumerStatefulWidget {
   final List<EventModel> availableEvents;
@@ -50,15 +50,21 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
         int latestCompletionTime = 0;
 
         if (events is Map && events.containsKey(_selectedEventId)) {
-          final eventProgress = events[_selectedEventId] as Map<String, dynamic>;
+          final eventProgress =
+              events[_selectedEventId] as Map<String, dynamic>;
 
-          phasesCompleted = (eventProgress['currentPhase'] as num?)?.toInt() ?? 0;
-          latestCompletionTime = (eventProgress['lastUpdateTime'] as num?)?.toInt() ?? 0;
+          phasesCompleted =
+              (eventProgress['currentPhase'] as num?)?.toInt() ?? 0;
+          latestCompletionTime =
+              (eventProgress['lastUpdateTime'] as num?)?.toInt() ?? 0;
 
           // Apply Time Filter
           if (_selectedTimeFilter == 'monthly' && latestCompletionTime > 0) {
-            final completionDate = DateTime.fromMillisecondsSinceEpoch(latestCompletionTime);
-            if (completionDate.year != now.year || completionDate.month != now.month) {
+            final completionDate = DateTime.fromMillisecondsSinceEpoch(
+              latestCompletionTime,
+            );
+            if (completionDate.year != now.year ||
+                completionDate.month != now.month) {
               phasesCompleted = 0; // Does not count for this month
             }
           }
@@ -85,7 +91,8 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
     // Assign positions with tie-breaking logic based on simple equal phases
     int currentPosition = 1;
     for (int i = 0; i < ranking.length; i++) {
-      if (i > 0 && ranking[i].phasesCompleted == ranking[i - 1].phasesCompleted) {
+      if (i > 0 &&
+          ranking[i].phasesCompleted == ranking[i - 1].phasesCompleted) {
         ranking[i].position = ranking[i - 1].position;
       } else {
         ranking[i].position = currentPosition;
@@ -130,13 +137,19 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text(
-          'Tabela de Classificação',
-          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+        automaticallyImplyLeading: false,
+        title: Text(
+          'Ranking',
+          style: GoogleFonts.orbitron(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            fontSize: 20,
+          ),
         ),
-        centerTitle: true,
+        centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        titleSpacing: 16,
       ),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
@@ -167,7 +180,9 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: _selectedTimeFilter == 'all_time' ? primaryAmber : Colors.transparent,
+                                color: _selectedTimeFilter == 'all_time'
+                                    ? primaryAmber
+                                    : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -175,7 +190,9 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: _selectedTimeFilter == 'all_time' ? Colors.black : secondaryTextColor,
+                                  color: _selectedTimeFilter == 'all_time'
+                                      ? Colors.black
+                                      : secondaryTextColor,
                                 ),
                               ),
                             ),
@@ -192,7 +209,9 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: _selectedTimeFilter == 'monthly' ? primaryAmber : Colors.transparent,
+                                color: _selectedTimeFilter == 'monthly'
+                                    ? primaryAmber
+                                    : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -200,7 +219,9 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: _selectedTimeFilter == 'monthly' ? Colors.black : secondaryTextColor,
+                                  color: _selectedTimeFilter == 'monthly'
+                                      ? Colors.black
+                                      : secondaryTextColor,
                                 ),
                               ),
                             ),
@@ -241,7 +262,8 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 40.0),
                         child: Column(
                           children: [
-                            FaIcon(FontAwesomeIcons.trophy,
+                            FaIcon(
+                              FontAwesomeIcons.trophy,
                               size: 64,
                               color: secondaryTextColor.withValues(alpha: 0.5),
                             ),
