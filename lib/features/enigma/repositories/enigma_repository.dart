@@ -55,7 +55,10 @@ class EnigmaRepository {
     });
   }
 
-  Future<ParseResponse> deletePhase({required String eventId, required String phaseId}) {
+  Future<ParseResponse> deletePhase({
+    required String eventId,
+    required String phaseId,
+  }) {
     return callFunction('deletePhase', {
       'eventId': eventId,
       'phaseId': phaseId,

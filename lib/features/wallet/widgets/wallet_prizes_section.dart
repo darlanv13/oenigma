@@ -3,7 +3,6 @@ import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class WalletPrizesSection extends StatelessWidget {
   final UserWalletModel wallet;
 
@@ -22,7 +21,8 @@ class WalletPrizesSection extends StatelessWidget {
         ),
         child: Column(
           children: [
-            FaIcon(FontAwesomeIcons.trophy,
+            FaIcon(
+              FontAwesomeIcons.trophy,
               size: 48,
               color: secondaryTextColor.withValues(alpha: 0.5),
             ),
@@ -57,7 +57,11 @@ class WalletPrizesSection extends StatelessWidget {
               color: primaryAmber.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const FaIcon(FontAwesomeIcons.trophy, color: primaryAmber, size: 32),
+            child: const FaIcon(
+              FontAwesomeIcons.trophy,
+              color: primaryAmber,
+              size: 32,
+            ),
           ),
           const SizedBox(width: 20),
           Expanded(

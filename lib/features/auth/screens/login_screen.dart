@@ -92,10 +92,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Widget _buildLoginForm() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Form(
         key: _formKey,
@@ -104,13 +112,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _buildTextFormField(
               controller: _emailController,
               hintText: "Email",
-              // CORREÇÃO AQUI: Passando o Widget FaIcon centralizado
               prefixIcon: Container(
                 alignment: Alignment.center,
                 width: 48,
-                child: FaIcon(
+                child: const FaIcon(
                   FontAwesomeIcons.envelope,
-                  color: textColor.withValues(alpha: 0.7),
+                  color: Colors.grey,
                   size: 20,
                 ),
               ),
@@ -121,13 +128,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _buildTextFormField(
               controller: _passwordController,
               hintText: "Senha",
-              // CORREÇÃO AQUI: Passando o Widget FaIcon centralizado
               prefixIcon: Container(
                 alignment: Alignment.center,
                 width: 48,
-                child: FaIcon(
+                child: const FaIcon(
                   FontAwesomeIcons.lock,
-                  color: textColor.withValues(alpha: 0.7),
+                  color: Colors.grey,
                   size: 20,
                 ),
               ),
@@ -137,7 +143,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   _isPasswordVisible
                       ? FontAwesomeIcons.solidEyeSlash
                       : FontAwesomeIcons.solidEye,
-                  color: textColor.withValues(alpha: 0.7),
+                  color: Colors.grey,
                   size: 20,
                 ),
                 onPressed: () =>
@@ -160,34 +166,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 },
                 child: const Text(
                   "Esqueceu a senha?",
-                  style: TextStyle(color: textColor),
+                  style: TextStyle(color: Colors.grey),
                 ),
               ),
             ),
             const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleLogin,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryAmber,
-                  foregroundColor: darkBackground,
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(30),
                   ),
+                  minimumSize: const Size(double.infinity, 50),
                 ),
                 child: _isLoading
                     ? const SizedBox(
                         height: 24,
                         width: 24,
-                        child: CircularProgressIndicator(color: darkBackground),
+                        child: CircularProgressIndicator(color: Colors.black),
                       )
                     : const Text(
-                        "Entrar",
+                        "ENTRAR",
                         style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.0,
                         ),
                       ),
               ),
@@ -198,7 +221,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 const Text(
                   "Não tem uma conta? ",
-                  style: TextStyle(color: textColor),
+                  style: TextStyle(color: Colors.grey),
                 ),
                 TextButton(
                   onPressed: _isLoading
@@ -213,7 +236,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: const Text(
                     "Cadastre-se",
                     style: TextStyle(
-                      color: primaryAmber,
+                      color: Color(0xFFD6B570),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -226,11 +249,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  // CORREÇÃO NA ASSINATURA DA FUNÇÃO: Recebendo "Widget prefixIcon"
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String hintText,
-    required Widget prefixIcon, // Alterado de IconData para Widget
+    required Widget prefixIcon,
     bool obscureText = false,
     Widget? suffixIcon,
     String? Function(String?)? validator,
@@ -239,17 +261,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       controller: controller,
       obscureText: obscureText,
       validator: validator,
-      style: const TextStyle(color: textColor),
+      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       decoration: InputDecoration(
         filled: true,
-        fillColor: cardColor,
+        fillColor: const Color(0xFF121212),
         hintText: hintText,
-        hintStyle: TextStyle(color: textColor.withValues(alpha: 0.7)),
-        prefixIcon: prefixIcon, // Usando o Widget passado
+        hintStyle: const TextStyle(
+          color: Colors.grey,
+          fontWeight: FontWeight.bold,
+        ),
+        prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
+        contentPadding: const EdgeInsets.symmetric(vertical: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Color(0xFFFFD54F), width: 1.5),
         ),
       ),
     );

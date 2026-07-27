@@ -4,7 +4,6 @@ import 'package:oenigma/core/models/ranking_player_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class RankingPodium extends StatelessWidget {
   final List<RankingPlayerModel> top3;
 
@@ -106,7 +105,8 @@ class _PodiumPlace extends StatelessWidget {
                       ? NetworkImage(player.photoURL!)
                       : null,
                   child: player.photoURL == null
-                      ? FaIcon(FontAwesomeIcons.solidUser,
+                      ? FaIcon(
+                          FontAwesomeIcons.solidUser,
                           size: isFirstPlace ? 30 : 20,
                           color: secondaryTextColor,
                         )
@@ -173,7 +173,10 @@ class _PodiumPlace extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [color.withValues(alpha: 0.9), color.withValues(alpha: 0.2)],
+                colors: [
+                  color.withValues(alpha: 0.9),
+                  color.withValues(alpha: 0.2),
+                ],
               ),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
@@ -181,7 +184,10 @@ class _PodiumPlace extends StatelessWidget {
               border: Border(
                 top: BorderSide(color: color, width: 2),
                 left: BorderSide(color: color.withValues(alpha: 0.5), width: 1),
-                right: BorderSide(color: color.withValues(alpha: 0.5), width: 1),
+                right: BorderSide(
+                  color: color.withValues(alpha: 0.5),
+                  width: 1,
+                ),
               ),
               boxShadow: [
                 BoxShadow(

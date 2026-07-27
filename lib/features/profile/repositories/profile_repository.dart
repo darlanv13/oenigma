@@ -2,11 +2,13 @@ import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'dart:typed_data';
 
 class ProfileRepository {
-
   Future<Map<String, dynamic>?> getPlayerDetails(String userId) async {
-    final query = QueryBuilder<ParseUser>(ParseUser.forQuery())..whereEqualTo('objectId', userId);
+    final query = QueryBuilder<ParseUser>(ParseUser.forQuery())
+      ..whereEqualTo('objectId', userId);
     final response = await query.query();
-    if (response.success && response.results != null && response.results!.isNotEmpty) {
+    if (response.success &&
+        response.results != null &&
+        response.results!.isNotEmpty) {
       final user = response.results!.first as ParseUser;
       // Convert ParseUser data to map or extract needed fields.
       // E.g., user.toJson() could work but typically we want standard fields.
@@ -37,7 +39,10 @@ class ProfileRepository {
     }
   }
 
-  Future<void> updateUserProfile(String userId, Map<String, dynamic> data) async {
+  Future<void> updateUserProfile(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {
     final user = ParseUser(null, null, null)..objectId = userId;
     data.forEach((key, value) {
       user.set(key, value);

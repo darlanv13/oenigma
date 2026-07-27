@@ -26,7 +26,8 @@ void showSuccessDialog(
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.green, width: 3),
                 ),
-                child: const FaIcon(FontAwesomeIcons.check,
+                child: const FaIcon(
+                  FontAwesomeIcons.check,
                   color: Colors.green,
                   size: 50,
                 ),

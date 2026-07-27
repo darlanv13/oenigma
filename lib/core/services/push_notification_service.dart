@@ -9,22 +9,33 @@ class PushNotificationService {
     try {
       final installation = await ParseInstallation.currentInstallation();
 
-      final List<dynamic> channels = installation.get<List<dynamic>>('channels') ?? [];
+      final List<dynamic> channels =
+          installation.get<List<dynamic>>('channels') ?? [];
       if (!channels.contains('all_players')) {
         installation.setAddUnique('channels', 'all_players');
         await installation.save();
-        dev.log('Inscrito no canal all_players', name: 'PushNotificationService');
+        dev.log(
+          'Inscrito no canal all_players',
+          name: 'PushNotificationService',
+        );
       }
 
       final user = await ParseUser.currentUser() as ParseUser?;
       if (user != null) {
         installation.set('user', user);
         await installation.save();
-        dev.log('Instalação vinculada ao usuário', name: 'PushNotificationService');
+        dev.log(
+          'Instalação vinculada ao usuário',
+          name: 'PushNotificationService',
+        );
       }
-
     } catch (e, stack) {
-      dev.log('Erro ao inicializar ParseInstallation', name: 'PushNotificationService', error: e, stackTrace: stack);
+      dev.log(
+        'Erro ao inicializar ParseInstallation',
+        name: 'PushNotificationService',
+        error: e,
+        stackTrace: stack,
+      );
     }
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
 import 'package:lottie/lottie.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import '../screens/event_details_screen.dart';

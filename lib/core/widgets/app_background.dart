@@ -4,11 +4,7 @@ class AppBackground extends StatelessWidget {
   final Widget child;
   final double opacity;
 
-  const AppBackground({
-    super.key,
-    required this.child,
-    this.opacity = 0.15,
-  });
+  const AppBackground({super.key, required this.child, this.opacity = 0.15});
 
   @override
   Widget build(BuildContext context) {

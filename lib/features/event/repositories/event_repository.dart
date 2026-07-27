@@ -61,10 +61,13 @@ class EventRepository {
     String playerId,
     String eventId,
   ) async {
-    final query = QueryBuilder<ParseUser>(ParseUser.forQuery())..whereEqualTo('objectId', playerId);
+    final query = QueryBuilder<ParseUser>(ParseUser.forQuery())
+      ..whereEqualTo('objectId', playerId);
     final response = await query.query();
 
-    if (response.success && response.results != null && response.results!.isNotEmpty) {
+    if (response.success &&
+        response.results != null &&
+        response.results!.isNotEmpty) {
       final ParseUser player = response.results!.first as ParseUser;
       final events = player.get<Map<String, dynamic>>('events') ?? {};
       final eventProgress = events[eventId];

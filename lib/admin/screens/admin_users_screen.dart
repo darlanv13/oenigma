@@ -37,11 +37,16 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         _filteredUsers = List.from(_allUsers);
       } else {
         _filteredUsers = _allUsers.where((user) {
-          final name = (user['name'] ?? user['displayName'] ?? '').toString().toLowerCase();
+          final name = (user['name'] ?? user['displayName'] ?? '')
+              .toString()
+              .toLowerCase();
           final email = (user['email'] ?? '').toString().toLowerCase();
           final cpf = (user['cpf'] ?? '').toString().toLowerCase();
           final phone = (user['phone'] ?? '').toString().toLowerCase();
-          return name.contains(query) || email.contains(query) || cpf.contains(query) || phone.contains(query);
+          return name.contains(query) ||
+              email.contains(query) ||
+              cpf.contains(query) ||
+              phone.contains(query);
         }).toList();
       }
     });
@@ -154,7 +159,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               }
 
               return ListView.builder(
-                itemCount: _searchController.text.isEmpty && _filteredUsers.length > 5 ? 5 : _filteredUsers.length,
+                itemCount:
+                    _searchController.text.isEmpty && _filteredUsers.length > 5
+                    ? 5
+                    : _filteredUsers.length,
                 itemBuilder: (context, index) {
                   final user = _filteredUsers[index];
                   final objectId = user['objectId'] as String;
@@ -202,13 +210,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             '$email${isAdmin ? " • Admin" : ""}${role == "creator" ? " • Creator" : ""}${isBanned ? " • Banido" : ""}',
                             style: const TextStyle(color: secondaryTextColor),
                           ),
-                          if (cpf.toString().isNotEmpty || phone.toString().isNotEmpty)
+                          if (cpf.toString().isNotEmpty ||
+                              phone.toString().isNotEmpty)
                             Text(
                               [
                                 if (cpf.toString().isNotEmpty) 'CPF: $cpf',
                                 if (phone.toString().isNotEmpty) 'Tel: $phone',
                               ].join(' • '),
-                              style: const TextStyle(color: Colors.grey, fontSize: 12),
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
                             ),
                         ],
                       ),

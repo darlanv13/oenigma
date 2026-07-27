@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oenigma/features/auth/screens/auth_wrapper.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
@@ -15,9 +14,9 @@ class OnboardingScreen extends StatelessWidget {
     await prefs.setBool('hasSeenOnboarding', true);
 
     if (context.mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const AuthWrapper()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const AuthWrapper()));
     }
   }
 
@@ -25,7 +24,11 @@ class OnboardingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     const bodyStyle = TextStyle(fontSize: 16.0, color: Colors.white70);
     const pageDecoration = PageDecoration(
-      titleTextStyle: TextStyle(fontSize: 28.0, fontWeight: FontWeight.bold, color: primaryAmber),
+      titleTextStyle: TextStyle(
+        fontSize: 28.0,
+        fontWeight: FontWeight.bold,
+        color: primaryAmber,
+      ),
       bodyTextStyle: bodyStyle,
       bodyPadding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
       pageColor: darkBackground,
@@ -37,26 +40,54 @@ class OnboardingScreen extends StatelessWidget {
       pages: [
         PageViewModel(
           title: "Bem-vindo ao O Enigma!",
-          body: "A maior caçada ao tesouro digital da sua cidade. Prepare-se para desvendar mistérios e ganhar prêmios reais via Pix.",
-          image: const Center(child: FaIcon(FontAwesomeIcons.compass, size: 140, color: primaryAmber)),
+          body:
+              "A maior caçada ao tesouro digital da sua cidade. Prepare-se para desvendar mistérios e ganhar prêmios reais via Pix.",
+          image: const Center(
+            child: FaIcon(
+              FontAwesomeIcons.compass,
+              size: 140,
+              color: primaryAmber,
+            ),
+          ),
           decoration: pageDecoration,
         ),
         PageViewModel(
           title: "Escolha um Evento",
-          body: "Acesse a tela inicial e entre no evento ativo. Fique de olho na contagem regressiva!",
-          image: const Center(child: FaIcon(FontAwesomeIcons.calendarDays, size: 140, color: Colors.greenAccent)),
+          body:
+              "Acesse a tela inicial e entre no evento ativo. Fique de olho na contagem regressiva!",
+          image: const Center(
+            child: FaIcon(
+              FontAwesomeIcons.calendarDays,
+              size: 140,
+              color: Colors.greenAccent,
+            ),
+          ),
           decoration: pageDecoration,
         ),
         PageViewModel(
           title: "Siga as Pistas",
-          body: "Cada enigma te levará a um local diferente. Use as ferramentas de Mapa e Bússola caso precise de uma ajudinha extra.",
-          image: const Center(child: FaIcon(FontAwesomeIcons.locationDot, size: 140, color: Colors.blueAccent)),
+          body:
+              "Cada enigma te levará a um local diferente. Use as ferramentas de Mapa e Bússola caso precise de uma ajudinha extra.",
+          image: const Center(
+            child: FaIcon(
+              FontAwesomeIcons.locationDot,
+              size: 140,
+              color: Colors.blueAccent,
+            ),
+          ),
           decoration: pageDecoration,
         ),
         PageViewModel(
           title: "Escaneie e Ganhe",
-          body: "Encontrou o local correto? Escaneie o QR Code escondido. O primeiro a completar todas as fases leva a bolada na carteira!",
-          image: const Center(child: FaIcon(FontAwesomeIcons.qrcode, size: 140, color: Colors.purpleAccent)),
+          body:
+              "Encontrou o local correto? Escaneie o QR Code escondido. O primeiro a completar todas as fases leva a bolada na carteira!",
+          image: const Center(
+            child: FaIcon(
+              FontAwesomeIcons.qrcode,
+              size: 140,
+              color: Colors.purpleAccent,
+            ),
+          ),
           decoration: pageDecoration,
         ),
       ],
@@ -67,9 +98,15 @@ class OnboardingScreen extends StatelessWidget {
       nextFlex: 0,
       showBackButton: false,
       back: const FaIcon(FontAwesomeIcons.arrowLeft, color: primaryAmber),
-      skip: const Text('Pular', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white70)),
+      skip: const Text(
+        'Pular',
+        style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white70),
+      ),
       next: const FaIcon(FontAwesomeIcons.arrowRight, color: primaryAmber),
-      done: const Text('Começar', style: TextStyle(fontWeight: FontWeight.w600, color: primaryAmber)),
+      done: const Text(
+        'Começar',
+        style: TextStyle(fontWeight: FontWeight.w600, color: primaryAmber),
+      ),
       curve: Curves.fastLinearToSlowEaseIn,
       controlsMargin: const EdgeInsets.all(16),
       dotsDecorator: const DotsDecorator(

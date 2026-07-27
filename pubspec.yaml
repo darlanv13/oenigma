@@ -37,7 +37,7 @@ dependencies:
   shared_preferences: ^2.5.4
   introduction_screen: ^4.0.0
   carousel_slider: ^5.1.2
-  google_fonts: ^8.0.2
+  google_fonts: ^8.2.0
   cached_network_image: ^3.4.1
   confetti: ^0.8.0
   

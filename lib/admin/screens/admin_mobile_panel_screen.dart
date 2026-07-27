@@ -557,7 +557,6 @@ class _MobilePhaseListScreenState extends State<_MobilePhaseListScreen> {
                       controller: orderCtrl,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(labelText: 'Ordem'),
-
                     ),
                     const SizedBox(height: 12),
                     SwitchListTile(
@@ -865,15 +864,29 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
     bool hasCompass = data?['hasCompass'] ?? false;
     bool isSaving = false;
 
-    List<String> selectedCharacteristics = List<String>.from(data?['characteristics'] ?? []);
+    List<String> selectedCharacteristics = List<String>.from(
+      data?['characteristics'] ?? [],
+    );
     final availableCharacteristics = [
       {'key': 'nado', 'label': 'Nado', 'icon': FontAwesomeIcons.personSwimming},
-      {'key': 'corrida', 'label': 'Corrida', 'icon': FontAwesomeIcons.personRunning},
+      {
+        'key': 'corrida',
+        'label': 'Corrida',
+        'icon': FontAwesomeIcons.personRunning,
+      },
       {'key': 'camera', 'label': 'Câmera', 'icon': FontAwesomeIcons.camera},
       {'key': 'noite', 'label': 'Noite', 'icon': FontAwesomeIcons.moon},
       {'key': 'dia', 'label': 'Dia', 'icon': FontAwesomeIcons.sun},
-      {'key': 'exploracao', 'label': 'Exploração', 'icon': FontAwesomeIcons.compass},
-      {'key': 'escalada', 'label': 'Escalada', 'icon': FontAwesomeIcons.mountain},
+      {
+        'key': 'exploracao',
+        'label': 'Exploração',
+        'icon': FontAwesomeIcons.compass,
+      },
+      {
+        'key': 'escalada',
+        'label': 'Escalada',
+        'icon': FontAwesomeIcons.mountain,
+      },
     ];
 
     List<dynamic> linkedHints = List.from(data?['linkedHints'] ?? []);
@@ -922,7 +935,6 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                             decoration: const InputDecoration(
                               labelText: 'Ordem',
                             ),
-
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -982,7 +994,6 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Prêmio (R\$)',
                       ),
-
                     ),
                     const SizedBox(height: 12),
                     TextField(
@@ -1176,12 +1187,18 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                       spacing: 8,
                       runSpacing: 8,
                       children: availableCharacteristics.map((char) {
-                        final isSelected = selectedCharacteristics.contains(char['key'] as String);
+                        final isSelected = selectedCharacteristics.contains(
+                          char['key'] as String,
+                        );
                         return FilterChip(
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              FaIcon(char['icon'] as dynamic, size: 14, color: isSelected ? Colors.black : Colors.white),
+                              FaIcon(
+                                char['icon'] as dynamic,
+                                size: 14,
+                                color: isSelected ? Colors.black : Colors.white,
+                              ),
                               const SizedBox(width: 8),
                               Text(char['label'] as String),
                             ],
@@ -1191,15 +1208,21 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                           checkmarkColor: Colors.black,
                           labelStyle: TextStyle(
                             color: isSelected ? Colors.black : Colors.white,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
                           backgroundColor: cardColor,
                           onSelected: (bool selected) {
                             setState(() {
                               if (selected) {
-                                selectedCharacteristics.add(char['key'] as String);
+                                selectedCharacteristics.add(
+                                  char['key'] as String,
+                                );
                               } else {
-                                selectedCharacteristics.remove(char['key'] as String);
+                                selectedCharacteristics.remove(
+                                  char['key'] as String,
+                                );
                               }
                             });
                           },
