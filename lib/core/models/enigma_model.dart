@@ -97,10 +97,16 @@ class EnigmaModel {
       hintData: map['hintData'],
       prize: (map['prize'] as num?)?.toDouble() ?? 0.0,
       order: map['order'] ?? 1,
-      characteristics: (map['characteristics'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      characteristics:
+          (map['characteristics'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
       status: map['status'],
       closedAt: map['closedAt'] != null
-          ? (map['closedAt'] is DateTime ? map['closedAt'] : DateTime.tryParse(map['closedAt'].toString()))
+          ? (map['closedAt'] is DateTime
+                ? map['closedAt']
+                : DateTime.tryParse(map['closedAt'].toString()))
           : null,
     );
   }

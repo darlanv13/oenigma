@@ -3,7 +3,6 @@ import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class WalletProfileHeader extends StatelessWidget {
   final UserWalletModel wallet;
 
@@ -21,11 +20,16 @@ class WalletProfileHeader extends StatelessWidget {
           child: CircleAvatar(
             radius: 28,
             backgroundColor: darkBackground,
-            backgroundImage: (wallet.photoURL != null && wallet.photoURL!.isNotEmpty)
+            backgroundImage:
+                (wallet.photoURL != null && wallet.photoURL!.isNotEmpty)
                 ? NetworkImage(wallet.photoURL!)
                 : null,
             child: (wallet.photoURL == null || wallet.photoURL!.isEmpty)
-                ? const FaIcon(FontAwesomeIcons.solidUser, color: secondaryTextColor, size: 30)
+                ? const FaIcon(
+                    FontAwesomeIcons.solidUser,
+                    color: secondaryTextColor,
+                    size: 30,
+                  )
                 : null,
           ),
         ),
@@ -45,10 +49,7 @@ class WalletProfileHeader extends StatelessWidget {
               ),
               Text(
                 wallet.email,
-                style: const TextStyle(
-                  color: secondaryTextColor,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: secondaryTextColor, fontSize: 14),
                 overflow: TextOverflow.ellipsis,
               ),
             ],

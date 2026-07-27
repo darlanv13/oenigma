@@ -131,14 +131,16 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                                   ? NetworkImage(winnerPhotoURL)
                                   : null,
                               child: winnerPhotoURL == null
-                                  ? const FaIcon(FontAwesomeIcons.solidUser,
+                                  ? const FaIcon(
+                                      FontAwesomeIcons.solidUser,
                                       size: 45,
                                     )
                                   : null,
                             ),
                             Positioned(
                               top: -1,
-                              child: FaIcon(FontAwesomeIcons.medal,
+                              child: FaIcon(
+                                FontAwesomeIcons.medal,
                                 color: primaryAmber,
                                 size: 30,
                               ),

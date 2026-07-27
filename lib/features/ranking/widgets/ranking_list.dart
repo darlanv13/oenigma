@@ -5,7 +5,6 @@ import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class RankingList extends ConsumerWidget {
   final List<RankingPlayerModel> players;
 
@@ -13,7 +12,10 @@ class RankingList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUserId = ref.read(authRepositoryProvider).currentUser?.objectId;
+    final currentUserId = ref
+        .read(authRepositoryProvider)
+        .currentUser
+        ?.objectId;
 
     return ListView.separated(
       shrinkWrap: true,
@@ -69,7 +71,8 @@ class RankingList extends ConsumerWidget {
                       ? NetworkImage(player.photoURL!)
                       : null,
                   child: player.photoURL == null
-                      ? const FaIcon(FontAwesomeIcons.solidUser,
+                      ? const FaIcon(
+                          FontAwesomeIcons.solidUser,
                           size: 20,
                           color: secondaryTextColor,
                         )

@@ -44,7 +44,8 @@ class CertificateScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
-                  const FaIcon(FontAwesomeIcons.circleCheck,
+                  const FaIcon(
+                    FontAwesomeIcons.circleCheck,
                     size: 72.0,
                     color: Colors.green,
                   ),

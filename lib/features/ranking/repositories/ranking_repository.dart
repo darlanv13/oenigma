@@ -18,6 +18,8 @@ class RankingRepository {
   }
 
   Future<Map<String, dynamic>> getRankingData(String eventId) async {
-      throw UnimplementedError("getRankingData is not yet implemented in Cloud Functions");
+    throw UnimplementedError(
+      "getRankingData is not yet implemented in Cloud Functions",
+    );
   }
 }

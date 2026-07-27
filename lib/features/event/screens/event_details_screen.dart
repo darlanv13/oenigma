@@ -422,6 +422,15 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     );
   }
 
+  String _formatDate(String dateStr) {
+    try {
+      final date = DateFormat('dd/MM/yyyy').parse(dateStr);
+      return DateFormat("d 'de' MMM", 'pt_BR').format(date);
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
   Widget _buildInfoGrid() {
     return GridView.count(
       crossAxisCount: 2,
@@ -443,7 +452,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           FontAwesomeIcons.calendarDay,
           'DATA',
           widget.event.startDate.isNotEmpty
-              ? widget.event.startDate
+              ? _formatDate(widget.event.startDate)
               : 'Não definida',
         ),
         FutureBuilder<Map<String, int>>(
@@ -520,20 +529,41 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         ),
         const SizedBox(height: 12),
         Container(
-          padding: const EdgeInsets.all(16),
+          height: 120, // Constrain height to make it scrollable
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.2), // Fundo mais escuro
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Text(
-            widget.event.fullDescription.isNotEmpty
-                ? widget.event.fullDescription
-                : 'Encontre pistas espalhadas pela cidade, escaneie QR codes e desvende o mistério. O primeiro a completar todas as etapas leva o prêmio de R\$ 5.000,00.',
-            style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
-              height: 1.6,
-            ),
+          child: Row(
+            children: [
+              // Golden detail on the side
+              Container(
+                width: 4,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFD6B570),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    bottomLeft: Radius.circular(16),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    widget.event.fullDescription.isNotEmpty
+                        ? widget.event.fullDescription
+                        : 'Encontre pistas espalhadas pela cidade, escaneie QR codes e desvende o mistério. O primeiro a completar todas as etapas leva o prêmio de R\$ 5.000,00.',
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                      height: 1.6,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],

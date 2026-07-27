@@ -1205,9 +1205,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     }
 
     String selectedMediaType = 'none';
-    if (data?['imageUrl'] != null && data?['imageUrl'].toString().isNotEmpty == true) {
+    if (data?['imageUrl'] != null &&
+        data?['imageUrl'].toString().isNotEmpty == true) {
       selectedMediaType = 'image';
-    } else if (data?['audioUrl'] != null && data?['audioUrl'].toString().isNotEmpty == true) {
+    } else if (data?['audioUrl'] != null &&
+        data?['audioUrl'].toString().isNotEmpty == true) {
       selectedMediaType = 'audio';
     }
 
@@ -1415,7 +1417,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                 controller: compassCoordsCtrl,
                                 style: const TextStyle(color: Colors.white),
                                 decoration: const InputDecoration(
-                                  labelText: 'Coordenadas Alvo do GPS (Lat, Lng)',
+                                  labelText:
+                                      'Coordenadas Alvo do GPS (Lat, Lng)',
                                   hintText: '-23.5505, -46.6333',
                                 ),
                               ),
@@ -1668,7 +1671,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
                                       // Salvando as novas chaves no Back4App
                                       'hasCompass': hasCompass,
-                                      'compassCoords': (hasCompass || selectedType == 'gps')
+                                      'compassCoords':
+                                          (hasCompass || selectedType == 'gps')
                                           ? compassCoordsCtrl.text.trim()
                                           : '',
                                       'imageUrl': photoUrlCtrl.text,

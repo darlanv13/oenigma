@@ -3,7 +3,6 @@ import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-
 class RankingEventSelector extends StatelessWidget {
   final String? selectedEventId;
   final List<EventModel> availableEvents;
@@ -32,7 +31,9 @@ class RankingEventSelector extends StatelessWidget {
         icon: const FaIcon(FontAwesomeIcons.chevronDown, color: primaryAmber),
         underline: const SizedBox(),
         onChanged: onChanged,
-        items: availableEvents.map<DropdownMenuItem<String>>((EventModel event) {
+        items: availableEvents.map<DropdownMenuItem<String>>((
+          EventModel event,
+        ) {
           return DropdownMenuItem<String>(
             value: event.id,
             child: Text(
