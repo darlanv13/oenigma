@@ -5,13 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -60,8 +61,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     return Scaffold(
       backgroundColor: darkBackground,
       appBar: AppBar(
-        title: const Text('Recuperar Senha'),
-        centerTitle: true,
+        title: Text(
+          'Recuperar Senha',
+          style: GoogleFonts.orbitron(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -102,7 +109,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       keyboardType: TextInputType.emailAddress,
                       style: const TextStyle(color: textColor),
                       decoration: InputDecoration(
-                        prefixIcon: const FaIcon(FontAwesomeIcons.envelope,
+                        prefixIcon: const FaIcon(
+                          FontAwesomeIcons.envelope,
                           color: secondaryTextColor,
                         ),
                         labelText: 'Email',

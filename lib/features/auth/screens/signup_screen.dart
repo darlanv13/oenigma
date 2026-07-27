@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -129,8 +129,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Criar Conta'),
-        centerTitle: true,
+        title: Text(
+          'Criar Conta',
+          style: GoogleFonts.orbitron(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -168,7 +174,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           ),
                         )
                       : FaIcon(
-                          _currentStep == 0 ? FontAwesomeIcons.arrowRight : FontAwesomeIcons.check,
+                          _currentStep == 0
+                              ? FontAwesomeIcons.arrowRight
+                              : FontAwesomeIcons.check,
                         ),
                   label: Text(_currentStep == 0 ? 'Avançar' : 'Concluir'),
                   style: ElevatedButton.styleFrom(
