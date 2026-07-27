@@ -2,16 +2,15 @@ import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/features/event/providers/event_repository_provider.dart';
-import 'dart:ui';
-import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:oenigma/core/models/event_model.dart';
 import '../screens/event_progress_screen.dart';
 import 'find_and_win_progress_screen.dart';
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:oenigma/features/auth/screens/login_screen.dart' as oenigma_login_screen;
+import 'package:google_fonts/google_fonts.dart';
+import 'package:oenigma/features/auth/screens/login_screen.dart'
+    as oenigma_login_screen;
 
 class EventDetailsScreen extends ConsumerStatefulWidget {
   final EventModel event;
@@ -60,15 +59,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         .read(eventRepositoryProvider)
         .getChallengeCountForEvent(widget.event.id);
     return {'total': count, 'solved': 0};
-  }
-
-  String _formatDate(String dateStr) {
-    try {
-      final date = DateFormat('dd/MM/yyyy').parse(dateStr);
-      return DateFormat("d 'de' MMM", 'pt_BR').format(date);
-    } catch (e) {
-      return dateStr;
-    }
   }
 
   Future<void> _handleSubscription() async {
@@ -160,7 +150,11 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            FaIcon(FontAwesomeIcons.userLock, color: Color(0xFFFFD54F), size: 20),
+            FaIcon(
+              FontAwesomeIcons.userLock,
+              color: Color(0xFFFFD54F),
+              size: 20,
+            ),
             SizedBox(width: 10),
             Text(
               'Login Necessário',
@@ -186,7 +180,8 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => const oenigma_login_screen.LoginScreen(),
+                  builder: (context) =>
+                      const oenigma_login_screen.LoginScreen(),
                 ),
               );
             },
@@ -297,65 +292,23 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // HEADER IMERSIVO COM A MESMA IMAGEM DO CARD
+              // APP BAR SIMPLES E CORPO
               SliverAppBar(
-                expandedHeight: 350.0,
                 floating: false,
                 pinned: true,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 leading: _buildBackButton(context),
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      // Imagem de Fundo (Mesma lógica do EventCard)
-                      widget.event.icon.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: widget.event.icon,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Color(0xFFFFD54F),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) =>
-                                  const Center(
-                                    child: FaIcon(
-                                      FontAwesomeIcons.image,
-                                      color: Colors.grey,
-                                      size: 40,
-                                    ),
-                                  ),
-                            )
-                          : Container(color: Colors.grey.shade900),
-
-                      // Gradiente escurecedor
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFF121212),
-                              const Color(0xFF121212).withValues(alpha: 0.8),
-                              Colors.transparent,
-                            ],
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            stops: const [0.0, 0.3, 1.0],
-                          ),
-                        ),
-                      ),
-
-                      // Badge Principal de Prêmio
-                      Positioned(
-                        top: MediaQuery.of(context).padding.top + 16,
-                        right: 20,
-                        child: _buildMainBadge(),
-                      ),
-                    ],
+                title: Text(
+                  'Detalhes',
+                  style: GoogleFonts.orbitron(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
                   ),
                 ),
+                centerTitle: false,
+                titleSpacing: 0,
               ),
 
               // CORPO DA TELA (Painel Escuro)
@@ -364,53 +317,69 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                   clipBehavior: Clip.none,
                   children: [
                     Container(
-                      margin: const EdgeInsets.only(top: 50),
-                      padding: const EdgeInsets.fromLTRB(
-                        24,
-                        60,
-                        24,
-                        120,
-                      ), // Espaço extra p/ botão fixo
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E1E1E),
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(32),
-                        ),
+                        borderRadius: BorderRadius.circular(24),
                         border: Border.all(
                           color: Colors.white.withValues(alpha: 0.05),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.5),
-                            blurRadius: 20,
-                            offset: const Offset(0, -10),
-                          ),
-                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Center(
-                            child: Column(
+                          Text(
+                            widget.event.name,
+                            style: GoogleFonts.orbitron(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            eventTitle,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(
+                                alpha: 0.2,
+                              ), // Fundo mais escuro
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.05),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  eventTitle,
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w900,
-                                    color: Color(0xFFFFD54F),
-                                    letterSpacing: 1.0,
-                                  ),
+                                const FaIcon(
+                                  FontAwesomeIcons.coins,
+                                  color: Color(0xFFD6B570),
+                                  size: 20,
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(width: 12),
                                 Text(
-                                  widget.event.name,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
+                                  widget.event.prize.replaceAll('R\$ ', 'R\$'),
+                                  style: GoogleFonts.orbitron(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
                                     color: Colors.white,
                                   ),
-                                  textAlign: TextAlign.center,
                                 ),
                               ],
                             ),
@@ -419,120 +388,34 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                           _buildInfoGrid(),
                           const SizedBox(height: 32),
                           _buildDescriptionSection(),
-                        ],
-                      ),
-                    ),
-
-                    // ÍCONE 3D CENTRALIZADO E FLUTUANTE
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          height: 100,
-                          width: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.6),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
+                          const SizedBox(height: 32),
+                          _buildBottomCtaButton(context),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              FaIcon(
+                                FontAwesomeIcons.shieldHalved,
+                                color: Color(0xFFD6B570),
+                                size: 12,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                "Caçada segura",
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
-                          child: const Center(
-                            child: FaIcon(
-                              FontAwesomeIcons.sackDollar,
-                              size: 70,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
             ],
-          ),
-
-          // BOTÃO FIXO (NEON) NO RODAPÉ
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFF121212).withValues(alpha: 0.0),
-                    const Color(0xFF121212).withValues(alpha: 0.9),
-                    const Color(0xFF121212),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-              child: _buildBottomCtaButton(context),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- WIDGETS AUXILIARES DO NOVO DESIGN ---
-
-  Widget _buildMainBadge() {
-    return SizedBox(
-      width: 75,
-      height: 95,
-      child: Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          Container(
-            width: 55,
-            height: 80,
-            decoration: const BoxDecoration(
-              color: Color(0xFF6B1A2C),
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(8)),
-            ),
-          ),
-          Positioned(
-            top: 10,
-            child: Container(
-              width: 65,
-              height: 65,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const RadialGradient(
-                  colors: [Color(0xFF8B233C), Color(0xFF4A101C)],
-                ),
-                border: Border.all(color: const Color(0xFFFFD54F), width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  widget.event.prize.replaceAll('R\$', 'R\$\n'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFFFFD54F),
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                    height: 1.1,
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),
@@ -545,21 +428,23 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       shrinkWrap: true,
       padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 2.6,
+      mainAxisSpacing: 24,
+      crossAxisSpacing: 24,
+      childAspectRatio: 2.2,
       children: [
-        _buildInfoPill(
+        _buildInfoText(
           FontAwesomeIcons.locationDot,
-          'Local',
+          'LOCAL',
           widget.event.location.isNotEmpty
               ? widget.event.location
               : 'Não definido',
         ),
-        _buildInfoPill(
+        _buildInfoText(
           FontAwesomeIcons.calendarDay,
-          'Data',
-          _formatDate(widget.event.startDate),
+          'DATA',
+          widget.event.startDate.isNotEmpty
+              ? widget.event.startDate
+              : 'Não definida',
         ),
         FutureBuilder<Map<String, int>>(
           future: _statsFuture,
@@ -567,90 +452,57 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             if (widget.event.eventType == 'find_and_win') {
               final solved = snapshot.data?['solved'] ?? 0;
               final total = snapshot.data?['total'] ?? 0;
-              return _buildInfoPill(
-                FontAwesomeIcons.bullseye,
-                'Progresso',
-                '$solved / $total',
-                isHighlight: true,
-              );
+              return _buildInfoText(null, 'PROGRESSO', '$solved / $total');
             } else {
               final total = snapshot.data?['total'] ?? 0;
-              return _buildInfoPill(
-                FontAwesomeIcons.filter,
-                'Fases',
-                total.toString(),
-                isHighlight: true,
-              );
+              return _buildInfoText(null, 'FASES', total.toString());
             }
           },
         ),
-        _buildInfoPill(
-          FontAwesomeIcons.users,
-          'Jogadores',
+        _buildInfoText(
+          FontAwesomeIcons.userGroup,
+          'JOGADORES',
           widget.event.playerCount.toString(),
         ),
       ],
     );
   }
 
-  Widget _buildInfoPill(
-    dynamic icon,
-    String label,
-    String value, {
-    bool isHighlight = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isHighlight
-                  ? const Color(0xFFFFD54F).withValues(alpha: 0.1)
-                  : Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: FaIcon(
-              icon,
-              color: isHighlight ? const Color(0xFFFFD54F) : Colors.grey,
-              size: 14,
-            ),
+  Widget _buildInfoText(dynamic icon, String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.0,
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            if (icon != null) ...[
+              FaIcon(icon, color: const Color(0xFFD6B570), size: 14),
+              const SizedBox(width: 8),
+            ],
+            Expanded(
+              child: Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: isHighlight ? const Color(0xFFFFD54F) : Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -658,24 +510,30 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'SOBRE A CAÇADA',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-            color: Colors.grey,
-            letterSpacing: 1.5,
+        Text(
+          'Sobre a caçada',
+          style: GoogleFonts.orbitron(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFFD6B570),
           ),
         ),
         const SizedBox(height: 12),
-        Text(
-          widget.event.fullDescription.isNotEmpty
-              ? widget.event.fullDescription
-              : 'Prepare-se para uma jornada épica. Siga as pistas, desvende os enigmas e encontre o tesouro antes dos outros jogadores.',
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.8),
-            fontSize: 15,
-            height: 1.5,
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.2), // Fundo mais escuro
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            widget.event.fullDescription.isNotEmpty
+                ? widget.event.fullDescription
+                : 'Encontre pistas espalhadas pela cidade, escaneie QR codes e desvende o mistério. O primeiro a completar todas as etapas leva o prêmio de R\$ 5.000,00.',
+            style: const TextStyle(
+              color: Colors.grey,
+              fontSize: 14,
+              height: 1.6,
+            ),
           ),
         ),
       ],
@@ -683,30 +541,23 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 
   Widget _buildBackButton(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(50),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.4),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Padding(
-                padding: EdgeInsets.only(right: 2.0),
-                child: FaIcon(
-                  FontAwesomeIcons.angleLeft,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
+    return Container(
+      margin: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.1),
+          width: 1,
         ),
+      ),
+      child: IconButton(
+        icon: const FaIcon(
+          FontAwesomeIcons.angleLeft,
+          color: Color(0xFFD6B570),
+          size: 16,
+        ),
+        onPressed: () => Navigator.of(context).pop(),
       ),
     );
   }
@@ -726,21 +577,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     }
 
     final bool isFree = widget.event.price == 0;
-
-    // Determina o gradiente do botão com base no status de inscrição e preço
-    List<Color> buttonGradient;
-    Color shadowColor;
-
-    if (_isSubscribed) {
-      buttonGradient = [const Color(0xFF4CAF50), const Color(0xFF2E7D32)];
-      shadowColor = Colors.green;
-    } else if (isFree) {
-      buttonGradient = [const Color(0xFF4CAF50), const Color(0xFF2E7D32)];
-      shadowColor = Colors.green;
-    } else {
-      buttonGradient = [const Color(0xFFFFD54F), const Color(0xFFF57F17)];
-      shadowColor = const Color(0xFFFFD54F);
-    }
 
     return GestureDetector(
       onTap: _isLoading
@@ -770,23 +606,15 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        height: 60,
+        height: 56,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: buttonGradient,
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(
-            color: shadowColor.withValues(alpha: 0.5),
-            width: 2,
-          ),
+          color: const Color(0xFFC7A55C), // Fundo dourado/âmbar liso
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: shadowColor.withValues(alpha: 0.4),
-              blurRadius: 20,
-              spreadRadius: 2,
+              color: const Color(0xFFC7A55C).withValues(alpha: 0.2),
+              blurRadius: 15,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -803,28 +631,24 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 ),
               )
             else ...[
+              const FaIcon(
+                FontAwesomeIcons.play,
+                size: 14,
+                color: Colors.black,
+              ),
+              const SizedBox(width: 12),
               Text(
                 _isSubscribed
                     ? 'ENTRAR NA CAÇADA'
                     : (isFree
                           ? 'INICIAR CAÇADA (GRÁTIS)'
                           : "INSCRIÇÃO: R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}"),
-                style: const TextStyle(
+                style: GoogleFonts.orbitron(
                   color: Colors.black,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.0,
                 ),
-              ),
-              const SizedBox(width: 10),
-              FaIcon(
-                _isSubscribed
-                    ? FontAwesomeIcons.play
-                    : (isFree
-                          ? FontAwesomeIcons.lockOpen
-                          : FontAwesomeIcons.lock),
-                size: 16,
-                color: Colors.black,
               ),
             ],
           ],
