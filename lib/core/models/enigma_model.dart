@@ -20,6 +20,8 @@ class EnigmaModel {
   final DateTime? closedAt;
   final double compassPrice;
   final int compassDuration;
+  final String icon;
+  final String difficulty;
 
   EnigmaModel({
     required this.id,
@@ -40,6 +42,8 @@ class EnigmaModel {
     this.closedAt,
     this.compassPrice = 0.0,
     this.compassDuration = 0,
+    this.icon = 'skull',
+    this.difficulty = 'MÉDIA',
   });
 
   EnigmaModel copyWith({
@@ -60,6 +64,8 @@ class EnigmaModel {
     DateTime? closedAt,
     double? compassPrice,
     int? compassDuration,
+    String? icon,
+    String? difficulty,
   }) {
     return EnigmaModel(
       id: id ?? this.id,
@@ -79,6 +85,8 @@ class EnigmaModel {
       closedAt: closedAt ?? this.closedAt,
       compassPrice: compassPrice ?? this.compassPrice,
       compassDuration: compassDuration ?? this.compassDuration,
+      icon: icon ?? this.icon,
+      difficulty: difficulty ?? this.difficulty,
     );
   }
 
@@ -118,6 +126,8 @@ class EnigmaModel {
           : null,
       compassPrice: (map['compassPrice'] as num?)?.toDouble() ?? 0.0,
       compassDuration: (map['compassDuration'] as num?)?.toInt() ?? 0,
+      icon: map['icon'] ?? 'skull',
+      difficulty: map['difficulty'] ?? 'MÉDIA',
     );
   }
 
@@ -142,6 +152,8 @@ class EnigmaModel {
       'closedAt': closedAt?.toIso8601String(),
       'compassPrice': compassPrice,
       'compassDuration': compassDuration,
+      'icon': icon,
+      'difficulty': difficulty,
     };
   }
 }
