@@ -1193,6 +1193,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final photoUrlCtrl = TextEditingController(text: data?['imageUrl']);
     final audioUrlCtrl = TextEditingController(text: data?['audioUrl']);
 
+    String selectedIcon = data?['icon'] ?? 'skull';
+    String selectedDifficulty = data?['difficulty'] ?? 'MÉDIA';
+
     // NOVOS CONTROLADORES: Bússola e Coordenadas Obrigatórias
     bool hasCompass = data?['hasCompass'] ?? false;
     final compassCoordsCtrl = TextEditingController(
@@ -1409,6 +1412,47 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               ),
                             ],
 
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              value: selectedIcon,
+                              dropdownColor: darkBackground,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                labelText: 'Ícone',
+                              ),
+                              items: const [
+                                DropdownMenuItem(value: 'skull', child: Text('Caveira')),
+                                DropdownMenuItem(value: 'map', child: Text('Mapa')),
+                                DropdownMenuItem(value: 'robot', child: Text('Robô')),
+                                DropdownMenuItem(value: 'ghost', child: Text('Fantasma')),
+                                DropdownMenuItem(value: 'crown', child: Text('Coroa')),
+                              ],
+                              onChanged: (val) {
+                                setState(() {
+                                  selectedIcon = val!;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              value: selectedDifficulty,
+                              dropdownColor: darkBackground,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                labelText: 'Dificuldade',
+                              ),
+                              items: const [
+                                DropdownMenuItem(value: 'FÁCIL', child: Text('FÁCIL')),
+                                DropdownMenuItem(value: 'MÉDIA', child: Text('MÉDIA')),
+                                DropdownMenuItem(value: 'ALTA', child: Text('ALTA')),
+                                DropdownMenuItem(value: 'ÉPICO', child: Text('ÉPICO')),
+                              ],
+                              onChanged: (val) {
+                                setState(() {
+                                  selectedDifficulty = val!;
+                                });
+                              },
+                            ),
                             const SizedBox(height: 12),
                             TextField(
                               controller: codeCtrl,
@@ -1699,6 +1743,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
                                   try {
                                     final newData = {
+                                      'icon': selectedIcon,
+                                      'difficulty': selectedDifficulty,
                                       'order':
                                           int.tryParse(orderCtrl.text) ?? 1,
                                       'title': titleCtrl.text,

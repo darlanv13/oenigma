@@ -75,6 +75,22 @@ class _CardEnigmaState extends State<CardEnigma> {
     }
   }
 
+  dynamic _getIconData(String iconName) {
+    switch (iconName) {
+      case 'map':
+        return FontAwesomeIcons.map;
+      case 'robot':
+        return FontAwesomeIcons.robot;
+      case 'ghost':
+        return FontAwesomeIcons.ghost;
+      case 'crown':
+        return FontAwesomeIcons.crown;
+      case 'skull':
+      default:
+        return FontAwesomeIcons.skull;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isClosed = widget.enigma.status == 'closed';
@@ -91,11 +107,11 @@ class _CardEnigmaState extends State<CardEnigma> {
 
     final currencyFormat = NumberFormat.currency(
       locale: 'pt_BR',
-      symbol: r'R$',
+      symbol: r'',
     );
 
     return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.90),
+      onTapDown: (_) => setState(() => _scale = 0.95),
       onTapUp: (_) {
         setState(() => _scale = 1.0);
         _handleTap(isTemporarilyBlocked);
@@ -103,182 +119,122 @@ class _CardEnigmaState extends State<CardEnigma> {
       onTapCancel: () => setState(() => _scale = 1.0),
       child: AnimatedScale(
         scale: _scale,
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOutBack,
-        child: AnimatedBuilder(
-          animation: widget.animation,
-          builder: (context, child) {
-            // Efeito de brilho pulsante e flutuação (respiração)
-            final double glowOpacity = 0.2 + (0.6 * widget.animation.value);
-            final double floatOffset = 6.0 * widget.animation.value;
-
-            return Container(
-              color: Colors.transparent,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  // Título do Enigma Flutuante
-                  Text(
-                    widget.enigma.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black,
-                          blurRadius: 6,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isTemporarilyBlocked
+                  ? Colors.redAccent.withValues(alpha: 0.3)
+                  : const Color(0xFFD6B570).withValues(alpha: 0.3),
+              width: 1,
+            ),
+            boxShadow: [
+              if (!isTemporarilyBlocked)
+                BoxShadow(
+                  color: const Color(0xFFD6B570).withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  spreadRadius: 2,
+                ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    FaIcon(
+                      _getIconData(widget.enigma.icon),
+                      size: 48,
+                      color: const Color(0xFFD6B570),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-
-                  // O Baú com Sombras e Efeitos
-                  Expanded(
-                    child: Stack(
-                      alignment: Alignment.center,
-                      clipBehavior: Clip.none,
+                    const SizedBox(height: 16),
+                    Text(
+                      widget.enigma.title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.enigma.difficulty,
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    const Spacer(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Sombra Oval no chão (Aumenta/Diminui com a flutuação)
-                        Positioned(
-                          bottom: 0,
-                          child: Container(
-                            width: 50 + (10 * widget.animation.value),
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(50),
-                              boxShadow: [
-                                if (!isTemporarilyBlocked)
-                                  BoxShadow(
-                                    color: const Color(
-                                      0xFFFFD54F,
-                                    ).withValues(alpha: glowOpacity * 0.5),
-                                    blurRadius: 15,
-                                    spreadRadius: 5,
-                                  ),
-                              ],
-                            ),
+                        const FaIcon(
+                          FontAwesomeIcons.coins,
+                          size: 14,
+                          color: Color(0xFFD6B570),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'R\$ ${currencyFormat.format(widget.enigma.prize).trim()}',
+                          style: const TextStyle(
+                            color: Color(0xFFD6B570),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
                           ),
                         ),
-
-                        // O SVG do Baú (Flutuando)
-                        Positioned(
-                          bottom: isTemporarilyBlocked ? 5 : 5 + floatOffset,
-                          child: Opacity(
-                            opacity: isTemporarilyBlocked ? 0.4 : 1.0,
-                            child: SvgPicture.asset(
-                              'assets/icon/chest.svg',
-                              width: 70, // Ajuste o tamanho conforme seu SVG
-                              height: 70,
-                            ),
-                          ),
-                        ),
-
-                        // Ícone de Cadeado se estiver bloqueado
-                        if (isTemporarilyBlocked)
-                          Positioned(
-                            bottom: 25,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.7),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const FaIcon(
-                                FontAwesomeIcons.lock,
-                                color: Colors.redAccent,
-                                size: 24,
-                              ),
-                            ),
-                          ),
                       ],
                     ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Badge Inferior: Temporizador ou Prêmio
-                  if (isTemporarilyBlocked)
-                    StreamBuilder<String>(
-                      stream: _countdownStream(widget.enigma.closedAt!),
-                      builder: (context, snapshot) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.8),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: Colors.redAccent.withValues(alpha: 0.5),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Text(
-                            snapshot.data ?? "--:--",
-                            style: const TextStyle(
-                              color: Colors.redAccent,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 12,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
-                        );
-                      },
-                    )
-                  else
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                  ],
+                ),
+              ),
+              if (isTemporarilyBlocked)
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const FaIcon(
-                            FontAwesomeIcons.sackDollar,
-                            size: 12,
-                            color: Colors.black,
+                            FontAwesomeIcons.lock,
+                            color: Colors.redAccent,
+                            size: 32,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            currencyFormat.format(widget.enigma.prize),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 12,
-                              color: Colors.black,
-                            ),
+                          const SizedBox(height: 12),
+                          StreamBuilder<String>(
+                            stream: _countdownStream(widget.enigma.closedAt!),
+                            builder: (context, snapshot) {
+                              return Text(
+                                snapshot.data ?? "--:--",
+                                style: const TextStyle(
+                                  color: Colors.redAccent,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  letterSpacing: 1.0,
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
                     ),
-                ],
-              ),
-            );
-          },
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

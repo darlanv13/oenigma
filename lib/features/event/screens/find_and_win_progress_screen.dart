@@ -58,6 +58,8 @@ class _FindAndWinProgressScreenState
             'status': doc.get<String>('status'),
             'closedAt': doc.get<DateTime>('closedAt'),
             'code': doc.get<String>('code') ?? '',
+            'icon': doc.get<String>('icon') ?? 'skull',
+            'difficulty': doc.get<String>('difficulty') ?? 'MÉDIA',
           });
         }).toList();
       }
@@ -214,11 +216,10 @@ class _FindAndWinProgressScreenState
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
                   sliver: SliverGrid(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 12,
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      childAspectRatio:
-                          0.65, // Proporção mais alta para acomodar os badges
+                      childAspectRatio: 0.9,
                     ),
                     delegate: SliverChildBuilderDelegate((context, index) {
                       return CardEnigma(
