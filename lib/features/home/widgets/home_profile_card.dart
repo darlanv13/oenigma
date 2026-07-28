@@ -23,82 +23,60 @@ class HomeProfileCard extends StatelessWidget {
     final String firstName = wallet.name.split(' ').first;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E), // Dark background matching the mockups
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+        border: Border(
+          bottom: BorderSide(
+            color: const Color(0xFFC0A060).withValues(alpha: 0.10),
+            width: 1,
           ),
-        ],
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: const Color(0xFFD6B570), // Gold accent
-                child: Text(
-                  firstName.isNotEmpty ? firstName[0].toUpperCase() : '?',
-                  style: GoogleFonts.orbitron(
-                    color: Colors.black,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                  ),
+              const FaIcon(
+                FontAwesomeIcons.solidCircleUser,
+                color: Color(0xFFC0A060),
+                size: 20,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Olá, ',
+                style: const TextStyle(
+                  color: Color(0xFFB0A07A),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Inter',
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Olá,',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      firstName,
-                      style: GoogleFonts.orbitron(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.0,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+              Text(
+                firstName.isNotEmpty ? firstName : 'Visitante!',
+                style: const TextStyle(
+                  color: Color(0xFFF0E6C5),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Inter',
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          const Divider(height: 1, color: Colors.white10),
-          const SizedBox(height: 20),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildStatColumn(
-                'SALDO DISPONÍVEL',
+                'Saldo',
                 'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
+                isBalance: true,
               ),
-              Container(width: 1, height: 40, color: Colors.white10),
+              const SizedBox(width: 16),
               _buildStatColumn(
-                'SEU RANKING',
+                'Rank',
                 '#${wallet.lastEventRank ?? '-'}',
+                isBalance: false,
               ),
             ],
           ),
@@ -107,25 +85,27 @@ class HomeProfileCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatColumn(String label, String value) {
+  Widget _buildStatColumn(String label, String value,
+      {required bool isBalance}) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
           label,
           style: const TextStyle(
-            color: Color(0xFFD6B570), // Gold color for labels
+            color: Color(0xFF7A7A7A),
             fontSize: 10,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 1.0,
+            fontFamily: 'Inter',
           ),
         ),
-        const SizedBox(height: 8),
         Text(
           value,
           style: GoogleFonts.orbitron(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
+            color: isBalance ? const Color(0xFFF0E6C5) : const Color(0xFFC0A060),
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],

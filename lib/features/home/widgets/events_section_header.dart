@@ -9,25 +9,37 @@ class EventsSectionHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          "ESCOLHA SUA CAÇADA",
-          style: GoogleFonts.orbitron(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: const Color(
-              0xFFD6B570,
-            ), // Destaque na cor do tema em dourado apagado
-            letterSpacing: 1.2,
+        ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [
+              Color(0xFFC0A060),
+              Color(0xFFF5E6B8),
+              Color(0xFFB8944B),
+            ],
+            stops: [0.0, 0.6, 1.0],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ).createShader(bounds),
+          child: Text(
+            "ESCOLHA SUA CAÇADA",
+            style: GoogleFonts.orbitron(
+              fontSize: 17.6, // 1.1rem
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              letterSpacing: 0.5,
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         const Text(
           "Eventos disponíveis no momento",
           style: TextStyle(
-            fontSize: 12,
-            color: Color(0xFF9E8B61),
-            fontWeight: FontWeight.w500,
+            fontSize: 11.2, // 0.7rem
+            color: Color(0xFF8A7A5A),
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.5,
+            fontFamily: 'Inter',
           ),
           textAlign: TextAlign.center,
         ),
