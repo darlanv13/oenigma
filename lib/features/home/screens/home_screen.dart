@@ -129,7 +129,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     child: FadeTransition(
                       opacity: _fadeAnimation,
                       child: Padding(
-                        padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+                        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
                         child: HomeProfileCard(
                           playerData: playerData,
                           wallet: walletData,
@@ -143,16 +143,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     child: FadeTransition(
                       opacity: _fadeAnimation,
                       child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: HomeBannerCarousel(),
-                      ),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: const Padding(
-                        padding: EdgeInsets.fromLTRB(20.0, 24.0, 20.0, 16.0),
+                        padding: EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 16.0),
                         child: EventsSectionHeader(),
                       ),
                     ),

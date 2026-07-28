@@ -9,6 +9,7 @@ import 'find_and_win_progress_screen.dart';
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:oenigma/features/auth/screens/login_screen.dart'
     as oenigma_login_screen;
 
