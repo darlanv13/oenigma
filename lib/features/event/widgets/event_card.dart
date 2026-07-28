@@ -180,13 +180,8 @@ class _EventCardState extends State<EventCard> {
                           children: [
                             const FaIcon(
                               FontAwesomeIcons.locationDot,
-<<<<<<< HEAD
-                              color: Color(0xFF9E8B61),
-                              size: 14,
-=======
                               color: Color(0xFFC0A060),
                               size: 11.2, // 0.7rem
->>>>>>> origin/feature/homepage-redesign-16237464640025730872
                             ),
                             const SizedBox(width: 4),
                             Expanded(
@@ -197,15 +192,9 @@ class _EventCardState extends State<EventCard> {
                                     ? widget.event.location
                                     : _formatDate(widget.event.startDate),
                                 style: const TextStyle(
-<<<<<<< HEAD
-                                  color: Color(0xFF9E8B61),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-=======
                                   color: Color(0xFFB0A07A),
                                   fontSize: 12.8, // 0.8rem
                                   fontFamily: 'Inter',
->>>>>>> origin/feature/homepage-redesign-16237464640025730872
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,

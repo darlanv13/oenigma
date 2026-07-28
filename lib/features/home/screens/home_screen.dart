@@ -142,11 +142,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     child: FadeTransition(
                       opacity: _fadeAnimation,
                       child: const Padding(
-<<<<<<< HEAD
-                        padding: EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 16.0),
-=======
                         padding: EdgeInsets.fromLTRB(20.0, 24.0, 20.0, 16.0),
->>>>>>> origin/feature/homepage-redesign-16237464640025730872
                         child: EventsSectionHeader(),
                       ),
                     ),
