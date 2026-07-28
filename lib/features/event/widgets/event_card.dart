@@ -177,7 +177,7 @@ class _EventCardState extends State<EventCard> {
                           children: [
                             const FaIcon(
                               FontAwesomeIcons.locationDot,
-                              color: Color(0xFFD6B570),
+                              color: Color(0xFF9E8B61),
                               size: 14,
                             ),
                             const SizedBox(width: 8),
@@ -189,7 +189,7 @@ class _EventCardState extends State<EventCard> {
                                     ? widget.event.location
                                     : _formatDate(widget.event.startDate),
                                 style: const TextStyle(
-                                  color: Color(0xFFD6B570),
+                                  color: Color(0xFF9E8B61),
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
                                 ),
