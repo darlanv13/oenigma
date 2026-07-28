@@ -1,16 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:oenigma/features/auth/providers/auth_provider.dart';
-import 'package:oenigma/features/profile/providers/profile_repository_provider.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
-import 'package:oenigma/features/profile/widgets/profile_account_actions.dart';
-import 'package:oenigma/features/profile/widgets/profile_editable_info_card.dart';
-import 'package:oenigma/features/profile/widgets/profile_header.dart';
-import 'package:oenigma/features/profile/widgets/profile_section_header.dart';
-import 'package:oenigma/features/profile/widgets/profile_stats_section.dart';
-import 'package:oenigma/features/profile/widgets/profile_badges_section.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -28,160 +18,339 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
 
-  bool _isLoading = false;
-  File? _selectedImage;
-
-  @override
-  void initState() {
-    super.initState();
-    _phoneController.text = widget.playerData['phone'] ?? '';
-  }
-
-  @override
-  void dispose() {
-    _phoneController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-    );
-    if (pickedFile != null) {
-      setState(() {
-        _selectedImage = File(pickedFile.path);
-      });
+  String _getInitials(String name) {
+    if (name.isEmpty) return '??';
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.length > 1) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     }
+    return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
   }
 
-  Future<void> _saveProfile() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      final authRepository = ref.read(authRepositoryProvider);
-      final userId = authRepository.currentUser!.objectId!;
-
-      String? photoURL;
-      if (_selectedImage != null) {
-        photoURL = await ref
-            .read(profileRepositoryProvider)
-            .uploadFile(
-              'profile_pictures/$userId/profile_image.jpg',
-              await _selectedImage!.readAsBytes(),
-            );
-      }
-      final dataToUpdate = {
-        'phone': _phoneController.text,
-        'birthDate': widget.playerData['birthDate'] ?? '',
-      };
-      if (photoURL != null) dataToUpdate['photoURL'] = photoURL;
-
-      try {
-        await ref
-            .read(profileRepositoryProvider)
-            .updateUserProfile(userId, dataToUpdate);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Perfil atualizado com sucesso!'),
-              backgroundColor: Colors.green,
-            ),
-          );
+  Widget _buildBackButton(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
         }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro: $e'),
-              backgroundColor: Colors.redAccent,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  Future<void> _resetPassword(String email) async {
-    if (email.isEmpty) return;
-
-    final authRepository = ref.read(authRepositoryProvider);
-    final error = await authRepository.sendPasswordResetEmail(email);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error ?? 'E-mail de recuperação enviado para $email'),
-          backgroundColor: error == null ? Colors.green : Colors.redAccent,
+      },
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: const Color(0xFFC0A060).withValues(alpha: 0.06),
+          shape: BoxShape.circle,
         ),
-      );
-    }
+        child: const Center(
+          child: Icon(
+            Icons.chevron_left,
+            color: Color(0xFFC0A060),
+            size: 22,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileSection(UserWalletModel walletData, Map<String, dynamic> playerData) {
+    final initials = _getInitials(walletData.name);
+    final email = playerData['email'] ?? walletData.email;
+
+    return Column(
+      children: [
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [Color(0xFFC0A060), Color(0xFF8A7A4A)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFC0A060).withValues(alpha: 0.3),
+                blurRadius: 24,
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              initials,
+              style: GoogleFonts.inter(
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF06080B),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          walletData.name,
+          style: GoogleFonts.orbitron(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFFF0E6C5),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          email,
+          style: const TextStyle(
+            fontSize: 13,
+            color: Color(0xFFB0A07A),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBalanceCard(UserWalletModel walletData) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16181C).withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Text(
+            'SALDO DISPONÍVEL',
+            style: TextStyle(
+              color: Color(0xFF7A7A7A),
+              fontSize: 10, // ~0.7rem
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'R\$ ${walletData.balance.toStringAsFixed(2).replaceAll('.', ',')}',
+            style: GoogleFonts.orbitron(
+              fontSize: 30, // ~2.2rem
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFFF0E6C5),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                child: _buildActionButton(
+                  label: 'Depositar',
+                  isPrimary: true,
+                  onTap: () {}, // Can route to wallet deposit
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildActionButton(
+                  label: 'Sacar',
+                  isPrimary: false,
+                  onTap: () {}, // Can route to wallet withdraw
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({required String label, required bool isPrimary, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 40,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(40),
+          gradient: isPrimary
+              ? const LinearGradient(
+                  colors: [Color(0xFFC0A060), Color(0xFFA8894A)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isPrimary ? null : Colors.transparent,
+          border: isPrimary ? null : Border.all(color: const Color(0xFFC0A060), width: 1.5),
+          boxShadow: isPrimary
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFC0A060).withValues(alpha: 0.4),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: Text(
+            label.toUpperCase(),
+            style: GoogleFonts.orbitron(
+              fontSize: 11, // ~0.75rem
+              fontWeight: FontWeight.w700,
+              color: isPrimary ? const Color(0xFF06080B) : const Color(0xFFF0E6C5),
+              letterSpacing: 0.8,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyStateSection(String title, IconData icon, String message, {String? highlight}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 18, bottom: 10),
+          child: Text(
+            title,
+            style: GoogleFonts.orbitron(
+              fontSize: 12, // ~0.8rem
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFFC0A060),
+              letterSpacing: 1.5,
+            ),
+          ),
+        ),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF16181C).withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                size: 32, // ~2rem
+                color: const Color(0xFF4A4A4A),
+              ),
+              const SizedBox(height: 10),
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: const TextStyle(
+                    color: Color(0xFF7A7A7A),
+                    fontSize: 13, // ~0.85rem
+                    fontFamily: 'Inter',
+                  ),
+                  children: [
+                    TextSpan(text: message),
+                    if (highlight != null) ...[
+                      const TextSpan(text: '\n'),
+                      TextSpan(
+                        text: highlight,
+                        style: const TextStyle(
+                          color: Color(0xFFC0A060),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final String email = widget.playerData['email'] ?? widget.walletData.email;
-
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text(
-          'Perfil',
-          style: GoogleFonts.orbitron(
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            fontSize: 20,
-          ),
-        ),
-        centerTitle: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        titleSpacing: 16,
-      ),
-      body: SingleChildScrollView(
+      body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
-        child: Column(
-          children: [
-            ProfileHeader(
-              walletData: widget.walletData,
-              playerData: widget.playerData,
-              selectedImage: _selectedImage,
-              onPickImage: _pickImage,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 32),
-                  const ProfileSectionHeader(title: 'ESTATÍSTICAS GERAIS'),
-                  ProfileStatsSection(wallet: widget.walletData),
-                  const SizedBox(height: 32),
-                  ProfileBadgesSection(playerData: widget.playerData),
-                  const SizedBox(height: 32),
-                  const ProfileSectionHeader(title: 'INFORMAÇÕES PESSOAIS'),
-                  ProfileEditableInfoCard(
-                    playerData: widget.playerData,
-                    formKey: _formKey,
-                    phoneController: _phoneController,
-                    isLoading: _isLoading,
-                    onSave: _saveProfile,
+        slivers: [
+          // HEADER CUSTOMIZADO
+          SliverToBoxAdapter(
+            child: SafeArea(
+              bottom: false,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: const Color(0xFFC0A060).withValues(alpha: 0.10),
+                      width: 1,
+                    ),
                   ),
-                  const SizedBox(height: 32),
-                  const ProfileSectionHeader(title: 'CONTA & SEGURANÇA'),
-                  ProfileAccountActions(
-                    email: email,
-                    onResetPassword: _resetPassword,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildBackButton(context),
+                    Text(
+                      'Perfil',
+                      style: GoogleFonts.orbitron(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFFF0E6C5),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(
+                      width: 36,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Icon(
+                          Icons.more_vert, // fa-ellipsis-v
+                          color: Color(0xFFC0A060),
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // CORPO DA TELA
+          SliverToBoxAdapter(
+            child: Container(
+              margin: const EdgeInsets.only(top: 20, left: 16, right: 16),
+              child: Column(
+                children: [
+                  _buildProfileSection(widget.walletData, widget.playerData),
+                  const SizedBox(height: 24),
+                  _buildBalanceCard(widget.walletData),
+                  const SizedBox(height: 10),
+                  _buildEmptyStateSection(
+                    'Meus prêmios',
+                    Icons.card_giftcard,
+                    'Nenhum prêmio ainda.',
+                    highlight: 'Participe de eventos para ganhar!',
+                  ),
+                  const SizedBox(height: 10),
+                  _buildEmptyStateSection(
+                    'Histórico recente',
+                    Icons.access_time_outlined,
+                    'Nenhuma atividade recente.',
                   ),
                   const SizedBox(height: 40),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
