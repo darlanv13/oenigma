@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -186,7 +187,7 @@ class _CardEnigmaState extends State<CardEnigma> {
                         const SizedBox(width: 6),
                         Text(
                           'R\$ ${currencyFormat.format(widget.enigma.prize).trim()}',
-                          style: const TextStyle(
+                          style: GoogleFonts.orbitron(
                             color: Color(0xFFD6B570),
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
