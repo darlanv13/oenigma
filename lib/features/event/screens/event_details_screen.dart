@@ -295,31 +295,34 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             slivers: [
               // HEADER CUSTOMIZADO
               SliverToBoxAdapter(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: const Color(0xFFC0A060).withValues(alpha: 0.10),
-                        width: 1,
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildBackButton(context),
-                      Text(
-                        'Detalhes',
-                        style: GoogleFonts.orbitron(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFFF0E6C5),
-                          letterSpacing: 0.5,
+                child: SafeArea(
+                  bottom: false,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: const Color(0xFFC0A060).withValues(alpha: 0.10),
+                          width: 1,
                         ),
                       ),
-                      const SizedBox(width: 36), // Balance space
-                    ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildBackButton(context),
+                        Text(
+                          'Detalhes',
+                          style: GoogleFonts.orbitron(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFF0E6C5),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(width: 36), // Balance space
+                      ],
+                    ),
                   ),
                 ),
               ),
