@@ -1,4 +1,3 @@
-import 'package:intl/intl.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -294,99 +293,93 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // APP BAR SIMPLES E CORPO
-              SliverAppBar(
-                floating: false,
-                pinned: true,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                leading: _buildBackButton(context),
-                title: Text(
-                  'Detalhes',
-                  style: GoogleFonts.orbitron(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+              // HEADER CUSTOMIZADO
+              SliverToBoxAdapter(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: const Color(0xFFC0A060).withValues(alpha: 0.10),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildBackButton(context),
+                      Text(
+                        'Detalhes',
+                        style: GoogleFonts.orbitron(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFF0E6C5),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(width: 36), // Balance space
+                    ],
                   ),
                 ),
-                centerTitle: false,
-                titleSpacing: 0,
               ),
 
-              // CORPO DA TELA (Painel Escuro)
+              // CORPO DA TELA (SEM BORDAS)
               SliverToBoxAdapter(
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
                     Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E1E1E),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.05),
-                        ),
-                      ),
+                      margin: const EdgeInsets.only(top: 20, left: 16, right: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             widget.event.name,
                             style: GoogleFonts.orbitron(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFFF0E6C5),
+                              letterSpacing: -0.5,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 2),
                           Text(
                             eventTitle,
                             style: const TextStyle(
                               fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey,
+                              color: Color(0xFFB0A07A),
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 16,
-                            ),
+                            padding: const EdgeInsets.fromLTRB(14, 8, 18, 8),
                             decoration: BoxDecoration(
-                              color: Colors.black.withValues(
-                                alpha: 0.2,
-                              ), // Fundo mais escuro
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.05),
-                              ),
+                              color: const Color(0xFFC0A060).withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(40),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const FaIcon(
                                   FontAwesomeIcons.coins,
-                                  color: Color(0xFFD6B570),
-                                  size: 20,
+                                  color: Color(0xFFC0A060),
+                                  size: 16,
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 8),
                                 Text(
                                   widget.event.prize.replaceAll('R\$ ', 'R\$'),
                                   style: GoogleFonts.orbitron(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFFF0E6C5),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 20),
                           _buildInfoGrid(),
                           const SizedBox(height: 32),
                           _buildDescriptionSection(),
@@ -424,88 +417,160 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     );
   }
 
-  String _formatDate(String dateStr) {
-    try {
-      final date = DateFormat('dd/MM/yyyy').parse(dateStr);
-      return DateFormat("d 'de' MMM", 'pt_BR').format(date);
-    } catch (e) {
-      return dateStr;
-    }
-  }
-
   Widget _buildInfoGrid() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 24,
-      crossAxisSpacing: 24,
-      childAspectRatio: 2.2,
+    return Column(
       children: [
-        _buildInfoText(
-          FontAwesomeIcons.locationDot,
-          'LOCAL',
-          widget.event.location.isNotEmpty
-              ? widget.event.location
-              : 'Não definido',
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF16181C).withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 20,
+            childAspectRatio: 2.5,
+            children: [
+              _buildEventStatus(),
+              FutureBuilder<Map<String, int>>(
+                future: _statsFuture,
+                builder: (context, snapshot) {
+                  if (widget.event.eventType == 'find_and_win') {
+                    final solved = snapshot.data?['solved'] ?? 0;
+                    final total = snapshot.data?['total'] ?? 0;
+                    return _buildInfoItem(
+                        FontAwesomeIcons.chartSimple, 'PROGRESSO', '$solved / $total');
+                  } else {
+                    final total = snapshot.data?['total'] ?? 0;
+                    return _buildInfoItem(
+                        FontAwesomeIcons.chartSimple, 'FASES', total.toString());
+                  }
+                },
+              ),
+              _buildInfoItem(
+                FontAwesomeIcons.users,
+                'JOGADORES',
+                widget.event.playerCount.toString(),
+              ),
+              _buildInfoItem(
+                FontAwesomeIcons.star,
+                'DIFICULDADE',
+                'Média',
+                iconColor: const Color(0xFFC0A060),
+              ),
+            ],
+          ),
         ),
-        _buildInfoText(
-          FontAwesomeIcons.calendarDay,
-          'DATA',
-          widget.event.startDate.isNotEmpty
-              ? _formatDate(widget.event.startDate)
-              : 'Não definida',
-        ),
-        FutureBuilder<Map<String, int>>(
-          future: _statsFuture,
-          builder: (context, snapshot) {
-            if (widget.event.eventType == 'find_and_win') {
-              final solved = snapshot.data?['solved'] ?? 0;
-              final total = snapshot.data?['total'] ?? 0;
-              return _buildInfoText(null, 'PROGRESSO', '$solved / $total');
-            } else {
-              final total = snapshot.data?['total'] ?? 0;
-              return _buildInfoText(null, 'FASES', total.toString());
-            }
-          },
-        ),
-        _buildInfoText(
-          FontAwesomeIcons.userGroup,
-          'JOGADORES',
-          widget.event.playerCount.toString(),
+        const SizedBox(height: 4),
+        Container(
+          width: double.infinity,
+          height: 1,
+          margin: const EdgeInsets.only(bottom: 18),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.transparent,
+                const Color(0xFFC0A060).withValues(alpha: 0.15),
+                Colors.transparent,
+              ],
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildInfoText(dynamic icon, String label, String value) {
+  Widget _buildEventStatus() {
+    String statusText = 'Em andamento';
+    Color statusColor = const Color(0xFF4CAF50);
+    dynamic iconData = FontAwesomeIcons.circleCheck;
+
+    if (widget.event.status == 'dev') {
+      statusText = 'Em breve';
+      statusColor = const Color(0xFFFF9800);
+      iconData = FontAwesomeIcons.clock;
+    } else if (widget.event.status == 'closed') {
+      statusText = 'Finalizado';
+      statusColor = const Color(0xFFF44336);
+      iconData = FontAwesomeIcons.circleXmark;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Row(
+          children: [
+            FaIcon(
+              FontAwesomeIcons.circle,
+              color: statusColor,
+              size: 6,
+            ),
+            const SizedBox(width: 4),
+            const Text(
+              'STATUS DO EVENTO',
+              style: TextStyle(
+                color: Color(0xFF7A7A7A),
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Row(
+          children: [
+            FaIcon(iconData, color: statusColor, size: 12),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                statusText,
+                style: TextStyle(
+                  color: statusColor,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoItem(dynamic icon, String label, String value, {Color iconColor = const Color(0xFFC0A060)}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: const TextStyle(
-            color: Colors.grey,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.0,
+            color: Color(0xFF7A7A7A),
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.8,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 2),
         Row(
           children: [
             if (icon != null) ...[
-              FaIcon(icon, color: const Color(0xFFD6B570), size: 14),
-              const SizedBox(width: 8),
+              SizedBox(
+                width: 18,
+                child: FaIcon(icon, color: iconColor, size: 12),
+              ),
             ],
             Expanded(
               child: Text(
                 value,
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFF0E6C5),
+                  fontWeight: FontWeight.w500,
                   fontSize: 14,
                 ),
                 overflow: TextOverflow.ellipsis,
@@ -524,48 +589,34 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         Text(
           'Sobre a caçada',
           style: GoogleFonts.orbitron(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFFD6B570),
+            fontSize: 13, // 0.8rem
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFFC0A060),
+            letterSpacing: 1.5,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Container(
-          height: 120, // Constrain height to make it scrollable
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.2), // Fundo mais escuro
+            color: Colors.black.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(16),
+            border: Border(
+              left: BorderSide(
+                color: const Color(0xFFC0A060).withValues(alpha: 0.2),
+                width: 2,
+              ),
+            ),
           ),
-          child: Row(
-            children: [
-              // Golden detail on the side
-              Container(
-                width: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFD6B570),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    bottomLeft: Radius.circular(16),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    widget.event.fullDescription.isNotEmpty
-                        ? widget.event.fullDescription
-                        : 'Encontre pistas espalhadas pela cidade, escaneie QR codes e desvende o mistério. O primeiro a completar todas as etapas leva o prêmio de R\$ 5.000,00.',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                      height: 1.6,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          child: Text(
+            widget.event.fullDescription.isNotEmpty
+                ? widget.event.fullDescription
+                : 'Encontre pistas espalhadas pela cidade, escaneie QR codes e desvende o mistério. O primeiro a completar todas as etapas leva o prêmio de R\$ 5.000,00.',
+            style: const TextStyle(
+              color: Color(0xFFB0A07A),
+              fontSize: 14, // ~0.9rem
+              height: 1.6,
+            ),
           ),
         ),
       ],
@@ -573,23 +624,22 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 
   Widget _buildBackButton(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-          width: 1,
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pop(),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: const Color(0xFFC0A060).withValues(alpha: 0.06),
+          shape: BoxShape.circle,
         ),
-      ),
-      child: IconButton(
-        icon: const FaIcon(
-          FontAwesomeIcons.angleLeft,
-          color: Color(0xFFD6B570),
-          size: 16,
+        child: const Center(
+          child: FaIcon(
+            FontAwesomeIcons.chevronLeft,
+            color: Color(0xFFC0A060),
+            size: 14,
+          ),
         ),
-        onPressed: () => Navigator.of(context).pop(),
       ),
     );
   }
@@ -638,15 +688,19 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        height: 56,
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFFC7A55C), // Fundo dourado/âmbar liso
-          borderRadius: BorderRadius.circular(28),
+          gradient: const LinearGradient(
+            colors: [Color(0xFFC0A060), Color(0xFFA8894A)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(40),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFC7A55C).withValues(alpha: 0.2),
-              blurRadius: 15,
-              offset: const Offset(0, 4),
+              color: const Color(0xFFC0A060).withValues(alpha: 0.4),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -658,17 +712,17 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
-                  color: Colors.black,
+                  color: Color(0xFF06080B),
                   strokeWidth: 2,
                 ),
               )
             else ...[
               const FaIcon(
                 FontAwesomeIcons.play,
-                size: 14,
-                color: Colors.black,
+                size: 16,
+                color: Color(0xFF06080B),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Text(
                 _isSubscribed
                     ? 'ENTRAR NA CAÇADA'
@@ -676,8 +730,8 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                           ? 'INICIAR CAÇADA (GRÁTIS)'
                           : "INSCRIÇÃO: R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}"),
                 style: GoogleFonts.orbitron(
-                  color: Colors.black,
-                  fontSize: 14,
+                  color: const Color(0xFF06080B),
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.0,
                 ),
