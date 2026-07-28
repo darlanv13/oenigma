@@ -10,9 +10,6 @@ import 'package:oenigma/core/widgets/dashed_rect.dart';
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/features/profile/providers/profile_repository_provider.dart';
 import 'package:oenigma/features/profile/screens/edit_profile_screen.dart';
-import 'package:oenigma/features/profile/widgets/profile_account_actions.dart';
-import 'package:oenigma/features/profile/widgets/profile_badges_section.dart';
-import 'package:oenigma/features/profile/widgets/profile_stats_section.dart';
 import 'package:oenigma/features/wallet/providers/wallet_provider.dart';
 import 'package:oenigma/features/wallet/screens/wallet_screen.dart';
 import 'package:oenigma/features/wallet/widgets/wallet_credit_options_sheet.dart';
@@ -93,19 +90,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  Future<void> _resetPassword(String email) async {
-    if (email.isEmpty) return;
-
+  Future<void> _signOut() async {
     final authRepository = ref.read(authRepositoryProvider);
-    final error = await authRepository.sendPasswordResetEmail(email);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error ?? 'E-mail de recuperação enviado para $email'),
-          backgroundColor: error == null ? Colors.green : Colors.redAccent,
-        ),
-      );
-    }
+    await authRepository.signOut();
   }
 
   Future<void> _refreshWalletData() async {
@@ -147,7 +134,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String email = widget.playerData['email'] ?? widget.walletData.email;
     final walletAsync = ref.watch(walletProvider);
     final currentWallet = walletAsync.value ?? widget.walletData;
 
@@ -199,6 +185,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         actions: [
           IconButton(
             icon: const FaIcon(
+              FontAwesomeIcons.arrowRightFromBracket,
+              color: Colors.redAccent,
+              size: 16,
+            ),
+            onPressed: _signOut,
+          ),
+          IconButton(
+            icon: const FaIcon(
               FontAwesomeIcons.pen,
               color: Color(0xFFB39D82),
               size: 16,
@@ -216,20 +210,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
         child: Column(
           children: [
             _buildHeader(currentWallet, widget.playerData),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
             _buildBalanceCard(currentWallet),
-            const SizedBox(height: 32),
-            _buildStatsSection(),
-            const SizedBox(height: 32),
-            _buildBadgesSection(),
-            const SizedBox(height: 32),
-            _buildAccountActionsSection(email),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
+            Expanded(child: _buildMeusPremios()),
+            const SizedBox(height: 16),
+            Expanded(child: _buildHistoricoRecente()),
           ],
         ),
       ),
@@ -257,8 +248,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           alignment: Alignment.bottomRight,
           children: [
             Container(
-              width: 90,
-              height: 90,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const RadialGradient(
@@ -286,7 +277,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             initials,
                             style: const TextStyle(
                               color: Colors.black,
-                              fontSize: 32,
+                              fontSize: 28,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
@@ -295,7 +286,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             GestureDetector(
               onTap: _pickImage,
               child: Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: const Color(0xFFB1904C),
                   shape: BoxShape.circle,
@@ -319,11 +310,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         Text(
           name,
           style: GoogleFonts.orbitron(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
@@ -344,7 +335,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildBalanceCard(UserWalletModel wallet) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       decoration: BoxDecoration(
         color: const Color(0xFF161616),
         borderRadius: BorderRadius.circular(24),
@@ -364,16 +355,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               letterSpacing: 1.5,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text(
             'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
             style: GoogleFonts.orbitron(
               color: const Color(0xFFDCD6CC),
-              fontSize: 36,
+              fontSize: 32,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Row(
             children: [
               Expanded(
@@ -398,7 +389,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -431,7 +422,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -455,40 +446,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildStatsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'ESTATÍSTICAS GERAIS',
-          style: TextStyle(
-            color: Color(0xFFDCD6CC),
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: 12),
-        DashedRect(
-          color: Colors.white.withValues(alpha: 0.1),
-          strokeWidth: 1.5,
-          gap: 6.0,
-          borderRadius: BorderRadius.circular(24),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF131313),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: ProfileStatsSection(wallet: widget.walletData),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBadgesSection() {
+  Widget _buildMeusPremios() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -501,32 +459,59 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(height: 12),
-        DashedRect(
-          color: Colors.white.withValues(alpha: 0.1),
-          strokeWidth: 1.5,
-          gap: 6.0,
-          borderRadius: BorderRadius.circular(24),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF131313),
-              borderRadius: BorderRadius.circular(24),
+        const SizedBox(height: 8),
+        Expanded(
+          child: DashedRect(
+            color: Colors.white.withValues(alpha: 0.1),
+            strokeWidth: 1.5,
+            gap: 6.0,
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFF131313),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  FaIcon(
+                    FontAwesomeIcons.gift,
+                    color: Colors.white.withValues(alpha: 0.2),
+                    size: 28,
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Nenhum prêmio ainda.',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Participe de eventos para ganhar!',
+                    style: TextStyle(
+                      color: Color(0xFFD6B570), // Dourado
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: ProfileBadgesSection(playerData: widget.playerData),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildAccountActionsSection(String email) {
+  Widget _buildHistoricoRecente() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'CONTA & SEGURANÇA',
+          'HISTÓRICO RECENTE',
           style: TextStyle(
             color: Color(0xFFDCD6CC),
             fontSize: 12,
@@ -534,22 +519,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(height: 12),
-        DashedRect(
-          color: Colors.white.withValues(alpha: 0.1),
-          strokeWidth: 1.5,
-          gap: 6.0,
-          borderRadius: BorderRadius.circular(24),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
-            decoration: BoxDecoration(
-              color: const Color(0xFF131313),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: ProfileAccountActions(
-              email: email,
-              onResetPassword: _resetPassword,
+        const SizedBox(height: 8),
+        Expanded(
+          child: DashedRect(
+            color: Colors.white.withValues(alpha: 0.1),
+            strokeWidth: 1.5,
+            gap: 6.0,
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: const Color(0xFF131313),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      shape: BoxShape.circle,
+                    ),
+                    child: FaIcon(
+                      FontAwesomeIcons.clock,
+                      color: Colors.white.withValues(alpha: 0.3),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Nenhuma atividade recente.',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
