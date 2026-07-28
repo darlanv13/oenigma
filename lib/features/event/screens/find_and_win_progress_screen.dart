@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
@@ -93,67 +94,73 @@ class _FindAndWinProgressScreenState
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // Header Transparente para valorizar o mapa
-              SliverAppBar(
-                expandedHeight: 120.0,
-                backgroundColor: Colors.transparent,
-                pinned: true,
-                elevation: 0,
-                leading: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.black.withValues(alpha: 0.5),
-                    child: IconButton(
-                      icon: const FaIcon(
-                        FontAwesomeIcons.chevronLeft,
-                        color: Colors.white,
-                        size: 18,
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 16.0),
+                  child: Row(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.05),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: IconButton(
+                          icon: const FaIcon(
+                            FontAwesomeIcons.angleLeft,
+                            color: Color(0xFFD6B570),
+                            size: 18,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
                       ),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ),
-                ),
-                flexibleSpace: FlexibleSpaceBar(
-                  centerTitle: true,
-                  title: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
+                      const SizedBox(width: 16),
+                      Text(
+                        'Enigmas',
+                        style: GoogleFonts.orbitron(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      widget.event.name,
-                      style: const TextStyle(
-                        color: Color(0xFFFFD54F),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
-                        letterSpacing: 0.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF121212).withValues(alpha: 0.9),
-                          Colors.transparent,
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
+                    ],
                   ),
                 ),
               ),
 
-              // Header elegante
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                  child: Column(
+                    children: [
+                      const Divider(color: Colors.white12, height: 1),
+                      const SizedBox(height: 24),
+                      Text(
+                        'DESVENDE OS MISTÉRIOS',
+                        style: GoogleFonts.orbitron(
+                          color: const Color(0xFFD6B570),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Escolha um enigma e comece a caçada',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
 
               // Indicador de Carregamento Inicial
               if (snapshot.connectionState == ConnectionState.waiting &&
