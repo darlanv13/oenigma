@@ -23,114 +23,92 @@ class HomeProfileCard extends StatelessWidget {
     final String firstName = wallet.name.split(' ').first;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.only(bottom: 18),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Colors.white.withValues(alpha: 0.05),
+            color: const Color(0xFFC0A060).withValues(alpha: 0.10),
             width: 1,
           ),
         ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Info do Jogador (Esquerda)
-          Expanded(
-            child: Row(
-              children: [
-                const FaIcon(
-                  FontAwesomeIcons.solidCircleUser,
-                  color: Color(0xFFD6B570),
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: RichText(
-                    overflow: TextOverflow.ellipsis,
-                    text: TextSpan(
-                      children: [
-                        const TextSpan(
-                          text: 'Olá, ',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.normal,
-                            color: Color(0xFFD6B570),
-                          ),
-                        ),
-                        TextSpan(
-                          text: '$firstName!',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFD6B570),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Saldo e Rank (Direita)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: const [
-                  Text(
-                    'SALDO',
-                    style: TextStyle(
-                      color: Color(0xFF9E8B61),
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  SizedBox(width: 24),
-                  Text(
-                    'RANK',
-                    style: TextStyle(
-                      color: Color(0xFF9E8B61),
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
+              const FaIcon(
+                FontAwesomeIcons.solidCircleUser,
+                color: Color(0xFFC0A060),
+                size: 20,
               ),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
-                    style: GoogleFonts.orbitron(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    '#${wallet.lastEventRank ?? '-'}',
-                    style: GoogleFonts.orbitron(
-                      color: const Color(0xFFD6B570),
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+              const SizedBox(width: 6),
+              Text(
+                'Olá, ',
+                style: const TextStyle(
+                  color: Color(0xFFB0A07A),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Inter',
+                ),
+              ),
+              Text(
+                firstName.isNotEmpty ? firstName : 'Visitante!',
+                style: const TextStyle(
+                  color: Color(0xFFF0E6C5),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              _buildStatColumn(
+                'Saldo',
+                'R\$ ${wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}',
+                isBalance: true,
+              ),
+              const SizedBox(width: 16),
+              _buildStatColumn(
+                'Rank',
+                '#${wallet.lastEventRank ?? '-'}',
+                isBalance: false,
               ),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildStatColumn(String label, String value,
+      {required bool isBalance}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF7A7A7A),
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 1.0,
+            fontFamily: 'Inter',
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.orbitron(
+            color: isBalance ? const Color(0xFFF0E6C5) : const Color(0xFFC0A060),
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
     );
   }
 }

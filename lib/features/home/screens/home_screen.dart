@@ -6,7 +6,6 @@ import 'package:oenigma/features/event/widgets/event_card.dart';
 import 'package:oenigma/features/home/providers/home_events_provider.dart';
 import '../widgets/home_profile_card.dart';
 import '../widgets/events_section_header.dart';
-import 'package:oenigma/features/home/widgets/home_banner_carousel.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
@@ -143,7 +142,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     child: FadeTransition(
                       opacity: _fadeAnimation,
                       child: const Padding(
+<<<<<<< HEAD
                         padding: EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 16.0),
+=======
+                        padding: EdgeInsets.fromLTRB(20.0, 24.0, 20.0, 16.0),
+>>>>>>> origin/feature/homepage-redesign-16237464640025730872
                         child: EventsSectionHeader(),
                       ),
                     ),
@@ -158,6 +161,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
     );
   }
+
+  int _currentCarouselIndex = 0;
 
   Widget _buildEventsCarousel(
     List<EventModel> events,
@@ -196,27 +201,68 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
 
     return SliverToBoxAdapter(
-      child: CarouselSlider(
-        options: CarouselOptions(
-          height: MediaQuery.of(context).size.height * 0.55,
-          viewportFraction: 0.85,
-          enlargeCenterPage: true,
-          enableInfiniteScroll: false,
-        ),
-        items: events.map((e) {
-          return Builder(
-            builder: (BuildContext context) {
-              return FadeTransition(
-                opacity: _fadeAnimation,
-                child: EventCard(
-                  event: e,
-                  playerData: playerData,
-                  onReturn: _reloadData,
+      child: StatefulBuilder(
+        builder: (context, setStateCarousel) {
+          return Column(
+            children: [
+              CarouselSlider(
+                options: CarouselOptions(
+                  height: 250, // To match min-height: 240px + some padding
+                  viewportFraction: 1.0,
+                  enlargeCenterPage: false,
+                  enableInfiniteScroll: true,
+                  onPageChanged: (index, reason) {
+                    setStateCarousel(() {
+                      _currentCarouselIndex = index;
+                    });
+                  },
                 ),
-              );
-            },
+                items: events.map((e) {
+                  return Builder(
+                    builder: (BuildContext context) {
+                      return FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                          child: EventCard(
+                            event: e,
+                            playerData: playerData,
+                            onReturn: _reloadData,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: events.asMap().entries.map((entry) {
+                  return Container(
+                    width: 10.0,
+                    height: 10.0,
+                    margin: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _currentCarouselIndex == entry.key
+                          ? const Color(0xFFC0A060)
+                          : const Color(0xFF3A3A3A),
+                      boxShadow: _currentCarouselIndex == entry.key
+                          ? [
+                              BoxShadow(
+                                color: const Color(0xFFC0A060).withValues(alpha: 0.6),
+                                blurRadius: 12,
+                              ),
+                            ]
+                          : [],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           );
-        }).toList(),
+        }
       ),
     );
   }
