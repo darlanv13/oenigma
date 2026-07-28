@@ -166,7 +166,7 @@ class _CardEnigmaState extends State<CardEnigma> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      widget.enigma.difficulty,
+                      '${widget.enigma.difficulty} • 0 ETAPAS',
                       style: const TextStyle(
                         color: Colors.grey,
                         fontSize: 10,
