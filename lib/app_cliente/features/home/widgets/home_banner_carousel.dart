@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,7 +15,7 @@ class HomeBannerCarousel extends StatefulWidget {
 class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
   int _currentCarouselIndex = 0;
 
-  IconData? _getIconData(String iconName) {
+  FaIconData? _getIconData(String iconName) {
     if (iconName.isEmpty) return null;
     switch (iconName.toLowerCase()) {
       case 'trophy':
