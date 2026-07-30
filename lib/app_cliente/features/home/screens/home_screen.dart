@@ -5,6 +5,7 @@ import 'package:oenigma/app_cliente/core/models/event_model.dart';
 import 'package:oenigma/app_cliente/features/event/widgets/event_card.dart';
 import 'package:oenigma/app_cliente/features/home/providers/home_events_provider.dart';
 import '../widgets/home_profile_card.dart';
+import '../widgets/home_banner_carousel.dart';
 import '../widgets/events_section_header.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -136,6 +137,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           allPlayers: allPlayers,
                         ),
                       ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: const HomeBannerCarousel(),
                     ),
                   ),
                   SliverToBoxAdapter(

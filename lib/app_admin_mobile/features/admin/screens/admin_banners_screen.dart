@@ -275,6 +275,11 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
     final titleCtrl = TextEditingController(text: data?['title']);
     final imageUrlCtrl = TextEditingController(text: data?['imageUrl']);
     final actionUrlCtrl = TextEditingController(text: data?['actionUrl']);
+    final tagTextCtrl = TextEditingController(text: data?['tagText']);
+    final tagIconCtrl = TextEditingController(text: data?['tagIcon']);
+    final descriptionCtrl = TextEditingController(text: data?['description']);
+    final buttonTextCtrl = TextEditingController(text: data?['buttonText']);
+    final bgIconCtrl = TextEditingController(text: data?['bgIcon']);
     final orderCtrl = TextEditingController(
       text: data?['order']?.toString() ?? '1',
     );
@@ -301,10 +306,35 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                       decoration: const InputDecoration(labelText: 'Título'),
                     ),
                     TextField(
+                      controller: tagTextCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(labelText: 'Texto da Tag (ex: Destaque)'),
+                    ),
+                    TextField(
+                      controller: tagIconCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(labelText: 'Ícone da Tag (ex: fire)'),
+                    ),
+                    TextField(
+                      controller: descriptionCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(labelText: 'Descrição'),
+                    ),
+                    TextField(
+                      controller: buttonTextCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(labelText: 'Texto do Botão'),
+                    ),
+                    TextField(
+                      controller: bgIconCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(labelText: 'Ícone de Fundo (ex: trophy)'),
+                    ),
+                    TextField(
                       controller: imageUrlCtrl,
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
-                        labelText: 'URL da Imagem (Obrigatório)',
+                        labelText: 'URL da Imagem (Opcional)',
                         suffixIcon: IconButton(
                           icon: const FaIcon(FontAwesomeIcons.upload, size: 18),
                           onPressed: () async {
@@ -354,10 +384,10 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    if (imageUrlCtrl.text.isEmpty) {
+                    if (titleCtrl.text.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('URL da imagem é obrigatória'),
+                          content: Text('Título é obrigatório'),
                         ),
                       );
                       return;
@@ -367,6 +397,11 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                       'title': titleCtrl.text,
                       'imageUrl': imageUrlCtrl.text,
                       'actionUrl': actionUrlCtrl.text,
+                      'tagText': tagTextCtrl.text,
+                      'tagIcon': tagIconCtrl.text,
+                      'description': descriptionCtrl.text,
+                      'buttonText': buttonTextCtrl.text,
+                      'bgIcon': bgIconCtrl.text,
                       'order': int.tryParse(orderCtrl.text) ?? 1,
                       'isActive': isActive,
                     };
