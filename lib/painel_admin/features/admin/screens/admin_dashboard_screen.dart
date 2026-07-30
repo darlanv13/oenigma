@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
 
 import '../repositories/admin_repository.dart';
@@ -24,59 +25,52 @@ class AdminDashboardScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Dashboard Geral',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 24),
           dashboardData.when(
-            data: (data) => Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: [
-                SizedBox(
-                  width: 250,
-                  child: _buildStatCard(
-                    'Usuários Ativos',
-                    data['users']?.toString() ?? '...',
-                    FontAwesomeIcons.userGroup,
-                    Colors.blue,
-                  ),
-                ),
-                SizedBox(
-                  width: 250,
-                  child: _buildStatCard(
-                    'Eventos Ativos',
-                    data['activeEvents']?.toString() ?? '...',
-                    FontAwesomeIcons.calendarCheck,
-                    Colors.green,
-                  ),
-                ),
-                SizedBox(
-                  width: 250,
-                  child: _buildStatCard(
-                    'Depósitos Totais',
-                    data['totalDeposits']?.toString() ?? '...',
-                    FontAwesomeIcons.dollarSign,
-                    primaryAmber,
-                  ),
-                ),
-                SizedBox(
-                  width: 250,
-                  child: _buildStatCard(
-                    'Saques Pendentes',
-                    data['pendingWithdrawals']?.toString() ?? '...',
-                    FontAwesomeIcons.moneyBillTrendUp,
-                    Colors.redAccent,
-                  ),
-                ),
-              ],
+            data: (data) => LayoutBuilder(
+              builder: (context, constraints) {
+                // Responsividade basica (grid de 4 ou menos dependendo da tela)
+                int crossAxisCount = 4;
+                if (constraints.maxWidth < 600) {
+                  crossAxisCount = 1;
+                } else if (constraints.maxWidth < 900) {
+                  crossAxisCount = 2;
+                } else if (constraints.maxWidth < 1200) {
+                  crossAxisCount = 3;
+                }
+
+                return GridView.count(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 20,
+                  mainAxisSpacing: 20,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  childAspectRatio: 1.5,
+                  children: [
+                    _buildStatCard(
+                      'Eventos',
+                      data['activeEvents']?.toString() ?? '...',
+                      FontAwesomeIcons.calendar,
+                    ),
+                    _buildStatCard(
+                      'Usuários',
+                      data['users']?.toString() ?? '...',
+                      FontAwesomeIcons.user,
+                    ),
+                    _buildStatCard(
+                      'Depósitos',
+                      data['totalDeposits']?.toString() ?? '...',
+                      FontAwesomeIcons.dollarSign,
+                    ),
+                    _buildStatCard(
+                      'Saques',
+                      data['pendingWithdrawals']?.toString() ?? '...',
+                      FontAwesomeIcons.moneyBillTrendUp,
+                    ),
+                  ],
+                );
+              }
             ),
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: CircularProgressIndicator(color: primaryAmber)),
             error: (err, stack) => Center(
               child: Text(
                 'Erro ao carregar dashboard: $err',
@@ -85,21 +79,45 @@ class AdminDashboardScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 32),
-          const Text(
-            'Visão Geral de Engajamento',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          Row(
+            children: [
+              const FaIcon(FontAwesomeIcons.clock, color: primaryAmber, size: 16),
+              const SizedBox(width: 10),
+              Text(
+                'Visão Geral de Engajamento',
+                style: GoogleFonts.orbitron(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: primaryAmber,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        primaryAmber.withValues(alpha: 0.15),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Container(
             height: 300,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: cardColor,
+              color: itemCardBackground.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: primaryAmber.withValues(alpha: 0.04),
+              ),
             ),
             child: LineChart(
               LineChartData(
@@ -148,34 +166,44 @@ class AdminDashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, dynamic icon, Color color) {
+  Widget _buildStatCard(String title, String value, dynamic icon) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
+        color: itemCardBackground.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: primaryAmber.withValues(alpha: 0.04),
+        ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(color: secondaryTextColor, fontSize: 14),
-              ),
-              FaIcon(icon, color: color, size: 20),
-            ],
-          ),
-          const SizedBox(height: 12),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+            style: GoogleFonts.orbitron(
+              color: highlightTextColor,
+              fontSize: 38,
+              fontWeight: FontWeight.w800,
             ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FaIcon(icon, color: primaryAmber, size: 11),
+              const SizedBox(width: 4),
+              Text(
+                title.toUpperCase(),
+                style: GoogleFonts.inter(
+                  color: secondaryTextColor,
+                  fontSize: 11,
+                  letterSpacing: 0.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ],
       ),
