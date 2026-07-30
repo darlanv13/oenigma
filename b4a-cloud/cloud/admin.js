@@ -8,9 +8,20 @@ Parse.Cloud.define("getAdminDashboardData", async (request) => {
     const usersCount = await usersQuery.count({ useMasterKey: true });
 
     const eventsQuery = new Parse.Query("Event");
-    // CORREÇÃO: Alterado de "published" para "open" para bater com a lógica do app
-    eventsQuery.equalTo("status", "open");
-    const activeEventsCount = await eventsQuery.count({ useMasterKey: true });
+    const totalEventsCount = await eventsQuery.count({ useMasterKey: true });
+
+    const eventsActiveQuery = new Parse.Query("Event");
+    eventsActiveQuery.equalTo("status", "open");
+    const activeEventsCount = await eventsActiveQuery.count({ useMasterKey: true });
+
+    const enigmasQuery = new Parse.Query("Enigma");
+    const totalEnigmasCount = await enigmasQuery.count({ useMasterKey: true });
+
+    const bannersQuery = new Parse.Query("Banner");
+    const totalBannersCount = await bannersQuery.count({ useMasterKey: true });
+
+    const hintsQuery = new Parse.Query("Hint");
+    const totalHintsCount = await hintsQuery.count({ useMasterKey: true });
 
     const depositsQuery = new Parse.Query("Transaction");
     depositsQuery.equalTo("type", "deposit");
@@ -24,7 +35,11 @@ Parse.Cloud.define("getAdminDashboardData", async (request) => {
       users: usersCount,
       activeEvents: activeEventsCount,
       totalDeposits: totalDepositsCount,
-      pendingWithdrawals: pendingWithdrawalsCount
+      pendingWithdrawals: pendingWithdrawalsCount,
+      totalEvents: totalEventsCount,
+      totalEnigmas: totalEnigmasCount,
+      totalBanners: totalBannersCount,
+      totalHints: totalHintsCount
     };
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error fetching dashboard data: " + error.message);

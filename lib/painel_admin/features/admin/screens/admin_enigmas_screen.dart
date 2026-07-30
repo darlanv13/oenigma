@@ -1,0 +1,429 @@
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+
+import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
+import 'package:oenigma/painel_admin/core/widgets/admin_item_card.dart';
+import 'package:oenigma/painel_admin/core/widgets/admin_modal.dart';
+
+class AdminEnigmasScreen extends StatefulWidget {
+  const AdminEnigmasScreen({super.key});
+
+  @override
+  State<AdminEnigmasScreen> createState() => _AdminEnigmasScreenState();
+}
+
+class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
+  late Future<List<ParseObject>> _enigmasFuture;
+  List<ParseObject> _events = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  void _loadData() async {
+    // Load events for the dropdown
+    final eventsQuery = QueryBuilder<ParseObject>(ParseObject('Event'))..orderByDescending('createdAt');
+    final eventsRes = await eventsQuery.query();
+    if (eventsRes.success && eventsRes.results != null) {
+      _events = eventsRes.results as List<ParseObject>;
+    }
+
+    setState(() {
+      final query = QueryBuilder<ParseObject>(ParseObject('Enigma'))
+        ..orderByDescending('createdAt')
+        ..includeObject(['event']);
+      _enigmasFuture = query.query().then((response) {
+        if (response.success && response.results != null) {
+          return response.results as List<ParseObject>;
+        }
+        return [];
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Todos os Enigmas', FontAwesomeIcons.puzzlePiece),
+        Expanded(
+          child: FutureBuilder<List<ParseObject>>(
+            future: _enigmasFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator(color: primaryAmber));
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text('Erro: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+              }
+
+              final enigmas = snapshot.data ?? [];
+              if (enigmas.isEmpty) {
+                return _buildEmptyState();
+              }
+
+              return ListView.builder(
+                itemCount: enigmas.length,
+                itemBuilder: (context, index) {
+                  final enigma = enigmas[index];
+                  return _buildEnigmaCard(enigma);
+                },
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildAddButton('Novo Enigma', () => _showAddEnigmaModal(context)),
+      ],
+    );
+  }
+
+  Widget _buildSectionTitle(String title, dynamic icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        children: [
+          FaIcon(icon, color: primaryAmber, size: 14),
+          const SizedBox(width: 10),
+          Text(
+            title.toUpperCase(),
+            style: GoogleFonts.orbitron(
+              color: primaryAmber,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [primaryAmber.withValues(alpha: 0.15), Colors.transparent],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return const AdminItemCard(
+      icon: FontAwesomeIcons.circleInfo,
+      title: 'Nenhum enigma cadastrado',
+      statusText: '',
+      statusColor: Colors.transparent,
+      subtitle: 'Crie enigmas dentro dos eventos.',
+    );
+  }
+
+  Widget _buildEnigmaCard(ParseObject enigma) {
+    final status = enigma.get<String>('status') ?? 'bloqueado';
+    Color statusColor;
+    String statusLabel;
+
+    if (status == 'concluido' || status == 'closed') {
+      statusColor = primaryAmber;
+      statusLabel = 'Concluído';
+    } else if (status == 'disponivel' || status == 'open') {
+      statusColor = successColor;
+      statusLabel = 'Disponível';
+    } else {
+      statusColor = secondaryTextColor;
+      statusLabel = 'Bloqueado';
+    }
+
+    final tipo = enigma.get<String>('type') ?? 'charada';
+    dynamic tipoIcon;
+    if (tipo == 'charada' || tipo == 'text') {
+      tipoIcon = FontAwesomeIcons.pencil;
+    } else if (tipo == 'gps') {
+      tipoIcon = FontAwesomeIcons.locationDot;
+    } else {
+      tipoIcon = FontAwesomeIcons.camera;
+    }
+
+    final eventObj = enigma.get<ParseObject>('event');
+    final eventName = eventObj?.get<String>('name') ?? 'Evento Desconhecido';
+    final dif = enigma.get<String>('difficulty') ?? 'Médio';
+    final prize = enigma.get<String>('prize') ?? 'R\$ 0,00';
+
+    return AdminItemCard(
+      icon: tipoIcon,
+      title: enigma.get<String>('instruction') ?? enigma.get<String>('name') ?? 'Sem Nome',
+      statusText: statusLabel,
+      statusColor: statusColor,
+      subtitle: 'Evento: $eventName · Tipo: $tipo · Dificuldade: $dif · Prêmio: $prize',
+      actions: [
+        _buildButton('Gerenciar', isWarning: true, onTap: () => _showManageEnigmaModal(context, enigma)),
+      ],
+    );
+  }
+
+  Widget _buildAddButton(String text, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: primaryAmber.withValues(alpha: 0.15), width: 1.5, style: BorderStyle.none),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: CustomPaint(
+          painter: _DashedBorderPainter(),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const FaIcon(FontAwesomeIcons.circlePlus, color: primaryAmber, size: 14),
+              const SizedBox(width: 8),
+              Text(
+                text,
+                style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildButton(String text, {bool isPrimary = false, bool isDanger = false, bool isWarning = false, required VoidCallback onTap}) {
+    Color bgColor = Colors.transparent;
+    Color textColorStr = primaryAmberHover;
+    Color borderColor = primaryAmber.withValues(alpha: 0.15);
+
+    if (isPrimary) {
+      bgColor = primaryAmber;
+      textColorStr = darkBackground;
+      borderColor = Colors.transparent;
+    } else if (isDanger) {
+      textColorStr = dangerColor;
+      borderColor = dangerColor.withValues(alpha: 0.3);
+    } else if (isWarning) {
+      textColorStr = warningColor;
+      borderColor = warningColor.withValues(alpha: 0.3);
+    }
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+        decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(30), border: Border.all(color: borderColor)),
+        child: Text(
+          text.toUpperCase(),
+          style: GoogleFonts.inter(color: textColorStr, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.3),
+        ),
+      ),
+    );
+  }
+
+  void _showAddEnigmaModal(BuildContext context) {
+    if (_events.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Crie um evento primeiro.')));
+      return;
+    }
+
+    final nomeController = TextEditingController();
+    final premioController = TextEditingController();
+    String tipo = 'text';
+    String dificuldade = 'Médio';
+    String eventId = _events.first.objectId!;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AdminModal(
+              title: 'Criar Novo Enigma',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(flex: 2, child: _buildInputForm(controller: nomeController, hint: 'Nome/Instrução')),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSelectForm(
+                          value: tipo,
+                          items: const [
+                            DropdownMenuItem(value: 'text', child: Text('Charada')),
+                            DropdownMenuItem(value: 'gps', child: Text('GPS')),
+                            DropdownMenuItem(value: 'qrcode', child: Text('QR Code')),
+                          ],
+                          onChanged: (val) { if (val != null) setModalState(() => tipo = val); },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSelectForm(
+                          value: dificuldade,
+                          items: const [
+                            DropdownMenuItem(value: 'Fácil', child: Text('Fácil')),
+                            DropdownMenuItem(value: 'Médio', child: Text('Médio')),
+                            DropdownMenuItem(value: 'Difícil', child: Text('Difícil')),
+                            DropdownMenuItem(value: 'Lendário', child: Text('Lendário')),
+                          ],
+                          onChanged: (val) { if (val != null) setModalState(() => dificuldade = val); },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildInputForm(controller: premioController, hint: 'Prêmio (R\$)')),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Vincular ao Evento:', style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12)),
+                  const SizedBox(height: 4),
+                  _buildSelectForm(
+                    value: eventId,
+                    items: _events.map((e) => DropdownMenuItem(value: e.objectId!, child: Text(e.get<String>('name') ?? ''))).toList(),
+                    onChanged: (val) { if (val != null) setModalState(() => eventId = val); },
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      _buildButton('Cancelar', onTap: () => Navigator.of(context).pop()),
+                      const SizedBox(width: 12),
+                      _buildButton('Criar Enigma', isPrimary: true, onTap: () async {
+                        await ParseCloudFunction('createOrUpdateEnigma').execute(
+                          parameters: {
+                            'eventId': eventId,
+                            'data': {
+                              'instruction': nomeController.text.trim(), // Assuming name maps to instruction
+                              'type': tipo,
+                              'difficulty': dificuldade,
+                              'prize': premioController.text.trim(),
+                              'status': 'open',
+                            }
+                          }
+                        );
+                        if (context.mounted) Navigator.of(context).pop();
+                        _loadData();
+                      }),
+                    ],
+                  )
+                ],
+              ),
+            );
+          }
+        );
+      },
+    );
+  }
+
+  void _showManageEnigmaModal(BuildContext context, ParseObject enigma) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AdminModal(
+          title: 'Gerenciar: ${enigma.get<String>('instruction') ?? ''}',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSectionTitle('Ferramentas', FontAwesomeIcons.toolbox),
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Funcionalidade de configuração de ferramentas (Radar, Maps, Scanner) será adicionada aqui.', style: TextStyle(color: secondaryTextColor)),
+              ),
+              const SizedBox(height: 16),
+              _buildSectionTitle('Dicas', FontAwesomeIcons.lightbulb),
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Lista de dicas vinculadas e botão de "Nova Dica".', style: TextStyle(color: secondaryTextColor)),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  _buildButton('Fechar', onTap: () => Navigator.of(context).pop()),
+                ],
+              )
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInputForm({required TextEditingController controller, required String hint}) {
+    return TextField(
+      controller: controller,
+      style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 15),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: secondaryTextColor.withValues(alpha: 0.5)),
+        filled: true,
+        fillColor: cardColor.withValues(alpha: 0.8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: primaryAmber.withValues(alpha: 0.15))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryAmber)),
+      ),
+    );
+  }
+
+  Widget _buildSelectForm({required String value, required List<DropdownMenuItem<String>> items, required ValueChanged<String?> onChanged}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(color: cardColor.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(12), border: Border.all(color: primaryAmber.withValues(alpha: 0.15))),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          dropdownColor: sidebarBackground,
+          style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 15),
+          isExpanded: true,
+          items: items,
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = primaryAmber.withValues(alpha: 0.15)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    const dashWidth = 5.0;
+    const dashSpace = 5.0;
+
+    double startX = 0;
+    while (startX < size.width) {
+      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
+      startX += dashWidth + dashSpace;
+    }
+    double startY = 0;
+    while (startY < size.height) {
+      canvas.drawLine(Offset(size.width, startY), Offset(size.width, startY + dashWidth), paint);
+      startY += dashWidth + dashSpace;
+    }
+    startX = size.width;
+    while (startX > 0) {
+      canvas.drawLine(Offset(startX, size.height), Offset(startX - dashWidth, size.height), paint);
+      startX -= dashWidth + dashSpace;
+    }
+    startY = size.height;
+    while (startY > 0) {
+      canvas.drawLine(Offset(0, startY), Offset(0, startY - dashWidth), paint);
+      startY -= dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
