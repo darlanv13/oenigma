@@ -1,7 +1,7 @@
 // lib/models/event_model.dart
 
-import 'package:oenigma/core/models/enigma_model.dart';
-import 'package:oenigma/core/models/phase_model.dart';
+import 'package:oenigma/app_cliente/core/models/enigma_model.dart';
+import 'package:oenigma/app_cliente/core/models/phase_model.dart';
 
 class EventModel {
   final String id;
