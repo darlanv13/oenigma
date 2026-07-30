@@ -8,6 +8,7 @@ import 'package:oenigma/app_cliente/core/models/event_model.dart';
 import 'package:oenigma/app_cliente/core/models/enigma_model.dart';
 import 'package:oenigma/app_cliente/core/models/phase_model.dart';
 import 'package:oenigma/app_cliente/features/enigma/screens/enigma_screen.dart';
+import 'map_dots_painter.dart';
 
 class CardEnigma extends StatefulWidget {
   final EnigmaModel enigma;
@@ -109,8 +110,17 @@ class _CardEnigmaState extends State<CardEnigma> {
       symbol: r'',
     );
 
+    Color statusColor;
+    if (isTemporarilyBlocked) {
+      statusColor = const Color(0xFFC0A060); // Gold for completed
+    } else if (!isClosed) {
+      statusColor = const Color(0xFF4CAF50); // Green for available
+    } else {
+      statusColor = const Color(0xFF555555); // Grey for blocked (if used)
+    }
+
     return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.95),
+      onTapDown: (_) => setState(() => _scale = 0.97),
       onTapUp: (_) {
         setState(() => _scale = 1.0);
         _handleTap(isTemporarilyBlocked);
@@ -118,120 +128,198 @@ class _CardEnigmaState extends State<CardEnigma> {
       onTapCancel: () => setState(() => _scale = 1.0),
       child: AnimatedScale(
         scale: _scale,
-        duration: const Duration(milliseconds: 100),
+        duration: const Duration(milliseconds: 150),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isTemporarilyBlocked
-                  ? Colors.redAccent.withValues(alpha: 0.3)
-                  : const Color(0xFFD6B570).withValues(alpha: 0.3),
-              width: 1,
+            color: const Color(0xFF16181C).withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(20),
+            border: Border(
+              left: BorderSide(color: statusColor, width: 3),
             ),
-            boxShadow: [
-              if (!isTemporarilyBlocked)
-                BoxShadow(
-                  color: const Color(0xFFD6B570).withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                ),
-            ],
           ),
+          clipBehavior: Clip.antiAlias,
           child: Stack(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    FaIcon(
-                      _getIconData(widget.enigma.icon),
-                      size: 48,
-                      color: const Color(0xFFD6B570),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      widget.enigma.title,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${widget.enigma.difficulty} • 0 ETAPAS',
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const FaIcon(
-                          FontAwesomeIcons.coins,
-                          size: 14,
-                          color: Color(0xFFD6B570),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'R\$ ${currencyFormat.format(widget.enigma.prize).trim()}',
-                          style: GoogleFonts.orbitron(
-                            color: Color(0xFFD6B570),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: MapDotsPainter(
+                    dotColor: const Color(0xFFC0A060).withValues(alpha: 0.04),
+                  ),
                 ),
               ),
-              if (isTemporarilyBlocked)
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.7),
-                      borderRadius: BorderRadius.circular(16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 16.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Icon Container
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFC0A060).withValues(alpha: 0.08),
+                        border: Border.all(
+                          color: const Color(0xFFC0A060).withValues(alpha: 0.1),
+                        ),
+                      ),
+                      child: Center(
+                        child: FaIcon(
+                          isTemporarilyBlocked ? FontAwesomeIcons.circleCheck : _getIconData(widget.enigma.icon),
+                          size: 16,
+                          color: statusColor,
+                        ),
+                      ),
                     ),
-                    child: Center(
+                    const SizedBox(width: 14),
+                    // Main Content
+                    Expanded(
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const FaIcon(
-                            FontAwesomeIcons.lock,
-                            color: Colors.redAccent,
-                            size: 32,
+                          // Title & Badge
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  widget.enigma.title,
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFFF0E6C5),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFC0A060).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: const Color(0xFFC0A060).withValues(alpha: 0.1),
+                                  ),
+                                ),
+                                child: Text(
+                                  isTemporarilyBlocked ? 'CONCLUÍDO' : 'DISPONÍVEL',
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFFC0A060),
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 2),
+                          // Desc & Difficulty
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  widget.enigma.instruction.isNotEmpty ? widget.enigma.instruction : 'Encontre a resposta',
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF8A7A5A),
+                                    fontSize: 10,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  FaIcon(
+                                    FontAwesomeIcons.star,
+                                    size: 8,
+                                    color: const Color(0xFFC0A060),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    widget.enigma.difficulty,
+                                    style: GoogleFonts.inter(
+                                      color: const Color(0xFFB0A07A),
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          // Prize
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFC0A060).withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFFC0A060).withValues(alpha: 0.15),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const FaIcon(
+                                  FontAwesomeIcons.coins,
+                                  size: 10,
+                                  color: Color(0xFFC0A060),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'R\$ ${currencyFormat.format(widget.enigma.prize).trim()}',
+                                  style: GoogleFonts.orbitron(
+                                    color: const Color(0xFFF0E6C5),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    // Action / Status
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        if (isTemporarilyBlocked)
                           StreamBuilder<String>(
                             stream: _countdownStream(widget.enigma.closedAt!),
                             builder: (context, snapshot) {
                               return Text(
                                 snapshot.data ?? "--:--",
-                                style: const TextStyle(
-                                  color: Colors.redAccent,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 16,
-                                  letterSpacing: 1.0,
+                                style: GoogleFonts.inter(
+                                  color: statusColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                  letterSpacing: 0.5,
                                 ),
                               );
                             },
+                          )
+                        else
+                          Text(
+                            'ABRIR',
+                            style: GoogleFonts.inter(
+                              color: statusColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                              letterSpacing: 0.5,
+                            ),
                           ),
-                        ],
-                      ),
+                      ],
                     ),
-                  ),
+                  ],
                 ),
+              ),
             ],
           ),
         ),
