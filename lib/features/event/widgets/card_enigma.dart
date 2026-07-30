@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/enigma/screens/enigma_screen.dart';
 
 class CardEnigma extends StatefulWidget {

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/svg.dart';
 
 import 'package:oenigma/features/auth/providers/auth_provider.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/features/auth/screens/signup_screen.dart';
 import 'package:oenigma/features/auth/screens/forgot_password_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -76,15 +74,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Column(
       children: [
         Image.asset('assets/images/logo_enigma_city.png', scale: 0.1), //
-        const SizedBox(height: 1),
-      ],
-    );
-  }
-
-  Widget _buildHeaderBusula() {
-    return Column(
-      children: [
-        Image.asset('assets/images/compass_icon.png', scale: 4.5), //
         const SizedBox(height: 1),
       ],
     );

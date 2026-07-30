@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'dart:ui';
 
 import '../widgets/card_enigma.dart';
