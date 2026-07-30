@@ -1,14 +1,11 @@
-import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
-import 'package:oenigma/painel_admin/core/widgets/admin_item_card.dart';
-import 'package:oenigma/painel_admin/core/widgets/admin_modal.dart';
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
-
-
+import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
+import 'package:oenigma/painel_admin/core/widgets/admin_item_card.dart';
+import 'package:oenigma/painel_admin/core/widgets/admin_modal.dart';
 
 class AdminEnigmasScreen extends StatefulWidget {
   const AdminEnigmasScreen({super.key});
@@ -119,7 +116,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
   }
 
   Widget _buildEmptyState() {
-    return AdminItemCard(
+    return const AdminItemCard(
       icon: FontAwesomeIcons.circleInfo,
       title: 'Nenhum enigma cadastrado',
       statusText: '',
@@ -155,9 +152,9 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     }
 
     final eventObj = enigma.get<ParseObject>('event');
-    final eventName = eventObj?.get<String>('title') ?? eventObj?.get<String>('name') ?? 'Evento Desconhecido';
+    final eventName = eventObj?.get<String>('name') ?? 'Evento Desconhecido';
     final dif = enigma.get<String>('difficulty') ?? 'Médio';
-    final prize = enigma.get<num>('prize') != null ? 'R\$ ${enigma.get<num>('prize')}' : 'R\$ 0,00';
+    final prize = enigma.get<String>('prize') ?? 'R\$ 0,00';
 
     return AdminItemCard(
       icon: tipoIcon,
@@ -290,7 +287,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                   const SizedBox(height: 4),
                   _buildSelectForm(
                     value: eventId,
-                    items: _events.map((e) => DropdownMenuItem(value: e.objectId!, child: Text(e.get<String>('title') ?? e.get<String>('name') ?? ''))).toList(),
+                    items: _events.map((e) => DropdownMenuItem(value: e.objectId!, child: Text(e.get<String>('name') ?? ''))).toList(),
                     onChanged: (val) { if (val != null) setModalState(() => eventId = val); },
                   ),
                   const SizedBox(height: 20),
@@ -307,7 +304,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                               'instruction': nomeController.text.trim(), // Assuming name maps to instruction
                               'type': tipo,
                               'difficulty': dificuldade,
-                              'prize': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
+                              'prize': premioController.text.trim(),
                               'status': 'open',
                             }
                           }
@@ -336,73 +333,27 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildSectionTitle('Ferramentas', FontAwesomeIcons.toolbox),
-              _buildToolItem(
-                icon: FontAwesomeIcons.satelliteDish,
-                name: 'Radar',
-                desc: 'Mostra QR codes num raio de 500m',
-                price: '2.99',
-              ),
-              _buildToolItem(
-                icon: FontAwesomeIcons.map,
-                name: 'Maps',
-                desc: 'Caminho otimizado entre enigmas',
-                price: '4.99',
-              ),
-              _buildToolItem(
-                icon: FontAwesomeIcons.qrcode,
-                name: 'Scanner+',
-                desc: 'Lê QR codes à distância (100m)',
-                price: '1.99',
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Funcionalidade de configuração de ferramentas (Radar, Maps, Scanner) será adicionada aqui.', style: TextStyle(color: secondaryTextColor)),
               ),
               const SizedBox(height: 16),
               _buildSectionTitle('Dicas', FontAwesomeIcons.lightbulb),
-              _buildHintItem(text: 'Dica inicial, olhe para cima', price: '0.50'),
-              const SizedBox(height: 8),
-              _buildAddButton('Adicionar Dica', () {}),
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Lista de dicas vinculadas e botão de "Nova Dica".', style: TextStyle(color: secondaryTextColor)),
+              ),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   _buildButton('Fechar', onTap: () => Navigator.of(context).pop()),
-                  const SizedBox(width: 12),
-                  _buildButton('Salvar', isPrimary: true, onTap: () => Navigator.of(context).pop()),
                 ],
               )
             ],
           ),
         );
       },
-    );
-  }
-
-  Widget _buildToolItem({required dynamic icon, required String name, required String desc, required String price}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: cardColor.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(14), border: Border.all(color: primaryAmber.withValues(alpha: 0.04))),
-      child: Row(
-        children: [
-          FaIcon(icon, color: primaryAmber, size: 20),
-          const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(name, style: GoogleFonts.inter(color: primaryAmberLight, fontWeight: FontWeight.w600, fontSize: 13)), Text(desc, style: GoogleFonts.inter(color: const Color(0xFF8A7A5A), fontSize: 10))])),
-          SizedBox(width: 60, child: _buildInputForm(controller: TextEditingController(text: price), hint: 'Preço')),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHintItem({required String text, required String price}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: cardColor.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(14), border: Border.all(color: primaryAmber.withValues(alpha: 0.04))),
-      child: Row(
-        children: [
-          Expanded(child: Text(text, style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 13))),
-          const SizedBox(width: 12),
-          SizedBox(width: 60, child: _buildInputForm(controller: TextEditingController(text: price), hint: 'Preço')),
-        ],
-      ),
     );
   }
 

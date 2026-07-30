@@ -1,14 +1,11 @@
-import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
-import 'package:oenigma/painel_admin/core/widgets/admin_item_card.dart';
-import 'package:oenigma/painel_admin/core/widgets/admin_modal.dart';
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
-
-
+import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
+import 'package:oenigma/painel_admin/core/widgets/admin_item_card.dart';
+import 'package:oenigma/painel_admin/core/widgets/admin_modal.dart';
 
 class AdminEventsScreen extends StatefulWidget {
   const AdminEventsScreen({super.key});
@@ -19,18 +16,6 @@ class AdminEventsScreen extends StatefulWidget {
 
 class _AdminEventsScreenState extends State<AdminEventsScreen> {
   late Future<List<ParseObject>> _eventsFuture;
-
-  // Added method to fetch enigmas for a specific event
-  Future<List<ParseObject>> _fetchEventEnigmas(String eventId) async {
-    final query = QueryBuilder<ParseObject>(ParseObject('Enigma'))
-      ..whereEqualTo('eventId', eventId)
-      ..orderByAscending('order');
-    final response = await query.query();
-    if (response.success && response.results != null) {
-      return response.results as List<ParseObject>;
-    }
-    return [];
-  }
 
   @override
   void initState() {
@@ -129,7 +114,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }
 
   Widget _buildEmptyState() {
-    return AdminItemCard(
+    return const AdminItemCard(
       icon: FontAwesomeIcons.circleInfo,
       title: 'Nenhum evento criado',
       statusText: '',
@@ -154,13 +139,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       statusLabel = 'Encerrado';
     }
 
-    final prize = event.get<num>('prizePool') != null
-                  ? 'R\$ ${event.get<num>('prizePool')}'
-                  : (event.get<String>('prize') ?? 'R\$ 0,00');
+    final prize = event.get<String>('prize') ?? event.get<String>('prizePool') ?? 'R\$ 0,00';
 
     return AdminItemCard(
       icon: FontAwesomeIcons.trophy,
-      title: event.get<String>('title') ?? event.get<String>('name') ?? 'Sem Título',
+      title: event.get<String>('name') ?? 'Sem Nome',
       statusText: statusLabel,
       statusColor: statusColor,
       subtitle: '$prize',
@@ -286,8 +269,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         await ParseCloudFunction('createOrUpdateEvent').execute(
                           parameters: {
                             'data': {
-                              'title': nome,
-                              'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
+                              'name': nome,
+                              'prize': premioController.text.trim(),
                               'status': status,
                               'eventType': 'find_and_win', // Default to find_and_win for new events based on mock
                             }
@@ -308,8 +291,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }
 
   void _showEditEventModal(BuildContext context, ParseObject event) {
-    final nomeController = TextEditingController(text: event.get<String>('title') ?? event.get<String>('name'));
-    final premioController = TextEditingController(text: event.get<num>('prizePool')?.toString() ?? event.get<String>('prize'));
+    final nomeController = TextEditingController(text: event.get<String>('name'));
+    final premioController = TextEditingController(text: event.get<String>('prize') ?? event.get<String>('prizePool'));
     String status = event.get<String>('status') ?? 'encerrado';
 
     showDialog(
@@ -350,59 +333,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   ),
                   const SizedBox(height: 16),
                   _buildSectionTitle('Enigmas deste evento', FontAwesomeIcons.puzzlePiece),
-
-                  // FutureBuilder to load Enigmas dynamically
-                  FutureBuilder<List<ParseObject>>(
-                    future: _fetchEventEnigmas(event.objectId!),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Padding(
-                          padding: EdgeInsets.all(12.0),
-                          child: Center(child: CircularProgressIndicator(color: primaryAmber)),
-                        );
-                      }
-                      final enigmas = snapshot.data ?? [];
-                      if (enigmas.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.all(12.0),
-                          child: Center(child: Text('Nenhum enigma neste evento.', style: TextStyle(color: secondaryTextColor))),
-                        );
-                      }
-
-                      return Column(
-                        children: enigmas.map((enig) {
-                          final status = enig.get<String>('status') ?? 'bloqueado';
-                          Color statusColor = secondaryTextColor;
-                          String statusLabel = 'Bloqueado';
-
-                          if (status == 'concluido' || status == 'closed') {
-                            statusColor = primaryAmber;
-                            statusLabel = 'Concluído';
-                          } else if (status == 'disponivel' || status == 'open') {
-                            statusColor = successColor;
-                            statusLabel = 'Disponível';
-                          }
-
-                          final tipo = enig.get<String>('type') ?? 'charada';
-                          dynamic tipoIcon = FontAwesomeIcons.pencil;
-                          if (tipo == 'gps') tipoIcon = FontAwesomeIcons.locationDot;
-                          else if (tipo == 'qrcode') tipoIcon = FontAwesomeIcons.camera;
-
-                          return AdminItemCard(
-                            icon: tipoIcon,
-                            title: enig.get<String>('instruction') ?? enig.get<String>('name') ?? 'Sem Nome',
-                            statusText: statusLabel,
-                            statusColor: statusColor,
-                            subtitle: 'Tipo: $tipo · Prêmio: ${enig.get<num>('prize') != null ? 'R\$ ${enig.get<num>('prize')}' : 'R\$ 0,00'}',
-                          );
-                        }).toList().cast<Widget>(),
-                      );
-                    }
+                  // Enigmas list should go here - requires a query to Enigma table filtered by eventId
+                  const Padding(
+                    padding: EdgeInsets.all(12.0),
+                    child: Center(child: Text('Funcionalidade de edição de enigmas será adicionada.', style: TextStyle(color: secondaryTextColor))),
                   ),
-                  const SizedBox(height: 12),
-                  _buildAddButton('Adicionar Enigma ao Evento', () {
-                    // Logic to add enigma would go here
-                  }),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -414,8 +349,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                           parameters: {
                             'eventId': event.objectId,
                             'data': {
-                              'title': nomeController.text.trim(),
-                              'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
+                              'name': nomeController.text.trim(),
+                              'prize': premioController.text.trim(),
                               'status': status,
                             }
                           }
@@ -435,11 +370,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }
 
   Future<void> _deleteEvent(ParseObject event) async {
-    // Safe delete via cloud function or parse direct
-     final response = await event.delete();
-     if (response.success) {
-       _loadEvents();
-     }
+    // Calling backend delete is not present in admin.js mock, using ParseObject.delete
+    final response = await event.delete();
+    if (response.success) {
+      _loadEvents();
+    }
   }
 
   Widget _buildInputForm({required TextEditingController controller, required String hint, int maxLines = 1}) {

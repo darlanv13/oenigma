@@ -48,41 +48,33 @@ class AdminDashboardScreen extends ConsumerWidget {
   }
 
   Widget _buildStatsGrid(Map<String, dynamic> data) {
-    return Wrap(
-      spacing: 20,
-      runSpacing: 20,
+    return GridView.count(
+      crossAxisCount: 4,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 20,
+      mainAxisSpacing: 20,
+      childAspectRatio: 1.5,
       children: [
-        SizedBox(
-          width: 250,
-          child: _buildStatBox(
-            data['totalEvents']?.toString() ?? '0',
-            'Eventos',
-            FontAwesomeIcons.calendar,
-          ),
+        _buildStatBox(
+          data['totalEvents']?.toString() ?? '0',
+          'Eventos',
+          FontAwesomeIcons.calendar,
         ),
-        SizedBox(
-          width: 250,
-          child: _buildStatBox(
-            data['totalEnigmas']?.toString() ?? '0',
-            'Enigmas',
-            FontAwesomeIcons.puzzlePiece,
-          ),
+        _buildStatBox(
+          data['totalEnigmas']?.toString() ?? '0',
+          'Enigmas',
+          FontAwesomeIcons.puzzlePiece,
         ),
-        SizedBox(
-          width: 250,
-          child: _buildStatBox(
-            data['totalBanners']?.toString() ?? '0',
-            'Banners',
-            FontAwesomeIcons.image,
-          ),
+        _buildStatBox(
+          data['totalBanners']?.toString() ?? '0',
+          'Banners',
+          FontAwesomeIcons.image,
         ),
-        SizedBox(
-          width: 250,
-          child: _buildStatBox(
-            data['totalHints']?.toString() ?? '0',
-            'Dicas',
-            FontAwesomeIcons.lightbulb,
-          ),
+        _buildStatBox(
+          data['totalHints']?.toString() ?? '0',
+          'Dicas',
+          FontAwesomeIcons.lightbulb,
         ),
       ],
     );
