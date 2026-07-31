@@ -152,7 +152,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     }
 
     final eventObj = enigma.get<ParseObject>('event');
-    final eventName = eventObj?.get<String>('name') ?? 'Evento Desconhecido';
+    final eventName = eventObj?.get<String>('title') ?? eventObj?.get<String>('name') ?? 'Evento Desconhecido';
     final dif = enigma.get<String>('difficulty') ?? 'Médio';
     final prize = enigma.get<String>('prize') ?? 'R\$ 0,00';
 
@@ -287,7 +287,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                   const SizedBox(height: 4),
                   _buildSelectForm(
                     value: eventId,
-                    items: _events.map((e) => DropdownMenuItem(value: e.objectId!, child: Text(e.get<String>('name') ?? ''))).toList(),
+                    items: _events.map((e) => DropdownMenuItem(value: e.objectId!, child: Text(e.get<String>('title') ?? e.get<String>('name') ?? ''))).toList(),
                     onChanged: (val) { if (val != null) setModalState(() => eventId = val); },
                   ),
                   const SizedBox(height: 20),

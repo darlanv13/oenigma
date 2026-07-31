@@ -143,7 +143,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
     return AdminItemCard(
       icon: FontAwesomeIcons.trophy,
-      title: event.get<String>('name') ?? 'Sem Nome',
+      title: event.get<String>('title') ?? event.get<String>('name') ?? 'Sem Nome',
       statusText: statusLabel,
       statusColor: statusColor,
       subtitle: '$prize',
