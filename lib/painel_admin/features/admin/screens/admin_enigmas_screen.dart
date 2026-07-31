@@ -129,7 +129,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
   }
 
   Widget _buildEnigmaCard(ParseObject enigma) {
-    final status = enigma.get<String>('status') ?? 'bloqueado';
+    final status = enigma.get<dynamic>('status')?.toString() ?? 'bloqueado';
     Color statusColor;
     String statusLabel;
 
@@ -144,7 +144,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
       statusLabel = 'Bloqueado';
     }
 
-    final tipo = enigma.get<String>('type') ?? 'charada';
+    final tipo = enigma.get<dynamic>('type')?.toString() ?? 'charada';
     dynamic tipoIcon;
     if (tipo == 'charada' || tipo == 'text') {
       tipoIcon = FontAwesomeIcons.pencil;
@@ -155,13 +155,13 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     }
 
     final eventObj = enigma.get<ParseObject>('event');
-    final eventName = eventObj?.get<String>('title') ?? eventObj?.get<String>('name') ?? 'Evento Desconhecido';
-    final dif = enigma.get<String>('difficulty') ?? 'Médio';
+    final eventName = eventObj?.get<dynamic>('title')?.toString() ?? eventObj?.get<dynamic>('name')?.toString() ?? 'Evento Desconhecido';
+    final dif = enigma.get<dynamic>('difficulty')?.toString() ?? 'Médio';
     final prize = enigma.get<num>('prize') != null ? 'R\$ ${enigma.get<num>('prize')}' : 'R\$ 0,00';
 
     return AdminItemCard(
       icon: tipoIcon,
-      title: enigma.get<String>('instruction') ?? enigma.get<String>('name') ?? 'Sem Nome',
+      title: enigma.get<dynamic>('instruction')?.toString() ?? enigma.get<dynamic>('name')?.toString() ?? 'Sem Nome',
       statusText: statusLabel,
       statusColor: statusColor,
       subtitle: 'Evento: $eventName · Tipo: $tipo · Dificuldade: $dif · Prêmio: $prize',
@@ -290,7 +290,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                   const SizedBox(height: 4),
                   _buildSelectForm(
                     value: eventId,
-                    items: _events.map((e) => DropdownMenuItem(value: e.objectId!, child: Text(e.get<String>('title') ?? e.get<String>('name') ?? ''))).toList(),
+                    items: _events.map((e) => DropdownMenuItem(value: e.objectId!, child: Text(e.get<dynamic>('title')?.toString() ?? e.get<dynamic>('name')?.toString() ?? ''))).toList(),
                     onChanged: (val) { if (val != null) setModalState(() => eventId = val); },
                   ),
                   const SizedBox(height: 20),
@@ -331,7 +331,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
       context: context,
       builder: (context) {
         return AdminModal(
-          title: 'Gerenciar: ${enigma.get<String>('instruction') ?? ''}',
+          title: 'Gerenciar: ${enigma.get<dynamic>('instruction')?.toString() ?? ''}',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
