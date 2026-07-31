@@ -8,20 +8,9 @@ Parse.Cloud.define("getAdminDashboardData", async (request) => {
     const usersCount = await usersQuery.count({ useMasterKey: true });
 
     const eventsQuery = new Parse.Query("Event");
-    const totalEventsCount = await eventsQuery.count({ useMasterKey: true });
-
-    const eventsActiveQuery = new Parse.Query("Event");
-    eventsActiveQuery.equalTo("status", "open");
-    const activeEventsCount = await eventsActiveQuery.count({ useMasterKey: true });
-
-    const enigmasQuery = new Parse.Query("Enigma");
-    const totalEnigmasCount = await enigmasQuery.count({ useMasterKey: true });
-
-    const bannersQuery = new Parse.Query("Banner");
-    const totalBannersCount = await bannersQuery.count({ useMasterKey: true });
-
-    const hintsQuery = new Parse.Query("Hint");
-    const totalHintsCount = await hintsQuery.count({ useMasterKey: true });
+    // CORREÇÃO: Alterado de "published" para "open" para bater com a lógica do app
+    eventsQuery.equalTo("status", "open");
+    const activeEventsCount = await eventsQuery.count({ useMasterKey: true });
 
     const depositsQuery = new Parse.Query("Transaction");
     depositsQuery.equalTo("type", "deposit");
@@ -35,11 +24,7 @@ Parse.Cloud.define("getAdminDashboardData", async (request) => {
       users: usersCount,
       activeEvents: activeEventsCount,
       totalDeposits: totalDepositsCount,
-      pendingWithdrawals: pendingWithdrawalsCount,
-      totalEvents: totalEventsCount,
-      totalEnigmas: totalEnigmasCount,
-      totalBanners: totalBannersCount,
-      totalHints: totalHintsCount
+      pendingWithdrawals: pendingWithdrawalsCount
     };
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error fetching dashboard data: " + error.message);
@@ -261,14 +246,7 @@ Parse.Cloud.define("createOrUpdateEnigma", async (request) => {
 
     if (data) {
       for (const key in data) {
-        if (key === 'tools') {
-            enigma.set('compassPrice', data[key]['compassPrice']);
-            enigma.set('compassDuration', data[key]['compassDuration']);
-            enigma.set('hasMap', data[key]['hasMap']);
-            enigma.set('hasRadar', data[key]['hasRadar']);
-        } else {
-            enigma.set(key, data[key]);
-        }
+        enigma.set(key, data[key]);
       }
     }
 
@@ -319,20 +297,6 @@ Parse.Cloud.define("createOrUpdateHint", async (request) => {
     }
 
     await hint.save(null, { useMasterKey: true });
-
-    // If linkedEnigmaId is passed in data, link the hint to the Enigma
-    if (data && data.linkedEnigmaId) {
-      const Enigma = Parse.Object.extend("Enigma");
-      const enigmaQuery = new Parse.Query(Enigma);
-      try {
-        const enigma = await enigmaQuery.get(data.linkedEnigmaId, { useMasterKey: true });
-        enigma.addUnique("linkedHints", hint.id);
-        await enigma.save(null, { useMasterKey: true });
-      } catch(e) {
-         // Enigma not found, silently fail linking
-      }
-    }
-
     return { success: true, hintId: hint.id };
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error saving hint: " + error.message);
