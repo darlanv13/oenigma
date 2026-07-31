@@ -245,7 +245,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   void _showAddEventModal(BuildContext context) {
     final nomeController = TextEditingController();
     final premioController = TextEditingController();
+    final descricaoController = TextEditingController();
+    final localController = TextEditingController();
     String status = 'open'; // Using 'open' to match the activeEvents query
+    String eventType = 'find_and_win';
 
     showDialog(
       context: context,
@@ -260,18 +263,41 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                 children: [
                   _buildInputForm(controller: nomeController, hint: 'Nome do evento (Ex: Find Win Centro)'),
                   const SizedBox(height: 12),
+                  _buildInputForm(controller: descricaoController, hint: 'Descrição', maxLines: 3),
+                  const SizedBox(height: 12),
+                  _buildInputForm(controller: localController, hint: 'Local do evento (Cidade)'),
+                  const SizedBox(height: 12),
                   _buildInputForm(controller: premioController, hint: 'Prêmio (Ex: R\$ 5.000,00)'),
                   const SizedBox(height: 12),
-                  _buildSelectForm(
-                    value: status,
-                    items: const [
-                      DropdownMenuItem(value: 'open', child: Text('Ativo')),
-                      DropdownMenuItem(value: 'em_breve', child: Text('Em breve')),
-                      DropdownMenuItem(value: 'encerrado', child: Text('Encerrado')),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildSelectForm(
+                          value: eventType,
+                          items: const [
+                            DropdownMenuItem(value: 'find_and_win', child: Text('Find Win')),
+                            DropdownMenuItem(value: 'classic', child: Text('Classic')),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) setModalState(() => eventType = val);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSelectForm(
+                          value: status,
+                          items: const [
+                            DropdownMenuItem(value: 'open', child: Text('Ativo')),
+                            DropdownMenuItem(value: 'em_breve', child: Text('Em breve')),
+                            DropdownMenuItem(value: 'encerrado', child: Text('Encerrado')),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) setModalState(() => status = val);
+                          },
+                        ),
+                      ),
                     ],
-                    onChanged: (val) {
-                      if (val != null) setModalState(() => status = val);
-                    },
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -281,15 +307,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       const SizedBox(width: 12),
                       _buildButton('Criar Evento', isPrimary: true, onTap: () async {
                         final nome = nomeController.text.trim();
-                        if (nome.isEmpty) return;
+                        final local = localController.text.trim();
+                        if (nome.isEmpty || local.isEmpty) return;
 
                         await ParseCloudFunction('createOrUpdateEvent').execute(
                           parameters: {
                             'data': {
                               'title': nome,
+                              'description': descricaoController.text.trim(),
+                              'location': local,
                               'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
                               'status': status,
-                              'eventType': 'find_and_win', // Default to find_and_win for new events based on mock
+                              'eventType': eventType,
                             }
                           }
                         );
@@ -310,7 +339,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   void _showEditEventModal(BuildContext context, ParseObject event) {
     final nomeController = TextEditingController(text: event.get<String>('title') ?? event.get<String>('name'));
     final premioController = TextEditingController(text: event.get<num>('prizePool')?.toString() ?? event.get<String>('prize'));
+    final descricaoController = TextEditingController(text: event.get<String>('description') ?? '');
+    final localController = TextEditingController(text: event.get<String>('location') ?? '');
     String status = event.get<String>('status') ?? 'encerrado';
+    String eventType = event.get<String>('eventType') ?? 'find_and_win';
 
     showDialog(
       context: context,
@@ -343,6 +375,32 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                           ],
                           onChanged: (val) {
                             if (val != null) setModalState(() => status = val);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: _buildInputForm(controller: descricaoController, hint: 'Descrição', maxLines: 2),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildInputForm(controller: localController, hint: 'Local do evento'),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSelectForm(
+                          value: eventType,
+                          items: const [
+                            DropdownMenuItem(value: 'find_and_win', child: Text('Find Win')),
+                            DropdownMenuItem(value: 'classic', child: Text('Classic')),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) setModalState(() => eventType = val);
                           },
                         ),
                       ),
@@ -415,8 +473,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             'eventId': event.objectId,
                             'data': {
                               'title': nomeController.text.trim(),
+                              'description': descricaoController.text.trim(),
+                              'location': localController.text.trim(),
                               'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
                               'status': status,
+                              'eventType': eventType,
                             }
                           }
                         );
