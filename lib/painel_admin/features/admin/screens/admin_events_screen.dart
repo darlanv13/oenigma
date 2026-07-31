@@ -296,15 +296,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         await ParseCloudFunction('createOrUpdateEvent').execute(
                           parameters: {
                             'data': {
-<<<<<<< HEAD
-                              'name': nome,
-                              'prize': premioController.text.trim(),
-=======
                               'title': nome,
                               'description': descricaoController.text.trim(),
                               'location': local,
                               'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
->>>>>>> origin/fix-event-creation-automatic-enigmas-8144183794438911336
                               'status': status,
                               'eventType': eventType,
                             }
@@ -325,15 +320,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }
 
   void _showEditEventModal(BuildContext context, ParseObject event) {
-<<<<<<< HEAD
-    final nomeController = TextEditingController(text: event.get<String>('name'));
-    final premioController = TextEditingController(text: event.get<String>('prize') ?? event.get<String>('prizePool'));
-=======
     final nomeController = TextEditingController(text: event.get<String>('title') ?? event.get<String>('name'));
     final premioController = TextEditingController(text: event.get<num>('prizePool')?.toString() ?? event.get<String>('prize'));
     final descricaoController = TextEditingController(text: event.get<String>('description') ?? '');
     final localController = TextEditingController(text: event.get<String>('location') ?? '');
->>>>>>> origin/fix-event-creation-automatic-enigmas-8144183794438911336
     String status = event.get<String>('status') ?? 'encerrado';
     String eventType = event.get<String>('eventType') ?? 'find_and_win';
 
@@ -401,10 +391,93 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   ),
                   const SizedBox(height: 16),
                   _buildSectionTitle('Enigmas deste evento', FontAwesomeIcons.puzzlePiece),
-                  // Enigmas list should go here - requires a query to Enigma table filtered by eventId
-                  const Padding(
-                    padding: EdgeInsets.all(12.0),
-                    child: Center(child: Text('Funcionalidade de edição de enigmas será adicionada.', style: TextStyle(color: secondaryTextColor))),
+                  FutureBuilder<ParseResponse>(
+                    future: (QueryBuilder<ParseObject>(ParseObject('Enigma'))..whereEqualTo('eventId', event.objectId)).query(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator()));
+                      }
+                      if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.success) {
+                        return const Padding(padding: EdgeInsets.all(12), child: Text('Erro ao carregar enigmas.', style: TextStyle(color: secondaryTextColor)));
+                      }
+                      final enigmas = snapshot.data!.results as List<ParseObject>?;
+                      if (enigmas == null || enigmas.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: Center(child: Text('Nenhum enigma neste evento. Adicione um!', style: TextStyle(color: secondaryTextColor))),
+                        );
+                      }
+                      return Column(
+                        children: enigmas.map((enigma) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: cardColor.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: primaryAmber.withValues(alpha: 0.04)),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: primaryAmber.withValues(alpha: 0.08),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: primaryAmber.withValues(alpha: 0.06)),
+                                  ),
+                                  child: const Center(child: FaIcon(FontAwesomeIcons.puzzlePiece, color: primaryAmber, size: 16)),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        enigma.get<String>('instruction') ?? 'Sem nome',
+                                        style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 14, fontWeight: FontWeight.w600),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Tipo: ${enigma.get<String>('type')} · Prêmio: ${enigma.get<String>('prize')}',
+                                        style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                _buildButton('Remover', isDanger: true, onTap: () async {
+                                  await enigma.delete();
+                                  setModalState(() {});
+                                }),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vá para a tela de Enigmas para adicionar.')));
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: primaryAmber.withValues(alpha: 0.15), width: 1.5),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const FaIcon(FontAwesomeIcons.circlePlus, color: primaryAmber, size: 14),
+                          const SizedBox(width: 8),
+                          Text('Adicionar Enigma ao Evento', style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500)),
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -417,15 +490,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                           parameters: {
                             'eventId': event.objectId,
                             'data': {
-<<<<<<< HEAD
-                              'name': nomeController.text.trim(),
-                              'prize': premioController.text.trim(),
-=======
                               'title': nomeController.text.trim(),
                               'description': descricaoController.text.trim(),
                               'location': localController.text.trim(),
                               'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
->>>>>>> origin/fix-event-creation-automatic-enigmas-8144183794438911336
                               'status': status,
                               'eventType': eventType,
                             }

@@ -323,40 +323,242 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     );
   }
 
+
+
   void _showManageEnigmaModal(BuildContext context, ParseObject enigma) {
+    Map<String, dynamic> tools = {};
+    try {
+      if (enigma.get<Map<String, dynamic>>('tools') != null) {
+        tools = Map<String, dynamic>.from(enigma.get<Map<String, dynamic>>('tools')!);
+      }
+    } catch (_) {}
+
+    bool hasRadar = tools['hasRadar'] ?? false;
+    bool hasMap = tools['hasMap'] ?? false;
+    bool hasScanner = tools['hasCompass'] ?? false; // Scanner maps to Compass
+    double radarPrice = (tools['radarPrice'] as num?)?.toDouble() ?? 2.99;
+    double mapPrice = (tools['mapPrice'] as num?)?.toDouble() ?? 4.99;
+    double scannerPrice = (tools['compassPrice'] as num?)?.toDouble() ?? 1.99;
+
     showDialog(
+
       context: context,
       builder: (context) {
-        return AdminModal(
-          title: 'Gerenciar: ${enigma.get<String>('instruction') ?? ''}',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSectionTitle('Ferramentas', FontAwesomeIcons.toolbox),
-              const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Text('Funcionalidade de configuração de ferramentas (Radar, Maps, Scanner) será adicionada aqui.', style: TextStyle(color: secondaryTextColor)),
-              ),
-              const SizedBox(height: 16),
-              _buildSectionTitle('Dicas', FontAwesomeIcons.lightbulb),
-              const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Text('Lista de dicas vinculadas e botão de "Nova Dica".', style: TextStyle(color: secondaryTextColor)),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AdminModal(
+              title: 'Gerenciar: ${enigma.get<String>('instruction') ?? ''}',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildButton('Fechar', onTap: () => Navigator.of(context).pop()),
+                  _buildSectionTitle('Ferramentas', FontAwesomeIcons.toolbox),
+                  _buildToolToggle('Radar', 'Mostra QR codes num raio de 500m', hasRadar, radarPrice, (val) => setModalState(() => hasRadar = val), (val) => radarPrice = val),
+                  _buildToolToggle('Maps', 'Caminho otimizado entre enigmas', hasMap, mapPrice, (val) => setModalState(() => hasMap = val), (val) => mapPrice = val),
+                  _buildToolToggle('Scanner+', 'Lê QR codes à distância (100m)', hasScanner, scannerPrice, (val) => setModalState(() => hasScanner = val), (val) => scannerPrice = val),
+                  const SizedBox(height: 16),
+                  _buildSectionTitle('Dicas', FontAwesomeIcons.lightbulb),
+                  FutureBuilder<ParseResponse>(
+                    future: (QueryBuilder<ParseObject>(ParseObject('Hint'))..whereEqualTo('linkedEnigmaId', enigma.objectId)).query(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator()));
+                      }
+                      final hints = snapshot.data?.results as List<ParseObject>? ?? [];
+                      if (hints.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text('Nenhuma dica cadastrada.', style: TextStyle(color: secondaryTextColor, fontSize: 12)),
+                        );
+                      }
+                      return Column(
+                        children: hints.map((hint) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: cardColor.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: primaryAmber.withValues(alpha: 0.04)),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(hint.get<String>('description') ?? hint.get<String>('title') ?? 'Sem texto', style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 13)),
+                                      const SizedBox(height: 4),
+                                      Text('Preço: R\$ ${hint.get<num>('price') ?? '0.00'}', style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 10)),
+                                    ],
+                                  ),
+                                ),
+                                _buildButton('Remover', isDanger: true, onTap: () async {
+                                  await hint.delete();
+                                  setModalState((){});
+                                }),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    }
+                  ),
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () {
+                      _showAddHintModal(context, enigma, () => setModalState((){}));
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: primaryAmber.withValues(alpha: 0.15), style: BorderStyle.solid), // Replacing dashed with solid for simplicity here
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const FaIcon(FontAwesomeIcons.circlePlus, color: primaryAmber, size: 14),
+                          const SizedBox(width: 8),
+                          Text('Adicionar Dica', style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      _buildButton('Fechar', onTap: () => Navigator.of(context).pop()),
+                      const SizedBox(width: 12),
+
+                      _buildButton('Salvar', isPrimary: true, onTap: () async {
+                         final tools = {
+                           'hasRadar': hasRadar,
+                           'hasMap': hasMap,
+                           'hasCompass': hasScanner,
+                           'radarPrice': radarPrice,
+                           'mapPrice': mapPrice,
+                           'compassPrice': scannerPrice,
+                         };
+
+                         await ParseCloudFunction('createOrUpdateEnigma').execute(
+                            parameters: {
+                               'eventId': enigma.get<String>('eventId') ?? '',
+                               'data': {
+                                  'enigmaId': enigma.objectId,
+                                  'tools': tools,
+                               }
+                            }
+                         );
+
+                         if (context.mounted) Navigator.of(context).pop();
+                         _loadData();
+                      }),
+
+                    ],
+                  )
                 ],
-              )
-            ],
-          ),
+              ),
+            );
+          }
         );
       },
     );
   }
 
+  void _showAddHintModal(BuildContext context, ParseObject enigma, VoidCallback onSuccess) {
+    final textController = TextEditingController();
+    final priceController = TextEditingController(text: '0.50');
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AdminModal(
+          title: 'Adicionar Dica',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+               _buildInputForm(controller: textController, hint: 'Escreva a dica...'),
+               const SizedBox(height: 12),
+               _buildInputForm(controller: priceController, hint: 'Preço (ex: 0.50)'),
+               const SizedBox(height: 20),
+               Row(
+                 mainAxisAlignment: MainAxisAlignment.end,
+                 children: [
+                    _buildButton('Cancelar', onTap: () => Navigator.of(context).pop()),
+                    const SizedBox(width: 12),
+                    _buildButton('Salvar Dica', isPrimary: true, onTap: () async {
+                       await ParseCloudFunction('createOrUpdateHint').execute(
+                          parameters: {
+                             'data': {
+                                'description': textController.text.trim(),
+                                'price': num.tryParse(priceController.text.trim()) ?? 0.0,
+                                'linkedEnigmaId': enigma.objectId,
+                             }
+                          }
+                       );
+                       if (context.mounted) Navigator.of(context).pop();
+                       onSuccess();
+                    }),
+                 ]
+               )
+            ]
+          )
+        );
+      }
+    );
+  }
+
+  Widget _buildToolToggle(String name, String desc, bool value, double price, ValueChanged<bool> onChanged, ValueChanged<double> onPriceChanged) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cardColor.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: primaryAmber.withValues(alpha: 0.04)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 13, fontWeight: FontWeight.w600)),
+                Text(desc, style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 10)),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 70,
+            child: TextField(
+              controller: TextEditingController(text: price.toStringAsFixed(2)),
+              onChanged: (val) => onPriceChanged(double.tryParse(val) ?? 0.0),
+              style: GoogleFonts.orbitron(color: primaryAmberLight, fontSize: 10),
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                filled: true,
+                fillColor: cardColor.withValues(alpha: 0.8),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide(color: primaryAmber.withValues(alpha: 0.15))),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: const BorderSide(color: primaryAmber)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: darkBackground,
+            activeTrackColor: primaryAmber,
+            inactiveTrackColor: const Color(0xFF3A3A3A),
+            inactiveThumbColor: const Color(0xFF1A1A1A),
+          ),
+        ],
+      ),
+    );
+  }
   Widget _buildInputForm({required TextEditingController controller, required String hint}) {
     return TextField(
       controller: controller,
