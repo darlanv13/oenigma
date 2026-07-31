@@ -1,9 +1,14 @@
-import 'package:flutter/foundation.dart';
 import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
-import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'package:oenigma/painel_admin/core/widgets/admin_item_card.dart';
+import 'package:oenigma/painel_admin/core/widgets/admin_modal.dart';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../utils/admin_upload_util.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+
+
+
 
 class AdminEventsScreen extends StatefulWidget {
   const AdminEventsScreen({super.key});
@@ -13,7 +18,19 @@ class AdminEventsScreen extends StatefulWidget {
 }
 
 class _AdminEventsScreenState extends State<AdminEventsScreen> {
-  late Future<ParseResponse> _eventsFuture;
+  late Future<List<ParseObject>> _eventsFuture;
+
+  // Added method to fetch enigmas for a specific event
+  Future<List<ParseObject>> _fetchEventEnigmas(String eventId) async {
+    final query = QueryBuilder<ParseObject>(ParseObject('Enigma'))
+      ..whereEqualTo('eventId', eventId)
+      ..orderByAscending('order');
+    final response = await query.query();
+    if (response.success && response.results != null) {
+      return response.results as List<ParseObject>;
+    }
+    return [];
+  }
 
   @override
   void initState() {
@@ -25,7 +42,12 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     setState(() {
       final query = QueryBuilder<ParseObject>(ParseObject('Event'))
         ..orderByDescending('createdAt');
-      _eventsFuture = query.query();
+      _eventsFuture = query.query().then((response) {
+        if (response.success && response.results != null) {
+          return response.results as List<ParseObject>;
+        }
+        return [];
+      });
     });
   }
 
@@ -34,1812 +56,474 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            const Text(
-              'Gestão de Eventos',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {
-                _showEventDialog(context);
-              },
-              icon: const FaIcon(FontAwesomeIcons.plus),
-              label: const Text('Novo Evento'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryAmber,
-                foregroundColor: Colors.black,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
+        _buildSectionTitle('Eventos', FontAwesomeIcons.calendar),
         Expanded(
-          child: FutureBuilder<ParseResponse>(
+          child: FutureBuilder<List<ParseObject>>(
             future: _eventsFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator(color: primaryAmber));
               }
               if (snapshot.hasError) {
-                debugPrint("Erro no stream de eventos: ${snapshot.error}");
-                return Center(
-                  child: Text(
-                    'Erro ao carregar eventos: \n${snapshot.error}',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.redAccent),
-                  ),
-                );
-              }
-              if (!snapshot.hasData ||
-                  !snapshot.data!.success ||
-                  snapshot.data!.results == null ||
-                  snapshot.data!.results!.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'Nenhum evento encontrado.',
-                    style: TextStyle(color: secondaryTextColor),
-                  ),
-                );
+                return Center(child: Text('Erro: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
               }
 
-              final events = snapshot.data!.results as List<ParseObject>;
+              final events = snapshot.data ?? [];
+              if (events.isEmpty) {
+                return _buildEmptyState();
+              }
 
-              return ListView.separated(
+              return ListView.builder(
                 itemCount: events.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 16),
                 itemBuilder: (context, index) {
                   final event = events[index];
-                  final eventId = event.objectId!;
-                  final title = event.get<String>('title') ?? 'Sem Título';
-                  final status = event.get<String>('status') ?? 'draft';
-                  final eventType = event.get<String>('eventType') ?? 'classic';
-                  final isPublished = status == 'open';
-                  final prizePool = event.get<num>('prizePool') ?? 0;
-
-                  return Card(
-                    color: cardColor,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  title,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isPublished
-                                      ? Colors.green.withValues(alpha: 0.2)
-                                      : Colors.orange.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  isPublished ? 'Publicado' : 'Rascunho',
-                                  style: TextStyle(
-                                    color: isPublished
-                                        ? Colors.green
-                                        : Colors.orange,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Premiação: R\$ $prizePool',
-                            style: const TextStyle(color: primaryAmber),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton.icon(
-                                onPressed: () {
-                                  _showEventDialog(
-                                    context,
-                                    docId: eventId,
-                                    data: _parseObjectToMap(event),
-                                  );
-                                },
-                                icon: const FaIcon(
-                                  FontAwesomeIcons.penToSquare,
-                                  size: 16,
-                                ),
-                                label: const Text('Editar'),
-                              ),
-                              if (eventType == 'find_and_win')
-                                TextButton.icon(
-                                  onPressed: () {
-                                    _showFindAndWinEnigmasDialog(
-                                      context,
-                                      eventId,
-                                    );
-                                  },
-                                  icon: const FaIcon(
-                                    FontAwesomeIcons.puzzlePiece,
-                                    size: 16,
-                                  ),
-                                  label: const Text('Enigmas'),
-                                )
-                              else
-                                TextButton.icon(
-                                  onPressed: () {
-                                    _showPhasesDialog(context, eventId);
-                                  },
-                                  icon: const FaIcon(
-                                    FontAwesomeIcons.listOl,
-                                    size: 16,
-                                  ),
-                                  label: const Text('Fases'),
-                                ),
-                              TextButton.icon(
-                                onPressed: () {
-                                  _toggleEventStatus(eventId, status);
-                                },
-                                icon: FaIcon(
-                                  isPublished
-                                      ? FontAwesomeIcons.eyeSlash
-                                      : FontAwesomeIcons.eye,
-                                  size: 16,
-                                ),
-                                label: Text(
-                                  isPublished ? 'Ocultar' : 'Publicar',
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () {
-                                  ParseCloudFunction('deleteEvent')
-                                      .execute(parameters: {'eventId': eventId})
-                                      .then((_) => _loadEvents());
-                                },
-                                icon: const FaIcon(
-                                  FontAwesomeIcons.trash,
-                                  color: Colors.redAccent,
-                                  size: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+                  return _buildEventCard(event);
                 },
               );
             },
           ),
         ),
+        const SizedBox(height: 16),
+        _buildAddButton('Novo Evento', () => _showAddEventModal(context)),
       ],
     );
   }
 
-  Map<String, dynamic> _parseObjectToMap(ParseObject obj) {
-    final map = <String, dynamic>{};
-    obj.toJson().forEach((key, value) {
-      map[key] = value;
-    });
-    return map;
-  }
-
-  void _showEventDialog(
-    BuildContext context, {
-    String? docId,
-    Map<String, dynamic>? data,
-  }) {
-    final titleCtrl = TextEditingController(text: data?['title']);
-    final descCtrl = TextEditingController(text: data?['description']);
-    String selectedEventType = data?['eventType'] ?? 'classic';
-    final prizeCtrl = TextEditingController(
-      text: data?['prizePool']?.toString(),
-    );
-    final orderCtrl = TextEditingController(
-      text: data?['order']?.toString() ?? '1',
-    );
-    final locationCtrl = TextEditingController(text: data?['location']);
-    final iconCtrl = TextEditingController(text: data?['icon']);
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Dialog(
-              backgroundColor: darkBackground,
-              insetPadding: const EdgeInsets.all(16),
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                constraints: const BoxConstraints(maxWidth: 600),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      docId == null ? 'Novo Evento' : 'Editar Evento',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Flexible(
-                      fit: FlexFit.loose,
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            TextField(
-                              controller: titleCtrl,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Título',
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: descCtrl,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Descrição',
-                              ),
-                              maxLines: 3,
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: prizeCtrl,
-                                    style: const TextStyle(color: Colors.white),
-                                    decoration: const InputDecoration(
-                                      labelText: 'Prêmio (R\$)',
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextField(
-                                    controller: orderCtrl,
-                                    style: const TextStyle(color: Colors.white),
-                                    decoration: const InputDecoration(
-                                      labelText: 'Ordem',
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: locationCtrl,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Local do Evento (Cidade) *',
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: iconCtrl,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
-                                labelText: 'URL da Imagem de Fundo',
-                                suffixIcon: IconButton(
-                                  icon: const FaIcon(
-                                    FontAwesomeIcons.upload,
-                                    size: 18,
-                                  ),
-                                  onPressed: () async {
-                                    final url =
-                                        await AdminUploadUtil.pickAndUploadImage(
-                                          context,
-                                        );
-                                    if (url != null) {
-                                      setState(() {
-                                        iconCtrl.text = url;
-                                      });
-                                    }
-                                  },
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            DropdownButtonFormField<String>(
-                              value: selectedEventType,
-                              dropdownColor: cardColor,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Tipo de Evento',
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'classic',
-                                  child: Text(
-                                    'Classic (A Jornada Estratégica)',
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'find_and_win',
-                                  child: Text(
-                                    'Find & Win (Recompensa Instantânea)',
-                                  ),
-                                ),
-                              ],
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setState(() {
-                                    selectedEventType = val;
-                                  });
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: selectedEventType == 'classic'
-                                    ? Colors.blue.withValues(alpha: 0.1)
-                                    : Colors.orange.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: selectedEventType == 'classic'
-                                      ? Colors.blue
-                                      : Colors.orange,
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      FaIcon(
-                                        FontAwesomeIcons.circleInfo,
-                                        color: selectedEventType == 'classic'
-                                            ? Colors.blue
-                                            : Colors.orange,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        selectedEventType == 'classic'
-                                            ? 'Modo Clássico'
-                                            : 'Modo Find & Win',
-                                        style: TextStyle(
-                                          color: selectedEventType == 'classic'
-                                              ? Colors.blue
-                                              : Colors.orange,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    selectedEventType == 'classic'
-                                        ? 'O jogador precisa concluir todas as fases e enigmas (jornada estruturada). O prêmio configurado neste formulário será entregue apenas no final de toda a jornada.'
-                                        : 'Fases são ignoradas pelo jogador (recompensa instantânea). O prêmio é entregue na hora ao resolver cada enigma. O valor do "Prêmio (R\$)" acima funciona apenas como informativo do total estimado da campanha.',
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancelar'),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryAmber,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                          ),
-                          onPressed: () async {
-                            if (locationCtrl.text.trim().isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'O local do evento é obrigatório.',
-                                  ),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                              return;
-                            }
-                            final newData = {
-                              'title': titleCtrl.text,
-                              'description': descCtrl.text,
-                              'prizePool': num.tryParse(prizeCtrl.text) ?? 0,
-                              'order': int.tryParse(orderCtrl.text) ?? 1,
-                              'icon': iconCtrl.text,
-                              'location': locationCtrl.text.trim(),
-                              'eventType': selectedEventType,
-                              'status': data?['status'] ?? 'draft',
-                            };
-                            try {
-                              if (docId == null) {
-                                final response = await ParseCloudFunction(
-                                  'createOrUpdateEvent',
-                                ).execute(parameters: {'data': newData});
-                                if (!response.success)
-                                  throw response.error ?? ParseError();
-                              } else {
-                                await ParseCloudFunction(
-                                  'createOrUpdateEvent',
-                                ).execute(
-                                  parameters: {
-                                    'eventId': docId,
-                                    'data': newData,
-                                  },
-                                );
-                              }
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                                _loadEvents();
-                              }
-                            } catch (e) {
-                              debugPrint('Erro ao salvar evento: $e');
-                            }
-                          },
-                          child: const Text('Salvar'),
-                        ),
-                      ],
-                    ),
+  Widget _buildSectionTitle(String title, dynamic icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        children: [
+          FaIcon(
+            icon,
+            color: primaryAmber,
+            size: 14,
+          ),
+          const SizedBox(width: 10),
+          Text(
+            title.toUpperCase(),
+            style: GoogleFonts.orbitron(
+              color: primaryAmber,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    primaryAmber.withValues(alpha: 0.15),
+                    Colors.transparent,
                   ],
                 ),
               ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _toggleEventStatus(String eventId, String currentStatus) async {
-    final newStatus = currentStatus == 'open' ? 'draft' : 'open';
-    try {
-      await ParseCloudFunction('createOrUpdateEvent').execute(
-        parameters: {
-          'eventId': eventId,
-          'data': {'status': newStatus},
-        },
-      );
-      _loadEvents();
-    } catch (e) {
-      debugPrint("Erro ao alterar status: $e");
-    }
-  }
-
-  void _showPhasesDialog(BuildContext context, String eventId) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: darkBackground,
-          insetPadding: const EdgeInsets.all(16),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            height: MediaQuery.of(context).size.height * 0.8,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Fases do Evento',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const FaIcon(
-                        FontAwesomeIcons.xmark,
-                        color: Colors.white,
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: StatefulBuilder(
-                    builder: (context, setStatePhases) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              _showPhaseEditDialog(
-                                context,
-                                eventId,
-                                onSaved: () {
-                                  setStatePhases(() {});
-                                },
-                              );
-                            },
-                            icon: const FaIcon(FontAwesomeIcons.plus, size: 16),
-                            label: const Text('Nova Fase'),
-                          ),
-                          const SizedBox(height: 16),
-                          Expanded(
-                            child: FutureBuilder<ParseResponse>(
-                              future:
-                                  (QueryBuilder<ParseObject>(
-                                          ParseObject('Phase'),
-                                        )
-                                        ..whereEqualTo(
-                                          'event',
-                                          (ParseObject(
-                                            'Event',
-                                          )..objectId = eventId).toPointer(),
-                                        )
-                                        ..orderByAscending('order'))
-                                      .query(),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                }
-                                if (snapshot.hasError ||
-                                    !snapshot.hasData ||
-                                    !snapshot.data!.success ||
-                                    snapshot.data!.results == null) {
-                                  return const Center(
-                                    child: Text(
-                                      'Nenhuma fase cadastrada.',
-                                      style: TextStyle(
-                                        color: secondaryTextColor,
-                                      ),
-                                    ),
-                                  );
-                                }
-
-                                final phases =
-                                    snapshot.data!.results as List<ParseObject>;
-
-                                return ListView.builder(
-                                  itemCount: phases.length,
-                                  itemBuilder: (context, index) {
-                                    final phase = phases[index];
-                                    final phaseId = phase.objectId!;
-                                    final order = phase.get<num>('order') ?? 0;
-                                    final isBlocked =
-                                        phase.get<bool>('isBlocked') ?? false;
-
-                                    return Card(
-                                      color: cardColor,
-                                      child: ExpansionTile(
-                                        title: Text(
-                                          'Fase $order',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        subtitle: Text(
-                                          isBlocked
-                                              ? 'Bloqueada'
-                                              : 'Desbloqueada',
-                                          style: TextStyle(
-                                            color: isBlocked
-                                                ? Colors.redAccent
-                                                : Colors.green,
-                                          ),
-                                        ),
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: [
-                                              TextButton.icon(
-                                                onPressed: () =>
-                                                    _showPhaseEditDialog(
-                                                      context,
-                                                      eventId,
-                                                      docId: phaseId,
-                                                      data: _parseObjectToMap(
-                                                        phase,
-                                                      ),
-                                                      onSaved: () {
-                                                        setStatePhases(() {});
-                                                      },
-                                                    ),
-                                                icon: const FaIcon(
-                                                  FontAwesomeIcons.penToSquare,
-                                                  size: 14,
-                                                ),
-                                                label: const Text('Editar'),
-                                              ),
-                                              TextButton.icon(
-                                                onPressed: () =>
-                                                    _showEnigmaEditDialog(
-                                                      context,
-                                                      eventId,
-                                                      phaseId,
-                                                      onSaved: () {
-                                                        setStatePhases(() {});
-                                                      },
-                                                    ),
-                                                icon: const FaIcon(
-                                                  FontAwesomeIcons.plus,
-                                                  size: 14,
-                                                ),
-                                                label: const Text(
-                                                  'Novo Enigma',
-                                                ),
-                                              ),
-                                              TextButton.icon(
-                                                onPressed: () async {
-                                                  bool confirm =
-                                                      await showDialog(
-                                                        context: context,
-                                                        builder: (ctx) => AlertDialog(
-                                                          backgroundColor:
-                                                              darkBackground,
-                                                          title: const Text(
-                                                            'Confirmar exclusão',
-                                                            style: TextStyle(
-                                                              color:
-                                                                  Colors.white,
-                                                            ),
-                                                          ),
-                                                          content: const Text(
-                                                            'Deseja excluir esta fase e seus enigmas?',
-                                                            style: TextStyle(
-                                                              color:
-                                                                  secondaryTextColor,
-                                                            ),
-                                                          ),
-                                                          actions: [
-                                                            TextButton(
-                                                              onPressed: () =>
-                                                                  Navigator.pop(
-                                                                    ctx,
-                                                                    false,
-                                                                  ),
-                                                              child: const Text(
-                                                                'Cancelar',
-                                                              ),
-                                                            ),
-                                                            ElevatedButton(
-                                                              style: ElevatedButton.styleFrom(
-                                                                backgroundColor:
-                                                                    Colors
-                                                                        .redAccent,
-                                                              ),
-                                                              onPressed: () =>
-                                                                  Navigator.pop(
-                                                                    ctx,
-                                                                    true,
-                                                                  ),
-                                                              child: const Text(
-                                                                'Excluir',
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ) ??
-                                                      false;
-                                                  if (confirm) {
-                                                    try {
-                                                      await ParseCloudFunction(
-                                                        'deletePhase',
-                                                      ).execute(
-                                                        parameters: {
-                                                          'eventId': eventId,
-                                                          'phaseId': phaseId,
-                                                        },
-                                                      );
-                                                      if (context.mounted) {
-                                                        setStatePhases(() {});
-                                                      }
-                                                    } catch (e) {
-                                                      debugPrint(
-                                                        'Erro ao excluir fase: \$e',
-                                                      );
-                                                    }
-                                                  }
-                                                },
-                                                icon: const FaIcon(
-                                                  FontAwesomeIcons.trash,
-                                                  color: Colors.redAccent,
-                                                  size: 14,
-                                                ),
-                                                label: const Text(
-                                                  'Excluir',
-                                                  style: TextStyle(
-                                                    color: Colors.redAccent,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          _buildEnigmasList(
-                                            eventId,
-                                            phaseId,
-                                            () {
-                                              setStatePhases(() {});
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildEnigmasList(
-    String eventId,
-    String? phaseId,
-    VoidCallback onRefresh,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Enigmas:',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          FutureBuilder<ParseResponse>(
-            future: () {
-              var query = QueryBuilder<ParseObject>(ParseObject('Enigma'));
-              if (phaseId != null) {
-                query.whereEqualTo(
-                  'phase',
-                  (ParseObject('Phase')..objectId = phaseId).toPointer(),
-                );
-              } else {
-                query.whereEqualTo('eventId', eventId);
-              }
-              query.orderByAscending('order');
-              return query.query();
-            }(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Text(
-                  'Carregando...',
-                  style: TextStyle(color: Colors.white),
-                );
-              }
-              if (snapshot.hasError ||
-                  !snapshot.hasData ||
-                  !snapshot.data!.success ||
-                  snapshot.data!.results == null) {
-                return const Text(
-                  'Nenhum enigma cadastrado nesta fase.',
-                  style: TextStyle(color: secondaryTextColor),
-                );
-              }
-
-              final enigmas = snapshot.data!.results as List<ParseObject>;
-
-              return Column(
-                children: enigmas.map((doc) {
-                  final enigmaId = doc.objectId!;
-                  final code = doc.get<String>('code') ?? '';
-                  final type = doc.get<String>('type') ?? '';
-
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      'Código: $code',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    subtitle: Text(
-                      'Tipo: $type',
-                      style: const TextStyle(color: secondaryTextColor),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const FaIcon(
-                            FontAwesomeIcons.penToSquare,
-                            size: 16,
-                            color: Colors.blue,
-                          ),
-                          onPressed: () => _showEnigmaEditDialog(
-                            context,
-                            eventId,
-                            phaseId,
-                            docId: enigmaId,
-                            data: _parseObjectToMap(doc),
-                            onSaved: onRefresh,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const FaIcon(
-                            FontAwesomeIcons.trash,
-                            size: 16,
-                            color: Colors.redAccent,
-                          ),
-                          onPressed: () async {
-                            final response =
-                                await ParseCloudFunction(
-                                  'deleteEnigma',
-                                ).execute(
-                                  parameters: {
-                                    'eventId': eventId,
-                                    'enigmaId': enigmaId,
-                                  },
-                                );
-                            if (response.success) {
-                              onRefresh();
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              );
-            },
           ),
         ],
       ),
     );
   }
 
-  void _showPhaseEditDialog(
-    BuildContext context,
-    String eventId, {
-    String? docId,
-    Map<String, dynamic>? data,
-    VoidCallback? onSaved,
-  }) {
-    final orderCtrl = TextEditingController(
-      text: data?['order']?.toString() ?? '1',
+  Widget _buildEmptyState() {
+    return AdminItemCard(
+      icon: FontAwesomeIcons.circleInfo,
+      title: 'Nenhum evento criado',
+      statusText: '',
+      statusColor: Colors.transparent,
+      subtitle: 'Clique em "Novo Evento" para começar.',
     );
-    bool isBlocked = data?['isBlocked'] ?? false;
+  }
+
+  Widget _buildEventCard(ParseObject event) {
+    final status = event.get<String>('status') ?? 'encerrado';
+    Color statusColor;
+    String statusLabel;
+
+    if (status == 'open' || status == 'ativo') {
+      statusColor = successColor;
+      statusLabel = 'Ativo';
+    } else if (status == 'em_breve') {
+      statusColor = warningColor;
+      statusLabel = 'Em breve';
+    } else {
+      statusColor = dangerColor;
+      statusLabel = 'Encerrado';
+    }
+
+    final prize = event.get<num>('prizePool') != null
+                  ? 'R\$ ${event.get<num>('prizePool')}'
+                  : (event.get<String>('prize') ?? 'R\$ 0,00');
+
+    return AdminItemCard(
+      icon: FontAwesomeIcons.trophy,
+      title: event.get<String>('title') ?? event.get<String>('name') ?? 'Sem Título',
+      statusText: statusLabel,
+      statusColor: statusColor,
+      subtitle: '$prize',
+      actions: [
+        _buildButton('Editar', isPrimary: true, onTap: () => _showEditEventModal(context, event)),
+        const SizedBox(width: 8),
+        _buildButton('Excluir', isDanger: true, onTap: () => _deleteEvent(event)),
+      ],
+    );
+  }
+
+  Widget _buildAddButton(String text, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: primaryAmber.withValues(alpha: 0.15), width: 1.5, style: BorderStyle.none),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: CustomPaint(
+          painter: _DashedBorderPainter(),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const FaIcon(FontAwesomeIcons.circlePlus, color: primaryAmber, size: 14),
+              const SizedBox(width: 8),
+              Text(
+                text,
+                style: GoogleFonts.inter(
+                  color: secondaryTextColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildButton(String text, {bool isPrimary = false, bool isDanger = false, required VoidCallback onTap}) {
+    Color bgColor = Colors.transparent;
+    Color textColorStr = primaryAmberHover;
+    Color borderColor = primaryAmber.withValues(alpha: 0.15);
+
+    if (isPrimary) {
+      bgColor = primaryAmber; // using linear gradient ideally, but solid for simplicity
+      textColorStr = darkBackground;
+      borderColor = Colors.transparent;
+    } else if (isDanger) {
+      textColorStr = dangerColor;
+      borderColor = dangerColor.withValues(alpha: 0.3);
+    }
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: borderColor),
+        ),
+        child: Text(
+          text.toUpperCase(),
+          style: GoogleFonts.inter(
+            color: textColorStr,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAddEventModal(BuildContext context) {
+    final nomeController = TextEditingController();
+    final premioController = TextEditingController();
+    String status = 'open'; // Using 'open' to match the activeEvents query
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) {
-            return Dialog(
-              backgroundColor: darkBackground,
-              insetPadding: const EdgeInsets.all(16),
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                constraints: const BoxConstraints(maxWidth: 400),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      docId == null ? 'Nova Fase' : 'Editar Fase',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Flexible(
-                      fit: FlexFit.loose,
-                      child: SingleChildScrollView(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            TextField(
-                              controller: orderCtrl,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Ordem',
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            SwitchListTile(
-                              title: const Text(
-                                'Fase Bloqueada',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              subtitle: const Text(
-                                'Os jogadores não poderão ver os enigmas desta fase até que ela seja desbloqueada.',
-                                style: TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              value: isBlocked,
-                              onChanged: (val) {
-                                setState(() => isBlocked = val);
-                              },
-                              activeColor: primaryAmber,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Cancelar'),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryAmber,
-                            foregroundColor: Colors.black,
-                          ),
-                          onPressed: () async {
-                            final newData = {
-                              'order': int.tryParse(orderCtrl.text) ?? 1,
-                              'isBlocked': isBlocked,
-                            };
-                            try {
-                              ParseResponse response;
-                              if (docId == null) {
-                                response =
-                                    await ParseCloudFunction(
-                                      'createOrUpdatePhase',
-                                    ).execute(
-                                      parameters: {
-                                        'eventId': eventId,
-                                        'data': newData,
-                                      },
-                                    );
-                              } else {
-                                response =
-                                    await ParseCloudFunction(
-                                      'createOrUpdatePhase',
-                                    ).execute(
-                                      parameters: {
-                                        'eventId': eventId,
-                                        'phaseId': docId,
-                                        'data': newData,
-                                      },
-                                    );
-                              }
+          builder: (context, setModalState) {
+            return AdminModal(
+              title: 'Criar Novo Evento',
+              maxWidth: 500,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _buildInputForm(controller: nomeController, hint: 'Nome do evento (Ex: Find Win Centro)'),
+                  const SizedBox(height: 12),
+                  _buildInputForm(controller: premioController, hint: 'Prêmio (Ex: R\$ 5.000,00)'),
+                  const SizedBox(height: 12),
+                  _buildSelectForm(
+                    value: status,
+                    items: const [
+                      DropdownMenuItem(value: 'open', child: Text('Ativo')),
+                      DropdownMenuItem(value: 'em_breve', child: Text('Em breve')),
+                      DropdownMenuItem(value: 'encerrado', child: Text('Encerrado')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setModalState(() => status = val);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      _buildButton('Cancelar', onTap: () => Navigator.of(context).pop()),
+                      const SizedBox(width: 12),
+                      _buildButton('Criar Evento', isPrimary: true, onTap: () async {
+                        final nome = nomeController.text.trim();
+                        if (nome.isEmpty) return;
 
-                              if (response.success) {
-                                if (context.mounted) {
-                                  Navigator.pop(context);
-                                  if (onSaved != null) onSaved();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Fase guardada com sucesso!',
-                                      ),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                }
-                              } else {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Erro: ${response.error?.message}',
-                                      ),
-                                      backgroundColor: Colors.redAccent,
-                                    ),
-                                  );
-                                }
-                              }
-                            } catch (e) {
-                              debugPrint('Erro ao salvar fase: $e');
+                        await ParseCloudFunction('createOrUpdateEvent').execute(
+                          parameters: {
+                            'data': {
+                              'title': nome,
+                              'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
+                              'status': status,
+                              'eventType': 'find_and_win', // Default to find_and_win for new events based on mock
                             }
-                          },
-                          child: const Text('Salvar'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                          }
+                        );
+                        if (context.mounted) Navigator.of(context).pop();
+                        _loadEvents();
+                      }),
+                    ],
+                  )
+                ],
               ),
             );
-          },
+          }
         );
       },
     );
   }
 
-  void _showFindAndWinEnigmasDialog(BuildContext context, String eventId) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: darkBackground,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            width: 800,
-            constraints: const BoxConstraints(maxHeight: 600),
-            padding: const EdgeInsets.all(24),
-            child: StatefulBuilder(
-              builder: (context, setStateEnigmas) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Enigmas do Evento',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const FaIcon(
-                            FontAwesomeIcons.xmark,
-                            color: Colors.white,
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        _showEnigmaEditDialog(
-                          context,
-                          eventId,
-                          null,
-                          onSaved: () {
-                            setStateEnigmas(() {});
-                          },
-                        );
-                      },
-                      icon: const FaIcon(FontAwesomeIcons.plus, size: 16),
-                      label: const Text('Novo Enigma'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryAmber,
-                        foregroundColor: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: _buildEnigmasList(eventId, null, () {
-                        setStateEnigmas(() {});
-                      }),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showEnigmaEditDialog(
-    BuildContext context,
-    String eventId,
-    String? phaseId, {
-    String? docId,
-    Map<String, dynamic>? data,
-    VoidCallback? onSaved,
-  }) {
-    final orderCtrl = TextEditingController(
-      text: data?['order']?.toString() ?? '1',
-    );
-    final titleCtrl = TextEditingController(text: data?['title']);
-    final codeCtrl = TextEditingController(text: data?['code']);
-    final instructionCtrl = TextEditingController(text: data?['instruction']);
-    final prizeCtrl = TextEditingController(
-      text: data?['prize']?.toString() ?? '0',
-    );
-    final photoUrlCtrl = TextEditingController(text: data?['imageUrl']);
-    final audioUrlCtrl = TextEditingController(text: data?['audioUrl']);
-
-    String selectedIcon = data?['icon'] ?? 'skull';
-    String selectedDifficulty = data?['difficulty'] ?? 'MÉDIA';
-
-    // NOVOS CONTROLADORES: Bússola e Coordenadas Obrigatórias
-    bool hasCompass = data?['hasCompass'] ?? false;
-    final compassCoordsCtrl = TextEditingController(
-      text: data?['compassCoords'],
-    );
-    final compassPriceCtrl = TextEditingController(
-      text: data?['compassPrice']?.toString() ?? '15.0',
-    );
-    final compassDurationCtrl = TextEditingController(
-      text: data?['compassDuration']?.toString() ?? '0',
-    );
-
-    String selectedType = data?['type'] ?? 'text';
-    if (!['text', 'gps', 'qrcode'].contains(selectedType)) {
-      selectedType = 'text';
-    }
-
-    String selectedMediaType = 'none';
-    if (data?['imageUrl'] != null &&
-        data?['imageUrl'].toString().isNotEmpty == true) {
-      selectedMediaType = 'image';
-    } else if (data?['audioUrl'] != null &&
-        data?['audioUrl'].toString().isNotEmpty == true) {
-      selectedMediaType = 'audio';
-    }
-
-    List<String> selectedCharacteristics = List<String>.from(
-      data?['characteristics'] ?? [],
-    );
-    final availableCharacteristics = [
-      {'key': 'nado', 'label': 'Nado', 'icon': FontAwesomeIcons.personSwimming},
-      {
-        'key': 'corrida',
-        'label': 'Corrida',
-        'icon': FontAwesomeIcons.personRunning,
-      },
-      {'key': 'camera', 'label': 'Câmera', 'icon': FontAwesomeIcons.camera},
-      {'key': 'noite', 'label': 'Noite', 'icon': FontAwesomeIcons.moon},
-      {'key': 'dia', 'label': 'Dia', 'icon': FontAwesomeIcons.sun},
-      {
-        'key': 'exploracao',
-        'label': 'Exploração',
-        'icon': FontAwesomeIcons.compass,
-      },
-      {
-        'key': 'escalada',
-        'label': 'Escalada',
-        'icon': FontAwesomeIcons.mountain,
-      },
-    ];
-
-    List<dynamic> linkedHints = List.from(data?['linkedHints'] ?? []);
-    final Future<ParseResponse> hintsFuture = QueryBuilder<ParseObject>(
-      ParseObject('Hint'),
-    ).query();
-    bool isSaving = false;
+  void _showEditEventModal(BuildContext context, ParseObject event) {
+    final nomeController = TextEditingController(text: event.get<String>('title') ?? event.get<String>('name'));
+    final premioController = TextEditingController(text: event.get<num>('prizePool')?.toString() ?? event.get<String>('prize'));
+    String status = event.get<String>('status') ?? 'encerrado';
 
     showDialog(
       context: context,
-      barrierDismissible: false,
       builder: (context) {
         return StatefulBuilder(
-          builder: (context, setState) {
-            return Dialog(
-              backgroundColor: darkBackground,
-              insetPadding: const EdgeInsets.all(16),
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                constraints: const BoxConstraints(maxWidth: 600),
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      docId == null ? 'Novo Enigma' : 'Editar Enigma',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+          builder: (context, setModalState) {
+            return AdminModal(
+              title: 'Editar Evento',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: _buildInputForm(controller: nomeController, hint: 'Nome'),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Flexible(
-                      fit: FlexFit.loose,
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            TextField(
-                              controller: orderCtrl,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Ordem',
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            DropdownButtonFormField<String>(
-                              value: selectedType,
-                              dropdownColor: darkBackground,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Tipo de Enigma',
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'text',
-                                  child: Text('Texto (Senha/Palavra)'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'gps',
-                                  child: Text('GPS + QR Code'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'qrcode',
-                                  child: Text('QR Code Simples'),
-                                ),
-                              ],
-                              onChanged: (val) {
-                                setState(() {
-                                  selectedType = val!;
-                                });
-                              },
-                            ),
-
-                            const SizedBox(height: 12),
-                            DropdownButtonFormField<String>(
-                              value: selectedMediaType,
-                              dropdownColor: darkBackground,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Tipo de Mídia',
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'none',
-                                  child: Text('Nenhuma'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'image',
-                                  child: Text('Imagem'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'audio',
-                                  child: Text('Áudio'),
-                                ),
-                              ],
-                              onChanged: (val) {
-                                setState(() {
-                                  selectedMediaType = val!;
-                                  if (selectedMediaType == 'none') {
-                                    photoUrlCtrl.clear();
-                                    audioUrlCtrl.clear();
-                                  } else if (selectedMediaType == 'image') {
-                                    audioUrlCtrl.clear();
-                                  } else if (selectedMediaType == 'audio') {
-                                    photoUrlCtrl.clear();
-                                  }
-                                });
-                              },
-                            ),
-
-                            if (selectedMediaType == 'image') ...[
-                              const SizedBox(height: 12),
-                              TextField(
-                                controller: photoUrlCtrl,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: InputDecoration(
-                                  labelText: 'URL da Imagem',
-                                  suffixIcon: IconButton(
-                                    icon: const FaIcon(
-                                      FontAwesomeIcons.upload,
-                                      size: 18,
-                                    ),
-                                    onPressed: () async {
-                                      final url =
-                                          await AdminUploadUtil.pickAndUploadImage(
-                                            context,
-                                          );
-                                      if (url != null) {
-                                        setState(() {
-                                          photoUrlCtrl.text = url;
-                                        });
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ] else if (selectedMediaType == 'audio') ...[
-                              const SizedBox(height: 12),
-                              TextField(
-                                controller: audioUrlCtrl,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: InputDecoration(
-                                  labelText: 'URL do Áudio',
-                                  suffixIcon: IconButton(
-                                    icon: const FaIcon(
-                                      FontAwesomeIcons.upload,
-                                      size: 18,
-                                    ),
-                                    onPressed: () async {
-                                      final url =
-                                          await AdminUploadUtil.pickAndUploadAudio(
-                                            context,
-                                          );
-                                      if (url != null) {
-                                        setState(() {
-                                          audioUrlCtrl.text = url;
-                                        });
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ],
-
-                            const SizedBox(height: 12),
-                            DropdownButtonFormField<String>(
-                              value: selectedIcon,
-                              dropdownColor: darkBackground,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Ícone',
-                              ),
-                              items: const [
-                                DropdownMenuItem(value: 'skull', child: Text('Caveira')),
-                                DropdownMenuItem(value: 'map', child: Text('Mapa')),
-                                DropdownMenuItem(value: 'robot', child: Text('Robô')),
-                                DropdownMenuItem(value: 'ghost', child: Text('Fantasma')),
-                                DropdownMenuItem(value: 'crown', child: Text('Coroa')),
-                              ],
-                              onChanged: (val) {
-                                setState(() {
-                                  selectedIcon = val!;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            DropdownButtonFormField<String>(
-                              value: selectedDifficulty,
-                              dropdownColor: darkBackground,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Dificuldade',
-                              ),
-                              items: const [
-                                DropdownMenuItem(value: 'FÁCIL', child: Text('FÁCIL')),
-                                DropdownMenuItem(value: 'MÉDIA', child: Text('MÉDIA')),
-                                DropdownMenuItem(value: 'ALTA', child: Text('ALTA')),
-                                DropdownMenuItem(value: 'ÉPICO', child: Text('ÉPICO')),
-                              ],
-                              onChanged: (val) {
-                                setState(() {
-                                  selectedDifficulty = val!;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: codeCtrl,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
-                                labelText: 'Código (Senha/Resposta)',
-                              ),
-                            ),
-                            if (selectedType == 'gps') ...[
-                              const SizedBox(height: 12),
-                              TextField(
-                                controller: compassCoordsCtrl,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: const InputDecoration(
-                                  labelText:
-                                      'Coordenadas Alvo do GPS (Lat, Lng)',
-                                  hintText: '-23.5505, -46.6333',
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: titleCtrl,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Título do Enigma',
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: instructionCtrl,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Instrução para o jogador',
-                              ),
-                              maxLines: 2,
-                            ),
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: prizeCtrl,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Prêmio (R\$)',
-                              ),
-                            ),
-
-                            const SizedBox(height: 16),
-                            const Divider(color: Colors.white24),
-                            const SizedBox(height: 8),
-
-                            // 👇 NOVO: CONFIGURAÇÃO DA BÚSSOLA 👇
-                            SwitchListTile(
-                              title: const Text(
-                                'Habilitar Bússola neste enigma?',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: const Text(
-                                'Permite ao usuário usar o item facilitador.',
-                                style: TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              value: hasCompass,
-                              activeColor: primaryAmber,
-                              contentPadding: EdgeInsets.zero,
-                              onChanged: (val) {
-                                setState(() {
-                                  hasCompass = val;
-                                });
-                              },
-                            ),
-
-                            // Campo de Coordenadas condicional: Só aparece se a bússola estiver ligada
-                            if (hasCompass) ...[
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: compassCoordsCtrl,
-                                style: const TextStyle(color: Colors.white),
-                                decoration: const InputDecoration(
-                                  labelText:
-                                      'Coordenadas da Bússola (Lat, Lng) *Obrigatório',
-                                  labelStyle: TextStyle(color: primaryAmber),
-                                  hintText: 'Ex: -23.5505, -46.6333',
-                                  hintStyle: TextStyle(color: Colors.white38),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: compassPriceCtrl,
-                                      style: const TextStyle(color: Colors.white),
-                                      decoration: InputDecoration(
-                                        labelText: 'Preço (R\$)',
-                                        prefixIcon: const Icon(Icons.attach_money, color: Colors.greenAccent),
-                                        filled: true,
-                                        fillColor: Colors.white10,
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                      ),
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: compassDurationCtrl,
-                                      style: const TextStyle(color: Colors.white),
-                                      decoration: InputDecoration(
-                                        labelText: 'Tempo (Segundos)',
-                                        prefixIcon: const Icon(Icons.timer, color: Colors.redAccent),
-                                        filled: true,
-                                        fillColor: Colors.white10,
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                        helperText: '0 = Infinito',
-                                        helperStyle: const TextStyle(color: Colors.grey),
-                                      ),
-                                      keyboardType: TextInputType.number,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-
-                            const SizedBox(height: 16),
-                            const Divider(color: Colors.white24),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Características do Enigma',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: availableCharacteristics.map((char) {
-                                final isSelected = selectedCharacteristics
-                                    .contains(char['key'] as String);
-                                return FilterChip(
-                                  label: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      FaIcon(
-                                        char['icon'] as dynamic,
-                                        size: 14,
-                                        color: isSelected
-                                            ? Colors.black
-                                            : Colors.white,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(char['label'] as String),
-                                    ],
-                                  ),
-                                  selected: isSelected,
-                                  selectedColor: primaryAmber,
-                                  checkmarkColor: Colors.black,
-                                  labelStyle: TextStyle(
-                                    color: isSelected
-                                        ? Colors.black
-                                        : Colors.white,
-                                    fontWeight: isSelected
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                  ),
-                                  backgroundColor: cardColor,
-                                  onSelected: (bool selected) {
-                                    setState(() {
-                                      if (selected) {
-                                        selectedCharacteristics.add(
-                                          char['key'] as String,
-                                        );
-                                      } else {
-                                        selectedCharacteristics.remove(
-                                          char['key'] as String,
-                                        );
-                                      }
-                                    });
-                                  },
-                                );
-                              }).toList(),
-                            ),
-
-                            const SizedBox(height: 16),
-                            const Divider(color: Colors.white24),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Dicas Vinculadas (Hints Pool)',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-
-                            FutureBuilder<ParseResponse>(
-                              future: hintsFuture,
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                }
-                                if (!snapshot.hasData ||
-                                    snapshot.data!.results == null) {
-                                  return const Text(
-                                    'Nenhuma dica no pool.',
-                                    style: TextStyle(color: Colors.white),
-                                  );
-                                }
-
-                                final allHints =
-                                    snapshot.data!.results as List<ParseObject>;
-                                return Column(
-                                  children: allHints.map((doc) {
-                                    final hintId = doc.objectId!;
-                                    final isSelected = linkedHints.contains(
-                                      hintId,
-                                    );
-                                    return CheckboxListTile(
-                                      title: Text(
-                                        doc.get<String>('title') ?? 'Dica',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      value: isSelected,
-                                      activeColor: primaryAmber,
-                                      onChanged: (val) {
-                                        setState(() {
-                                          if (val == true)
-                                            linkedHints.add(hintId);
-                                          else
-                                            linkedHints.remove(hintId);
-                                        });
-                                      },
-                                    );
-                                  }).toList(),
-                                );
-                              },
-                            ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildInputForm(controller: premioController, hint: 'Prêmio'),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSelectForm(
+                          value: status,
+                          items: const [
+                            DropdownMenuItem(value: 'open', child: Text('Ativo')),
+                            DropdownMenuItem(value: 'em_breve', child: Text('Em breve')),
+                            DropdownMenuItem(value: 'encerrado', child: Text('Encerrado')),
                           ],
+                          onChanged: (val) {
+                            if (val != null) setModalState(() => status = val);
+                          },
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: isSaving
-                              ? null
-                              : () => Navigator.pop(context),
-                          child: const Text('Cancelar'),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryAmber,
-                            foregroundColor: Colors.black,
-                          ),
-                          onPressed: isSaving
-                              ? null
-                              : () async {
-                                  // 🔴 REGRA DE VALIDAÇÃO OBRIGATÓRIA DA BÚSSOLA 🔴
-                                  if ((hasCompass || selectedType == 'gps') &&
-                                      compassCoordsCtrl.text.trim().isEmpty) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Erro: Coordenadas do GPS são obrigatórias!',
-                                        ),
-                                        backgroundColor: Colors.redAccent,
-                                      ),
-                                    );
-                                    return; // Cancela a execução para impedir o salvamento incorreto
-                                  }
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildSectionTitle('Enigmas deste evento', FontAwesomeIcons.puzzlePiece),
 
-                                  setState(() => isSaving = true);
+                  // FutureBuilder to load Enigmas dynamically
+                  FutureBuilder<List<ParseObject>>(
+                    future: _fetchEventEnigmas(event.objectId!),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: Center(child: CircularProgressIndicator(color: primaryAmber)),
+                        );
+                      }
+                      final enigmas = snapshot.data ?? [];
+                      if (enigmas.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: Center(child: Text('Nenhum enigma neste evento.', style: TextStyle(color: secondaryTextColor))),
+                        );
+                      }
 
-                                  try {
-                                    final newData = {
-                                      'icon': selectedIcon,
-                                      'difficulty': selectedDifficulty,
-                                      'order':
-                                          int.tryParse(orderCtrl.text) ?? 1,
-                                      'title': titleCtrl.text,
-                                      'code': codeCtrl.text,
-                                      'instruction': instructionCtrl.text,
-                                      'type': selectedType,
-                                      'prize':
-                                          num.tryParse(prizeCtrl.text) ?? 0,
-                                      'linkedHints': linkedHints,
-                                      'characteristics':
-                                          selectedCharacteristics,
+                      return Column(
+                        children: enigmas.map((enig) {
+                          final status = enig.get<String>('status') ?? 'bloqueado';
+                          Color statusColor = secondaryTextColor;
+                          String statusLabel = 'Bloqueado';
 
-                                      // Salvando as novas chaves no Back4App
-                                      'hasCompass': hasCompass,
-                                      'compassCoords':
-                                          (hasCompass || selectedType == 'gps')
-                                          ? compassCoordsCtrl.text.trim()
-                                          : '',
-                                      'compassPrice': double.tryParse(compassPriceCtrl.text.replaceAll(',', '.')) ?? 15.0,
-                                      'compassDuration': int.tryParse(compassDurationCtrl.text) ?? 0,
-                                      'imageUrl': photoUrlCtrl.text,
-                                      'audioUrl': audioUrlCtrl.text,
-                                    };
+                          if (status == 'concluido' || status == 'closed') {
+                            statusColor = primaryAmber;
+                            statusLabel = 'Concluído';
+                          } else if (status == 'disponivel' || status == 'open') {
+                            statusColor = successColor;
+                            statusLabel = 'Disponível';
+                          }
 
-                                    ParseResponse response;
-                                    if (docId == null) {
-                                      response =
-                                          await ParseCloudFunction(
-                                            'createOrUpdateEnigma',
-                                          ).execute(
-                                            parameters: {
-                                              'eventId': eventId,
-                                              'phaseId': phaseId ?? '',
-                                              'data': newData,
-                                            },
-                                          );
-                                    } else {
-                                      response =
-                                          await ParseCloudFunction(
-                                            'createOrUpdateEnigma',
-                                          ).execute(
-                                            parameters: {
-                                              'eventId': eventId,
-                                              'enigmaId': docId,
-                                              'data': newData,
-                                            },
-                                          );
-                                    }
+                          final tipo = enig.get<String>('type') ?? 'charada';
+                          dynamic tipoIcon = FontAwesomeIcons.pencil;
+                          if (tipo == 'gps') tipoIcon = FontAwesomeIcons.locationDot;
+                          else if (tipo == 'qrcode') tipoIcon = FontAwesomeIcons.camera;
 
-                                    if (response.success) {
-                                      if (context.mounted) {
-                                        Navigator.pop(context);
-                                        if (onSaved != null) onSaved();
-                                      }
-                                    } else {
-                                      throw Exception(
-                                        response.error?.message ??
-                                            'Erro desconhecido',
-                                      );
-                                    }
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Erro: $e'),
-                                          backgroundColor: Colors.redAccent,
-                                        ),
-                                      );
-                                    }
-                                  } finally {
-                                    setState(() => isSaving = false);
-                                  }
-                                },
-                          child: isSaving
-                              ? const SizedBox(
-                                  height: 16,
-                                  width: 16,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Salvar'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                          return AdminItemCard(
+                            icon: tipoIcon,
+                            title: enig.get<String>('instruction') ?? enig.get<String>('name') ?? 'Sem Nome',
+                            statusText: statusLabel,
+                            statusColor: statusColor,
+                            subtitle: 'Tipo: $tipo · Prêmio: ${enig.get<num>('prize') != null ? 'R\$ ${enig.get<num>('prize')}' : 'R\$ 0,00'}',
+                          );
+                        }).toList().cast<Widget>(),
+                      );
+                    }
+                  ),
+                  const SizedBox(height: 12),
+                  _buildAddButton('Adicionar Enigma ao Evento', () {
+                    // Logic to add enigma would go here
+                  }),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      _buildButton('Cancelar', onTap: () => Navigator.of(context).pop()),
+                      const SizedBox(width: 12),
+                      _buildButton('Salvar Evento', isPrimary: true, onTap: () async {
+                        await ParseCloudFunction('createOrUpdateEvent').execute(
+                          parameters: {
+                            'eventId': event.objectId,
+                            'data': {
+                              'title': nomeController.text.trim(),
+                              'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
+                              'status': status,
+                            }
+                          }
+                        );
+                        if (context.mounted) Navigator.of(context).pop();
+                        _loadEvents();
+                      }),
+                    ],
+                  )
+                ],
               ),
             );
-          },
+          }
         );
       },
     );
   }
+
+  Future<void> _deleteEvent(ParseObject event) async {
+    // Safe delete via cloud function or parse direct
+     final response = await event.delete();
+     if (response.success) {
+       _loadEvents();
+     }
+  }
+
+  Widget _buildInputForm({required TextEditingController controller, required String hint, int maxLines = 1}) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 15),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: secondaryTextColor.withValues(alpha: 0.5)),
+        filled: true,
+        fillColor: cardColor.withValues(alpha: 0.8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: primaryAmber.withValues(alpha: 0.15)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: primaryAmber),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectForm({required String value, required List<DropdownMenuItem<String>> items, required ValueChanged<String?> onChanged}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: cardColor.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: primaryAmber.withValues(alpha: 0.15)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          dropdownColor: sidebarBackground,
+          style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 15),
+          isExpanded: true,
+          items: items,
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = primaryAmber.withValues(alpha: 0.15)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    const dashWidth = 5.0;
+    const dashSpace = 5.0;
+
+    // Draw top
+    double startX = 0;
+    while (startX < size.width) {
+      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
+      startX += dashWidth + dashSpace;
+    }
+    // Draw right
+    double startY = 0;
+    while (startY < size.height) {
+      canvas.drawLine(Offset(size.width, startY), Offset(size.width, startY + dashWidth), paint);
+      startY += dashWidth + dashSpace;
+    }
+    // Draw bottom
+    startX = size.width;
+    while (startX > 0) {
+      canvas.drawLine(Offset(startX, size.height), Offset(startX - dashWidth, size.height), paint);
+      startX -= dashWidth + dashSpace;
+    }
+    // Draw left
+    startY = size.height;
+    while (startY > 0) {
+      canvas.drawLine(Offset(0, startY), Offset(0, startY - dashWidth), paint);
+      startY -= dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

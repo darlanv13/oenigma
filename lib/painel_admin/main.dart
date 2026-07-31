@@ -5,7 +5,7 @@ import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oenigma/painel_admin/features/admin/screens/admin_auth_wrapper.dart';
+import 'package:oenigma/painel_admin/features/auth/screens/login_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,7 +51,7 @@ class AdminApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const AdminAuthWrapper(),
+      home: const LoginScreen(),
     );
   }
 }

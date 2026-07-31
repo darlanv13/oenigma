@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
 
 import '../repositories/admin_repository.dart';
@@ -20,126 +20,152 @@ class AdminDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboardData = ref.watch(adminDashboardProvider);
 
-    return SingleChildScrollView(
+    return dashboardData.when(
+      data: (data) {
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStatsGrid(data),
+              const SizedBox(height: 30),
+              _buildSectionTitle('Atividade Recente', FontAwesomeIcons.clock),
+              _buildRecentActivity(data),
+            ],
+          ),
+        );
+      },
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: primaryAmber),
+      ),
+      error: (err, stack) => Center(
+        child: Text(
+          'Erro ao carregar dashboard:\n$err',
+          style: const TextStyle(color: Colors.red),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsGrid(Map<String, dynamic> data) {
+    return Wrap(
+      spacing: 20,
+      runSpacing: 20,
+      children: [
+        SizedBox(
+          width: 250,
+          child: _buildStatBox(
+            data['totalEvents']?.toString() ?? '0',
+            'Eventos',
+            FontAwesomeIcons.calendar,
+          ),
+        ),
+        SizedBox(
+          width: 250,
+          child: _buildStatBox(
+            data['totalEnigmas']?.toString() ?? '0',
+            'Enigmas',
+            FontAwesomeIcons.puzzlePiece,
+          ),
+        ),
+        SizedBox(
+          width: 250,
+          child: _buildStatBox(
+            data['totalBanners']?.toString() ?? '0',
+            'Banners',
+            FontAwesomeIcons.image,
+          ),
+        ),
+        SizedBox(
+          width: 250,
+          child: _buildStatBox(
+            data['totalHints']?.toString() ?? '0',
+            'Dicas',
+            FontAwesomeIcons.lightbulb,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatBox(String number, String label, dynamic icon) {
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: primaryAmber.withValues(alpha: 0.04),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            'Dashboard Geral',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          Text(
+            number,
+            style: GoogleFonts.orbitron(
+              color: primaryAmberLight,
+              fontSize: 38,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 24),
-          dashboardData.when(
-            data: (data) => Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: [
-                SizedBox(
-                  width: 250,
-                  child: _buildStatCard(
-                    'Usuários Ativos',
-                    data['users']?.toString() ?? '...',
-                    FontAwesomeIcons.userGroup,
-                    Colors.blue,
-                  ),
-                ),
-                SizedBox(
-                  width: 250,
-                  child: _buildStatCard(
-                    'Eventos Ativos',
-                    data['activeEvents']?.toString() ?? '...',
-                    FontAwesomeIcons.calendarCheck,
-                    Colors.green,
-                  ),
-                ),
-                SizedBox(
-                  width: 250,
-                  child: _buildStatCard(
-                    'Depósitos Totais',
-                    data['totalDeposits']?.toString() ?? '...',
-                    FontAwesomeIcons.dollarSign,
-                    primaryAmber,
-                  ),
-                ),
-                SizedBox(
-                  width: 250,
-                  child: _buildStatCard(
-                    'Saques Pendentes',
-                    data['pendingWithdrawals']?.toString() ?? '...',
-                    FontAwesomeIcons.moneyBillTrendUp,
-                    Colors.redAccent,
-                  ),
-                ),
-              ],
-            ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, stack) => Center(
-              child: Text(
-                'Erro ao carregar dashboard: $err',
-                style: const TextStyle(color: Colors.red),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FaIcon(
+                icon,
+                color: primaryAmber,
+                size: 12,
               ),
-            ),
-          ),
-          const SizedBox(height: 32),
-          const Text(
-            'Visão Geral de Engajamento',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            height: 300,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: cardColor,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(show: true, drawVerticalLine: false),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: true, reservedSize: 22),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: true, reservedSize: 40),
-                  ),
-                  topTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
+              const SizedBox(width: 4),
+              Text(
+                label.toUpperCase(),
+                style: GoogleFonts.inter(
+                  color: secondaryTextColor,
+                  fontSize: 11,
+                  letterSpacing: 0.5,
+                  fontWeight: FontWeight.w500,
                 ),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: const [
-                      FlSpot(0, 3),
-                      FlSpot(1, 1),
-                      FlSpot(2, 4),
-                      FlSpot(3, 2),
-                      FlSpot(4, 5),
-                      FlSpot(5, 3),
-                      FlSpot(6, 6),
-                    ],
-                    isCurved: true,
-                    color: primaryAmber,
-                    barWidth: 4,
-                    dotData: FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: primaryAmber.withValues(alpha: 0.2),
-                    ),
-                  ),
-                ],
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, dynamic icon) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 24, bottom: 14),
+      child: Row(
+        children: [
+          FaIcon(
+            icon,
+            color: primaryAmber,
+            size: 14,
+          ),
+          const SizedBox(width: 10),
+          Text(
+            title.toUpperCase(),
+            style: GoogleFonts.orbitron(
+              color: primaryAmber,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    primaryAmber.withValues(alpha: 0.15),
+                    Colors.transparent,
+                  ],
+                ),
               ),
             ),
           ),
@@ -148,33 +174,58 @@ class AdminDashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, dynamic icon, Color color) {
+  Widget _buildRecentActivity(Map<String, dynamic> data) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: BoxDecoration(
-        color: cardColor,
+        color: cardColor.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: primaryAmber.withValues(alpha: 0.04),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(color: secondaryTextColor, fontSize: 14),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: primaryAmber.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: primaryAmber.withValues(alpha: 0.06),
               ),
-              FaIcon(icon, color: color, size: 20),
-            ],
+            ),
+            child: const Center(
+              child: FaIcon(
+                FontAwesomeIcons.circleInfo,
+                color: primaryAmber,
+                size: 20,
+              ),
+            ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bem-vindo ao Painel ADM',
+                  style: GoogleFonts.inter(
+                    color: primaryAmberLight,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Comece criando seu primeiro evento!',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF8A7A5A),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
