@@ -139,7 +139,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       statusLabel = 'Encerrado';
     }
 
-    final prize = event.get<String>('prize') ?? event.get<String>('prizePool') ?? 'R\$ 0,00';
+    final prize = event.get<dynamic>('prize')?.toString() ?? event.get<dynamic>('prizePool')?.toString() ?? 'R\$ 0,00';
 
     return AdminItemCard(
       icon: FontAwesomeIcons.trophy,
@@ -299,7 +299,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               'title': nome,
                               'description': descricaoController.text.trim(),
                               'location': local,
-                              'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
+                              'prizePool': premioController.text.trim(),
                               'status': status,
                               'eventType': eventType,
                             }
@@ -321,7 +321,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
   void _showEditEventModal(BuildContext context, ParseObject event) {
     final nomeController = TextEditingController(text: event.get<String>('title') ?? event.get<String>('name'));
-    final premioController = TextEditingController(text: event.get<num>('prizePool')?.toString() ?? event.get<String>('prize'));
+    final premioController = TextEditingController(text: event.get<dynamic>('prizePool')?.toString() ?? event.get<dynamic>('prize')?.toString());
     final descricaoController = TextEditingController(text: event.get<String>('description') ?? '');
     final localController = TextEditingController(text: event.get<String>('location') ?? '');
     String status = event.get<String>('status') ?? 'encerrado';
@@ -493,7 +493,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               'title': nomeController.text.trim(),
                               'description': descricaoController.text.trim(),
                               'location': localController.text.trim(),
-                              'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
+                              'prizePool': premioController.text.trim(),
                               'status': status,
                               'eventType': eventType,
                             }
