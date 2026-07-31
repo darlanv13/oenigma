@@ -246,6 +246,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final nomeController = TextEditingController();
     final premioController = TextEditingController();
     String status = 'open'; // Using 'open' to match the activeEvents query
+    String type = 'find_and_win'; // Default eventType
 
     showDialog(
       context: context,
@@ -261,6 +262,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   _buildInputForm(controller: nomeController, hint: 'Nome do evento (Ex: Find Win Centro)'),
                   const SizedBox(height: 12),
                   _buildInputForm(controller: premioController, hint: 'Prêmio (Ex: R\$ 5.000,00)'),
+                  const SizedBox(height: 12),
+                  _buildSelectForm(
+                    value: type,
+                    items: const [
+                      DropdownMenuItem(value: 'find_and_win', child: Text('Find & Win (Enigmas Diretos)')),
+                      DropdownMenuItem(value: 'classic', child: Text('Classic (Fases)')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setModalState(() => type = val);
+                      }
+                    },
+                  ),
                   const SizedBox(height: 12),
                   _buildSelectForm(
                     value: status,
@@ -289,7 +303,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               'title': nome,
                               'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
                               'status': status,
-                              'eventType': 'find_and_win', // Default to find_and_win for new events based on mock
+                              'eventType': type,
                             }
                           }
                         );

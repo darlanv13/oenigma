@@ -136,60 +136,6 @@ Parse.Cloud.define("createOrUpdateEvent", async (request) => {
 
     await event.save(null, { useMasterKey: true });
 
-    if (isNew) {
-      const Phase = Parse.Object.extend("Phase");
-      const Enigma = Parse.Object.extend("Enigma");
-
-      let phasesToSave = [];
-      let enigmasToSave = [];
-
-      if (event.get("eventType") === "find_and_win") {
-        // Find and Win: Create Enigmas directly linked to Event, no phases
-        for (let j = 1; j <= 3; j++) {
-          const enigma = new Enigma();
-          enigma.set("event", event);
-          enigma.set("eventId", event.id);
-          enigma.set("order", j);
-          enigma.set("type", "text");
-          enigma.set("code", "");
-          enigma.set("instruction", `Enigma ${j} do Evento`);
-          enigma.set("prize", 0);
-          enigmasToSave.push(enigma);
-        }
-        await Parse.Object.saveAll(enigmasToSave, { useMasterKey: true });
-      } else {
-        // Classic: Create 5 Phases with 3 Enigmas each
-        for (let i = 1; i <= 5; i++) {
-          const phase = new Phase();
-          phase.set("event", event);
-          phase.set("eventId", event.id);
-          phase.set("order", i);
-          phase.set("isBlocked", i > 1);
-          phasesToSave.push(phase);
-        }
-
-        await Parse.Object.saveAll(phasesToSave, { useMasterKey: true });
-
-        for (let i = 0; i < phasesToSave.length; i++) {
-          const phase = phasesToSave[i];
-          for (let j = 1; j <= 3; j++) {
-            const enigma = new Enigma();
-            enigma.set("event", event);
-            enigma.set("eventId", event.id);
-            enigma.set("phase", phase);
-            enigma.set("phaseId", phase.id);
-            enigma.set("order", j);
-            enigma.set("type", "text");
-            enigma.set("code", "");
-            enigma.set("instruction", `Enigma ${j} da Fase ${i + 1}`);
-            enigma.set("prize", 0);
-            enigmasToSave.push(enigma);
-          }
-        }
-        await Parse.Object.saveAll(enigmasToSave, { useMasterKey: true });
-      }
-    }
-
     return { success: true, eventId: event.id };
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error saving event: " + error.message);
