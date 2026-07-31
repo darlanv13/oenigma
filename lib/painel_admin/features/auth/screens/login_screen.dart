@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/painel_admin/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/painel_admin/features/auth/screens/signup_screen.dart';
 import 'package:oenigma/painel_admin/features/auth/screens/forgot_password_screen.dart';
+import 'package:oenigma/painel_admin/features/admin/screens/main_admin_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -42,7 +43,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             SnackBar(content: Text(error), backgroundColor: Colors.red),
           );
         } else {
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          final user = authRepository.currentUser;
+          final isAdmin = user?.get<bool>('isAdmin') ?? false;
+          final role = user?.get<String>('role') ?? 'player';
+          if (!isAdmin && role != 'admin') {
+             ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Acesso Restrito: Apenas administradores.'), backgroundColor: Colors.red),
+             );
+             await authRepository.signOut();
+             setState(() => _isLoading = false);
+             return;
+          }
+          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const MainAdminScreen()));
         }
         setState(() => _isLoading = false);
       }
