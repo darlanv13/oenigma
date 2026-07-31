@@ -441,7 +441,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                            'mapPrice': mapPrice,
                            'compassPrice': scannerPrice,
                          };
-
+                         
                          await ParseCloudFunction('createOrUpdateEnigma').execute(
                             parameters: {
                                'eventId': enigma.get<String>('eventId') ?? '',
@@ -470,7 +470,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
   void _showAddHintModal(BuildContext context, ParseObject enigma, VoidCallback onSuccess) {
     final textController = TextEditingController();
     final priceController = TextEditingController(text: '0.50');
-
+    
     showDialog(
       context: context,
       builder: (context) {
