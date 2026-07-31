@@ -1209,7 +1209,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     );
 
     String selectedType = data?['type'] ?? 'text';
-    if (!['text', 'gps', 'qrcode'].contains(selectedType)) {
+    if (!['text', 'photo', 'audio'].contains(selectedType)) {
       selectedType = 'text';
     }
 
@@ -1303,15 +1303,15 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               items: const [
                                 DropdownMenuItem(
                                   value: 'text',
-                                  child: Text('Texto (Senha/Palavra)'),
+                                  child: Text('Charada (Texto)'),
                                 ),
                                 DropdownMenuItem(
-                                  value: 'gps',
-                                  child: Text('GPS + QR Code'),
+                                  value: 'photo',
+                                  child: Text('Foto (Imagem)'),
                                 ),
                                 DropdownMenuItem(
-                                  value: 'qrcode',
-                                  child: Text('QR Code Simples'),
+                                  value: 'audio',
+                                  child: Text('Áudio (Mídia)'),
                                 ),
                               ],
                               onChanged: (val) {
@@ -1798,7 +1798,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                       'order':
                                           int.tryParse(orderCtrl.text) ?? 1,
                                       'title': titleCtrl.text,
-                                      'code': codeCtrl.text,
+                                      'code': docId == null && codeCtrl.text.trim().isEmpty
+                                          ? '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond % 9000}'
+                                          : codeCtrl.text,
                                       'instruction': instructionCtrl.text,
                                       'type': selectedType,
                                       'prize':

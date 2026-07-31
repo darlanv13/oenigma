@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
@@ -236,9 +237,13 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
 
     final nomeController = TextEditingController();
     final premioController = TextEditingController();
+    final compassCoordsCtrl = TextEditingController();
     String tipo = 'text';
     String dificuldade = 'Médio';
     String eventId = _events.first.objectId!;
+    bool hasRadar = false;
+    bool hasMap = false;
+    bool hasCompass = false;
 
     showDialog(
       context: context,
@@ -258,9 +263,9 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                         child: _buildSelectForm(
                           value: tipo,
                           items: const [
-                            DropdownMenuItem(value: 'text', child: Text('Charada')),
-                            DropdownMenuItem(value: 'gps', child: Text('GPS')),
-                            DropdownMenuItem(value: 'qrcode', child: Text('QR Code')),
+                            DropdownMenuItem(value: 'text', child: Text('Charada (Texto)')),
+                            DropdownMenuItem(value: 'photo', child: Text('Foto (Imagem)')),
+                            DropdownMenuItem(value: 'audio', child: Text('Áudio (Mídia)')),
                           ],
                           onChanged: (val) { if (val != null) setModalState(() => tipo = val); },
                         ),
@@ -283,6 +288,75 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
+                  Text('Ferramentas:', style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12)),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SwitchListTile(
+                          title: Text('Radar', style: GoogleFonts.inter(color: Colors.white, fontSize: 12)),
+                          value: hasRadar,
+                          onChanged: (val) => setModalState(() => hasRadar = val),
+                          activeColor: primaryAmber,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      Expanded(
+                        child: SwitchListTile(
+                          title: Text('Mapa', style: GoogleFonts.inter(color: Colors.white, fontSize: 12)),
+                          value: hasMap,
+                          onChanged: (val) => setModalState(() => hasMap = val),
+                          activeColor: primaryAmber,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      Expanded(
+                        child: SwitchListTile(
+                          title: Text('Bússola', style: GoogleFonts.inter(color: Colors.white, fontSize: 12)),
+                          value: hasCompass,
+                          onChanged: (val) => setModalState(() => hasCompass = val),
+                          activeColor: primaryAmber,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (hasMap || hasCompass) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInputForm(controller: compassCoordsCtrl, hint: 'Coordenadas (Lat, Lng)'),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const FaIcon(FontAwesomeIcons.locationCrosshairs, color: primaryAmber, size: 20),
+                          onPressed: () async {
+                            try {
+                              bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+                              if (!serviceEnabled) throw 'Serviço de localização desativado.';
+
+                              LocationPermission permission = await Geolocator.checkPermission();
+                              if (permission == LocationPermission.denied) {
+                                permission = await Geolocator.requestPermission();
+                                if (permission == LocationPermission.denied) throw 'Permissão negada.';
+                              }
+                              if (permission == LocationPermission.deniedForever) throw 'Permissão permanentemente negada.';
+
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Buscando localização...')));
+                              Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+                              setModalState(() {
+                                compassCoordsCtrl.text = '${position.latitude}, ${position.longitude}';
+                              });
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+                            }
+                          }
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 16),
                   Text('Vincular ao Evento:', style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12)),
                   const SizedBox(height: 4),
                   _buildSelectForm(
@@ -297,21 +371,29 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                       _buildButton('Cancelar', onTap: () => Navigator.of(context).pop()),
                       const SizedBox(width: 12),
                       _buildButton('Criar Enigma', isPrimary: true, onTap: () async {
+                        if ((hasMap || hasCompass) && compassCoordsCtrl.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coordenadas são obrigatórias para Mapa/Bússola.')));
+                          return;
+                        }
+
+                        final generatedHash = '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond % 9000}';
+
                         await ParseCloudFunction('createOrUpdateEnigma').execute(
                           parameters: {
                             'eventId': eventId,
                             'data': {
                               'instruction': nomeController.text.trim(), // Assuming name maps to instruction
+                              'code': generatedHash,
                               'type': tipo,
                               'difficulty': dificuldade,
                               'prize': premioController.text.trim(),
                               'status': 'open',
-                              'hasCompass': false,
-                              'compassCoords': '',
+                              'hasCompass': hasCompass,
+                              'compassCoords': compassCoordsCtrl.text.trim(),
                               'compassPrice': 15.0,
                               'compassDuration': 0,
-                              'hasRadar': false,
-                              'hasMap': false,
+                              'hasRadar': hasRadar,
+                              'hasMap': hasMap,
                               'radarPrice': 2.99,
                               'mapPrice': 4.99,
                             }

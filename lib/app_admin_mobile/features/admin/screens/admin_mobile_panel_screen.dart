@@ -860,7 +860,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
       text: data?['prize']?.toString() ?? '0',
     );
 
-    String selectedType = data?['type'] ?? 'foto';
+    String selectedType = data?['type'] ?? 'text';
     bool hasCompass = data?['hasCompass'] ?? false;
     bool isSaving = false;
 
@@ -949,19 +949,15 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                             items: const [
                               DropdownMenuItem(
                                 value: 'text',
-                                child: Text('Texto'),
+                                child: Text('Charada (Texto)'),
                               ),
                               DropdownMenuItem(
-                                value: 'gps',
-                                child: Text('GPS'),
+                                value: 'photo',
+                                child: Text('Foto (Imagem)'),
                               ),
                               DropdownMenuItem(
-                                value: 'qrcode',
-                                child: Text('QR Code'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'foto',
-                                child: Text('Foto'),
+                                value: 'audio',
+                                child: Text('Áudio (Mídia)'),
                               ),
                             ],
                             onChanged: (val) =>
@@ -1309,7 +1305,9 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                                 final newData = {
                                   'order': int.tryParse(orderCtrl.text) ?? 1,
                                   'title': titleCtrl.text,
-                                  'code': codeCtrl.text,
+                                  'code': docId == null && codeCtrl.text.trim().isEmpty
+                                          ? '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond % 9000}'
+                                          : codeCtrl.text,
                                   'instruction': instructionCtrl.text,
                                   'type': selectedType,
                                   'prize': num.tryParse(prizeCtrl.text) ?? 0,
@@ -1335,7 +1333,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                                   'linkedHints': linkedHints,
                                   'characteristics': selectedCharacteristics,
                                 };
-                                if (selectedType == 'foto') {
+                                if (selectedType == 'photo') {
                                   newData['photoUrl'] = photoUrlCtrl.text;
                                 }
 
