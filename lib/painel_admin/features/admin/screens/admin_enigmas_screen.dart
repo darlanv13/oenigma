@@ -297,16 +297,23 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                       _buildButton('Cancelar', onTap: () => Navigator.of(context).pop()),
                       const SizedBox(width: 12),
                       _buildButton('Criar Enigma', isPrimary: true, onTap: () async {
+                        final newData = {
+                          'instruction': nomeController.text.trim(),
+                          'title': nomeController.text.trim(),
+                          'type': tipo,
+                          'difficulty': dificuldade,
+                          'prize': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
+                          'status': 'open',
+                          'hasCompass': false,
+                          'compassCoords': '',
+                          'compassPrice': 15.0,
+                          'compassDuration': 0,
+                        };
+
                         await ParseCloudFunction('createOrUpdateEnigma').execute(
                           parameters: {
                             'eventId': eventId,
-                            'data': {
-                              'instruction': nomeController.text.trim(), // Assuming name maps to instruction
-                              'type': tipo,
-                              'difficulty': dificuldade,
-                              'prize': premioController.text.trim(),
-                              'status': 'open',
-                            }
+                            'data': newData
                           }
                         );
                         if (context.mounted) Navigator.of(context).pop();

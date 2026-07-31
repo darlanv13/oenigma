@@ -296,15 +296,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         await ParseCloudFunction('createOrUpdateEvent').execute(
                           parameters: {
                             'data': {
-<<<<<<< HEAD
-                              'name': nome,
-                              'prize': premioController.text.trim(),
-=======
                               'title': nome,
                               'description': descricaoController.text.trim(),
                               'location': local,
                               'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
->>>>>>> origin/fix-event-creation-automatic-enigmas-8144183794438911336
                               'status': status,
                               'eventType': eventType,
                             }
@@ -325,15 +320,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }
 
   void _showEditEventModal(BuildContext context, ParseObject event) {
-<<<<<<< HEAD
-    final nomeController = TextEditingController(text: event.get<String>('name'));
-    final premioController = TextEditingController(text: event.get<String>('prize') ?? event.get<String>('prizePool'));
-=======
     final nomeController = TextEditingController(text: event.get<String>('title') ?? event.get<String>('name'));
     final premioController = TextEditingController(text: event.get<num>('prizePool')?.toString() ?? event.get<String>('prize'));
     final descricaoController = TextEditingController(text: event.get<String>('description') ?? '');
     final localController = TextEditingController(text: event.get<String>('location') ?? '');
->>>>>>> origin/fix-event-creation-automatic-enigmas-8144183794438911336
     String status = event.get<String>('status') ?? 'encerrado';
     String eventType = event.get<String>('eventType') ?? 'find_and_win';
 
@@ -417,15 +407,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                           parameters: {
                             'eventId': event.objectId,
                             'data': {
-<<<<<<< HEAD
-                              'name': nomeController.text.trim(),
-                              'prize': premioController.text.trim(),
-=======
                               'title': nomeController.text.trim(),
                               'description': descricaoController.text.trim(),
                               'location': localController.text.trim(),
                               'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
->>>>>>> origin/fix-event-creation-automatic-enigmas-8144183794438911336
                               'status': status,
                               'eventType': eventType,
                             }
