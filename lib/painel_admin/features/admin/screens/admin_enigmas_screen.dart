@@ -306,6 +306,14 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                               'difficulty': dificuldade,
                               'prize': premioController.text.trim(),
                               'status': 'open',
+                              'hasCompass': false,
+                              'compassCoords': '',
+                              'compassPrice': 15.0,
+                              'compassDuration': 0,
+                              'hasRadar': false,
+                              'hasMap': false,
+                              'radarPrice': 2.99,
+                              'mapPrice': 4.99,
                             }
                           }
                         );
@@ -326,19 +334,12 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
 
 
   void _showManageEnigmaModal(BuildContext context, ParseObject enigma) {
-    Map<String, dynamic> tools = {};
-    try {
-      if (enigma.get<Map<String, dynamic>>('tools') != null) {
-        tools = Map<String, dynamic>.from(enigma.get<Map<String, dynamic>>('tools')!);
-      }
-    } catch (_) {}
-
-    bool hasRadar = tools['hasRadar'] ?? false;
-    bool hasMap = tools['hasMap'] ?? false;
-    bool hasScanner = tools['hasCompass'] ?? false; // Scanner maps to Compass
-    double radarPrice = (tools['radarPrice'] as num?)?.toDouble() ?? 2.99;
-    double mapPrice = (tools['mapPrice'] as num?)?.toDouble() ?? 4.99;
-    double scannerPrice = (tools['compassPrice'] as num?)?.toDouble() ?? 1.99;
+    bool hasRadar = enigma.get<bool>('hasRadar') ?? false;
+    bool hasMap = enigma.get<bool>('hasMap') ?? false;
+    bool hasScanner = enigma.get<bool>('hasCompass') ?? false; // Scanner maps to Compass
+    double radarPrice = (enigma.get<num>('radarPrice'))?.toDouble() ?? 2.99;
+    double mapPrice = (enigma.get<num>('mapPrice'))?.toDouble() ?? 4.99;
+    double scannerPrice = (enigma.get<num>('compassPrice'))?.toDouble() ?? 1.99;
 
     showDialog(
 
@@ -433,21 +434,17 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                       const SizedBox(width: 12),
 
                       _buildButton('Salvar', isPrimary: true, onTap: () async {
-                         final tools = {
-                           'hasRadar': hasRadar,
-                           'hasMap': hasMap,
-                           'hasCompass': hasScanner,
-                           'radarPrice': radarPrice,
-                           'mapPrice': mapPrice,
-                           'compassPrice': scannerPrice,
-                         };
-                         
                          await ParseCloudFunction('createOrUpdateEnigma').execute(
                             parameters: {
                                'eventId': enigma.get<String>('eventId') ?? '',
                                'data': {
                                   'enigmaId': enigma.objectId,
-                                  'tools': tools,
+                                  'hasRadar': hasRadar,
+                                  'hasMap': hasMap,
+                                  'hasCompass': hasScanner,
+                                  'radarPrice': radarPrice,
+                                  'mapPrice': mapPrice,
+                                  'compassPrice': scannerPrice,
                                }
                             }
                          );

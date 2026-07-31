@@ -1113,7 +1113,10 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                                 labelText: 'Preço',
                                 prefixText: 'R\$ ',
                               ),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -1314,8 +1317,21 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                                   'compassCoords': hasCompass
                                       ? compassCoordsCtrl.text.trim()
                                       : '',
-                                  'compassPrice': double.tryParse(compassPriceCtrl.text.replaceAll(',', '.')) ?? 15.0,
-                                  'compassDuration': int.tryParse(compassDurationCtrl.text) ?? 0,
+                                  'compassPrice':
+                                      double.tryParse(
+                                        compassPriceCtrl.text.replaceAll(
+                                          ',',
+                                          '.',
+                                        ),
+                                      ) ??
+                                      15.0,
+                                  'compassDuration':
+                                      int.tryParse(compassDurationCtrl.text) ??
+                                      0,
+                                  'hasRadar': data?['hasRadar'] ?? false,
+                                  'hasMap': data?['hasMap'] ?? false,
+                                  'radarPrice': data?['radarPrice'] ?? 2.99,
+                                  'mapPrice': data?['mapPrice'] ?? 4.99,
                                   'linkedHints': linkedHints,
                                   'characteristics': selectedCharacteristics,
                                 };

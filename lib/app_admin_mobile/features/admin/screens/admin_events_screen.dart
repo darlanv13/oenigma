@@ -1421,11 +1421,26 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                 labelText: 'Ícone',
                               ),
                               items: const [
-                                DropdownMenuItem(value: 'skull', child: Text('Caveira')),
-                                DropdownMenuItem(value: 'map', child: Text('Mapa')),
-                                DropdownMenuItem(value: 'robot', child: Text('Robô')),
-                                DropdownMenuItem(value: 'ghost', child: Text('Fantasma')),
-                                DropdownMenuItem(value: 'crown', child: Text('Coroa')),
+                                DropdownMenuItem(
+                                  value: 'skull',
+                                  child: Text('Caveira'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'map',
+                                  child: Text('Mapa'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'robot',
+                                  child: Text('Robô'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'ghost',
+                                  child: Text('Fantasma'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'crown',
+                                  child: Text('Coroa'),
+                                ),
                               ],
                               onChanged: (val) {
                                 setState(() {
@@ -1442,10 +1457,22 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                 labelText: 'Dificuldade',
                               ),
                               items: const [
-                                DropdownMenuItem(value: 'FÁCIL', child: Text('FÁCIL')),
-                                DropdownMenuItem(value: 'MÉDIA', child: Text('MÉDIA')),
-                                DropdownMenuItem(value: 'ALTA', child: Text('ALTA')),
-                                DropdownMenuItem(value: 'ÉPICO', child: Text('ÉPICO')),
+                                DropdownMenuItem(
+                                  value: 'FÁCIL',
+                                  child: Text('FÁCIL'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'MÉDIA',
+                                  child: Text('MÉDIA'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'ALTA',
+                                  child: Text('ALTA'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'ÉPICO',
+                                  child: Text('ÉPICO'),
+                                ),
                               ],
                               onChanged: (val) {
                                 setState(() {
@@ -1550,30 +1577,53 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                   Expanded(
                                     child: TextFormField(
                                       controller: compassPriceCtrl,
-                                      style: const TextStyle(color: Colors.white),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                      ),
                                       decoration: InputDecoration(
                                         labelText: 'Preço (R\$)',
-                                        prefixIcon: const Icon(Icons.attach_money, color: Colors.greenAccent),
+                                        prefixIcon: const Icon(
+                                          Icons.attach_money,
+                                          color: Colors.greenAccent,
+                                        ),
                                         filled: true,
                                         fillColor: Colors.white10,
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
                                       ),
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            decimal: true,
+                                          ),
                                     ),
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: TextFormField(
                                       controller: compassDurationCtrl,
-                                      style: const TextStyle(color: Colors.white),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                      ),
                                       decoration: InputDecoration(
                                         labelText: 'Tempo (Segundos)',
-                                        prefixIcon: const Icon(Icons.timer, color: Colors.redAccent),
+                                        prefixIcon: const Icon(
+                                          Icons.timer,
+                                          color: Colors.redAccent,
+                                        ),
                                         filled: true,
                                         fillColor: Colors.white10,
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
                                         helperText: '0 = Infinito',
-                                        helperStyle: const TextStyle(color: Colors.grey),
+                                        helperStyle: const TextStyle(
+                                          color: Colors.grey,
+                                        ),
                                       ),
                                       keyboardType: TextInputType.number,
                                     ),
@@ -1763,8 +1813,23 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                           (hasCompass || selectedType == 'gps')
                                           ? compassCoordsCtrl.text.trim()
                                           : '',
-                                      'compassPrice': double.tryParse(compassPriceCtrl.text.replaceAll(',', '.')) ?? 15.0,
-                                      'compassDuration': int.tryParse(compassDurationCtrl.text) ?? 0,
+                                      'compassPrice':
+                                          double.tryParse(
+                                            compassPriceCtrl.text.replaceAll(
+                                              ',',
+                                              '.',
+                                            ),
+                                          ) ??
+                                          15.0,
+                                      'compassDuration':
+                                          int.tryParse(
+                                            compassDurationCtrl.text,
+                                          ) ??
+                                          0,
+                                      'hasRadar': data?['hasRadar'] ?? false,
+                                      'hasMap': data?['hasMap'] ?? false,
+                                      'radarPrice': data?['radarPrice'] ?? 2.99,
+                                      'mapPrice': data?['mapPrice'] ?? 4.99,
                                       'imageUrl': photoUrlCtrl.text,
                                       'audioUrl': audioUrlCtrl.text,
                                     };
