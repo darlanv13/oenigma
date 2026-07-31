@@ -139,7 +139,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }
 
   Widget _buildEventCard(ParseObject event) {
-    final status = event.get<String>('status') ?? 'encerrado';
+    final status = event.get<dynamic>('status')?.toString() ?? 'encerrado';
     Color statusColor;
     String statusLabel;
 
@@ -156,11 +156,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
     final prize = event.get<num>('prizePool') != null
                   ? 'R\$ ${event.get<num>('prizePool')}'
-                  : (event.get<String>('prize') ?? 'R\$ 0,00');
+                  : (event.get<dynamic>('prize')?.toString() ?? 'R\$ 0,00');
 
     return AdminItemCard(
       icon: FontAwesomeIcons.trophy,
-      title: event.get<String>('title') ?? event.get<String>('name') ?? 'Sem Título',
+      title: event.get<dynamic>('title')?.toString() ?? event.get<dynamic>('name')?.toString() ?? 'Sem Título',
       statusText: statusLabel,
       statusColor: statusColor,
       subtitle: '$prize',
@@ -308,9 +308,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }
 
   void _showEditEventModal(BuildContext context, ParseObject event) {
-    final nomeController = TextEditingController(text: event.get<String>('title') ?? event.get<String>('name'));
-    final premioController = TextEditingController(text: event.get<num>('prizePool')?.toString() ?? event.get<String>('prize'));
-    String status = event.get<String>('status') ?? 'encerrado';
+    final nomeController = TextEditingController(text: event.get<dynamic>('title')?.toString() ?? event.get<dynamic>('name')?.toString());
+    final premioController = TextEditingController(text: event.get<num>('prizePool')?.toString() ?? event.get<dynamic>('prize')?.toString());
+    String status = event.get<dynamic>('status')?.toString() ?? 'encerrado';
 
     showDialog(
       context: context,
@@ -371,7 +371,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
                       return Column(
                         children: enigmas.map((enig) {
-                          final status = enig.get<String>('status') ?? 'bloqueado';
+                          final status = enig.get<dynamic>('status')?.toString() ?? 'bloqueado';
                           Color statusColor = secondaryTextColor;
                           String statusLabel = 'Bloqueado';
 
@@ -383,14 +383,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             statusLabel = 'Disponível';
                           }
 
-                          final tipo = enig.get<String>('type') ?? 'charada';
+                          final tipo = enig.get<dynamic>('type')?.toString() ?? 'charada';
                           dynamic tipoIcon = FontAwesomeIcons.pencil;
                           if (tipo == 'gps') tipoIcon = FontAwesomeIcons.locationDot;
                           else if (tipo == 'qrcode') tipoIcon = FontAwesomeIcons.camera;
 
                           return AdminItemCard(
                             icon: tipoIcon,
-                            title: enig.get<String>('instruction') ?? enig.get<String>('name') ?? 'Sem Nome',
+                            title: enig.get<dynamic>('instruction')?.toString() ?? enig.get<dynamic>('name')?.toString() ?? 'Sem Nome',
                             statusText: statusLabel,
                             statusColor: statusColor,
                             subtitle: 'Tipo: $tipo · Prêmio: ${enig.get<num>('prize') != null ? 'R\$ ${enig.get<num>('prize')}' : 'R\$ 0,00'}',
