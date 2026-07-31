@@ -115,8 +115,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
   Widget _buildEmptyState() {
     return const AdminItemCard(
-      icon: FontAwesomeIcons.circleInfo,
-      title: 'Nenhum evento criado',
+      icon: FontAwesomeIcons.calendarXmark,
+      title: 'Nenhum Evento',
       statusText: '',
       statusColor: Colors.transparent,
       subtitle: 'Clique em "Novo Evento" para começar.',
@@ -139,14 +139,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       statusLabel = 'Encerrado';
     }
 
-    final prize = event.get<String>('prize') ?? event.get<String>('prizePool') ?? 'R\$ 0,00';
+    final prize = event.get<String>('prize') ?? event.get<num>('prizePool')?.toString() ?? 'R\$ 0,00';
 
     return AdminItemCard(
       icon: FontAwesomeIcons.trophy,
-      title: event.get<String>('name') ?? 'Sem Nome',
+      title: event.get<String>('title') ?? event.get<String>('name') ?? 'Sem Nome',
       statusText: statusLabel,
       statusColor: statusColor,
-      subtitle: '$prize',
+      subtitle: prize,
       actions: [
         _buildButton('Editar', isPrimary: true, onTap: () => _showEditEventModal(context, event)),
         const SizedBox(width: 8),
@@ -165,6 +165,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         decoration: BoxDecoration(
           border: Border.all(color: primaryAmber.withValues(alpha: 0.15), width: 1.5, style: BorderStyle.none),
           borderRadius: BorderRadius.circular(16),
+          color: cardColor.withValues(alpha: 0.5),
         ),
         child: CustomPaint(
           painter: _DashedBorderPainter(),
@@ -175,11 +176,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
               const SizedBox(width: 8),
               Text(
                 text,
-                style: GoogleFonts.inter(
-                  color: secondaryTextColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -188,18 +185,21 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     );
   }
 
-  Widget _buildButton(String text, {bool isPrimary = false, bool isDanger = false, required VoidCallback onTap}) {
+  Widget _buildButton(String text, {bool isPrimary = false, bool isDanger = false, bool isWarning = false, required VoidCallback onTap}) {
     Color bgColor = Colors.transparent;
     Color textColorStr = primaryAmberHover;
     Color borderColor = primaryAmber.withValues(alpha: 0.15);
 
     if (isPrimary) {
-      bgColor = primaryAmber; // using linear gradient ideally, but solid for simplicity
+      bgColor = primaryAmber;
       textColorStr = darkBackground;
       borderColor = Colors.transparent;
     } else if (isDanger) {
       textColorStr = dangerColor;
       borderColor = dangerColor.withValues(alpha: 0.3);
+    } else if (isWarning) {
+      textColorStr = warningColor;
+      borderColor = warningColor.withValues(alpha: 0.3);
     }
 
     return InkWell(
@@ -207,19 +207,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       borderRadius: BorderRadius.circular(30),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: borderColor),
-        ),
+        decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(30), border: Border.all(color: borderColor)),
         child: Text(
           text.toUpperCase(),
-          style: GoogleFonts.inter(
-            color: textColorStr,
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.3,
-          ),
+          style: GoogleFonts.inter(color: textColorStr, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.3),
         ),
       ),
     );
@@ -230,7 +221,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final premioController = TextEditingController();
     final descricaoController = TextEditingController();
     final localController = TextEditingController();
-    String status = 'open'; // Using 'open' to match the activeEvents query
+    String status = 'em_breve';
     String eventType = 'find_and_win';
 
     showDialog(
@@ -296,15 +287,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         await ParseCloudFunction('createOrUpdateEvent').execute(
                           parameters: {
                             'data': {
-<<<<<<< HEAD
-                              'name': nome,
-                              'prize': premioController.text.trim(),
-=======
                               'title': nome,
                               'description': descricaoController.text.trim(),
                               'location': local,
                               'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
->>>>>>> origin/fix-event-creation-automatic-enigmas-8144183794438911336
                               'status': status,
                               'eventType': eventType,
                             }
@@ -325,15 +311,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }
 
   void _showEditEventModal(BuildContext context, ParseObject event) {
-<<<<<<< HEAD
-    final nomeController = TextEditingController(text: event.get<String>('name'));
-    final premioController = TextEditingController(text: event.get<String>('prize') ?? event.get<String>('prizePool'));
-=======
     final nomeController = TextEditingController(text: event.get<String>('title') ?? event.get<String>('name'));
     final premioController = TextEditingController(text: event.get<num>('prizePool')?.toString() ?? event.get<String>('prize'));
     final descricaoController = TextEditingController(text: event.get<String>('description') ?? '');
     final localController = TextEditingController(text: event.get<String>('location') ?? '');
->>>>>>> origin/fix-event-creation-automatic-enigmas-8144183794438911336
     String status = event.get<String>('status') ?? 'encerrado';
     String eventType = event.get<String>('eventType') ?? 'find_and_win';
 
@@ -401,11 +382,119 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   ),
                   const SizedBox(height: 16),
                   _buildSectionTitle('Enigmas deste evento', FontAwesomeIcons.puzzlePiece),
-                  // Enigmas list should go here - requires a query to Enigma table filtered by eventId
-                  const Padding(
-                    padding: EdgeInsets.all(12.0),
-                    child: Center(child: Text('Funcionalidade de edição de enigmas será adicionada.', style: TextStyle(color: secondaryTextColor))),
+
+                  // Enigmas list
+                  SizedBox(
+                    height: 250,
+                    child: FutureBuilder<ParseResponse>(
+                      future: () {
+                        final query = QueryBuilder<ParseObject>(ParseObject('Enigma'))
+                          ..whereEqualTo('eventId', event.objectId)
+                          ..orderByAscending('order');
+                        return query.query();
+                      }(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator(color: primaryAmber));
+                        }
+
+                        final results = snapshot.data?.results;
+                        if (results == null || results.isEmpty) {
+                          return const Center(child: Text('Nenhum enigma vinculado a este evento.', style: TextStyle(color: secondaryTextColor)));
+                        }
+
+                        return ListView.builder(
+                          itemCount: results.length,
+                          itemBuilder: (context, index) {
+                            final enigma = results[index] as ParseObject;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: sidebarBackground,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: primaryAmber.withValues(alpha: 0.1)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(enigma.get<String>('instruction') ?? enigma.get<String>('title') ?? 'Sem nome', style: const TextStyle(color: primaryAmberLight, fontWeight: FontWeight.bold)),
+                                          Text('Tipo: ${enigma.get<String>('type') ?? 'N/A'} | Prêmio: ${enigma.get<num>('prize') ?? '0'}', style: const TextStyle(color: secondaryTextColor, fontSize: 12)),
+                                        ],
+                                      ),
+                                    ),
+                                    _buildButton('Editar', isPrimary: true, onTap: () {
+                                      _showEnigmaEditDialog(
+                                        context,
+                                        event.objectId!,
+                                        docId: enigma.objectId,
+                                        data: {
+                                          'order': enigma.get<num>('order')?.toInt() ?? 1,
+                                          'title': enigma.get<String>('title') ?? '',
+                                          'code': enigma.get<String>('code') ?? '',
+                                          'instruction': enigma.get<String>('instruction') ?? '',
+                                          'prize': enigma.get<num>('prize') ?? 0,
+                                          'imageUrl': enigma.get<String>('imageUrl') ?? '',
+                                          'audioUrl': enigma.get<String>('audioUrl') ?? '',
+                                          'icon': enigma.get<String>('icon') ?? 'skull',
+                                          'difficulty': enigma.get<String>('difficulty') ?? 'MÉDIA',
+                                          'hasCompass': enigma.get<bool>('hasCompass') ?? false,
+                                          'compassCoords': enigma.get<String>('compassCoords') ?? '',
+                                          'compassPrice': enigma.get<num>('compassPrice') ?? 15.0,
+                                          'compassDuration': enigma.get<num>('compassDuration') ?? 0,
+                                          'type': enigma.get<String>('type') ?? 'text',
+                                        },
+                                        onSaved: () {
+                                          setModalState(() {});
+                                        }
+                                      );
+                                    }),
+                                    const SizedBox(width: 8),
+                                    _buildButton('Excluir', isDanger: true, onTap: () async {
+                                       final confirm = await showDialog<bool>(
+                                         context: context,
+                                         builder: (ctx) => AlertDialog(
+                                           backgroundColor: sidebarBackground,
+                                           title: const Text('Excluir Enigma', style: TextStyle(color: Colors.white)),
+                                           content: const Text('Deseja excluir este enigma?', style: TextStyle(color: secondaryTextColor)),
+                                           actions: [
+                                             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+                                             TextButton(
+                                               onPressed: () => Navigator.pop(ctx, true),
+                                               child: const Text('Excluir', style: TextStyle(color: dangerColor)),
+                                             ),
+                                           ],
+                                         ),
+                                       );
+
+                                       if (confirm == true) {
+                                          await ParseCloudFunction('deleteEnigma').execute(parameters: {'enigmaId': enigma.objectId});
+                                          setModalState((){});
+                                       }
+                                    }),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                        );
+                      }
+                    )
                   ),
+
+                  const SizedBox(height: 12),
+                  Center(
+                    child: _buildButton('Novo Enigma', isPrimary: true, onTap: () {
+                      _showEnigmaEditDialog(context, event.objectId!, onSaved: () {
+                        setModalState(() {});
+                      });
+                    }),
+                  ),
+
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -417,15 +506,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                           parameters: {
                             'eventId': event.objectId,
                             'data': {
-<<<<<<< HEAD
-                              'name': nomeController.text.trim(),
-                              'prize': premioController.text.trim(),
-=======
                               'title': nomeController.text.trim(),
                               'description': descricaoController.text.trim(),
                               'location': localController.text.trim(),
                               'prizePool': num.tryParse(premioController.text.trim().replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0,
->>>>>>> origin/fix-event-creation-automatic-enigmas-8144183794438911336
                               'status': status,
                               'eventType': eventType,
                             }
@@ -445,10 +529,226 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     );
   }
 
-  Future<void> _deleteEvent(ParseObject event) async {
-    // Calling backend delete is not present in admin.js mock, using ParseObject.delete
-    final response = await event.delete();
-    if (response.success) {
+  void _showEnigmaEditDialog(
+    BuildContext context,
+    String eventId,
+    {
+    String? docId,
+    Map<String, dynamic>? data,
+    VoidCallback? onSaved,
+  }) {
+    final orderCtrl = TextEditingController(text: data?['order']?.toString() ?? '1');
+    final titleCtrl = TextEditingController(text: data?['title']);
+    final codeCtrl = TextEditingController(text: data?['code']);
+    final instructionCtrl = TextEditingController(text: data?['instruction']);
+    final prizeCtrl = TextEditingController(text: data?['prize']?.toString() ?? '0');
+    final photoUrlCtrl = TextEditingController(text: data?['imageUrl']);
+    final audioUrlCtrl = TextEditingController(text: data?['audioUrl']);
+
+    String selectedIcon = data?['icon'] ?? 'skull';
+    String selectedDifficulty = data?['difficulty'] ?? 'MÉDIA';
+
+    bool hasCompass = data?['hasCompass'] ?? false;
+    final compassCoordsCtrl = TextEditingController(text: data?['compassCoords']);
+    final compassPriceCtrl = TextEditingController(text: data?['compassPrice']?.toString() ?? '15.0');
+    final compassDurationCtrl = TextEditingController(text: data?['compassDuration']?.toString() ?? '0');
+
+    String selectedType = data?['type'] ?? 'text';
+    if (!['text', 'gps', 'qrcode'].contains(selectedType)) {
+      selectedType = 'text';
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AdminModal(
+              title: docId == null ? 'Novo Enigma' : 'Editar Enigma',
+              maxWidth: 600,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: _buildInputForm(controller: orderCtrl, hint: 'Ordem')),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: _buildSelectForm(
+                            value: selectedType,
+                            items: const [
+                              DropdownMenuItem(value: 'text', child: Text('Texto (Senha/Palavra)')),
+                              DropdownMenuItem(value: 'gps', child: Text('GPS (Localização)')),
+                              DropdownMenuItem(value: 'qrcode', child: Text('QR Code')),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) setModalState(() => selectedType = val);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildInputForm(controller: titleCtrl, hint: 'Título Privado (Admin)'),
+                    const SizedBox(height: 12),
+                    _buildInputForm(controller: instructionCtrl, hint: 'Nome / Instrução (Público)'),
+                    const SizedBox(height: 12),
+                    if (selectedType == 'text' || selectedType == 'qrcode' || selectedType == 'gps') ...[
+                      _buildInputForm(controller: codeCtrl, hint: 'Código Secreto (Senha / QR)'),
+                      const SizedBox(height: 12),
+                    ],
+                    Row(
+                      children: [
+                        Expanded(child: _buildInputForm(controller: prizeCtrl, hint: 'Prêmio (R\$)')),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildSelectForm(
+                            value: selectedDifficulty,
+                            items: const [
+                              DropdownMenuItem(value: 'FÁCIL', child: Text('Fácil')),
+                              DropdownMenuItem(value: 'MÉDIA', child: Text('Média')),
+                              DropdownMenuItem(value: 'DIFÍCIL', child: Text('Difícil')),
+                              DropdownMenuItem(value: 'LENDÁRIA', child: Text('Lendária')),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) setModalState(() => selectedDifficulty = val);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildSectionTitle('Mídia', FontAwesomeIcons.image),
+                    _buildInputForm(controller: photoUrlCtrl, hint: 'URL da Imagem (Opcional)'),
+                    const SizedBox(height: 12),
+                    _buildInputForm(controller: audioUrlCtrl, hint: 'URL do Áudio (Opcional)'),
+
+                    const SizedBox(height: 16),
+                    _buildSectionTitle('Bússola / GPS', FontAwesomeIcons.compass),
+                    Row(
+                      children: [
+                        Theme(
+                          data: ThemeData(unselectedWidgetColor: secondaryTextColor),
+                          child: Checkbox(
+                            value: hasCompass,
+                            activeColor: primaryAmber,
+                            checkColor: Colors.black,
+                            onChanged: (val) {
+                              if (val != null) setModalState(() => hasCompass = val);
+                            },
+                          ),
+                        ),
+                        const Text('Habilitar Bússola', style: TextStyle(color: secondaryTextColor)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _buildInputForm(controller: compassCoordsCtrl, hint: 'Coordenadas (Lat, Lng) - Obrigatório para GPS/Bússola'),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: _buildInputForm(controller: compassPriceCtrl, hint: 'Preço Bússola (R\$)')),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildInputForm(controller: compassDurationCtrl, hint: 'Duração Bússola (Segundos)')),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        _buildButton('Cancelar', onTap: () => Navigator.of(context).pop()),
+                        const SizedBox(width: 12),
+                        _buildButton('Salvar', isPrimary: true, onTap: () async {
+                           if ((hasCompass || selectedType == 'gps') &&
+                               compassCoordsCtrl.text.trim().isEmpty) {
+                             ScaffoldMessenger.of(context).showSnackBar(
+                               const SnackBar(
+                                 content: Text('Erro: Coordenadas do GPS são obrigatórias!'),
+                                 backgroundColor: Colors.redAccent,
+                               ),
+                             );
+                             return;
+                           }
+
+                           final newData = {
+                              'icon': selectedIcon,
+                              'difficulty': selectedDifficulty,
+                              'order': int.tryParse(orderCtrl.text) ?? 1,
+                              'title': titleCtrl.text,
+                              'code': codeCtrl.text,
+                              'instruction': instructionCtrl.text,
+                              'type': selectedType,
+                              'prize': num.tryParse(prizeCtrl.text) ?? 0,
+                              'hasCompass': hasCompass,
+                              'compassCoords': (hasCompass || selectedType == 'gps') ? compassCoordsCtrl.text.trim() : '',
+                              'compassPrice': double.tryParse(compassPriceCtrl.text.replaceAll(',', '.')) ?? 15.0,
+                              'compassDuration': int.tryParse(compassDurationCtrl.text) ?? 0,
+                              'imageUrl': photoUrlCtrl.text,
+                              'audioUrl': audioUrlCtrl.text,
+                           };
+
+                           ParseResponse response;
+                           if (docId == null) {
+                             response = await ParseCloudFunction('createOrUpdateEnigma').execute(
+                               parameters: {
+                                 'eventId': eventId,
+                                 'data': newData,
+                               },
+                             );
+                           } else {
+                             response = await ParseCloudFunction('createOrUpdateEnigma').execute(
+                               parameters: {
+                                 'eventId': eventId,
+                                 'enigmaId': docId,
+                                 'data': newData,
+                               },
+                             );
+                           }
+
+                           if (response.success) {
+                             if (context.mounted) {
+                               Navigator.pop(context);
+                               if (onSaved != null) onSaved();
+                             }
+                           } else {
+                             if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao salvar: ${response.error?.message}')));
+                             }
+                           }
+                        }),
+                      ],
+                    )
+                  ]
+                )
+              )
+            );
+          }
+        );
+      }
+    );
+  }
+
+  void _deleteEvent(ParseObject event) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: sidebarBackground,
+        title: const Text('Excluir Evento', style: TextStyle(color: Colors.white)),
+        content: const Text('Deseja mesmo excluir este evento e todos os seus dados?', style: TextStyle(color: secondaryTextColor)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Excluir', style: TextStyle(color: dangerColor)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await ParseCloudFunction('deleteEvent').execute(parameters: {'eventId': event.objectId});
       _loadEvents();
     }
   }
@@ -457,21 +757,15 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 15),
+      style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: secondaryTextColor.withValues(alpha: 0.5)),
         filled: true,
         fillColor: cardColor.withValues(alpha: 0.8),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: primaryAmber.withValues(alpha: 0.15)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryAmber),
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: primaryAmber.withValues(alpha: 0.15))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryAmber)),
       ),
     );
   }
@@ -479,16 +773,12 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   Widget _buildSelectForm({required String value, required List<DropdownMenuItem<String>> items, required ValueChanged<String?> onChanged}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: cardColor.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: primaryAmber.withValues(alpha: 0.15)),
-      ),
+      decoration: BoxDecoration(color: cardColor.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(12), border: Border.all(color: primaryAmber.withValues(alpha: 0.15))),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           dropdownColor: sidebarBackground,
-          style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 15),
+          style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 14),
           isExpanded: true,
           items: items,
           onChanged: onChanged,
@@ -509,25 +799,21 @@ class _DashedBorderPainter extends CustomPainter {
     const dashWidth = 5.0;
     const dashSpace = 5.0;
 
-    // Draw top
     double startX = 0;
     while (startX < size.width) {
       canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
       startX += dashWidth + dashSpace;
     }
-    // Draw right
     double startY = 0;
     while (startY < size.height) {
       canvas.drawLine(Offset(size.width, startY), Offset(size.width, startY + dashWidth), paint);
       startY += dashWidth + dashSpace;
     }
-    // Draw bottom
     startX = size.width;
     while (startX > 0) {
       canvas.drawLine(Offset(startX, size.height), Offset(startX - dashWidth, size.height), paint);
       startX -= dashWidth + dashSpace;
     }
-    // Draw left
     startY = size.height;
     while (startY > 0) {
       canvas.drawLine(Offset(0, startY), Offset(0, startY - dashWidth), paint);
