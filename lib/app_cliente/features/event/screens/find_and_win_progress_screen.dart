@@ -36,10 +36,7 @@ class _FindAndWinProgressScreenState
       _,
     ) async {
       final query = QueryBuilder<ParseObject>(ParseObject('Enigma'))
-        ..whereEqualTo(
-          'event',
-          (ParseObject('Event')..objectId = widget.event.id).toPointer(),
-        )
+        ..whereEqualTo('eventId', widget.event.id)
         ..orderByAscending('order');
 
       final response = await query.query();
@@ -52,6 +49,7 @@ class _FindAndWinProgressScreenState
             'instruction': doc.get<String>('instruction') ?? '',
             'prize': doc.get<num>('prize') ?? 0,
             'imageUrl': doc.get<String>('imageUrl'),
+            'audioUrl': doc.get<String>('audioUrl'),
             'type': doc.get<String>('type') ?? 'text',
             'characteristics': doc.get<List<dynamic>>('characteristics') ?? [],
             'status': doc.get<String>('status'),
@@ -59,6 +57,14 @@ class _FindAndWinProgressScreenState
             'code': doc.get<String>('code') ?? '',
             'icon': doc.get<String>('icon') ?? 'skull',
             'difficulty': doc.get<String>('difficulty') ?? 'MÉDIA',
+            'hasCompass': doc.get<bool>('hasCompass') ?? false,
+            'hasMap': doc.get<bool>('hasMap') ?? false,
+            'hasRadar': doc.get<bool>('hasRadar') ?? false,
+            'compassPrice': doc.get<num>('compassPrice')?.toDouble() ?? 15.0,
+            'mapPrice': doc.get<num>('mapPrice')?.toDouble() ?? 4.99,
+            'radarPrice': doc.get<num>('radarPrice')?.toDouble() ?? 2.99,
+            'compassDuration': doc.get<num>('compassDuration')?.toInt() ?? 0,
+            'compassCoords': doc.get<String>('compassCoords'),
           });
         }).toList();
       }
