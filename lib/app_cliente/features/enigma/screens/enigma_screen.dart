@@ -3,6 +3,7 @@ import 'dart:math' show pi, sin;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -873,14 +874,11 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   Widget _buildEnigmaContent() {
     return Column(
       children: [
-        Text(
-          _currentEnigma.instruction,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 16,
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
-            height: 1.5,
+        MarkdownBody(
+          data: _currentEnigma.instruction,
+          styleSheet: MarkdownStyleSheet(
+            p: const TextStyle(color: Colors.white, fontSize: 16, height: 1.5, fontWeight: FontWeight.w500),
+            strong: const TextStyle(color: Color(0xFFFFD54F), fontWeight: FontWeight.bold),
           ),
         ),
 

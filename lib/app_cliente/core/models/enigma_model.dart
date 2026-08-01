@@ -99,6 +99,11 @@ class EnigmaModel {
       final lat = (locationMap['_latitude'] as num?)?.toDouble() ?? 0.0;
       final lon = (locationMap['_longitude'] as num?)?.toDouble() ?? 0.0;
       parsedLocation = ParseGeoPoint(latitude: lat, longitude: lon);
+    } else if (map['compassCoords'] != null && map['compassCoords'].toString().isNotEmpty) {
+      final coords = map['compassCoords'].toString().split(',');
+      if (coords.length == 2) {
+        parsedLocation = ParseGeoPoint(latitude: double.tryParse(coords[0].trim()) ?? 0.0, longitude: double.tryParse(coords[1].trim()) ?? 0.0);
+      }
     }
     return EnigmaModel(
       id: map['id'] ?? '',

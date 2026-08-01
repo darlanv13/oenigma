@@ -159,7 +159,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
         children: [
-          FaIcon(icon, color: primaryAmber, size: 14),
+          FaIcon(icon as dynamic, color: primaryAmber, size: 14),
           const SizedBox(width: 10),
           Text(
             title.toUpperCase(),
@@ -307,7 +307,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     );
   }
 
-  Widget _buildPreviewToolBtn(IconData icon, String title, Color color) {
+  Widget _buildPreviewToolBtn(dynamic icon, String title, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -479,7 +479,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                 children: [
                   Row(
                     children: [
-                      Expanded(flex: 2, child: _buildInputForm(controller: nomeController, hint: 'Instrução (Suporta Markdown)', maxLines: 4)),
+                      Expanded(flex: 2, child: _buildInputForm(controller: nomeController, hint: 'Instrução (Suporta Markdown)')),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildSelectForm(
