@@ -159,6 +159,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         const SizedBox(width: 8),
         _buildButton('Editar', isPrimary: true, onTap: () => _showEditEventModal(context, event)),
         const SizedBox(width: 8),
+        _buildButton('Duplicar', isPrimary: false, onTap: () => _duplicateEvent(context, event)),
+        const SizedBox(width: 8),
         _buildButton('Excluir', isDanger: true, onTap: () => _deleteEvent(event)),
       ],
     );
@@ -733,6 +735,134 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       if (context.mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao publicar: $e')));
+      }
+    }
+  }
+
+  Future<void> _duplicateEvent(BuildContext context, ParseObject event) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // 1. Copy Event
+      final resEvent = await ParseCloudFunction('createOrUpdateEvent').execute(
+        parameters: {
+          'data': {
+            'title': '${event.get<String>("title") ?? "Evento"} (Cópia)',
+            'description': event.get<String>('description') ?? '',
+            'location': event.get<String>('location') ?? '',
+            'prizePool': event.get<String>('prizePool') ?? '0',
+            'status': 'em_breve', // Start as upcoming/disabled
+            'eventType': event.get<String>('eventType') ?? 'find_and_win',
+          }
+        }
+      );
+
+      if (!resEvent.success || resEvent.result == null) {
+        throw 'Falha ao duplicar o evento principal.';
+      }
+
+      final newEventId = resEvent.result is ParseObject
+          ? (resEvent.result as ParseObject).objectId!
+          : (resEvent.result is Map ? resEvent.result['objectId'] : '');
+
+      if (newEventId.isEmpty) throw 'ID do novo evento inválido.';
+
+      // 1.5 Copy Phases
+      final queryPhases = QueryBuilder<ParseObject>(ParseObject('Phase'))..whereEqualTo('eventId', event.objectId);
+      final phasesRes = await queryPhases.query();
+      if (phasesRes.success && phasesRes.results != null) {
+        final phaseFutures = <Future>[];
+        for (var oldPhase in phasesRes.results!) {
+          final p = oldPhase as ParseObject;
+          phaseFutures.add(ParseCloudFunction('createOrUpdatePhase').execute(
+            parameters: {
+              'eventId': newEventId,
+              'data': {
+                'title': p.get<String>('title') ?? 'Fase',
+                'order': p.get<num>('order')?.toInt() ?? 1,
+                'status': 'bloqueado', // Copied phases start blocked
+              }
+            }
+          ));
+        }
+        await Future.wait(phaseFutures);
+      }
+
+      // 2. Fetch and Copy Enigmas
+      final queryEnigmas = QueryBuilder<ParseObject>(ParseObject('Enigma'))
+        ..whereEqualTo('eventId', event.objectId);
+      final enigmasRes = await queryEnigmas.query();
+
+      if (enigmasRes.success && enigmasRes.results != null) {
+        for (var oldEnigma in enigmasRes.results!) {
+          final enigmaObj = oldEnigma as ParseObject;
+          final generatedHash = '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond.toString().padLeft(3, '0')}';
+
+          final resNewEnigma = await ParseCloudFunction('createOrUpdateEnigma').execute(
+            parameters: {
+              'eventId': newEventId,
+              'data': {
+                'instruction': enigmaObj.get<String>('instruction'),
+                'code': generatedHash,
+                'order': enigmaObj.get<num>('order'),
+                'type': enigmaObj.get<String>('type'),
+                'difficulty': enigmaObj.get<String>('difficulty'),
+                'prize': enigmaObj.get<dynamic>('prize')?.toString() ?? '0',
+                'status': 'bloqueado', // Copy starts blocked
+                'hasCompass': enigmaObj.get<bool>('hasCompass') ?? false,
+                'compassCoords': enigmaObj.get<String>('compassCoords') ?? '',
+                'compassPrice': enigmaObj.get<num>('compassPrice')?.toDouble() ?? 15.0,
+                'compassDuration': enigmaObj.get<num>('compassDuration')?.toInt() ?? 0,
+                'hasRadar': enigmaObj.get<bool>('hasRadar') ?? false,
+                'hasMap': enigmaObj.get<bool>('hasMap') ?? false,
+                'radarPrice': enigmaObj.get<num>('radarPrice')?.toDouble() ?? 2.99,
+                'mapPrice': enigmaObj.get<num>('mapPrice')?.toDouble() ?? 4.99,
+                'imageUrl': enigmaObj.get<String>('imageUrl') ?? '',
+                'audioUrl': enigmaObj.get<String>('audioUrl') ?? '',
+              }
+            }
+          );
+
+          // 3. Copy Hints for each Enigma
+          if (resNewEnigma.success && resNewEnigma.result != null) {
+            String newEnigmaId = resNewEnigma.result is ParseObject ? (resNewEnigma.result as ParseObject).objectId! : (resNewEnigma.result is Map ? resNewEnigma.result['objectId'] : '');
+            if (newEnigmaId.isNotEmpty) {
+              final queryHints = QueryBuilder<ParseObject>(ParseObject('Hint'))..whereEqualTo('linkedEnigmaId', enigmaObj.objectId);
+              final hintsRes = await queryHints.query();
+              if (hintsRes.success && hintsRes.results != null) {
+                final hintFutures = <Future>[];
+                for (var oldHint in hintsRes.results!) {
+                  final hintObj = oldHint as ParseObject;
+                  hintFutures.add(ParseCloudFunction('createOrUpdateHint').execute(
+                    parameters: {
+                      'data': {
+                        'description': hintObj.get<String>('description'),
+                        'price': hintObj.get<num>('price')?.toDouble() ?? 0.0,
+                        'linkedEnigmaId': newEnigmaId,
+                      }
+                    }
+                  ));
+                }
+                await Future.wait(hintFutures);
+              }
+            }
+          }
+        }
+      }
+
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Evento duplicado com sucesso!')));
+        _loadEvents();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao duplicar evento: $e')));
       }
     }
   }

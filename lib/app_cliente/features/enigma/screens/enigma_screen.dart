@@ -3,6 +3,8 @@ import 'dart:math' show pi, sin;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -282,6 +284,38 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       }
     } catch (e) {
       debugPrint("Erro na inicialização do enigma: $e");
+
+      // Offline fallback
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final cached = prefs.getString('enigma_cache_${_currentEnigma.id}');
+        if (cached != null && mounted) {
+          final statusData = Map<String, dynamic>.from(jsonDecode(cached));
+          setState(() {
+            _isHintVisible = statusData['isHintVisible'] ?? false;
+            _hintData = statusData['hintData'] != null ? Map<String, dynamic>.from(statusData['hintData']) : null;
+            _canBuyHint = statusData['canBuyHint'] ?? false;
+            _isBlocked = statusData['isBlocked'] ?? false;
+            _hasCompass = statusData['hasCompass'] ?? _currentEnigma.hasCompass;
+            _hasMap = statusData['hasMap'] ?? _currentEnigma.hasMap;
+            _hasRadar = statusData['hasRadar'] ?? _currentEnigma.hasRadar;
+            _compassDuration = statusData['compassDuration'] ?? _currentEnigma.compassDuration;
+            _compassPrice = (statusData['compassPrice'] as num?)?.toDouble() ?? _currentEnigma.compassPrice;
+            if (_compassPrice == 0.0) _compassPrice = 15.0;
+            if (statusData['destinationLocation'] != null) {
+              _destinationLocation = {
+                'latitude': (statusData['destinationLocation']['latitude'] as num).toDouble(),
+                'longitude': (statusData['destinationLocation']['longitude'] as num).toDouble(),
+              };
+            }
+            if (_compassRemainingSeconds == null) _compassRemainingSeconds = _compassDuration;
+          });
+          if (_isBlocked && statusData['cooldownUntil'] != null) {
+            _handleCooldown(statusData['cooldownUntil']);
+          }
+        }
+      } catch (_) {}
+
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -326,7 +360,17 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         'phaseOrder': widget.phase.order,
         'enigmaId': _currentEnigma.id,
       });
+
+      if (result.success && result.result != null) {
+        // Cache success
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('enigma_cache_${_currentEnigma.id}', jsonEncode(result.result));
+        } catch (_) {}
+      }
+
       if (mounted) {
+        if (!result.success || result.result == null) throw Exception('API Call failed');
         final statusData = Map<String, dynamic>.from(result.result);
         setState(() {
           _isHintVisible = statusData['isHintVisible'] ?? false;
@@ -1234,6 +1278,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     );
   }
 
+  void _openRadarDialog() {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Radar ativado! Em breve no jogo.')));
+  }
+
   void _openMapDialog() {
     if (_destinationLocation == null) return;
     showDialog(
@@ -1466,6 +1514,18 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 isPurchased: _hasCompass,
               ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildToolPurchaseCard(
+                title: 'RADAR',
+                price: _currentEnigma.radarPrice,
+                type: 'Radar',
+                toolKey: 'radar',
+                icon: FontAwesomeIcons.satelliteDish,
+                color: Colors.deepPurpleAccent,
+                isPurchased: _hasRadar,
+              ),
+            ),
           ],
         ),
       ],
@@ -1497,7 +1557,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           onPressed: _isLoading
               ? null
               : () =>
-                    toolKey == 'map' ? _openMapDialog() : _openCompassDialog(),
+                    toolKey == 'map' ? _openMapDialog() : (toolKey == 'radar' ? _openRadarDialog() : _openCompassDialog()),
           icon: FaIcon(icon, size: 14, color: Colors.white),
           label: Text(
             'ABRIR $title',

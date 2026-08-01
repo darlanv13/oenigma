@@ -413,9 +413,11 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
       }
 
       let cost = 0;
-      if (toolType === 'map') cost = 20.0;
+      if (toolType === 'map') cost = enigma ? (enigma.get("mapPrice") || 20.0) : 20.0;
       else if (toolType === 'compass') {
          cost = enigma ? (enigma.get("compassPrice") || 15.0) : 15.0;
+      } else if (toolType === 'radar') {
+         cost = enigma ? (enigma.get("radarPrice") || 10.0) : 10.0;
       }
       else throw new Parse.Error(Parse.Error.INVALID_QUERY, "Invalid tool type.");
 

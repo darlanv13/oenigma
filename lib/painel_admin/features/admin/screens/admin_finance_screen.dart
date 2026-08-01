@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:universal_html/html.dart' as html;
+import 'package:fl_chart/fl_chart.dart';
 import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -34,12 +38,44 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Gestão Financeira e Saques (Pix)',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Gestão Financeira e Saques (Pix)',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            ElevatedButton.icon(
+              icon: const FaIcon(FontAwesomeIcons.filePdf, size: 16),
+              label: const Text('Exportar Relatório'),
+              style: ElevatedButton.styleFrom(backgroundColor: primaryAmber, foregroundColor: Colors.black),
+              onPressed: () => _exportFinancialReport(context),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Container(
+          height: 150,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(16)),
+          child: BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              barGroups: [
+                BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 8, color: Colors.blue)]),
+                BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 10, color: Colors.green)]),
+                BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 14, color: Colors.orange)]),
+                BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 15, color: Colors.pink)]),
+                BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 13, color: Colors.red)]),
+                BarChartGroupData(x: 5, barRods: [BarChartRodData(toY: 10, color: Colors.purple)]),
+              ],
+              titlesData: FlTitlesData(show: false),
+              borderData: FlBorderData(show: false),
+            ),
           ),
         ),
         const SizedBox(height: 24),
@@ -159,6 +195,58 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
         ),
       ],
     );
+  }
+
+  Future<void> _exportFinancialReport(BuildContext context) async {
+    showDialog(context: context, barrierDismissible: false, builder: (context) => const Center(child: CircularProgressIndicator()));
+    try {
+      final doc = pw.Document();
+      doc.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text('Relatório Financeiro Geral', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 20),
+                pw.Text('Compras Recentes de Ferramentas (Simulado):'),
+                pw.SizedBox(height: 10),
+                pw.TableHelper.fromTextArray(
+                  context: context,
+                  data: <List<String>>[
+                    <String>['Data', 'Produto', 'Valor'],
+                    <String>['10/08/2026', 'Dica (Enigma 3)', 'R\$ 0,50'],
+                    <String>['11/08/2026', 'Bússola (Enigma 4)', 'R\$ 15,00'],
+                    <String>['12/08/2026', 'Mapa (Enigma 1)', 'R\$ 20,00'],
+                  ],
+                ),
+                pw.SizedBox(height: 40),
+                pw.Text('Totais: R\$ 35,50', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+              ],
+            );
+          },
+        ),
+      );
+
+      final bytes = await doc.save();
+      final blob = html.Blob([bytes], 'application/pdf');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      html.AnchorElement(href: url)
+        ..setAttribute('download', 'Relatorio_Financeiro.pdf')
+        ..click();
+      html.Url.revokeObjectUrl(url);
+
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Relatório exportado!')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+      }
+    }
   }
 
   Future<void> _handleWithdrawal(

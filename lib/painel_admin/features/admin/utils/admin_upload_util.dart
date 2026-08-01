@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'dart:typed_data';
 
 class AdminUploadUtil {
   static Future<String?> pickAndUploadImage(BuildContext context) async {
@@ -43,12 +45,28 @@ class AdminUploadUtil {
         );
       }
 
-      final bytes = await pickedFile.readAsBytes();
+      final originalBytes = await pickedFile.readAsBytes();
+
+      // Compress the image before uploading to save server space and improve load times
+      Uint8List compressedBytes;
+      try {
+        final result = await FlutterImageCompress.compressWithList(
+          originalBytes,
+          minHeight: 1080,
+          minWidth: 1080,
+          quality: 70, // Compressa para 70% da qualidade original
+        );
+        compressedBytes = result;
+      } catch (_) {
+        // Fallback case compress fails
+        compressedBytes = originalBytes;
+      }
+
       final fileName = pickedFile.name.isNotEmpty
           ? pickedFile.name
-          : 'upload.jpg';
+          : 'upload_compressed.jpg';
 
-      final parseFile = ParseWebFile(bytes, name: fileName);
+      final parseFile = ParseWebFile(compressedBytes, name: fileName);
       final response = await parseFile.save();
 
       if (isShowingDialog && context.mounted) {

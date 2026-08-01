@@ -20,6 +20,7 @@ class MapRadiusWidget extends StatefulWidget {
 class _MapRadiusWidgetState extends State<MapRadiusWidget> {
   late LatLng _obfuscatedCenter;
   bool _hasLocationPermission = false; // <-- VARIÁVEL DE CONTROLE ADICIONADA
+  BitmapDescriptor? _customMarkerIcon;
 
   // Dark/Night map style JSON
   final String _mapStyle = '''
@@ -123,6 +124,17 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget> {
       150.0, // Mova o centro em até 150 metros do ponto real
     );
     _checkLocationPermission(); // <-- INICIA A CHECAGEM DE PERMISSÃO
+    _loadCustomMarker();
+  }
+
+  Future<void> _loadCustomMarker() async {
+    try {
+      final icon = await BitmapDescriptor.fromAssetImage(
+        const ImageConfiguration(size: Size(48, 48)),
+        'assets/images/compass_icon.png', // Fallback to an existing app image if the icon isn't ideal
+      );
+      if (mounted) setState(() => _customMarkerIcon = icon);
+    } catch (_) {}
   }
 
   // NOVA FUNÇÃO: Checa se a EnigmaScreen já liberou o GPS
@@ -185,6 +197,13 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget> {
           myLocationButtonEnabled: _hasLocationPermission,
           onMapCreated: (GoogleMapController controller) {
             controller.setMapStyle(_mapStyle);
+          },
+          markers: {
+            Marker(
+              markerId: const MarkerId('destination'),
+              position: _obfuscatedCenter,
+              icon: _customMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+            ),
           },
           circles: {
             Circle(
