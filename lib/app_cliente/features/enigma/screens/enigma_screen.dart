@@ -222,6 +222,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   late EnigmaModel _currentEnigma;
   bool _hasCompass = false;
   bool _hasMap = false;
+  bool _hasRadar = false;
   Map<String, double>? _destinationLocation;
   int _compassDuration = 0;
   double _compassPrice = 15.0;
@@ -273,7 +274,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     });
 
     try {
-      if (_currentEnigma.type == 'gps') {
+      if (_currentEnigma.location != null) {
         await _initializeGpsListener();
       }
       if (mounted) {
@@ -334,8 +335,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               : null;
           _canBuyHint = statusData['canBuyHint'] ?? false;
           _isBlocked = statusData['isBlocked'] ?? false;
-          _hasCompass = statusData['hasCompass'] ?? false;
-          _hasMap = statusData['hasMap'] ?? false;
+          _hasCompass = statusData['hasCompass'] ?? _currentEnigma.hasCompass;
+          _hasMap = statusData['hasMap'] ?? _currentEnigma.hasMap;
+          _hasRadar = statusData['hasRadar'] ?? _currentEnigma.hasRadar;
           _compassDuration = statusData['compassDuration'] ?? _currentEnigma.compassDuration;
           _compassPrice = (statusData['compassPrice'] as num?)?.toDouble() ?? _currentEnigma.compassPrice;
           if (_compassPrice == 0.0) {
@@ -1444,7 +1446,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             Expanded(
               child: _buildToolPurchaseCard(
                 title: 'MAPA',
-                price: 20.0,
+                price: _currentEnigma.mapPrice,
                 type: 'Mapa',
                 toolKey: 'map',
                 icon: FontAwesomeIcons.mapLocationDot,

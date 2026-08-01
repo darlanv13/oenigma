@@ -20,6 +20,11 @@ class EnigmaModel {
   final DateTime? closedAt;
   final double compassPrice;
   final int compassDuration;
+  final bool hasCompass;
+  final bool hasMap;
+  final bool hasRadar;
+  final double mapPrice;
+  final double radarPrice;
   final String icon;
   final String difficulty;
 
@@ -42,6 +47,11 @@ class EnigmaModel {
     this.closedAt,
     this.compassPrice = 0.0,
     this.compassDuration = 0,
+    this.hasCompass = false,
+    this.hasMap = false,
+    this.hasRadar = false,
+    this.mapPrice = 0.0,
+    this.radarPrice = 0.0,
     this.icon = 'skull',
     this.difficulty = 'MÉDIA',
   });
@@ -64,6 +74,11 @@ class EnigmaModel {
     DateTime? closedAt,
     double? compassPrice,
     int? compassDuration,
+    bool? hasCompass,
+    bool? hasMap,
+    bool? hasRadar,
+    double? mapPrice,
+    double? radarPrice,
     String? icon,
     String? difficulty,
   }) {
@@ -85,6 +100,11 @@ class EnigmaModel {
       closedAt: closedAt ?? this.closedAt,
       compassPrice: compassPrice ?? this.compassPrice,
       compassDuration: compassDuration ?? this.compassDuration,
+      hasCompass: hasCompass ?? this.hasCompass,
+      hasMap: hasMap ?? this.hasMap,
+      hasRadar: hasRadar ?? this.hasRadar,
+      mapPrice: mapPrice ?? this.mapPrice,
+      radarPrice: radarPrice ?? this.radarPrice,
       icon: icon ?? this.icon,
       difficulty: difficulty ?? this.difficulty,
     );
@@ -131,6 +151,11 @@ class EnigmaModel {
           : null,
       compassPrice: (map['compassPrice'] as num?)?.toDouble() ?? 0.0,
       compassDuration: (map['compassDuration'] as num?)?.toInt() ?? 0,
+      hasCompass: map['hasCompass'] ?? false,
+      hasMap: map['hasMap'] ?? false,
+      hasRadar: map['hasRadar'] ?? false,
+      mapPrice: (map['mapPrice'] as num?)?.toDouble() ?? 4.99,
+      radarPrice: (map['radarPrice'] as num?)?.toDouble() ?? 2.99,
       icon: map['icon'] ?? 'skull',
       difficulty: map['difficulty'] ?? 'MÉDIA',
     );
@@ -157,6 +182,11 @@ class EnigmaModel {
       'closedAt': closedAt?.toIso8601String(),
       'compassPrice': compassPrice,
       'compassDuration': compassDuration,
+      'hasCompass': hasCompass,
+      'hasMap': hasMap,
+      'hasRadar': hasRadar,
+      'mapPrice': mapPrice,
+      'radarPrice': radarPrice,
       'icon': icon,
       'difficulty': difficulty,
     };
