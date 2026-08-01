@@ -20,6 +20,8 @@ class AdminEnigmasScreen extends StatefulWidget {
 class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
   late Future<List<ParseObject>> _enigmasFuture;
   List<ParseObject> _events = [];
+  String _selectedFilterType = 'Todos';
+  String _selectedFilterEvent = 'Todos';
 
   @override
   void initState() {
@@ -53,7 +55,13 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Todos os Enigmas', FontAwesomeIcons.puzzlePiece),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: _buildSectionTitle('Todos os Enigmas', FontAwesomeIcons.puzzlePiece)),
+            _buildFilterDropdowns(),
+          ],
+        ),
         Expanded(
           child: FutureBuilder<List<ParseObject>>(
             future: _enigmasFuture,
@@ -65,7 +73,15 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                 return Center(child: Text('Erro: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
               }
 
-              final enigmas = snapshot.data ?? [];
+              var enigmas = snapshot.data ?? [];
+
+              if (_selectedFilterEvent != 'Todos') {
+                enigmas = enigmas.where((e) => e.get<String>('eventId') == _selectedFilterEvent).toList();
+              }
+              if (_selectedFilterType != 'Todos') {
+                enigmas = enigmas.where((e) => e.get<String>('type') == _selectedFilterType).toList();
+              }
+
               if (enigmas.isEmpty) {
                 return _buildEmptyState();
               }
@@ -82,6 +98,57 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
         ),
         const SizedBox(height: 16),
         _buildAddButton('Novo Enigma', () => _showAddEnigmaModal(context)),
+      ],
+    );
+  }
+
+  Widget _buildFilterDropdowns() {
+    return Row(
+      children: [
+        Container(
+          width: 150,
+          margin: const EdgeInsets.only(bottom: 14, right: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(color: cardColor.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(8), border: Border.all(color: primaryAmber.withValues(alpha: 0.15))),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedFilterEvent,
+              dropdownColor: sidebarBackground,
+              style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 12),
+              isExpanded: true,
+              items: [
+                const DropdownMenuItem(value: 'Todos', child: Text('Todos Eventos')),
+                ..._events.map((e) => DropdownMenuItem(value: e.objectId!, child: Text(e.get<String>('title') ?? e.get<String>('name') ?? ''))),
+              ],
+              onChanged: (val) {
+                if (val != null) setState(() => _selectedFilterEvent = val);
+              },
+            ),
+          ),
+        ),
+        Container(
+          width: 130,
+          margin: const EdgeInsets.only(bottom: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(color: cardColor.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(8), border: Border.all(color: primaryAmber.withValues(alpha: 0.15))),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedFilterType,
+              dropdownColor: sidebarBackground,
+              style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 12),
+              isExpanded: true,
+              items: const [
+                DropdownMenuItem(value: 'Todos', child: Text('Todos Tipos')),
+                DropdownMenuItem(value: 'text', child: Text('Texto')),
+                DropdownMenuItem(value: 'photo', child: Text('Foto')),
+                DropdownMenuItem(value: 'audio', child: Text('Áudio')),
+              ],
+              onChanged: (val) {
+                if (val != null) setState(() => _selectedFilterType = val);
+              },
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -166,12 +233,74 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
       statusColor: statusColor,
       subtitle: 'Evento: $eventName · Tipo: $tipo · Dificuldade: $dif · Prêmio: $prize',
       actions: [
+        _buildButton('Duplicar', isPrimary: false, onTap: () => _duplicateEnigma(context, enigma)),
+        const SizedBox(width: 8),
         _buildButton('Gerenciar', isWarning: true, onTap: () => _showManageEnigmaModal(context, enigma)),
       ],
     );
   }
 
+  Future<void> _duplicateEnigma(BuildContext context, ParseObject enigma) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator(color: primaryAmber)),
+    );
+
+    try {
+      final String generatedHash = '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond.toString().padLeft(3, '0')}';
+
+      final queryOrder = QueryBuilder<ParseObject>(ParseObject('Enigma'))
+        ..whereEqualTo('eventId', enigma.get<String>('eventId'))
+        ..orderByDescending('order')
+        ..setLimit(1);
+      final resOrder = await queryOrder.query();
+      int nextOrder = 1;
+      if (resOrder.success && resOrder.results != null && resOrder.results!.isNotEmpty) {
+        final lastEnigma = resOrder.results!.first as ParseObject;
+        nextOrder = (lastEnigma.get<num>('order')?.toInt() ?? 0) + 1;
+      }
+
+      await ParseCloudFunction('createOrUpdateEnigma').execute(
+        parameters: {
+          'eventId': enigma.get<String>('eventId') ?? '',
+          'data': {
+            'instruction': '${enigma.get<String>("instruction") ?? "Enigma"} (Cópia)',
+            'code': generatedHash,
+            'order': nextOrder,
+            'type': enigma.get<String>('type'),
+            'difficulty': enigma.get<String>('difficulty'),
+            'prize': enigma.get<dynamic>('prize')?.toString() ?? '0',
+            'status': 'bloqueado', // Copied items start blocked
+            'hasCompass': enigma.get<bool>('hasCompass') ?? false,
+            'compassCoords': enigma.get<String>('compassCoords') ?? '',
+            'compassPrice': enigma.get<num>('compassPrice')?.toDouble() ?? 15.0,
+            'compassDuration': enigma.get<num>('compassDuration')?.toInt() ?? 0,
+            'hasRadar': enigma.get<bool>('hasRadar') ?? false,
+            'hasMap': enigma.get<bool>('hasMap') ?? false,
+            'radarPrice': enigma.get<num>('radarPrice')?.toDouble() ?? 2.99,
+            'mapPrice': enigma.get<num>('mapPrice')?.toDouble() ?? 4.99,
+            'imageUrl': enigma.get<String>('imageUrl') ?? '',
+            'audioUrl': enigma.get<String>('audioUrl') ?? '',
+          }
+        }
+      );
+
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enigma duplicado com sucesso!')));
+        _loadData();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao duplicar: $e')));
+      }
+    }
+  }
+
   Widget _buildAddButton(String text, VoidCallback onTap) {
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -595,6 +724,10 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                                     ],
                                   ),
                                 ),
+                                _buildButton('Editar', isWarning: true, onTap: () {
+                                  _showEditHintModal(context, hint, () => setModalState((){}));
+                                }),
+                                const SizedBox(width: 8),
                                 _buildButton('Remover', isDanger: true, onTap: () async {
                                   await hint.delete();
                                   setModalState((){});
@@ -663,6 +796,49 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
           }
         );
       },
+    );
+  }
+
+  void _showEditHintModal(BuildContext context, ParseObject hint, VoidCallback onSuccess) {
+    final textController = TextEditingController(text: hint.get<String>('description') ?? hint.get<String>('title') ?? '');
+    final priceController = TextEditingController(text: hint.get<num>('price')?.toStringAsFixed(2) ?? '0.50');
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AdminModal(
+          title: 'Editar Dica',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+               _buildInputForm(controller: textController, hint: 'Escreva a dica...'),
+               const SizedBox(height: 12),
+               _buildInputForm(controller: priceController, hint: 'Preço (ex: 0.50)'),
+               const SizedBox(height: 20),
+               Row(
+                 mainAxisAlignment: MainAxisAlignment.end,
+                 children: [
+                    _buildButton('Cancelar', onTap: () => Navigator.of(context).pop()),
+                    const SizedBox(width: 12),
+                    _buildButton('Salvar Alterações', isPrimary: true, onTap: () async {
+                       await ParseCloudFunction('createOrUpdateHint').execute(
+                          parameters: {
+                             'hintId': hint.objectId,
+                             'data': {
+                                'description': textController.text.trim(),
+                                'price': num.tryParse(priceController.text.trim()) ?? 0.0,
+                             }
+                          }
+                       );
+                       if (context.mounted) Navigator.of(context).pop();
+                       onSuccess();
+                    }),
+                 ]
+               )
+            ]
+          )
+        );
+      }
     );
   }
 

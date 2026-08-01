@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'dart:convert';
@@ -413,62 +414,112 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                           child: Center(child: Text('Nenhum enigma neste evento. Adicione um!', style: TextStyle(color: secondaryTextColor))),
                         );
                       }
-                      return Column(
-                        children: enigmas.map((enigma) {
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: cardColor.withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: primaryAmber.withValues(alpha: 0.04)),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: primaryAmber.withValues(alpha: 0.08),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: primaryAmber.withValues(alpha: 0.06)),
-                                  ),
-                                  child: const Center(child: FaIcon(FontAwesomeIcons.puzzlePiece, color: primaryAmber, size: 16)),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        enigma.get<String>('instruction') ?? 'Sem nome',
-                                        style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 14, fontWeight: FontWeight.w600),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Tipo: ${enigma.get<String>('type')} · Prêmio: ${enigma.get<String>('prize')}',
-                                        style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                _buildButton('Remover', isDanger: true, onTap: () async {
-                                  // Cascade delete hints
-                                  final hintsQuery = QueryBuilder<ParseObject>(ParseObject('Hint'))
-                                    ..whereEqualTo('linkedEnigmaId', enigma.objectId);
-                                  final hintsRes = await hintsQuery.query();
-                                  if (hintsRes.success && hintsRes.results != null) {
-                                    for (var h in hintsRes.results!) {
-                                      await (h as ParseObject).delete();
-                                    }
+                      // Ordenar localmente pelo campo order se existir
+                      enigmas.sort((a, b) => (a.get<num>('order') ?? 0).compareTo(b.get<num>('order') ?? 0));
+
+                      return SizedBox(
+                        height: 300, // Limitar altura para o modal não explodir
+                        child: Theme(
+                          data: Theme.of(context).copyWith(
+                            canvasColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                          ),
+                          child: ReorderableListView(
+                            shrinkWrap: true,
+                            buildDefaultDragHandles: false,
+                            onReorder: (int oldIndex, int newIndex) async {
+                              if (newIndex > oldIndex) newIndex -= 1;
+                              final ParseObject item = enigmas.removeAt(oldIndex);
+                              enigmas.insert(newIndex, item);
+
+                              // Atualiza backend
+                              setModalState((){}); // Update UI instantly
+
+                              final futures = <Future>[];
+                              for (int i = 0; i < enigmas.length; i++) {
+                                final e = enigmas[i];
+                                futures.add(ParseCloudFunction('createOrUpdateEnigma').execute(
+                                  parameters: {
+                                    'enigmaId': e.objectId,
+                                    'data': {'order': i + 1}
                                   }
-                                  await enigma.delete();
-                                  setModalState(() {});
-                                }),
-                              ],
-                            ),
-                          );
-                        }).toList(),
+                                ));
+                              }
+                              await Future.wait(futures);
+                            },
+                            children: enigmas.map((enigma) {
+                              return Container(
+                                key: ValueKey(enigma.objectId),
+                                margin: const EdgeInsets.only(bottom: 10),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: cardColor.withValues(alpha: 0.4),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: primaryAmber.withValues(alpha: 0.04)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    ReorderableDragStartListener(
+                                      index: enigmas.indexOf(enigma),
+                                      child: const MouseRegion(
+                                        cursor: SystemMouseCursors.grab,
+                                        child: Padding(
+                                          padding: EdgeInsets.only(right: 12),
+                                          child: FaIcon(FontAwesomeIcons.gripVertical, color: secondaryTextColor, size: 16),
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: primaryAmber.withValues(alpha: 0.08),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: primaryAmber.withValues(alpha: 0.06)),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          (enigma.get<num>('order') ?? 0).toString(),
+                                          style: GoogleFonts.inter(color: primaryAmber, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            enigma.get<String>('instruction') ?? 'Sem nome',
+                                            style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 14, fontWeight: FontWeight.w600),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Tipo: ${enigma.get<String>('type')} · Prêmio: R\$ ${enigma.get<dynamic>('prize')}',
+                                            style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    _buildButton('Remover', isDanger: true, onTap: () async {
+                                      // Cascade delete hints
+                                      final hintsQuery = QueryBuilder<ParseObject>(ParseObject('Hint'))
+                                        ..whereEqualTo('linkedEnigmaId', enigma.objectId);
+                                      final hintsRes = await hintsQuery.query();
+                                      if (hintsRes.success && hintsRes.results != null) {
+                                        for (var h in hintsRes.results!) {
+                                          await (h as ParseObject).delete();
+                                        }
+                                      }
+                                      await enigma.delete();
+                                      setModalState(() {});
+                                    }),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -563,7 +614,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                 children: enigmas.map((enigma) {
                   final code = enigma.get<String>('code') ?? '';
                   final name = enigma.get<String>('instruction') ?? 'Sem Nome';
-                  if (code.isEmpty) return pw.SizedBox.shrink();
+                  if (code.isEmpty) return pw.SizedBox();
 
                   return pw.Container(
                     width: 150,
