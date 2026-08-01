@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'package:oenigma/painel_admin/features/admin/utils/admin_upload_util.dart';
 
 import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
 import 'package:oenigma/painel_admin/core/widgets/admin_item_card.dart';
@@ -238,6 +239,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     final nomeController = TextEditingController();
     final premioController = TextEditingController();
     final compassCoordsCtrl = TextEditingController();
+    final photoUrlCtrl = TextEditingController();
+    final audioUrlCtrl = TextEditingController();
     String tipo = 'text';
     String dificuldade = 'Médio';
     String eventId = _events.first.objectId!;
@@ -296,6 +299,45 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                   _buildToolToggle('Radar', 'Mostra QR codes num raio de 500m', hasRadar, radarPrice, (val) => setModalState(() => hasRadar = val), (val) => radarPrice = val),
                   _buildToolToggle('Maps', 'Caminho otimizado entre enigmas', hasMap, mapPrice, (val) => setModalState(() => hasMap = val), (val) => mapPrice = val),
                   _buildToolToggle('Scanner+', 'Lê QR codes à distância (100m)', hasCompass, compassPrice, (val) => setModalState(() => hasCompass = val), (val) => compassPrice = val),
+                  if (tipo == 'photo') ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInputForm(controller: photoUrlCtrl, hint: 'URL da Foto'),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 20),
+                          onPressed: () async {
+                            final url = await AdminUploadUtil.pickAndUploadImage(context);
+                            if (url != null) {
+                              setModalState(() => photoUrlCtrl.text = url);
+                            }
+                          }
+                        ),
+                      ],
+                    ),
+                  ] else if (tipo == 'audio') ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInputForm(controller: audioUrlCtrl, hint: 'URL do Áudio'),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 20),
+                          onPressed: () async {
+                            final url = await AdminUploadUtil.pickAndUploadAudio(context);
+                            if (url != null) {
+                              setModalState(() => audioUrlCtrl.text = url);
+                            }
+                          }
+                        ),
+                      ],
+                    ),
+                  ],
                   if (hasMap || hasCompass) ...[
                     const SizedBox(height: 12),
                     Row(
@@ -346,12 +388,31 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                       _buildButton('Cancelar', onTap: () => Navigator.of(context).pop()),
                       const SizedBox(width: 12),
                       _buildButton('Criar Enigma', isPrimary: true, onTap: () async {
-                        if ((hasMap || hasCompass) && compassCoordsCtrl.text.trim().isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coordenadas são obrigatórias para Mapa/Bússola.')));
-                          return;
+                        if (hasMap || hasCompass) {
+                          if (compassCoordsCtrl.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coordenadas são obrigatórias para Mapa/Bússola.')));
+                            return;
+                          }
+                          final latLngRegEx = RegExp(r'^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$');
+                          if (!latLngRegEx.hasMatch(compassCoordsCtrl.text.trim())) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Formato inválido de coordenadas. Use: Latitude, Longitude (ex: -23.5, -46.6)')));
+                            return;
+                          }
                         }
 
                         final generatedHash = '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond % 9000}';
+
+                        // Check current max order for this event to auto-increment
+                        final queryOrder = QueryBuilder<ParseObject>(ParseObject('Enigma'))
+                          ..whereEqualTo('eventId', eventId)
+                          ..orderByDescending('order')
+                          ..setLimit(1);
+                        final resOrder = await queryOrder.query();
+                        int nextOrder = 1;
+                        if (resOrder.success && resOrder.results != null && resOrder.results!.isNotEmpty) {
+                          final lastEnigma = resOrder.results!.first as ParseObject;
+                          nextOrder = (lastEnigma.get<num>('order')?.toInt() ?? 0) + 1;
+                        }
 
                         await ParseCloudFunction('createOrUpdateEnigma').execute(
                           parameters: {
@@ -359,6 +420,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                             'data': {
                               'instruction': nomeController.text.trim(), // Assuming name maps to instruction
                               'code': generatedHash,
+                              'order': nextOrder,
                               'type': tipo,
                               'difficulty': dificuldade,
                               'prize': premioController.text.trim(),
@@ -371,6 +433,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                               'hasMap': hasMap,
                               'radarPrice': radarPrice,
                               'mapPrice': mapPrice,
+                              'imageUrl': tipo == 'photo' ? photoUrlCtrl.text.trim() : '',
+                              'audioUrl': tipo == 'audio' ? audioUrlCtrl.text.trim() : '',
                             }
                           }
                         );
@@ -409,6 +473,29 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if ((enigma.get<String>('code') ?? '').isNotEmpty) ...[
+                    _buildSectionTitle('Código Hash (QR Code)', FontAwesomeIcons.qrcode),
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: cardColor.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: primaryAmber.withValues(alpha: 0.15)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              enigma.get<String>('code')!,
+                              style: GoogleFonts.orbitron(color: Colors.white, fontSize: 16, letterSpacing: 2),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   _buildSectionTitle('Ferramentas', FontAwesomeIcons.toolbox),
                   _buildToolToggle('Radar', 'Mostra QR codes num raio de 500m', hasRadar, radarPrice, (val) => setModalState(() => hasRadar = val), (val) => radarPrice = val),
                   _buildToolToggle('Maps', 'Caminho otimizado entre enigmas', hasMap, mapPrice, (val) => setModalState(() => hasMap = val), (val) => mapPrice = val),

@@ -1776,17 +1776,26 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               ? null
                               : () async {
                                   // 🔴 REGRA DE VALIDAÇÃO OBRIGATÓRIA DA BÚSSOLA 🔴
-                                  if ((hasCompass || selectedType == 'gps') &&
-                                      compassCoordsCtrl.text.trim().isEmpty) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Erro: Coordenadas do GPS são obrigatórias!',
+                                  if (hasCompass || selectedType == 'gps') {
+                                    if (compassCoordsCtrl.text.trim().isEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Erro: Coordenadas do GPS são obrigatórias!'),
+                                          backgroundColor: Colors.redAccent,
                                         ),
-                                        backgroundColor: Colors.redAccent,
-                                      ),
-                                    );
-                                    return; // Cancela a execução para impedir o salvamento incorreto
+                                      );
+                                      return;
+                                    }
+                                    final latLngRegEx = RegExp(r'^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$');
+                                    if (!latLngRegEx.hasMatch(compassCoordsCtrl.text.trim())) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Formato inválido. Use: Latitude, Longitude (ex: -23.5, -46.6)'),
+                                          backgroundColor: Colors.redAccent,
+                                        ),
+                                      );
+                                      return;
+                                    }
                                   }
 
                                   setState(() => isSaving = true);
