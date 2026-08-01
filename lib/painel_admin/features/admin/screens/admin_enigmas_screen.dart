@@ -886,18 +886,56 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
   void _showEditHintModal(BuildContext context, ParseObject hint, VoidCallback onSuccess) {
     final textController = TextEditingController(text: hint.get<String>('description') ?? hint.get<String>('title') ?? '');
     final priceController = TextEditingController(text: hint.get<num>('price')?.toStringAsFixed(2) ?? '0.50');
+    final mediaUrlController = TextEditingController(text: hint.get<String>('data') ?? '');
+    String hintType = hint.get<String>('type') ?? 'text';
 
     showDialog(
       context: context,
       builder: (context) {
-        return AdminModal(
-          title: 'Editar Dica',
-          child: Column(
+        return StatefulBuilder(
+          builder: (context, setHintState) {
+            return AdminModal(
+              title: 'Editar Dica',
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               _buildInputForm(controller: textController, hint: 'Escreva a dica...'),
+               Row(
+                 children: [
+                   Expanded(
+                     child: _buildSelectForm(
+                       value: hintType,
+                       items: const [
+                         DropdownMenuItem(value: 'text', child: Text('Texto')),
+                         DropdownMenuItem(value: 'photo', child: Text('Foto')),
+                         DropdownMenuItem(value: 'audio', child: Text('Áudio')),
+                       ],
+                       onChanged: (val) { if (val != null) setHintState(() => hintType = val); },
+                     ),
+                   ),
+                   const SizedBox(width: 8),
+                   Expanded(child: _buildInputForm(controller: priceController, hint: 'Preço (ex: 0.50)')),
+                 ]
+               ),
                const SizedBox(height: 12),
-               _buildInputForm(controller: priceController, hint: 'Preço (ex: 0.50)'),
+               _buildInputForm(controller: textController, hint: 'Escreva a dica (ou instrução da mídia)...'),
+               if (hintType == 'photo' || hintType == 'audio') ...[
+                 const SizedBox(height: 12),
+                 Row(
+                   children: [
+                     Expanded(child: _buildInputForm(controller: mediaUrlController, hint: 'URL da Mídia')),
+                     const SizedBox(width: 8),
+                     IconButton(
+                       icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 20),
+                       onPressed: () async {
+                         final url = hintType == 'photo'
+                             ? await AdminUploadUtil.pickAndUploadImage(context)
+                             : await AdminUploadUtil.pickAndUploadAudio(context);
+                         if (url != null) setHintState(() => mediaUrlController.text = url);
+                       }
+                     ),
+                   ],
+                 ),
+               ],
                const SizedBox(height: 20),
                Row(
                  mainAxisAlignment: MainAxisAlignment.end,
@@ -911,6 +949,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                              'data': {
                                 'description': textController.text.trim(),
                                 'price': num.tryParse(priceController.text.trim()) ?? 0.0,
+                                'type': hintType,
+                                'data': mediaUrlController.text.trim(),
                              }
                           }
                        );
@@ -922,6 +962,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
             ]
           )
         );
+          }
+        );
       }
     );
   }
@@ -929,18 +971,56 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
   void _showAddHintModal(BuildContext context, ParseObject enigma, VoidCallback onSuccess) {
     final textController = TextEditingController();
     final priceController = TextEditingController(text: '0.50');
+    final mediaUrlController = TextEditingController();
+    String hintType = 'text';
     
     showDialog(
       context: context,
       builder: (context) {
-        return AdminModal(
-          title: 'Adicionar Dica',
-          child: Column(
+        return StatefulBuilder(
+          builder: (context, setHintState) {
+            return AdminModal(
+              title: 'Adicionar Dica',
+              child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               _buildInputForm(controller: textController, hint: 'Escreva a dica...'),
+               Row(
+                 children: [
+                   Expanded(
+                     child: _buildSelectForm(
+                       value: hintType,
+                       items: const [
+                         DropdownMenuItem(value: 'text', child: Text('Texto')),
+                         DropdownMenuItem(value: 'photo', child: Text('Foto')),
+                         DropdownMenuItem(value: 'audio', child: Text('Áudio')),
+                       ],
+                       onChanged: (val) { if (val != null) setHintState(() => hintType = val); },
+                     ),
+                   ),
+                   const SizedBox(width: 8),
+                   Expanded(child: _buildInputForm(controller: priceController, hint: 'Preço (ex: 0.50)')),
+                 ]
+               ),
                const SizedBox(height: 12),
-               _buildInputForm(controller: priceController, hint: 'Preço (ex: 0.50)'),
+               _buildInputForm(controller: textController, hint: 'Escreva a dica (ou instrução da mídia)...'),
+               if (hintType == 'photo' || hintType == 'audio') ...[
+                 const SizedBox(height: 12),
+                 Row(
+                   children: [
+                     Expanded(child: _buildInputForm(controller: mediaUrlController, hint: 'URL da Mídia')),
+                     const SizedBox(width: 8),
+                     IconButton(
+                       icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 20),
+                       onPressed: () async {
+                         final url = hintType == 'photo'
+                             ? await AdminUploadUtil.pickAndUploadImage(context)
+                             : await AdminUploadUtil.pickAndUploadAudio(context);
+                         if (url != null) setHintState(() => mediaUrlController.text = url);
+                       }
+                     ),
+                   ],
+                 ),
+               ],
                const SizedBox(height: 20),
                Row(
                  mainAxisAlignment: MainAxisAlignment.end,
@@ -954,6 +1034,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                                 'description': textController.text.trim(),
                                 'price': num.tryParse(priceController.text.trim()) ?? 0.0,
                                 'linkedEnigmaId': enigma.objectId,
+                                'type': hintType,
+                                'data': mediaUrlController.text.trim(),
                              }
                           }
                        );
@@ -964,6 +1046,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                )
             ]
           )
+        );
+          }
         );
       }
     );

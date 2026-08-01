@@ -105,7 +105,113 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             color: Color(0xFFB0A07A),
           ),
         ),
+        const SizedBox(height: 20),
+        _buildLeagueBadge(playerData),
       ],
+    );
+  }
+
+  Widget _buildLeagueBadge(Map<String, dynamic> playerData) {
+    int xp = playerData['xp'] ?? 0;
+    String league = playerData['league'] ?? 'Bronze';
+
+    // League progress logic
+    int currentLeagueMin = 0;
+    int currentLeagueMax = 500;
+    Color leagueColor = Colors.brown[300]!;
+
+    if (league == 'Lenda') {
+      currentLeagueMin = 6001;
+      currentLeagueMax = 6001; // Maxed out
+      leagueColor = Colors.purpleAccent;
+    } else if (league == 'Diamante') {
+      currentLeagueMin = 3001;
+      currentLeagueMax = 6000;
+      leagueColor = Colors.blueAccent;
+    } else if (league == 'Ouro') {
+      currentLeagueMin = 1501;
+      currentLeagueMax = 3000;
+      leagueColor = Colors.amber;
+    } else if (league == 'Prata') {
+      currentLeagueMin = 501;
+      currentLeagueMax = 1500;
+      leagueColor = Colors.blueGrey[300]!;
+    }
+
+    double progress = 1.0;
+    if (league != 'Lenda') {
+      progress = (xp - currentLeagueMin) / (currentLeagueMax - currentLeagueMin);
+      if (progress < 0) progress = 0;
+      if (progress > 1) progress = 1;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16181C).withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: leagueColor.withValues(alpha: 0.3), width: 1.5),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.shield, color: leagueColor, size: 24),
+              const SizedBox(width: 8),
+              Text(
+                'Liga $league'.toUpperCase(),
+                style: GoogleFonts.orbitron(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: leagueColor,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Stack(
+            children: [
+              Container(
+                height: 8,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return Container(
+                    height: 8,
+                    width: constraints.maxWidth * progress,
+                    decoration: BoxDecoration(
+                      color: leagueColor,
+                      borderRadius: BorderRadius.circular(4),
+                      boxShadow: [
+                        BoxShadow(color: leagueColor.withValues(alpha: 0.5), blurRadius: 8),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('$xp XP', style: TextStyle(color: leagueColor, fontWeight: FontWeight.bold, fontSize: 12)),
+              if (league != 'Lenda')
+                Text('Próxima Liga: ${currentLeagueMax + 1} XP', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10)),
+              if (league == 'Lenda')
+                Text('Nível Máximo', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

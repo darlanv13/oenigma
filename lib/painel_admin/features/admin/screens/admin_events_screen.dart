@@ -843,6 +843,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         'description': hintObj.get<String>('description'),
                         'price': hintObj.get<num>('price')?.toDouble() ?? 0.0,
                         'linkedEnigmaId': newEnigmaId,
+                        'type': hintObj.get<String>('type') ?? 'text',
+                        'data': hintObj.get<String>('data') ?? '',
                       }
                     }
                   ));

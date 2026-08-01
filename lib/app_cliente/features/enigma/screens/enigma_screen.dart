@@ -1637,9 +1637,31 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     final String data = _hintData!['data']?.toString() ?? '';
 
     if (type == 'photo') {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Image.network(data),
+      return Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Image.network(data),
+          ),
+          const SizedBox(height: 12),
+          Text(_hintData!['description']?.toString() ?? '', style: const TextStyle(color: Colors.white, fontSize: 16)),
+        ]
+      );
+    } else if (type == 'audio') {
+      return Column(
+        children: [
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent.withValues(alpha: 0.1), foregroundColor: Colors.orangeAccent),
+            onPressed: () async {
+              final player = AudioPlayer();
+              await player.play(UrlSource(data));
+            },
+            icon: const FaIcon(FontAwesomeIcons.play, size: 16),
+            label: const Text('Tocar Áudio'),
+          ),
+          const SizedBox(height: 12),
+          Text(_hintData!['description']?.toString() ?? '', style: const TextStyle(color: Colors.white, fontSize: 16)),
+        ]
       );
     } else if (type == 'gps') {
       final coords = data.split(',');

@@ -245,6 +245,15 @@ Parse.Cloud.define("getEventData", async (request) => {
 
 
 
+
+function getLeagueByXP(xp) {
+  if (xp >= 6001) return 'Lenda';
+  if (xp >= 3001) return 'Diamante';
+  if (xp >= 1501) return 'Ouro';
+  if (xp >= 501) return 'Prata';
+  return 'Bronze';
+}
+
 Parse.Cloud.define("handleEnigmaAction", async (request) => {
   const { action, eventId, phaseOrder, enigmaId, answer, code, toolType } = request.params;
   const user = request.user;
@@ -456,6 +465,11 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
           // Recompensa Instantânea: add to balance immediately
           user.set("balance", balance + enigmaPrize);
 
+          let currentXP = user.get("xp") || 0;
+          currentXP += 50; // +50 XP per Enigma
+          user.set("xp", currentXP);
+          user.set("league", getLeagueByXP(currentXP));
+
           // Atualizar status do enigma para bloquear para outros jogadores
           enigma.set("status", "closed");
           enigma.set("closedAt", new Date());
@@ -520,6 +534,12 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
 
             userEvents[eventId] = eventProgress;
             user.set("events", userEvents);
+
+            let currentXP = user.get("xp") || 0;
+            currentXP += 50; // +50 XP per Enigma
+            user.set("xp", currentXP);
+            user.set("league", getLeagueByXP(currentXP));
+
             await user.save(null, { useMasterKey: true });
 
             return {
@@ -540,6 +560,11 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
 
             user.set("balance", balance + prizePool);
             user.set("lastWonEventName", eventObj.get("name"));
+
+            let currentXP = user.get("xp") || 0;
+            currentXP += 250; // +200 XP for Event Finish + 50 for the final enigma
+            user.set("xp", currentXP);
+            user.set("league", getLeagueByXP(currentXP));
 
             let winnerEvents = user.get("winnerEvents") || [];
             winnerEvents.push(eventId);
