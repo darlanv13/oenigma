@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:oenigma/painel_admin/features/admin/utils/admin_upload_util.dart';
 
 import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
@@ -239,6 +240,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     final nomeController = TextEditingController();
     final premioController = TextEditingController();
     final compassCoordsCtrl = TextEditingController();
+    final firstHintCtrl = TextEditingController();
+    final firstHintPriceCtrl = TextEditingController(text: '0.50');
     final photoUrlCtrl = TextEditingController();
     final audioUrlCtrl = TextEditingController();
     String tipo = 'text';
@@ -374,6 +377,16 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                     ),
                   ],
                   const SizedBox(height: 16),
+                  Text('Dica Inicial (Opcional):', style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12)),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Expanded(flex: 3, child: _buildInputForm(controller: firstHintCtrl, hint: 'Texto da 1ª Dica...')),
+                      const SizedBox(width: 8),
+                      Expanded(child: _buildInputForm(controller: firstHintPriceCtrl, hint: 'Preço')),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                   Text('Vincular ao Evento:', style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12)),
                   const SizedBox(height: 4),
                   _buildSelectForm(
@@ -388,6 +401,15 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                       _buildButton('Cancelar', onTap: () => Navigator.of(context).pop()),
                       const SizedBox(width: 12),
                       _buildButton('Criar Enigma', isPrimary: true, onTap: () async {
+                        if (tipo == 'photo' && photoUrlCtrl.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('A URL da foto é obrigatória.')));
+                          return;
+                        }
+                        if (tipo == 'audio' && audioUrlCtrl.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('A URL do áudio é obrigatória.')));
+                          return;
+                        }
+
                         if (hasMap || hasCompass) {
                           if (compassCoordsCtrl.text.trim().isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Coordenadas são obrigatórias para Mapa/Bússola.')));
@@ -400,7 +422,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                           }
                         }
 
-                        final generatedHash = '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond % 9000}';
+                        final generatedHash = '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond.toString().padLeft(3, '0')}';
 
                         // Check current max order for this event to auto-increment
                         final queryOrder = QueryBuilder<ParseObject>(ParseObject('Enigma'))
@@ -414,7 +436,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                           nextOrder = (lastEnigma.get<num>('order')?.toInt() ?? 0) + 1;
                         }
 
-                        await ParseCloudFunction('createOrUpdateEnigma').execute(
+                        final enigmaRes = await ParseCloudFunction('createOrUpdateEnigma').execute(
                           parameters: {
                             'eventId': eventId,
                             'data': {
@@ -438,6 +460,25 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                             }
                           }
                         );
+
+                        if (enigmaRes.success && enigmaRes.result != null && firstHintCtrl.text.trim().isNotEmpty) {
+                          String newEnigmaId = enigmaRes.result is ParseObject
+                              ? (enigmaRes.result as ParseObject).objectId!
+                              : (enigmaRes.result is Map ? enigmaRes.result['objectId'] : '');
+
+                          if (newEnigmaId.isNotEmpty) {
+                            await ParseCloudFunction('createOrUpdateHint').execute(
+                              parameters: {
+                                'data': {
+                                  'description': firstHintCtrl.text.trim(),
+                                  'price': num.tryParse(firstHintPriceCtrl.text.trim()) ?? 0.0,
+                                  'linkedEnigmaId': newEnigmaId,
+                                }
+                              }
+                            );
+                          }
+                        }
+
                         if (context.mounted) Navigator.of(context).pop();
                         _loadData();
                       }),
@@ -485,11 +526,28 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                       ),
                       child: Row(
                         children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+                            child: QrImageView(
+                              data: enigma.get<String>('code')!,
+                              version: QrVersions.auto,
+                              size: 100.0,
+                              backgroundColor: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
                           Expanded(
-                            child: Text(
-                              enigma.get<String>('code')!,
-                              style: GoogleFonts.orbitron(color: Colors.white, fontSize: 16, letterSpacing: 2),
-                              textAlign: TextAlign.center,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  enigma.get<String>('code')!,
+                                  style: GoogleFonts.orbitron(color: Colors.white, fontSize: 16, letterSpacing: 2),
+                                ),
+                                const SizedBox(height: 8),
+                                Text('Você pode escanear ou digitar o código acima.', style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 10)),
+                              ]
                             ),
                           ),
                         ],
@@ -581,8 +639,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                          await ParseCloudFunction('createOrUpdateEnigma').execute(
                             parameters: {
                                'eventId': enigma.get<String>('eventId') ?? '',
-                               'enigmaId': enigma.objectId,
                                'data': {
+                                  'enigmaId': enigma.objectId,
                                   'hasRadar': hasRadar,
                                   'hasMap': hasMap,
                                   'hasCompass': hasScanner,

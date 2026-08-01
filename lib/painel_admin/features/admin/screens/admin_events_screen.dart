@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'dart:convert';
+import 'package:universal_html/html.dart' as html;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
@@ -148,6 +152,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       statusColor: statusColor,
       subtitle: '$prize',
       actions: [
+        _buildButton('Exportar QRs', isPrimary: false, onTap: () => _exportQRs(context, event)),
+        const SizedBox(width: 8),
         _buildButton('Editar', isPrimary: true, onTap: () => _showEditEventModal(context, event)),
         const SizedBox(width: 8),
         _buildButton('Excluir', isDanger: true, onTap: () => _deleteEvent(event)),
@@ -447,6 +453,15 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                   ),
                                 ),
                                 _buildButton('Remover', isDanger: true, onTap: () async {
+                                  // Cascade delete hints
+                                  final hintsQuery = QueryBuilder<ParseObject>(ParseObject('Hint'))
+                                    ..whereEqualTo('linkedEnigmaId', enigma.objectId);
+                                  final hintsRes = await hintsQuery.query();
+                                  if (hintsRes.success && hintsRes.results != null) {
+                                    for (var h in hintsRes.results!) {
+                                      await (h as ParseObject).delete();
+                                    }
+                                  }
                                   await enigma.delete();
                                   setModalState(() {});
                                 }),
@@ -511,6 +526,89 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _exportQRs(BuildContext context, ParseObject event) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final query = QueryBuilder<ParseObject>(ParseObject('Enigma'))
+        ..whereEqualTo('eventId', event.objectId);
+      final response = await query.query();
+
+      if (!response.success || response.results == null || response.results!.isEmpty) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nenhum enigma encontrado para exportar.')));
+        return;
+      }
+
+      final doc = pw.Document();
+      final enigmas = response.results as List<ParseObject>;
+
+      // Adicionando uma página por Enigma ou colocando múltiplos (Aqui 1 por página bem grande ou grid)
+      // Vamos colocar em Grid
+      doc.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return [
+              pw.Header(level: 0, child: pw.Text('QR Codes - ${event.get<String>("title") ?? "Evento"}')),
+              pw.Wrap(
+                spacing: 20,
+                runSpacing: 20,
+                children: enigmas.map((enigma) {
+                  final code = enigma.get<String>('code') ?? '';
+                  final name = enigma.get<String>('instruction') ?? 'Sem Nome';
+                  if (code.isEmpty) return pw.SizedBox.shrink();
+
+                  return pw.Container(
+                    width: 150,
+                    child: pw.Column(
+                      children: [
+                        pw.BarcodeWidget(
+                          barcode: pw.Barcode.qrCode(),
+                          data: code,
+                          width: 120,
+                          height: 120,
+                        ),
+                        pw.SizedBox(height: 8),
+                        pw.Text(name, textAlign: pw.TextAlign.center, style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                        pw.Text(code, style: const pw.TextStyle(fontSize: 8)),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ];
+          },
+        ),
+      );
+
+      final bytes = await doc.save();
+
+      // Save for Web
+      final blob = html.Blob([bytes], 'application/pdf');
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', 'QRCodes_${event.get<String>("title") ?? "Evento"}.pdf')
+        ..click();
+      html.Url.revokeObjectUrl(url);
+
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Exportação concluída!')));
+      }
+
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao exportar: $e')));
+      }
+    }
   }
 
   Future<void> _deleteEvent(ParseObject event) async {

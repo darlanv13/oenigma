@@ -1808,7 +1808,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                           int.tryParse(orderCtrl.text) ?? 1,
                                       'title': titleCtrl.text,
                                       'code': docId == null && codeCtrl.text.trim().isEmpty
-                                          ? '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond % 9000}'
+                                          ? '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond.toString().padLeft(3, '0')}'
                                           : codeCtrl.text,
                                       'instruction': instructionCtrl.text,
                                       'type': selectedType,
