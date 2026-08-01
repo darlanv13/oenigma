@@ -244,6 +244,9 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     bool hasRadar = false;
     bool hasMap = false;
     bool hasCompass = false;
+    double radarPrice = 2.99;
+    double mapPrice = 4.99;
+    double compassPrice = 1.99;
 
     showDialog(
       context: context,
@@ -290,37 +293,9 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                   const SizedBox(height: 16),
                   Text('Ferramentas:', style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12)),
                   const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SwitchListTile(
-                          title: Text('Radar', style: GoogleFonts.inter(color: Colors.white, fontSize: 12)),
-                          value: hasRadar,
-                          onChanged: (val) => setModalState(() => hasRadar = val),
-                          activeColor: primaryAmber,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                      Expanded(
-                        child: SwitchListTile(
-                          title: Text('Mapa', style: GoogleFonts.inter(color: Colors.white, fontSize: 12)),
-                          value: hasMap,
-                          onChanged: (val) => setModalState(() => hasMap = val),
-                          activeColor: primaryAmber,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                      Expanded(
-                        child: SwitchListTile(
-                          title: Text('Bússola', style: GoogleFonts.inter(color: Colors.white, fontSize: 12)),
-                          value: hasCompass,
-                          onChanged: (val) => setModalState(() => hasCompass = val),
-                          activeColor: primaryAmber,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildToolToggle('Radar', 'Mostra QR codes num raio de 500m', hasRadar, radarPrice, (val) => setModalState(() => hasRadar = val), (val) => radarPrice = val),
+                  _buildToolToggle('Maps', 'Caminho otimizado entre enigmas', hasMap, mapPrice, (val) => setModalState(() => hasMap = val), (val) => mapPrice = val),
+                  _buildToolToggle('Scanner+', 'Lê QR codes à distância (100m)', hasCompass, compassPrice, (val) => setModalState(() => hasCompass = val), (val) => compassPrice = val),
                   if (hasMap || hasCompass) ...[
                     const SizedBox(height: 12),
                     Row(
@@ -390,12 +365,12 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                               'status': 'open',
                               'hasCompass': hasCompass,
                               'compassCoords': compassCoordsCtrl.text.trim(),
-                              'compassPrice': 15.0,
+                              'compassPrice': compassPrice,
                               'compassDuration': 0,
                               'hasRadar': hasRadar,
                               'hasMap': hasMap,
-                              'radarPrice': 2.99,
-                              'mapPrice': 4.99,
+                              'radarPrice': radarPrice,
+                              'mapPrice': mapPrice,
                             }
                           }
                         );
@@ -519,8 +494,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                          await ParseCloudFunction('createOrUpdateEnigma').execute(
                             parameters: {
                                'eventId': enigma.get<String>('eventId') ?? '',
+                               'enigmaId': enigma.objectId,
                                'data': {
-                                  'enigmaId': enigma.objectId,
                                   'hasRadar': hasRadar,
                                   'hasMap': hasMap,
                                   'hasCompass': hasScanner,
