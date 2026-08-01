@@ -153,6 +153,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       statusColor: statusColor,
       subtitle: '$prize',
       actions: [
+        _buildButton('Publicar Enigmas', isPrimary: false, onTap: () => _publishAllEnigmas(context, event)),
+        const SizedBox(width: 8),
         _buildButton('Exportar QRs', isPrimary: false, onTap: () => _exportQRs(context, event)),
         const SizedBox(width: 8),
         _buildButton('Editar', isPrimary: true, onTap: () => _showEditEventModal(context, event)),
@@ -300,7 +302,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         final local = localController.text.trim();
                         if (nome.isEmpty || local.isEmpty) return;
 
-                        await ParseCloudFunction('createOrUpdateEvent').execute(
+                        final resEvent = await ParseCloudFunction('createOrUpdateEvent').execute(
                           parameters: {
                             'data': {
                               'title': nome,
@@ -312,6 +314,29 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             }
                           }
                         );
+
+                        if (resEvent.success && resEvent.result != null && eventType == 'classic') {
+                          String newEventId = resEvent.result is ParseObject
+                              ? (resEvent.result as ParseObject).objectId!
+                              : (resEvent.result is Map ? resEvent.result['objectId'] : '');
+
+                          if (newEventId.isNotEmpty) {
+                            final futures = <Future>[];
+                            for (int i = 1; i <= 3; i++) {
+                              futures.add(ParseCloudFunction('createOrUpdatePhase').execute(
+                                parameters: {
+                                  'eventId': newEventId,
+                                  'data': {
+                                    'title': 'Fase $i',
+                                    'order': i,
+                                    'status': 'open',
+                                  }
+                                }
+                              ));
+                            }
+                            await Future.wait(futures);
+                          }
+                        }
                         if (context.mounted) Navigator.of(context).pop();
                         _loadEvents();
                       }),
@@ -432,7 +457,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               final ParseObject item = enigmas.removeAt(oldIndex);
                               enigmas.insert(newIndex, item);
 
-                              // Atualiza backend
+                              // Update local state first to prevent UI snapback
+                              for (int i = 0; i < enigmas.length; i++) {
+                                enigmas[i].set('order', i + 1);
+                              }
                               setModalState((){}); // Update UI instantly
 
                               final futures = <Future>[];
@@ -658,6 +686,53 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       if (context.mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao exportar: $e')));
+      }
+    }
+  }
+
+  Future<void> _publishAllEnigmas(BuildContext context, ParseObject event) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final query = QueryBuilder<ParseObject>(ParseObject('Enigma'))
+        ..whereEqualTo('eventId', event.objectId);
+      final response = await query.query();
+
+      if (!response.success || response.results == null || response.results!.isEmpty) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nenhum enigma encontrado.')));
+        return;
+      }
+
+      final enigmas = response.results as List<ParseObject>;
+      final futures = <Future>[];
+
+      for (var e in enigmas) {
+        if (e.get<String>('status') != 'open') {
+          futures.add(ParseCloudFunction('createOrUpdateEnigma').execute(
+            parameters: {
+              'enigmaId': e.objectId,
+              'data': {'status': 'open'}
+            }
+          ));
+        }
+      }
+
+      await Future.wait(futures);
+
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enigmas publicados com sucesso!')));
+      }
+
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao publicar: $e')));
       }
     }
   }

@@ -49,6 +49,7 @@ dependencies:
   qr_flutter: ^4.1.0
   pdf: ^3.12.0
   universal_html: ^2.3.0
+  flutter_markdown_plus: ^1.0.12
 
 # === CORREÇÃO DE CONFLITO DE DEPENDÊNCIAS ===
 dependency_overrides:

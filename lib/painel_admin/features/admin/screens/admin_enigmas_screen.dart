@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -233,6 +234,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
       statusColor: statusColor,
       subtitle: 'Evento: $eventName · Tipo: $tipo · Dificuldade: $dif · Prêmio: $prize',
       actions: [
+        _buildButton('Preview', isPrimary: false, onTap: () => _showPreviewModal(context, enigma)),
+        const SizedBox(width: 8),
         _buildButton('Duplicar', isPrimary: false, onTap: () => _duplicateEnigma(context, enigma)),
         const SizedBox(width: 8),
         _buildButton('Gerenciar', isWarning: true, onTap: () => _showManageEnigmaModal(context, enigma)),
@@ -240,7 +243,88 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     );
   }
 
-  Future<void> _duplicateEnigma(BuildContext context, ParseObject enigma) async {
+  void _showPreviewModal(BuildContext context, ParseObject enigma) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: Container(
+            width: 375, // Simulated mobile width
+            height: 812, // Simulated mobile height
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(36),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.3), width: 8),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: Scaffold(
+                backgroundColor: Colors.transparent,
+                appBar: AppBar(
+                  backgroundColor: Colors.black,
+                  title: Text(enigma.get<String>('instruction') ?? 'Enigma', style: GoogleFonts.orbitron(fontSize: 16)),
+                  leading: IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                ),
+                body: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(16)),
+                        child: MarkdownBody(
+                          data: enigma.get<String>('instruction') ?? 'Instrução vazia',
+                          styleSheet: MarkdownStyleSheet(
+                            p: GoogleFonts.inter(color: Colors.white, fontSize: 16, height: 1.5),
+                            strong: GoogleFonts.inter(color: primaryAmber, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      if (enigma.get<bool>('hasMap') == true)
+                        _buildPreviewToolBtn(FontAwesomeIcons.mapLocationDot, 'Mapa', primaryAmber),
+                      if (enigma.get<bool>('hasCompass') == true)
+                        _buildPreviewToolBtn(FontAwesomeIcons.compass, 'Bússola', primaryAmber),
+                      if (enigma.get<bool>('hasRadar') == true)
+                        _buildPreviewToolBtn(FontAwesomeIcons.satelliteDish, 'Radar', primaryAmber),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: successColor, padding: const EdgeInsets.symmetric(vertical: 16)),
+                        onPressed: () {},
+                        child: Text('RESPONDER ENIGMA', style: GoogleFonts.orbitron(color: Colors.black, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+    );
+  }
+
+  Widget _buildPreviewToolBtn(IconData icon, String title, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withValues(alpha: 0.5))),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          FaIcon(icon, color: color, size: 20),
+          const SizedBox(width: 12),
+          Text(title, style: GoogleFonts.inter(color: color, fontSize: 16, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _duplicateEnigma
+(BuildContext context, ParseObject enigma) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -395,7 +479,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                 children: [
                   Row(
                     children: [
-                      Expanded(flex: 2, child: _buildInputForm(controller: nomeController, hint: 'Nome/Instrução')),
+                      Expanded(flex: 2, child: _buildInputForm(controller: nomeController, hint: 'Instrução (Suporta Markdown)', maxLines: 4)),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildSelectForm(
