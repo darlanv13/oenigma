@@ -47,7 +47,7 @@ class _FindAndWinProgressScreenState
             'id': doc.objectId,
             'title': doc.get<String>('title') ?? '',
             'instruction': doc.get<String>('instruction') ?? '',
-            'prize': doc.get<num>('prize') ?? 0,
+            'prize': doc.get<dynamic>('prize') ?? 0,
             'imageUrl': doc.get<String>('imageUrl'),
             'audioUrl': doc.get<String>('audioUrl'),
             'type': doc.get<String>('type') ?? 'text',
@@ -108,7 +108,9 @@ class _FindAndWinProgressScreenState
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xFFC0A060).withValues(alpha: 0.06),
+                              color: const Color(
+                                0xFFC0A060,
+                              ).withValues(alpha: 0.06),
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
@@ -150,7 +152,10 @@ class _FindAndWinProgressScreenState
                       const SizedBox(height: 16),
                       // Hunt Info
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF16181C).withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(20),
@@ -177,12 +182,19 @@ class _FindAndWinProgressScreenState
                               ],
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFC0A060).withValues(alpha: 0.08),
+                                color: const Color(
+                                  0xFFC0A060,
+                                ).withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: const Color(0xFFC0A060).withValues(alpha: 0.1),
+                                  color: const Color(
+                                    0xFFC0A060,
+                                  ).withValues(alpha: 0.1),
                                 ),
                               ),
                               child: RichText(
@@ -193,7 +205,8 @@ class _FindAndWinProgressScreenState
                                   ),
                                   children: [
                                     TextSpan(
-                                      text: '${enigmas.where((e) => e.status == 'closed').length}',
+                                      text:
+                                          '${enigmas.where((e) => e.status == 'closed').length}',
                                       style: const TextStyle(
                                         color: Color(0xFFC0A060),
                                         fontWeight: FontWeight.bold,
@@ -272,19 +285,16 @@ class _FindAndWinProgressScreenState
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: CardEnigma(
-                            enigma: visibleEnigmas[index],
-                            event: widget.event,
-                            animation: _animationController,
-                          ),
-                        );
-                      },
-                      childCount: visibleEnigmas.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: CardEnigma(
+                          enigma: visibleEnigmas[index],
+                          event: widget.event,
+                          animation: _animationController,
+                        ),
+                      );
+                    }, childCount: visibleEnigmas.length),
                   ),
                 ),
 
@@ -296,7 +306,9 @@ class _FindAndWinProgressScreenState
                     decoration: BoxDecoration(
                       border: Border(
                         top: BorderSide(
-                          color: const Color(0xFFC0A060).withValues(alpha: 0.06),
+                          color: const Color(
+                            0xFFC0A060,
+                          ).withValues(alpha: 0.06),
                         ),
                       ),
                     ),
