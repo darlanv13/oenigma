@@ -19,7 +19,7 @@ class AdminEventsScreen extends StatefulWidget {
 }
 
 class _AdminEventsScreenState extends State<AdminEventsScreen> {
-  late Future<List<ParseObject>> _eventsFuture;
+  Future<List<ParseObject>>? _eventsFuture;
 
   @override
   void initState() {
@@ -48,7 +48,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         _buildSectionTitle('Eventos', FontAwesomeIcons.calendar),
         Expanded(
           child: FutureBuilder<List<ParseObject>>(
-            future: _eventsFuture,
+            future: _eventsFuture ?? Future.value([]),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(

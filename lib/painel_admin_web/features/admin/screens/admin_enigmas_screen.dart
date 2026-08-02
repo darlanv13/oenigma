@@ -19,7 +19,7 @@ class AdminEnigmasScreen extends StatefulWidget {
 }
 
 class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
-  late Future<List<ParseObject>> _enigmasFuture;
+  Future<List<ParseObject>>? _enigmasFuture;
   List<ParseObject> _events = [];
   String _selectedFilterType = 'Todos';
   String _selectedFilterEvent = 'Todos';
@@ -71,7 +71,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
         ),
         Expanded(
           child: FutureBuilder<List<ParseObject>>(
-            future: _enigmasFuture,
+            future: _enigmasFuture ?? Future.value([]),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
