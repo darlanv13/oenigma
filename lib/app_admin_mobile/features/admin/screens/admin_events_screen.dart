@@ -1812,6 +1812,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                           : codeCtrl.text,
                                       'instruction': instructionCtrl.text,
                                       'type': selectedType,
+                                      'status': data?['status'] ?? 'open',
                                       'prize':
                                           num.tryParse(prizeCtrl.text) ?? 0,
                                       'linkedHints': linkedHints,
