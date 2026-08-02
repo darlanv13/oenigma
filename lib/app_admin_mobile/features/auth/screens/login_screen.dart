@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/app_admin_mobile/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/app_admin_mobile/features/auth/screens/signup_screen.dart';
 import 'package:oenigma/app_admin_mobile/features/auth/screens/forgot_password_screen.dart';
-import 'package:oenigma/app_admin_mobile/features/admin/screens/main_admin_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oenigma/painel_admin/features/admin/screens/main_admin_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});

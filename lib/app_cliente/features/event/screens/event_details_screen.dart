@@ -5,12 +5,13 @@ import 'package:oenigma/app_cliente/features/event/providers/event_repository_pr
 
 import 'package:oenigma/app_cliente/core/models/event_model.dart';
 import '../screens/event_progress_screen.dart';
-import 'find_and_win_progress_screen.dart';
 import 'package:oenigma/app_cliente/features/wallet/screens/wallet_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/app_cliente/features/auth/screens/login_screen.dart'
     as oenigma_login_screen;
+
+import 'lobby_find_and_win_screen.dart';
 
 class EventDetailsScreen extends ConsumerStatefulWidget {
   final EventModel event;
