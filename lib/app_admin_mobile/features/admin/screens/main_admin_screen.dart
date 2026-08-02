@@ -4,7 +4,6 @@ import 'package:oenigma/app_admin_mobile/features/admin/screens/admin_banners_sc
 import 'package:oenigma/app_admin_mobile/features/admin/screens/admin_dashboard_screen.dart';
 import 'package:oenigma/app_admin_mobile/features/admin/screens/admin_events_screen.dart';
 import 'package:oenigma/app_admin_mobile/features/admin/screens/admin_finance_screen.dart';
-import 'package:oenigma/app_admin_mobile/features/admin/screens/admin_fraud_screen.dart';
 import 'package:oenigma/app_admin_mobile/features/admin/screens/admin_mobile_panel_screen.dart';
 import 'package:oenigma/app_admin_mobile/features/admin/screens/admin_tools_screen.dart';
 import 'package:oenigma/app_admin_mobile/features/admin/screens/admin_users_screen.dart';
@@ -29,7 +28,6 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
     AdminEventsScreen(),
     AdminUsersScreen(),
     AdminFinanceScreen(),
-    AdminFraudScreen(),
     AdminToolsScreen(),
     AdminBannersScreen(),
   ];
