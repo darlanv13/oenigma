@@ -72,7 +72,7 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
                   },
                 ),
                 items: banners.map((doc) {
-                  final imageUrl = doc.get<String>('imageUrl') ?? '';
+                  // final imageUrl = doc.get<String>('imageUrl') ?? '';
                   final actionUrl = doc.get<String>('actionUrl') ?? '';
                   final title = doc.get<String>('title') ?? '';
                   final description = doc.get<String>('description') ?? '';

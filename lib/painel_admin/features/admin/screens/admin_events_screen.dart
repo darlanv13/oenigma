@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'dart:convert';
 import 'package:universal_html/html.dart' as html;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -674,7 +673,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       // Save for Web
       final blob = html.Blob([bytes], 'application/pdf');
       final url = html.Url.createObjectUrlFromBlob(blob);
-      final anchor = html.AnchorElement(href: url)
+      html.AnchorElement(href: url)
         ..setAttribute('download', 'QRCodes_${event.get<String>("title") ?? "Evento"}.pdf')
         ..click();
       html.Url.revokeObjectUrl(url);
