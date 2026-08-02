@@ -1310,6 +1310,7 @@ class _MobileEnigmaListScreenState extends State<_MobileEnigmaListScreen> {
                                           : codeCtrl.text,
                                   'instruction': instructionCtrl.text,
                                   'type': selectedType,
+                                  'status': data?['status'] ?? 'open',
                                   'prize': num.tryParse(prizeCtrl.text) ?? 0,
                                   'hasCompass': hasCompass,
                                   'compassCoords': hasCompass
