@@ -322,7 +322,7 @@ class DragonRadarPainter extends CustomPainter {
 
     // O Efeito Neon da Esfera
     final glowPaint = Paint()
-      ..color = Colors.orangeAccent
+      ..color = const Color(0xFFC0A060)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
     canvas.drawCircle(targetOffset, 12, glowPaint);
 

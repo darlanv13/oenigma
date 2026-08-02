@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/app_cliente/core/utils/app_colors.dart';
 
 class CooldownDialog extends StatefulWidget {
@@ -79,12 +80,12 @@ class _CooldownDialogState extends State<CooldownDialog> {
               height: 120,
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Muitas Tentativas',
-              style: TextStyle(
+              style: GoogleFonts.orbitron(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: primaryAmber,
+                color: const Color(0xFFC0A060),
               ),
             ),
             const SizedBox(height: 12),

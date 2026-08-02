@@ -95,7 +95,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             color: const Color(0xFF1E1E1E).withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: const Color(0xFFFFD54F).withValues(alpha: 0.5),
+              color: const Color(0xFFC0A060).withValues(alpha: 0.5),
               width: 2,
             ),
             boxShadow: [
@@ -111,14 +111,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
             children: [
               const FaIcon(
                 FontAwesomeIcons.qrcode,
-                color: Color(0xFFFFD54F),
+                color: Color(0xFFC0A060),
                 size: 40,
               ),
               const SizedBox(height: 16),
               const Text(
                 'Código Detectado',
                 style: TextStyle(
-                  color: Color(0xFFFFD54F),
+                  color: Color(0xFFC0A060),
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.0,
@@ -150,7 +150,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     Navigator.of(context).pop();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: Color(0xFFC0A060),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -416,12 +416,12 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            FaIcon(FontAwesomeIcons.wallet, color: Color(0xFFFFD54F), size: 20),
+            FaIcon(FontAwesomeIcons.wallet, color: Color(0xFFC0A060), size: 20),
             SizedBox(width: 10),
             Text(
               'Saldo Insuficiente',
               style: TextStyle(
-                color: Color(0xFFFFD54F),
+                color: Color(0xFFC0A060),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -453,7 +453,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD54F),
+              backgroundColor: const Color(0xFFC0A060),
               foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -479,12 +479,12 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
-            FaIcon(FontAwesomeIcons.store, color: Color(0xFFFFD54F), size: 20),
+            FaIcon(FontAwesomeIcons.store, color: Color(0xFFC0A060), size: 20),
             SizedBox(width: 10),
             Text(
               'Confirmar Compra',
               style: TextStyle(
-                color: Color(0xFFFFD54F),
+                color: Color(0xFFC0A060),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -502,7 +502,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD54F),
+              backgroundColor: const Color(0xFFC0A060),
               foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -543,7 +543,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               toolType == 'compass' ? 'Bússola Ativada!' : 'Mapa Ativado!',
               style: TextStyle(
                 color: toolType == 'compass'
-                    ? Colors.greenAccent
+                    ? Color(0xFFC0A060)
                     : Colors.blueAccent,
                 fontWeight: FontWeight.bold,
               ),
@@ -558,7 +558,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       : FontAwesomeIcons.mapLocationDot,
                   size: 60,
                   color: toolType == 'compass'
-                      ? Colors.greenAccent
+                      ? Color(0xFFC0A060)
                       : Colors.blueAccent,
                 ),
                 const SizedBox(height: 20),
@@ -575,7 +575,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFD54F),
+                    backgroundColor: const Color(0xFFC0A060),
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -682,7 +682,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
-                            color: Colors.greenAccent,
+                            color: Color(0xFFC0A060),
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -690,7 +690,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
+                              backgroundColor: Color(0xFFC0A060),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
@@ -827,7 +827,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               : "Fase ${widget.phase.order} - Enigma ${widget.phase.enigmas.indexOf(_currentEnigma) + 1}",
           style: const TextStyle(
             fontWeight: FontWeight.w900,
-            color: Color(0xFFFFD54F),
+            color: Color(0xFFC0A060),
           ),
         ),
         centerTitle: true,
@@ -837,7 +837,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       ),
       body: _isLoading && !_isHintVisible
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFFFD54F)),
+              child: CircularProgressIndicator(color: Color(0xFFC0A060)),
             )
           : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -886,7 +886,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               Row(
                 children: [
               if (icon != null) ...[
-                FaIcon(icon, color: const Color(0xFFFFD54F), size: 16),
+                FaIcon(icon, color: const Color(0xFFC0A060), size: 16),
                 const SizedBox(width: 10),
               ],
               Text(
@@ -924,7 +924,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           data: _currentEnigma.instruction,
           styleSheet: MarkdownStyleSheet(
             p: const TextStyle(color: Colors.white, fontSize: 16, height: 1.5, fontWeight: FontWeight.w500),
-            strong: const TextStyle(color: Color(0xFFFFD54F), fontWeight: FontWeight.bold),
+            strong: const TextStyle(color: Color(0xFFC0A060), fontWeight: FontWeight.bold),
           ),
         ),
 
@@ -960,7 +960,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 _buildMediaButton(
                   icon: FontAwesomeIcons.play,
                   label: 'Ouvir Áudio',
-                  color: Colors.orangeAccent,
+                  color: Color(0xFFC0A060),
                   onPressed: () => _showMediaDialog(
                     context,
                     type: 'audio',
@@ -1087,8 +1087,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                               ? FontAwesomeIcons.locationCrosshairs
                               : FontAwesomeIcons.route,
                           color: _isNear
-                              ? Colors.greenAccent
-                              : const Color(0xFFFFD54F),
+                              ? Color(0xFFC0A060)
+                              : const Color(0xFFC0A060),
                           size: 16,
                         ),
                         const SizedBox(width: 10),
@@ -1099,8 +1099,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                           style: TextStyle(
                             fontSize: 16,
                             color: _isNear
-                                ? Colors.greenAccent
-                                : const Color(0xFFFFD54F),
+                                ? Color(0xFFC0A060)
+                                : const Color(0xFFC0A060),
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -1190,11 +1190,11 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30),
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
+                  colors: [Color(0xFFC0A060), Color(0xFFF57F17)],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
+                    color: const Color(0xFFC0A060).withValues(alpha: 0.3),
                     blurRadius: 15,
                   ),
                 ],
@@ -1250,7 +1250,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     children: [
                       FaIcon(
                         FontAwesomeIcons.lightbulb,
-                        color: Color(0xFFFFD54F),
+                        color: Color(0xFFC0A060),
                       ),
                       SizedBox(width: 12),
                       Text(
@@ -1349,7 +1349,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
-            color: Colors.greenAccent.withValues(alpha: 0.5),
+            color: Color(0xFFC0A060).withValues(alpha: 0.5),
             width: 2,
           ),
         ),
@@ -1365,7 +1365,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     children: [
                       FaIcon(
                         FontAwesomeIcons.compass,
-                        color: Colors.greenAccent,
+                        color: Color(0xFFC0A060),
                       ),
                       SizedBox(width: 12),
                       Text(
@@ -1408,7 +1408,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('O tempo da bússola acabou!'),
-                        backgroundColor: Colors.orange,
+                        backgroundColor: Color(0xFFC0A060),
                       ),
                     );
                   }
@@ -1430,9 +1430,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
+          color: const Color(0xFFC0A060).withValues(alpha: 0.3),
         ),
-        color: const Color(0xFFFFD54F).withValues(alpha: 0.05),
+        color: const Color(0xFFC0A060).withValues(alpha: 0.05),
       ),
       child: TextButton.icon(
         onPressed: _isLoading
@@ -1446,13 +1446,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               },
         icon: const FaIcon(
           FontAwesomeIcons.lightbulb,
-          color: Color(0xFFFFD54F),
+          color: Color(0xFFC0A060),
           size: 18,
         ),
         label: Text(
           'COMPRAR PISTA (R\$ ${cost.toStringAsFixed(2)})',
           style: const TextStyle(
-            color: Color(0xFFFFD54F),
+            color: Color(0xFFC0A060),
             fontWeight: FontWeight.w900,
             letterSpacing: 1.0,
           ),
@@ -1510,7 +1510,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 type: 'Bússola',
                 toolKey: 'compass',
                 icon: FontAwesomeIcons.compass,
-                color: Colors.greenAccent,
+                color: Color(0xFFC0A060),
                 isPurchased: _hasCompass,
               ),
             ),
@@ -1651,7 +1651,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       return Column(
         children: [
           ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orangeAccent.withValues(alpha: 0.1), foregroundColor: Colors.orangeAccent),
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFC0A060).withValues(alpha: 0.1), foregroundColor: Color(0xFFC0A060)),
             onPressed: () async {
               final player = AudioPlayer();
               await player.play(UrlSource(data));
@@ -1752,7 +1752,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20),
                   borderSide: const BorderSide(
-                    color: Color(0xFFFFD54F),
+                    color: Color(0xFFC0A060),
                     width: 2,
                   ),
                 ),
@@ -1768,12 +1768,12 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       colors: [Color(0xFF424242), Color(0xFF212121)],
                     )
                   : const LinearGradient(
-                      colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
+                      colors: [Color(0xFFC0A060), Color(0xFFF57F17)],
                     ),
               boxShadow: [
                 if (!_isBlocked)
                   BoxShadow(
-                    color: const Color(0xFFFFD54F).withValues(alpha: 0.4),
+                    color: const Color(0xFFC0A060).withValues(alpha: 0.4),
                     blurRadius: 15,
                     spreadRadius: 2,
                   ),
@@ -1891,7 +1891,7 @@ class _AudioDialogState extends State<_AudioDialog> {
         color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: Colors.orangeAccent.withValues(alpha: 0.3),
+          color: Color(0xFFC0A060).withValues(alpha: 0.3),
           width: 2,
         ),
       ),
@@ -1903,7 +1903,7 @@ class _AudioDialogState extends State<_AudioDialog> {
             children: [
               const Row(
                 children: [
-                  FaIcon(FontAwesomeIcons.music, color: Colors.orangeAccent),
+                  FaIcon(FontAwesomeIcons.music, color: Color(0xFFC0A060)),
                   SizedBox(width: 12),
                   Text(
                     'Pista em Áudio',
@@ -1931,7 +1931,7 @@ class _AudioDialogState extends State<_AudioDialog> {
             ),
             child: IconButton(
               iconSize: 48,
-              color: Colors.orangeAccent,
+              color: Color(0xFFC0A060),
               icon: FaIcon(
                 _isPlaying ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
               ),
@@ -1949,10 +1949,10 @@ class _AudioDialogState extends State<_AudioDialog> {
 
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: Colors.orangeAccent,
+              activeTrackColor: Color(0xFFC0A060),
               inactiveTrackColor: Colors.white24,
-              thumbColor: Colors.orangeAccent,
-              overlayColor: Colors.orangeAccent.withValues(alpha: 0.2),
+              thumbColor: Color(0xFFC0A060),
+              overlayColor: Color(0xFFC0A060).withValues(alpha: 0.2),
               trackHeight: 4.0,
             ),
             child: Slider(

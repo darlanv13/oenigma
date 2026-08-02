@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart'; // Importe o pacote Lottie
+import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/app_cliente/core/utils/app_colors.dart';
 
 void showErrorDialog(BuildContext context, {required String message}) {
@@ -20,12 +21,12 @@ void showErrorDialog(BuildContext context, {required String message}) {
               // --- ÍCONE SUBSTITUÍDO PELA ANIMAÇÃO ---
               Lottie.asset('assets/animations/error.json', height: 120),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Código Incorreto',
-                style: TextStyle(
+                style: GoogleFonts.orbitron(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.orange,
+                  color: const Color(0xFFC0A060),
                 ),
               ),
               const SizedBox(height: 12),
@@ -39,7 +40,7 @@ void showErrorDialog(BuildContext context, {required String message}) {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color(0xFFC0A060),
                     foregroundColor: darkBackground,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -47,9 +48,9 @@ void showErrorDialog(BuildContext context, {required String message}) {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text(
+                  child: Text(
                     'TENTAR NOVAMENTE',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.orbitron(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),

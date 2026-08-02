@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/app_cliente/core/utils/app_colors.dart';
 
 // Diálogo para quando um enigma é resolvido, mas a fase ainda não acabou.
@@ -25,12 +26,12 @@ void showEnigmaSuccessDialog(
                 repeat: false,
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Enigma Resolvido!',
-                style: TextStyle(
+                style: GoogleFonts.orbitron(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green,
+                  color: const Color(0xFFC0A060),
                 ),
               ),
               const SizedBox(height: 24),
@@ -38,16 +39,17 @@ void showEnigmaSuccessDialog(
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: const Color(0xFFC0A060),
+                    foregroundColor: const Color(0xFF121212),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   onPressed: onContinue,
-                  child: const Text(
+                  child: Text(
                     'Próximo Desafio',
-                    style: TextStyle(fontSize: 18, color: textColor),
+                    style: GoogleFonts.orbitron(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
