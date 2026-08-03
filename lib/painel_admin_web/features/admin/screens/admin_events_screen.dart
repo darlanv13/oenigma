@@ -413,7 +413,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             String newEventId = resEvent.result is ParseObject
                                 ? (resEvent.result as ParseObject).objectId!
                                 : (resEvent.result is Map
-                                      ? resEvent.result['objectId']
+                                      ? (resEvent.result['eventId'] ?? resEvent.result['objectId'] ?? '')
                                       : '');
 
                             if (newEventId.isNotEmpty) {
@@ -1058,7 +1058,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
       final newEventId = resEvent.result is ParseObject
           ? (resEvent.result as ParseObject).objectId!
-          : (resEvent.result is Map ? resEvent.result['objectId'] : '');
+          : (resEvent.result is Map ? (resEvent.result['eventId'] ?? resEvent.result['objectId'] ?? '') : '');
 
       if (newEventId.isEmpty) throw 'ID do novo evento inválido.';
 
@@ -1143,7 +1143,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             String newEnigmaId = resNewEnigma.result is ParseObject
                 ? (resNewEnigma.result as ParseObject).objectId!
                 : (resNewEnigma.result is Map
-                      ? resNewEnigma.result['objectId']
+                      ? (resNewEnigma.result['enigmaId'] ?? resNewEnigma.result['objectId'] ?? '')
                       : '');
             if (newEnigmaId.isNotEmpty) {
               final queryHints = QueryBuilder<ParseObject>(ParseObject('Hint'))
