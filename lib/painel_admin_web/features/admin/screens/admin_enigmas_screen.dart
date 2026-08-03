@@ -117,7 +117,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildAddButton('Novo Enigma', () => _showAddEnigmaModal(context)),
+        _buildAddButton('Novo Enigma', () => _showEnigmaModal(context)),
       ],
     );
   }
@@ -294,9 +294,15 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
         ),
         const SizedBox(width: 8),
         _buildButton(
-          'Gerenciar',
+          'Editar',
           isWarning: true,
-          onTap: () => _showManageEnigmaModal(context, enigma),
+          onTap: () => _showEnigmaModal(context, enigma: enigma),
+        ),
+        const SizedBox(width: 8),
+        _buildButton(
+          'Excluir',
+          isDanger: true,
+          onTap: () => _deleteEnigma(context, enigma),
         ),
       ],
     );
@@ -606,7 +612,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     );
   }
 
-  void _showAddEnigmaModal(BuildContext context) {
+  void _showEnigmaModal(BuildContext context, {ParseObject? enigma}) {
     if (_events.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -614,22 +620,27 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
       return;
     }
 
-    final nomeController = TextEditingController();
-    final premioController = TextEditingController();
-    final compassCoordsCtrl = TextEditingController();
+    final isEdit = enigma != null;
+
+    final nomeController = TextEditingController(text: isEdit ? enigma.get<String>('instruction') : '');
+    final premioController = TextEditingController(text: isEdit ? (enigma.get<dynamic>('prize')?.toString() ?? '') : '');
+    final compassCoordsCtrl = TextEditingController(text: isEdit ? (enigma.get<String>('compassCoords') ?? '') : '');
     final firstHintCtrl = TextEditingController();
     final firstHintPriceCtrl = TextEditingController(text: '0.50');
-    final photoUrlCtrl = TextEditingController();
-    final audioUrlCtrl = TextEditingController();
-    String tipo = 'text';
-    String dificuldade = 'Médio';
-    String eventId = _events.first.objectId!;
-    bool hasRadar = false;
-    bool hasMap = false;
-    bool hasCompass = false;
-    double radarPrice = 2.99;
-    double mapPrice = 4.99;
-    double compassPrice = 1.99;
+    final photoUrlCtrl = TextEditingController(text: isEdit ? (enigma.get<String>('imageUrl') ?? '') : '');
+    final audioUrlCtrl = TextEditingController(text: isEdit ? (enigma.get<String>('audioUrl') ?? '') : '');
+    
+    String tipo = isEdit ? (enigma.get<String>('type') ?? 'text') : 'text';
+    String dificuldade = isEdit ? (enigma.get<String>('difficulty') ?? 'Médio') : 'Médio';
+    String eventId = isEdit ? (enigma.get<String>('eventId') ?? _events.first.objectId!) : _events.first.objectId!;
+    
+    bool hasRadar = isEdit ? (enigma.get<bool>('hasRadar') ?? false) : false;
+    bool hasMap = isEdit ? (enigma.get<bool>('hasMap') ?? false) : false;
+    bool hasCompass = isEdit ? (enigma.get<bool>('hasCompass') ?? false) : false;
+    
+    double radarPrice = isEdit ? (enigma.get<num>('radarPrice')?.toDouble() ?? 2.99) : 2.99;
+    double mapPrice = isEdit ? (enigma.get<num>('mapPrice')?.toDouble() ?? 4.99) : 4.99;
+    double compassPrice = isEdit ? (enigma.get<num>('compassPrice')?.toDouble() ?? 1.99) : 1.99;
 
     showDialog(
       context: context,
@@ -637,7 +648,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return AdminModal(
-              title: 'Criar Novo Enigma',
+              title: isEdit ? 'Editar Enigma' : 'Criar Novo Enigma',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -862,33 +873,35 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                     ),
                   ],
                   const SizedBox(height: 16),
-                  Text(
-                    'Dica Inicial (Opcional):',
-                    style: GoogleFonts.inter(
-                      color: secondaryTextColor,
-                      fontSize: 12,
+                  if (!isEdit) ...[
+                    Text(
+                      'Dica Inicial (Opcional):',
+                      style: GoogleFonts.inter(
+                        color: secondaryTextColor,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: _buildInputForm(
-                          controller: firstHintCtrl,
-                          hint: 'Texto da 1ª Dica...',
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: _buildInputForm(
+                            controller: firstHintCtrl,
+                            hint: 'Texto da 1ª Dica...',
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildInputForm(
-                          controller: firstHintPriceCtrl,
-                          hint: 'Preço',
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildInputForm(
+                            controller: firstHintPriceCtrl,
+                            hint: 'Preço',
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   Text(
                     'Vincular ao Evento:',
                     style: GoogleFonts.inter(
@@ -915,6 +928,202 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                       if (val != null) setModalState(() => eventId = val);
                     },
                   ),
+                  if (isEdit && (enigma!.get<String>('code') ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _buildSectionTitle(
+                      'Código Hash (QR Code)',
+                      FontAwesomeIcons.qrcode,
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: cardColor.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: primaryAmber.withValues(alpha: 0.15),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: QrImageView(
+                              data: enigma!.get<String>('code')!,
+                              version: QrVersions.auto,
+                              size: 100.0,
+                              backgroundColor: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  enigma!.get<String>('code')!,
+                                  style: GoogleFonts.orbitron(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Você pode escanear ou digitar o código acima.',
+                                  style: GoogleFonts.inter(
+                                    color: secondaryTextColor,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (isEdit) ...[
+                    const SizedBox(height: 16),
+                    _buildSectionTitle('Dicas', FontAwesomeIcons.lightbulb),
+                    FutureBuilder<ParseResponse>(
+                      future: (QueryBuilder<ParseObject>(
+                        ParseObject('Hint'),
+                      )..whereEqualTo('linkedEnigmaId', enigma!.objectId)).query(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(8),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+                        final hints =
+                            snapshot.data?.results as List<ParseObject>? ?? [];
+                        if (hints.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text(
+                              'Nenhuma dica cadastrada.',
+                              style: TextStyle(
+                                color: secondaryTextColor,
+                                fontSize: 12,
+                              ),
+                            ),
+                          );
+                        }
+                        return Column(
+                          children: hints.map((hint) {
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: cardColor.withValues(alpha: 0.4),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: primaryAmber.withValues(alpha: 0.04),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          hint.get<String>('description') ??
+                                              hint.get<String>('title') ??
+                                              'Sem texto',
+                                          style: GoogleFonts.inter(
+                                            color: primaryAmberLight,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Preço: R\$ ${hint.get<num>('price') ?? '0.00'}',
+                                          style: GoogleFonts.inter(
+                                            color: secondaryTextColor,
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  _buildButton(
+                                    'Editar',
+                                    isWarning: true,
+                                    onTap: () {
+                                      _showEditHintModal(
+                                        context,
+                                        hint,
+                                        () => setModalState(() {}),
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildButton(
+                                    'Remover',
+                                    isDanger: true,
+                                    onTap: () async {
+                                      await hint.delete();
+                                      setModalState(() {});
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: () {
+                        _showAddHintModal(
+                          context,
+                          enigma!,
+                          () => setModalState(() {}),
+                        );
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: primaryAmber.withValues(alpha: 0.15),
+                            style: BorderStyle.solid,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const FaIcon(
+                              FontAwesomeIcons.circlePlus,
+                              color: primaryAmber,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Adicionar Dica',
+                              style: GoogleFonts.inter(
+                                color: secondaryTextColor,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -925,7 +1134,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                       ),
                       const SizedBox(width: 12),
                       _buildButton(
-                        'Criar Enigma',
+                        'Salvar',
                         isPrimary: true,
                         onTap: () async {
                           if (tipo == 'photo' &&
@@ -948,26 +1157,14 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                           }
 
                           if (hasMap || hasCompass) {
-                            if (compassCoordsCtrl.text.trim().isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Coordenadas são obrigatórias para Mapa/Bússola.',
-                                  ),
-                                ),
-                              );
-                              return;
-                            }
-                            final latLngRegEx = RegExp(
-                              r'^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$',
+                            final regex = RegExp(
+                              r'^-?([0-8]?[0-9]|90)\.{1}\d{1,6},\s?-?((1[0-7][0-9]|[0-9]{1,2})\.{1}\d{1,6}|180\.0{1,6})$',
                             );
-                            if (!latLngRegEx.hasMatch(
-                              compassCoordsCtrl.text.trim(),
-                            )) {
+                            if (!regex.hasMatch(compassCoordsCtrl.text.trim())) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
-                                    'Formato inválido de coordenadas. Use: Latitude, Longitude (ex: -23.5, -46.6)',
+                                    'Formato de coordenadas inválido. Use "Lat, Lng" decimais.',
                                   ),
                                 ),
                               );
@@ -975,25 +1172,27 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                             }
                           }
 
-                          final generatedHash =
+                          final String generatedHash =
                               '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond.toString().padLeft(3, '0')}';
 
                           // Check current max order for this event to auto-increment
-                          final queryOrder =
-                              QueryBuilder<ParseObject>(ParseObject('Enigma'))
-                                ..whereEqualTo('eventId', eventId)
-                                ..orderByDescending('order')
-                                ..setLimit(1);
-                          final resOrder = await queryOrder.query();
-                          int nextOrder = 1;
-                          if (resOrder.success &&
-                              resOrder.results != null &&
-                              resOrder.results!.isNotEmpty) {
-                            final lastEnigma =
-                                resOrder.results!.first as ParseObject;
-                            nextOrder =
-                                (lastEnigma.get<num>('order')?.toInt() ?? 0) +
-                                1;
+                          int nextOrder = isEdit ? (enigma!.get<num>('order')?.toInt() ?? 1) : 1;
+                          if (!isEdit) {
+                            final queryOrder =
+                                QueryBuilder<ParseObject>(ParseObject('Enigma'))
+                                  ..whereEqualTo('eventId', eventId)
+                                  ..orderByDescending('order')
+                                  ..setLimit(1);
+                            final resOrder = await queryOrder.query();
+                            if (resOrder.success &&
+                                resOrder.results != null &&
+                                resOrder.results!.isNotEmpty) {
+                              final lastEnigma =
+                                  resOrder.results!.first as ParseObject;
+                              nextOrder =
+                                  (lastEnigma.get<num>('order')?.toInt() ?? 0) +
+                                  1;
+                            }
                           }
 
                           final enigmaRes =
@@ -1002,10 +1201,10 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                               ).execute(
                                 parameters: {
                                   'eventId': eventId,
+                                  if (isEdit) 'enigmaId': enigma!.objectId,
                                   'data': {
-                                    'instruction': nomeController.text
-                                        .trim(), // Assuming name maps to instruction
-                                    'code': generatedHash,
+                                    'instruction': nomeController.text.trim(), // Assuming name maps to instruction
+                                    if (!isEdit) 'code': generatedHash,
                                     'order': nextOrder,
                                     'type': tipo,
                                     'difficulty': dificuldade,
@@ -1021,12 +1220,12 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                                               ),
                                         ) ??
                                         0,
-                                    'status': 'open',
+                                    if (!isEdit) 'status': 'open',
                                     'hasCompass': hasCompass,
                                     'compassCoords': compassCoordsCtrl.text
                                         .trim(),
                                     'compassPrice': compassPrice,
-                                    'compassDuration': 0,
+                                    if (!isEdit) 'compassDuration': 0,
                                     'hasRadar': hasRadar,
                                     'hasMap': hasMap,
                                     'radarPrice': radarPrice,
@@ -1041,7 +1240,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                                 },
                               );
 
-                          if (enigmaRes.success &&
+                          if (!isEdit && enigmaRes.success &&
                               enigmaRes.result != null &&
                               firstHintCtrl.text.trim().isNotEmpty) {
                             String newEnigmaId = enigmaRes.result is ParseObject
@@ -1084,287 +1283,60 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     );
   }
 
-  void _showManageEnigmaModal(BuildContext context, ParseObject enigma) {
-    bool hasRadar = enigma.get<bool>('hasRadar') ?? false;
-    bool hasMap = enigma.get<bool>('hasMap') ?? false;
-    bool hasScanner =
-        enigma.get<bool>('hasCompass') ?? false; // Scanner maps to Compass
-    double radarPrice = (enigma.get<num>('radarPrice'))?.toDouble() ?? 2.99;
-    double mapPrice = (enigma.get<num>('mapPrice'))?.toDouble() ?? 4.99;
-    double scannerPrice = (enigma.get<num>('compassPrice'))?.toDouble() ?? 1.99;
-
-    showDialog(
+  Future<void> _deleteEnigma(BuildContext context, ParseObject enigma) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return AdminModal(
-              title: 'Gerenciar: ${enigma.get<String>('instruction') ?? ''}',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if ((enigma.get<String>('code') ?? '').isNotEmpty) ...[
-                    _buildSectionTitle(
-                      'Código Hash (QR Code)',
-                      FontAwesomeIcons.qrcode,
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: cardColor.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: primaryAmber.withValues(alpha: 0.15),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: QrImageView(
-                              data: enigma.get<String>('code')!,
-                              version: QrVersions.auto,
-                              size: 100.0,
-                              backgroundColor: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  enigma.get<String>('code')!,
-                                  style: GoogleFonts.orbitron(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    letterSpacing: 2,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Você pode escanear ou digitar o código acima.',
-                                  style: GoogleFonts.inter(
-                                    color: secondaryTextColor,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  _buildSectionTitle('Ferramentas', FontAwesomeIcons.toolbox),
-                  _buildToolToggle(
-                    'Radar',
-                    'Mostra QR codes num raio de 500m',
-                    hasRadar,
-                    radarPrice,
-                    (val) => setModalState(() => hasRadar = val),
-                    (val) => radarPrice = val,
-                  ),
-                  _buildToolToggle(
-                    'Maps',
-                    'Caminho otimizado entre enigmas',
-                    hasMap,
-                    mapPrice,
-                    (val) => setModalState(() => hasMap = val),
-                    (val) => mapPrice = val,
-                  ),
-                  _buildToolToggle(
-                    'Scanner+',
-                    'Lê QR codes à distância (100m)',
-                    hasScanner,
-                    scannerPrice,
-                    (val) => setModalState(() => hasScanner = val),
-                    (val) => scannerPrice = val,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSectionTitle('Dicas', FontAwesomeIcons.lightbulb),
-                  FutureBuilder<ParseResponse>(
-                    future: (QueryBuilder<ParseObject>(
-                      ParseObject('Hint'),
-                    )..whereEqualTo('linkedEnigmaId', enigma.objectId)).query(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(8),
-                            child: CircularProgressIndicator(),
-                          ),
-                        );
-                      }
-                      final hints =
-                          snapshot.data?.results as List<ParseObject>? ?? [];
-                      if (hints.isEmpty) {
-                        return const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'Nenhuma dica cadastrada.',
-                            style: TextStyle(
-                              color: secondaryTextColor,
-                              fontSize: 12,
-                            ),
-                          ),
-                        );
-                      }
-                      return Column(
-                        children: hints.map((hint) {
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: cardColor.withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: primaryAmber.withValues(alpha: 0.04),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        hint.get<String>('description') ??
-                                            hint.get<String>('title') ??
-                                            'Sem texto',
-                                        style: GoogleFonts.inter(
-                                          color: primaryAmberLight,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Preço: R\$ ${hint.get<num>('price') ?? '0.00'}',
-                                        style: GoogleFonts.inter(
-                                          color: secondaryTextColor,
-                                          fontSize: 10,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                _buildButton(
-                                  'Editar',
-                                  isWarning: true,
-                                  onTap: () {
-                                    _showEditHintModal(
-                                      context,
-                                      hint,
-                                      () => setModalState(() {}),
-                                    );
-                                  },
-                                ),
-                                const SizedBox(width: 8),
-                                _buildButton(
-                                  'Remover',
-                                  isDanger: true,
-                                  onTap: () async {
-                                    await hint.delete();
-                                    setModalState(() {});
-                                  },
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () {
-                      _showAddHintModal(
-                        context,
-                        enigma,
-                        () => setModalState(() {}),
-                      );
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: primaryAmber.withValues(alpha: 0.15),
-                          style: BorderStyle.solid,
-                        ), // Replacing dashed with solid for simplicity here
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const FaIcon(
-                            FontAwesomeIcons.circlePlus,
-                            color: primaryAmber,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Adicionar Dica',
-                            style: GoogleFonts.inter(
-                              color: secondaryTextColor,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      _buildButton(
-                        'Fechar',
-                        onTap: () => Navigator.of(context).pop(),
-                      ),
-                      const SizedBox(width: 12),
-
-                      _buildButton(
-                        'Salvar',
-                        isPrimary: true,
-                        onTap: () async {
-                          await ParseCloudFunction(
-                            'createOrUpdateEnigma',
-                          ).execute(
-                            parameters: {
-                              'eventId': enigma.get<String>('eventId') ?? '',
-                              'data': {
-                                'enigmaId': enigma.objectId,
-                                'hasRadar': hasRadar,
-                                'hasMap': hasMap,
-                                'hasCompass': hasScanner,
-                                'radarPrice': radarPrice,
-                                'mapPrice': mapPrice,
-                                'compassPrice': scannerPrice,
-                              },
-                            },
-                          );
-
-                          if (context.mounted) Navigator.of(context).pop();
-                          _loadData();
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          },
+        return AlertDialog(
+          backgroundColor: sidebarBackground,
+          title: Text(
+            'Confirmar Exclusão',
+            style: GoogleFonts.orbitron(color: primaryAmber),
+          ),
+          content: Text(
+            'Tem certeza que deseja excluir este enigma? Esta ação não pode ser desfeita e todas as dicas associadas serão perdidas.',
+            style: GoogleFonts.inter(color: secondaryTextColor),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.white)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Excluir', style: TextStyle(color: Color(0xFFE53935))),
+            ),
+          ],
         );
       },
     );
+
+    if (confirmed == true) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(color: primaryAmber),
+        ),
+      );
+      
+      final res = await ParseCloudFunction('deleteEnigma').execute(
+        parameters: {
+          'enigmaId': enigma.objectId,
+        }
+      );
+      
+      if (context.mounted) {
+        Navigator.of(context).pop(); // close progress dialog
+        if (res.success) {
+           _loadData();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao excluir: ${res.error?.message}')),
+          );
+        }
+      }
+    }
   }
 
   void _showEditHintModal(
