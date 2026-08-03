@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' show pi, sin;
 import 'dart:ui';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -50,14 +51,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text(
-          'Aponte para o QR Code',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        elevation: 0,
-      ),
+      backgroundColor: Colors.black,
       body: Stack(
         alignment: Alignment.center,
         children: [
@@ -76,6 +70,59 @@ class _ScannerScreenState extends State<ScannerScreen> {
             },
           ),
           if (_detectedQRCode != null) _buildConfirmationOverlay(),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0B0E11).withValues(alpha: 0.8),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: const Color(0xFFC0A060).withValues(alpha: 0.10),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC0A060).withValues(alpha: 0.06),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: FaIcon(
+                            FontAwesomeIcons.chevronLeft,
+                            color: Color(0xFFC0A060),
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      'Ler QR Code',
+                      style: GoogleFonts.orbitron(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFFF0E6C5),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: 36),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1193,51 +1240,102 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: Text(
-          widget.phase.id == 'find_and_win'
-              ? "Enigma Rápido"
-              : "Fase ${widget.phase.order} - Enigma ${widget.phase.enigmas.indexOf(_currentEnigma) + 1}",
-          style: const TextStyle(
-            fontWeight: FontWeight.w900,
-            color: Color(0xFFC0A060),
-            fontFamily: 'Orbitron',
-          ),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: Colors.transparent,
-      ),
-      body: _isLoading && !_isHintVisible
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFC0A060)),
-            )
-          : Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF0b0e11), Color(0xFF06080b)],
-                ),
-              ),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildEnigmaCard(),
-                    const SizedBox(height: 16),
-                    _buildHintSection(),
-                    const SizedBox(height: 16),
-                    _buildActionArea(),
-                    const SizedBox(height: 40),
-                  ],
-                ),
+      backgroundColor: const Color(0xFF06080B), // Cor de fundo do painel web
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF0b0e11), Color(0xFF06080b)],
               ),
             ),
+          ),
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: SafeArea(
+                  bottom: false,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: const Color(0xFFC0A060).withValues(alpha: 0.10),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFC0A060).withValues(alpha: 0.06),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: FaIcon(
+                                FontAwesomeIcons.chevronLeft,
+                                color: Color(0xFFC0A060),
+                                size: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            widget.phase.id == 'find_and_win'
+                                ? "Enigma Rápido"
+                                : "Fase ${widget.phase.order} - Enigma ${widget.phase.enigmas.indexOf(_currentEnigma) + 1}",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.orbitron(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFF0E6C5),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 36), // Balance space
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _isLoading && !_isHintVisible
+                    ? const Padding(
+                        padding: EdgeInsets.only(top: 100),
+                        child: Center(
+                          child: CircularProgressIndicator(color: Color(0xFFC0A060)),
+                        ),
+                      )
+                    : Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildEnigmaCard(),
+                            const SizedBox(height: 16),
+                            _buildHintSection(),
+                            const SizedBox(height: 16),
+                            _buildActionArea(),
+                            const SizedBox(height: 40),
+                          ],
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
