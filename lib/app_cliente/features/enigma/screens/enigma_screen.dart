@@ -1193,51 +1193,157 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: Text(
-          widget.phase.id == 'find_and_win'
-              ? "Enigma Rápido"
-              : "Fase ${widget.phase.order} - Enigma ${widget.phase.enigmas.indexOf(_currentEnigma) + 1}",
-          style: const TextStyle(
-            fontWeight: FontWeight.w900,
-            color: Color(0xFFC0A060),
-            fontFamily: 'Orbitron',
-          ),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF06080B),
+      body: SafeArea(
+        child: _isLoading && !_isHintVisible
+            ? const Center(
+                child: CircularProgressIndicator(color: Color(0xFFC0A060)),
+              )
+            : Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0B0E11),
+                    borderRadius: BorderRadius.circular(36),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black87,
+                        blurRadius: 50,
+                        offset: Offset(0, 30),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // Glow effect
+                      Positioned(
+                        top: -80,
+                        right: -80,
+                        child: Container(
+                          width: 200,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                const Color(0xFFC0A060).withOpacity(0.04),
+                                Colors.transparent,
+                              ],
+                              stops: const [0.0, 0.7],
+                            ),
+                          ),
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          // Header
+                          Container(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: const Color(0xFFC0A060).withOpacity(0.10),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => Navigator.of(context).pop(),
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFC0A060).withOpacity(0.06),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Center(
+                                        child: FaIcon(
+                                          FontAwesomeIcons.chevronLeft,
+                                          color: Color(0xFFC0A060),
+                                          size: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    widget.phase.id == 'find_and_win'
+                                        ? "Enigma Rápido"
+                                        : "Fase ${widget.phase.order} - Enigma ${widget.phase.enigmas.indexOf(_currentEnigma) + 1}",
+                                    style: const TextStyle(
+                                      fontFamily: 'Orbitron',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFFF0E6C5),
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFC0A060).withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: const Color(0xFFC0A060).withOpacity(0.10),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      FaIcon(
+                                        FontAwesomeIcons.solidCircle,
+                                        color: Colors.green,
+                                        size: 6,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        'Ativo',
+                                        style: TextStyle(
+                                          fontFamily: 'Orbitron',
+                                          fontSize: 10,
+                                          color: Color(0xFFC0A060),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildEnigmaCard(),
+                                  const SizedBox(height: 16),
+                                  _buildHintSection(),
+                                  const SizedBox(height: 16),
+                                  _buildActionArea(),
+                                  const SizedBox(height: 40),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
       ),
-      body: _isLoading && !_isHintVisible
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFC0A060)),
-            )
-          : Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFF0b0e11), Color(0xFF06080b)],
-                ),
-              ),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildEnigmaCard(),
-                    const SizedBox(height: 16),
-                    _buildHintSection(),
-                    const SizedBox(height: 16),
-                    _buildActionArea(),
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              ),
-            ),
     );
   }
 
@@ -1252,18 +1358,18 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E).withOpacity(0.6),
+            color: const Color(0xFF16181C).withOpacity(0.6),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: const Color(0xFFC0A060).withOpacity(0.08),
+              color: const Color(0xFFC0A060).withOpacity(0.06),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.4),
-                blurRadius: 15,
+                blurRadius: 24,
                 offset: const Offset(0, 8),
               ),
             ],
@@ -1274,21 +1380,21 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               Row(
                 children: [
                   if (icon != null) ...[
-                    FaIcon(icon, color: const Color(0xFFC0A060), size: 16),
-                    const SizedBox(width: 10),
+                    FaIcon(icon, color: const Color(0xFFC0A060), size: 14),
+                    const SizedBox(width: 8),
                   ],
                   Text(
                     title.toUpperCase(),
                     style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF7A7A7A),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
                       letterSpacing: 1.5,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               child,
             ],
           ),
@@ -1303,42 +1409,42 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       title: 'Desafio Atual',
       icon: FontAwesomeIcons.scroll,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           MarkdownBody(
             data: _currentEnigma.instruction,
             styleSheet: MarkdownStyleSheet(
               p: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                height: 1.5,
-                fontWeight: FontWeight.w500,
+                color: Color(0xFFF0E6C5),
+                fontSize: 13,
+                height: 1.7,
+                fontWeight: FontWeight.w400,
               ),
               strong: const TextStyle(
                 color: Color(0xFFC0A060),
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
           if ((_currentEnigma.imageUrl != null && _currentEnigma.imageUrl!.isNotEmpty) ||
               (_currentEnigma.audioUrl != null && _currentEnigma.audioUrl!.isNotEmpty)) ...[
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
               children: [
                 if (_currentEnigma.imageUrl != null && _currentEnigma.imageUrl!.isNotEmpty)
                   _buildMediaButton(
                     icon: FontAwesomeIcons.image,
                     label: 'Ver Imagem',
-                    color: Colors.blueAccent,
+                    color: const Color(0xFF4FC3F7),
                     onPressed: () => _showMediaDialog(
                       context,
                       type: 'image',
                       url: _currentEnigma.imageUrl!,
                     ),
                   ),
-                if ((_currentEnigma.imageUrl != null && _currentEnigma.imageUrl!.isNotEmpty) &&
-                    (_currentEnigma.audioUrl != null && _currentEnigma.audioUrl!.isNotEmpty))
-                  const SizedBox(width: 16),
                 if (_currentEnigma.audioUrl != null && _currentEnigma.audioUrl!.isNotEmpty)
                   _buildMediaButton(
                     icon: FontAwesomeIcons.play,
@@ -1364,17 +1470,33 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     required Color color,
     required VoidCallback onPressed,
   }) {
-    return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color.withOpacity(0.1),
-        foregroundColor: color,
-        side: BorderSide(color: color, width: 1.5),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: color, width: 1.5),
+          color: color.withOpacity(0.06),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FaIcon(icon, color: color, size: 12),
+            const SizedBox(width: 6),
+            Text(
+              label.toUpperCase(),
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 10,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
       ),
-      onPressed: onPressed,
-      icon: FaIcon(icon, size: 16),
-      label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 
@@ -1384,44 +1506,46 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (_isHintVisible && _hintData != null)
-          _buildCard(
-            title: 'Pista Encontrada',
-            icon: FontAwesomeIcons.magnifyingGlass,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFC0A060), Color(0xFFF57F17)],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFC0A060).withOpacity(0.3),
-                    blurRadius: 15,
-                  ),
-                ],
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFC0A060), Color(0xFFA8894A)],
               ),
-              child: ElevatedButton.icon(
-                onPressed: _openHintDialog,
-                icon: const FaIcon(
-                  FontAwesomeIcons.eye,
-                  color: Colors.black,
-                  size: 18,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFC0A060).withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
                 ),
-                label: const Text(
-                  'ABRIR PISTA',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
-                  ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed: _openHintDialog,
+              icon: const FaIcon(
+                FontAwesomeIcons.eye,
+                color: Color(0xFF06080B),
+                size: 14,
+              ),
+              label: const Text(
+                'ABRIR PISTA',
+                style: TextStyle(
+                  color: Color(0xFF06080B),
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                  letterSpacing: 1.0,
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
                 ),
               ),
             ),
@@ -1438,11 +1562,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     final cost = hintCosts[widget.phase.order] ?? 5;
 
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: const Color(0xFFC0A060).withOpacity(0.3),
+          width: 1.5,
         ),
         color: const Color(0xFFC0A060).withOpacity(0.05),
       ),
@@ -1459,18 +1585,19 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         icon: const FaIcon(
           FontAwesomeIcons.lightbulb,
           color: Color(0xFFC0A060),
-          size: 18,
+          size: 14,
         ),
         label: Text(
           'COMPRAR PISTA (R\$ ${cost.toStringAsFixed(2)})',
           style: const TextStyle(
             color: Color(0xFFC0A060),
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.0,
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            letterSpacing: 0.8,
           ),
         ),
         style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
@@ -1483,65 +1610,47 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     if (!_currentEnigma.hasMap && !_currentEnigma.hasCompass && !_currentEnigma.hasRadar) {
       return const SizedBox.shrink();
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Row(
-          children: [
-            FaIcon(FontAwesomeIcons.toolbox, color: Colors.grey, size: 16),
-            SizedBox(width: 10),
-            Text(
-              'FERRAMENTAS',
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.5,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildToolPurchaseCard(
-                title: 'MAPA',
-                price: _currentEnigma.mapPrice,
-                type: 'Mapa',
-                toolKey: 'map',
-                icon: FontAwesomeIcons.mapLocationDot,
-                color: Colors.blueAccent,
-                isPurchased: _hasMap,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildToolPurchaseCard(
-                title: 'BÚSSOLA',
-                price: _compassPrice,
-                type: 'Bússola',
-                toolKey: 'compass',
-                icon: FontAwesomeIcons.compass,
-                color: const Color(0xFFC0A060),
-                isPurchased: _hasCompass,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildToolPurchaseCard(
-                title: 'RADAR',
-                price: _currentEnigma.radarPrice,
-                type: 'Radar',
-                toolKey: 'radar',
-                icon: FontAwesomeIcons.satelliteDish,
-                color: Colors.deepPurpleAccent,
-                isPurchased: _hasRadar,
-              ),
-            ),
-          ],
-        ),
-      ],
+    return _buildCard(
+      title: 'Ferramentas',
+      icon: FontAwesomeIcons.toolbox,
+      child: GridView.count(
+        crossAxisCount: 3,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 0.85,
+        padding: EdgeInsets.zero,
+        children: [
+          _buildToolPurchaseCard(
+            title: 'Mapa',
+            price: _currentEnigma.mapPrice,
+            type: 'Mapa',
+            toolKey: 'map',
+            icon: FontAwesomeIcons.mapLocationDot,
+            color: const Color(0xFF4FC3F7),
+            isPurchased: _hasMap,
+          ),
+          _buildToolPurchaseCard(
+            title: 'Bússola',
+            price: _compassPrice,
+            type: 'Bússola',
+            toolKey: 'compass',
+            icon: FontAwesomeIcons.compass,
+            color: const Color(0xFFC0A060),
+            isPurchased: _hasCompass,
+          ),
+          _buildToolPurchaseCard(
+            title: 'Radar',
+            price: _currentEnigma.radarPrice,
+            type: 'Radar',
+            toolKey: 'radar',
+            icon: FontAwesomeIcons.satelliteDish,
+            color: const Color(0xFFCE93D8),
+            isPurchased: _hasRadar,
+          ),
+        ],
+      ),
     );
   }
 
@@ -1554,90 +1663,66 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     required Color color,
     required bool isPurchased,
   }) {
-    if (isPurchased) {
-      return Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.3),
-              blurRadius: 15,
-              spreadRadius: 1,
-            ),
-          ],
-        ),
-        child: ElevatedButton.icon(
-          onPressed: _isLoading
-              ? null
-              : () => toolKey == 'map'
-                  ? _openMapDialog()
-                  : (toolKey == 'radar' ? _openRadarDialog() : _openCompassDialog()),
-          icon: FaIcon(icon, size: 14, color: Colors.white),
-          label: Text(
-            'ABRIR $title',
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 12,
-              letterSpacing: 1.0,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: color,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            elevation: 0,
-          ),
-        ),
-      );
-    }
-
-    return GestureDetector(
+    return InkWell(
       onTap: _isLoading
           ? null
           : () async {
+              if (isPurchased) {
+                if (toolKey == 'map') {
+                  _openMapDialog();
+                } else if (toolKey == 'radar') {
+                  _openRadarDialog();
+                } else {
+                  _openCompassDialog();
+                }
+                return;
+              }
               final bool? confirmed = await _showPurchaseConfirmationDialog(
                 price,
                 type: type,
               );
               if (confirmed == true) _handleToolPurchase(toolKey);
             },
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
+          color: isPurchased ? const Color(0xFFC0A060).withOpacity(0.08) : const Color(0xFF16181C).withOpacity(0.5),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+          border: Border.all(
+            color: isPurchased ? const Color(0xFFC0A060) : const Color(0xFFC0A060).withOpacity(0.10),
+            width: 1.5,
+          ),
+          boxShadow: isPurchased
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFC0A060).withOpacity(0.1),
+                    blurRadius: 20,
+                  )
+                ]
+              : null,
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             FaIcon(icon, color: color, size: 28),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                letterSpacing: 1.0,
+              title.toUpperCase(),
+              style: TextStyle(
+                color: isPurchased ? const Color(0xFFC0A060) : const Color(0xFFB0A07A),
+                fontWeight: FontWeight.w700,
+                fontSize: 10,
+                letterSpacing: 0.5,
               ),
             ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF121212),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                'R\$ ${price.toInt()}',
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
+            const SizedBox(height: 4),
+            Text(
+              isPurchased ? '✓' : 'R\$ ${price.toInt()}',
+              style: TextStyle(
+                color: isPurchased ? const Color(0xFF4CAF50) : const Color(0xFFC0A060),
+                fontWeight: isPurchased ? FontWeight.w700 : FontWeight.w600,
+                fontSize: 10,
               ),
             ),
           ],
@@ -1659,80 +1744,100 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         (_currentEnigma.type == 'qrcode' || _isNear) && !_isBlocked;
 
     return _buildCard(
-      title: 'Missão de Campo',
-      icon: FontAwesomeIcons.mapLocationDot,
+      title: _currentEnigma.type == 'gps' ? 'Caça ao Tesouro' : 'Escaneie o QR Code',
+      icon: FontAwesomeIcons.qrcode,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          Container(
+            width: double.infinity,
+            constraints: const BoxConstraints(maxWidth: 130),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF121212),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFFC0A060).withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const FaIcon(
+                  FontAwesomeIcons.qrcode,
+                  color: Color(0xFF4A4A4A),
+                  size: 44,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Aponte para o QR Code',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF7A7A7A),
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
           if (_currentEnigma.type == 'gps') ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFF121212),
+                color: const Color(0xFF16181C).withOpacity(0.4),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.05),
+                  color: const Color(0xFFC0A060).withOpacity(0.06),
                 ),
               ),
-              child: _distance == null
-                  ? const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 16,
-                          height: 16,
+              child: Column(
+                children: [
+                  const Text(
+                    'DISTÂNCIA DO ALVO',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF7A7A7A),
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  _distance == null
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.grey,
+                            color: Color(0xFFC0A060),
+                          ),
+                        )
+                      : Text(
+                          _isNear ? "📍 CHEGOU!" : "${_distance!.toStringAsFixed(0)} m",
+                          style: const TextStyle(
+                            fontFamily: 'Orbitron',
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFFC0A060),
                           ),
                         ),
-                        SizedBox(width: 12),
-                        Text(
-                          "Buscando satélites...",
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        FaIcon(
-                          _isNear
-                              ? FontAwesomeIcons.locationCrosshairs
-                              : FontAwesomeIcons.route,
-                          color: _isNear
-                              ? const Color(0xFFC0A060)
-                              : const Color(0xFFC0A060),
-                          size: 16,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          _isNear
-                              ? "VOCÊ CHEGOU!"
-                              : "Distância: ${_distance!.toStringAsFixed(0)} metros",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: _isNear
-                                ? const Color(0xFFC0A060)
-                                : const Color(0xFFC0A060),
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ],
-                    ),
+                ],
+              ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
           ],
 
           Container(
+            width: double.infinity,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
               gradient: isActionReady
                   ? const LinearGradient(
-                      colors: [Color(0xFF00FFFF), Color(0xFF0088FF)],
+                      colors: [Color(0xFFC0A060), Color(0xFFA8894A)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     )
                   : const LinearGradient(
                       colors: [Color(0xFF424242), Color(0xFF212121)],
@@ -1740,9 +1845,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               boxShadow: [
                 if (isActionReady)
                   BoxShadow(
-                    color: const Color(0xFF00FFFF).withOpacity(0.4),
-                    blurRadius: 15,
-                    spreadRadius: 2,
+                    color: const Color(0xFFC0A060).withOpacity(0.3),
+                    blurRadius: 24,
+                    offset: const Offset(0, 4),
                   ),
               ],
             ),
@@ -1762,27 +1867,27 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     }
                   : null,
               icon: FaIcon(
-                _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
-                color: isActionReady ? Colors.white : Colors.grey,
-                size: 20,
+                _isBlocked ? FontAwesomeIcons.clock : (_currentEnigma.type == 'gps' && !isActionReady ? FontAwesomeIcons.qrcode : FontAwesomeIcons.camera),
+                color: isActionReady ? const Color(0xFF06080B) : Colors.grey,
+                size: 14,
               ),
               label: Text(
                 _isBlocked
                     ? 'COOLDOWN ATIVO'
                     : (isActionReady
-                        ? 'ESCANEAR CÓDIGO'
+                        ? (_currentEnigma.type == 'gps' ? 'ESCANEAR CÓDIGO' : 'ESCANEAR AGORA')
                         : 'APROXIME-SE DO ALVO'),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0,
-                  color: isActionReady ? Colors.white : Colors.grey,
+                  letterSpacing: 1.5,
+                  color: isActionReady ? const Color(0xFF06080B) : Colors.grey,
                 ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,
-                padding: const EdgeInsets.symmetric(vertical: 18),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
