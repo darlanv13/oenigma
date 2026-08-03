@@ -1158,7 +1158,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
 
                           if (hasMap || hasCompass) {
                             final regex = RegExp(
-                              r'^-?([0-8]?[0-9]|90)\.{1}\d{1,6},\s?-?((1[0-7][0-9]|[0-9]{1,2})\.{1}\d{1,6}|180\.0{1,6})$',
+                              r'^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$',
                             );
                             if (!regex.hasMatch(compassCoordsCtrl.text.trim())) {
                               ScaffoldMessenger.of(context).showSnackBar(
