@@ -1282,9 +1282,11 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         ),
                         Expanded(
                           child: Text(
-                            widget.phase.id == 'find_and_win'
-                                ? "Enigma Rápido"
-                                : "Fase ${widget.phase.order} - Enigma ${widget.phase.enigmas.indexOf(_currentEnigma) + 1}",
+                            _currentEnigma.type == 'qrcode'
+                                ? "QR Code"
+                                : widget.phase.id == 'find_and_win'
+                                    ? "Enigma Rápido"
+                                    : "Fase ${widget.phase.order} - Enigma ${widget.phase.enigmas.indexOf(_currentEnigma) + 1}",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.orbitron(
                               fontSize: 18,
@@ -1294,7 +1296,42 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                             ),
                           ),
                         ),
-                        const SizedBox(width: 36), // Balance space
+                        _currentEnigma.type == 'qrcode'
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.green.withValues(alpha: 0.5),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.green,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Text(
+                                      'Ativo',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : const SizedBox(width: 36), // Balance space
                       ],
                     ),
                   ),
@@ -1737,15 +1774,16 @@ class _EnigmaScreenState extends State<EnigmaScreen>
 
   // --- ÁREA DE AÇÃO (CÓDIGO / QR / GPS) ---
   Widget _buildActionArea() {
-    if (_currentEnigma.type == 'gps' || _currentEnigma.type == 'qrcode') {
-      return _buildQrCodeGpsCard();
+    if (_currentEnigma.type == 'gps') {
+      return _buildGpsCard();
+    } else if (_currentEnigma.type == 'qrcode') {
+      return _buildQrCodeCard();
     }
     return _buildCodeInputSection();
   }
 
-  Widget _buildQrCodeGpsCard() {
-    final bool isActionReady =
-        (_currentEnigma.type == 'qrcode' || _isNear) && !_isBlocked;
+  Widget _buildGpsCard() {
+    final bool isActionReady = _isNear && !_isBlocked;
 
     return _buildCard(
       title: 'Missão de Campo',
@@ -1753,68 +1791,66 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (_currentEnigma.type == 'gps') ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF121212),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.05),
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF121212),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.05),
               ),
-              child: _distance == null
-                  ? const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.grey,
-                          ),
+            ),
+            child: _distance == null
+                ? const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.grey,
                         ),
-                        SizedBox(width: 12),
-                        Text(
-                          "Buscando satélites...",
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        "Buscando satélites...",
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        FaIcon(
-                          _isNear
-                              ? FontAwesomeIcons.locationCrosshairs
-                              : FontAwesomeIcons.route,
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FaIcon(
+                        _isNear
+                            ? FontAwesomeIcons.locationCrosshairs
+                            : FontAwesomeIcons.route,
+                        color: _isNear
+                            ? const Color(0xFFC0A060)
+                            : const Color(0xFFC0A060),
+                        size: 16,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        _isNear
+                            ? "VOCÊ CHEGOU!"
+                            : "Distância: ${_distance!.toStringAsFixed(0)} metros",
+                        style: TextStyle(
+                          fontSize: 16,
                           color: _isNear
                               ? const Color(0xFFC0A060)
                               : const Color(0xFFC0A060),
-                          size: 16,
+                          fontWeight: FontWeight.w900,
                         ),
-                        const SizedBox(width: 10),
-                        Text(
-                          _isNear
-                              ? "VOCÊ CHEGOU!"
-                              : "Distância: ${_distance!.toStringAsFixed(0)} metros",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: _isNear
-                                ? const Color(0xFFC0A060)
-                                : const Color(0xFFC0A060),
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-            const SizedBox(height: 24),
-          ],
+                      ),
+                    ],
+                  ),
+          ),
+          const SizedBox(height: 24),
 
           Container(
             decoration: BoxDecoration(
@@ -1859,13 +1895,114 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 _isBlocked
                     ? 'COOLDOWN ATIVO'
                     : (isActionReady
-                        ? 'ESCANEAR CÓDIGO'
+                        ? 'ESCANEAR ALVO'
                         : 'APROXIME-SE DO ALVO'),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.0,
                   color: isActionReady ? Colors.white : Colors.grey,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                minimumSize: const Size(double.infinity, 50),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQrCodeCard() {
+    return _buildCard(
+      title: 'Escaneie o QR Code',
+      icon: FontAwesomeIcons.qrcode,
+      child: Column(
+        children: [
+          CustomPaint(
+            painter: DashedRectPainter(
+              color: const Color(0xFFC0A060).withValues(alpha: 0.3),
+              strokeWidth: 2,
+              gap: 6,
+            ),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Column(
+                children: [
+                  FaIcon(
+                    FontAwesomeIcons.qrcode,
+                    color: Colors.white.withValues(alpha: 0.2),
+                    size: 60,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Aponte para o QR\nCode',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: _isBlocked
+                  ? const LinearGradient(
+                      colors: [Color(0xFF424242), Color(0xFF212121)],
+                    )
+                  : const LinearGradient(
+                      colors: [Color(0xFFC0A060), Color(0xFFF57F17)],
+                    ),
+              boxShadow: [
+                if (!_isBlocked)
+                  BoxShadow(
+                    color: const Color(0xFFC0A060).withOpacity(0.4),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                  ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed: _isBlocked
+                  ? null
+                  : () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ScannerScreen(
+                            onScan: (scannedCode) => _handleAction(
+                              'validateCode',
+                              code: scannedCode,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+              icon: FaIcon(
+                _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.camera,
+                color: _isBlocked ? Colors.grey : Colors.black,
+                size: 20,
+              ),
+              label: Text(
+                _isBlocked ? 'COOLDOWN ATIVO' : 'ESCANEAR AGORA',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                  color: _isBlocked ? Colors.grey : Colors.black,
                 ),
               ),
               style: ElevatedButton.styleFrom(
@@ -2149,4 +2286,45 @@ class _AudioDialogState extends State<_AudioDialog> {
       ),
     );
   }
+}
+// ================================================================
+//  DASHED RECT PAINTER
+// ================================================================
+class DashedRectPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double gap;
+
+  DashedRectPainter({
+    this.color = Colors.white,
+    this.strokeWidth = 1.0,
+    this.gap = 5.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final path = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          const Radius.circular(16)));
+
+    final dashPath = Path();
+    for (final metric in path.computeMetrics()) {
+      double distance = 0;
+      while (distance < metric.length) {
+        dashPath.addPath(
+            metric.extractPath(distance, distance + gap), Offset.zero);
+        distance += gap * 2;
+      }
+    }
+    canvas.drawPath(dashPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
