@@ -57,6 +57,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
       body: Stack(
         alignment: Alignment.center,
@@ -186,7 +187,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 }
 
 // ================================================================
-//  ENIGMA SCREEN COM NOVO DESIGN E LÓGICA COMPLETA
+//  ENIGMA SCREEN COM DESIGN DA HOMEPAGE (CORRIGIDO)
 // ================================================================
 class EnigmaScreen extends StatefulWidget {
   final EventModel event;
@@ -274,7 +275,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   // ================================================================
-  //  LÓGICA COMPLETA (mantida do código original)
+  //  LÓGICA COMPLETA (mantida do original)
   // ================================================================
 
   Future<void> _resetEnigmaState() async {
@@ -335,9 +336,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         .toDouble(),
               };
             }
-            if (_compassRemainingSeconds == null) {
-              _compassRemainingSeconds = _compassDuration;
-            }
+            _compassRemainingSeconds ??= _compassDuration;
           });
           if (_isBlocked && statusData['cooldownUntil'] != null) {
             _handleCooldown(statusData['cooldownUntil']);
@@ -394,9 +393,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       .toDouble(),
             };
           }
-          if (_compassRemainingSeconds == null) {
-            _compassRemainingSeconds = _compassDuration;
-          }
+          _compassRemainingSeconds ??= _compassDuration;
         });
         if (_isBlocked && statusData['cooldownUntil'] != null) {
           _handleCooldown(statusData['cooldownUntil']);
@@ -1187,7 +1184,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   // ================================================================
-  //  CONSTRUÇÃO DA UI (NOVO DESIGN)
+  //  CONSTRUÇÃO DA UI (DESIGN DA HOMEPAGE)
   // ================================================================
 
   @override
@@ -1241,7 +1238,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     );
   }
 
-  // --- CARD PADRÃO ---
+  // --- CARD PADRÃO (mesmo estilo da homepage) ---
   Widget _buildCard({
     required String title,
     required Widget child,
