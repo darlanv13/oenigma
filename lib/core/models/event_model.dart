@@ -64,7 +64,7 @@ class EventModel {
       prize:
           map['prize'] ??
           (map['prizePool'] != null ? 'R\$ ${map['prizePool']}' : 'R\$ 0'),
-      price: (map['price'] as num?)?.toDouble() ?? 0.0,
+      price: map['price'] != null ? double.tryParse(map['price'].toString()) ?? 0.0 : 0.0,
       icon: map['icon'] ?? '',
       startDate: map['startDate'] ?? 'Data não definida',
       location: map['location'] ?? 'Local não definido',
