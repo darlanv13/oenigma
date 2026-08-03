@@ -1428,8 +1428,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           ),
 
         if (!_isHintVisible && _canBuyHint) _buildHintPurchaseButton(),
-        if (_currentEnigma.type == 'gps' || _currentEnigma.type == 'foto')
-          _buildToolsPurchaseButtons(),
+        _buildToolsPurchaseButtons(),
       ],
     );
   }
@@ -1481,8 +1480,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   Widget _buildToolsPurchaseButtons() {
-    if (_currentEnigma.type != 'gps' && _currentEnigma.type != 'foto')
+    if (!_currentEnigma.hasMap && !_currentEnigma.hasCompass && !_currentEnigma.hasRadar) {
       return const SizedBox.shrink();
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
