@@ -1240,18 +1240,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF06080B), // Cor de fundo do painel web
+      backgroundColor: Colors.transparent, // Background set to transparent to match Lobby and Events screens
       body: Stack(
         children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFF0b0e11), Color(0xFF06080b)],
-              ),
-            ),
-          ),
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
