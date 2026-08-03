@@ -390,17 +390,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                         .trim(),
                                     'location': local,
                                     'prizePool':
-                                        num.tryParse(
-                                          premioController.text
-                                              .trim()
-                                              .replaceAll('.', '')
-                                              .replaceAll(',', '.')
-                                              .replaceAll(
-                                                RegExp(r'[^0-9.]'),
-                                                '',
-                                              ),
-                                        ) ??
-                                        0,
+                                        (num.tryParse(
+                                              premioController.text
+                                                  .trim()
+                                                  .replaceAll('.', '')
+                                                  .replaceAll(',', '.')
+                                                  .replaceAll(
+                                                    RegExp(r'[^0-9.]'),
+                                                    '',
+                                                  ),
+                                            ) ??
+                                            0)
+                                            .toString(),
                                     'status': status,
                                     'eventType': eventType,
                                   },
@@ -839,14 +840,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                 'description': descricaoController.text.trim(),
                                 'location': localController.text.trim(),
                                 'prizePool':
-                                    num.tryParse(
-                                      premioController.text
-                                          .trim()
-                                          .replaceAll('.', '')
-                                          .replaceAll(',', '.')
-                                          .replaceAll(RegExp(r'[^0-9.]'), ''),
-                                    ) ??
-                                    0,
+                                    (num.tryParse(
+                                          premioController.text
+                                              .trim()
+                                              .replaceAll('.', '')
+                                              .replaceAll(',', '.')
+                                              .replaceAll(
+                                                RegExp(r'[^0-9.]'),
+                                                '',
+                                              ),
+                                        ) ??
+                                        0)
+                                        .toString(),
                                 'status': status,
                                 'eventType': eventType,
                               },
