@@ -1047,7 +1047,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                             String newEnigmaId = enigmaRes.result is ParseObject
                                 ? (enigmaRes.result as ParseObject).objectId!
                                 : (enigmaRes.result is Map
-                                      ? enigmaRes.result['objectId']
+                                      ? (enigmaRes.result['enigmaId'] ?? enigmaRes.result['objectId'] ?? '')
                                       : '');
 
                             if (newEnigmaId.isNotEmpty) {
