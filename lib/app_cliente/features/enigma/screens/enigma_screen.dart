@@ -57,7 +57,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         elevation: 0,
-        backgroundColor: Colors.transparent,
       ),
       body: Stack(
         alignment: Alignment.center,
@@ -187,7 +186,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 }
 
 // ================================================================
-//  ENIGMA SCREEN COM DESIGN DA HOMEPAGE (CORRIGIDO)
+//  ENIGMA SCREEN COM NOVO DESIGN E LÓGICA COMPLETA
 // ================================================================
 class EnigmaScreen extends StatefulWidget {
   final EventModel event;
@@ -275,7 +274,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   // ================================================================
-  //  LÓGICA COMPLETA (mantida do original)
+  //  LÓGICA COMPLETA (mantida do código original)
   // ================================================================
 
   Future<void> _resetEnigmaState() async {
@@ -336,7 +335,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         .toDouble(),
               };
             }
-            _compassRemainingSeconds ??= _compassDuration;
+            if (_compassRemainingSeconds == null) {
+              _compassRemainingSeconds = _compassDuration;
+            }
           });
           if (_isBlocked && statusData['cooldownUntil'] != null) {
             _handleCooldown(statusData['cooldownUntil']);
@@ -393,7 +394,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       .toDouble(),
             };
           }
-          _compassRemainingSeconds ??= _compassDuration;
+          if (_compassRemainingSeconds == null) {
+            _compassRemainingSeconds = _compassDuration;
+          }
         });
         if (_isBlocked && statusData['cooldownUntil'] != null) {
           _handleCooldown(statusData['cooldownUntil']);
@@ -1184,7 +1187,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   // ================================================================
-  //  CONSTRUÇÃO DA UI (DESIGN DA HOMEPAGE)
+  //  CONSTRUÇÃO DA UI (NOVO DESIGN)
   // ================================================================
 
   @override
@@ -1238,7 +1241,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     );
   }
 
-  // --- CARD PADRÃO (mesmo estilo da homepage) ---
+  // --- CARD PADRÃO ---
   Widget _buildCard({
     required String title,
     required Widget child,
@@ -1425,8 +1428,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           ),
 
         if (!_isHintVisible && _canBuyHint) _buildHintPurchaseButton(),
-        if (_currentEnigma.type == 'gps' || _currentEnigma.type == 'foto')
-          _buildToolsPurchaseButtons(),
+        _buildToolsPurchaseButtons(),
       ],
     );
   }
@@ -1478,8 +1480,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   Widget _buildToolsPurchaseButtons() {
-    if (_currentEnigma.type != 'gps' && _currentEnigma.type != 'foto')
+    if (!_currentEnigma.hasMap && !_currentEnigma.hasCompass && !_currentEnigma.hasRadar) {
       return const SizedBox.shrink();
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
