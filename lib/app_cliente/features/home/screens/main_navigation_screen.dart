@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:oenigma/app_cliente/core/models/user_wallet_model.dart';
-import 'package:oenigma/app_cliente/core/models/event_model.dart';
+import 'package:oenigma/core/models/user_wallet_model.dart';
+import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/app_cliente/features/home/providers/home_events_provider.dart';
 import 'package:oenigma/app_cliente/features/home/screens/home_screen.dart';
 import 'package:oenigma/app_cliente/features/auth/screens/login_screen.dart';

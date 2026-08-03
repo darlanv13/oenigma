@@ -5,7 +5,7 @@ import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:oenigma/app_cliente/core/models/user_wallet_model.dart';
+import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/app_cliente/features/wallet/providers/wallet_provider.dart';
 import 'package:oenigma/app_cliente/features/wallet/widgets/wallet_balance_card.dart';
 import 'package:oenigma/app_cliente/features/wallet/widgets/wallet_credit_options_sheet.dart';

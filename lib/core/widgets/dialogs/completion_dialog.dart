@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:oenigma/app_cliente/core/utils/app_colors.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 
 void showCompletionDialog(
   BuildContext context, {

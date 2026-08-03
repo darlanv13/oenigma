@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/app_cliente/features/event/providers/event_repository_provider.dart';
 import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
-import 'package:oenigma/app_cliente/core/models/event_model.dart';
-import 'package:oenigma/app_cliente/core/models/phase_model.dart';
-import 'package:oenigma/app_cliente/core/utils/app_colors.dart';
+import 'package:oenigma/core/models/event_model.dart';
+import 'package:oenigma/core/models/phase_model.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/app_cliente/features/event/widgets/phase_card.dart';
 import '../widgets/progress_header.dart';
 

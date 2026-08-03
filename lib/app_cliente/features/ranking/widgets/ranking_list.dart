@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:oenigma/app_cliente/core/models/ranking_player_model.dart';
-import 'package:oenigma/app_cliente/core/utils/app_colors.dart';
+import 'package:oenigma/core/models/ranking_player_model.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 

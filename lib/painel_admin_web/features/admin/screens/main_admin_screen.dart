@@ -3,7 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oenigma/painel_admin_web/core/utils/app_colors.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_dashboard_screen.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_events_screen.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_enigmas_screen.dart';

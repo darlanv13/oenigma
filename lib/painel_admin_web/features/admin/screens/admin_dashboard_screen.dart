@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/utils/app_colors.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import '../repositories/admin_repository.dart';
 
 final adminDashboardProvider = FutureProvider.autoDispose<Map<String, dynamic>>(

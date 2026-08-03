@@ -1,5 +1,5 @@
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
-import 'package:oenigma/app_cliente/core/models/user_wallet_model.dart';
+import 'package:oenigma/core/models/user_wallet_model.dart';
 
 class WalletRepository {
   Future<ParseResponse> callFunction(

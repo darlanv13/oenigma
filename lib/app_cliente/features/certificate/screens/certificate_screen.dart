@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:oenigma/app_cliente/core/utils/app_colors.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 // Importe o plugin de compartilhamento (você precisará adicioná-lo ao pubspec.yaml)

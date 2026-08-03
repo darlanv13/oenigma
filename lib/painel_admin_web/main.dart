@@ -1,7 +1,7 @@
 // lib/main_admin.dart
 
 import 'package:flutter/material.dart';
-import 'package:oenigma/painel_admin_web/core/utils/app_colors.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

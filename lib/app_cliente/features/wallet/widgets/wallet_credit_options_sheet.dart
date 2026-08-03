@@ -2,7 +2,7 @@ import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
-import 'package:oenigma/app_cliente/core/models/user_wallet_model.dart';
+import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class CreditOptionsSheet extends StatelessWidget {

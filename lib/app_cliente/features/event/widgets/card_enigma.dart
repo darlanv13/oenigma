@@ -4,9 +4,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import 'package:oenigma/app_cliente/core/models/event_model.dart';
-import 'package:oenigma/app_cliente/core/models/enigma_model.dart';
-import 'package:oenigma/app_cliente/core/models/phase_model.dart';
+import 'package:oenigma/core/models/event_model.dart';
+import 'package:oenigma/core/models/enigma_model.dart';
+import 'package:oenigma/core/models/phase_model.dart';
 import 'package:oenigma/app_cliente/features/enigma/screens/enigma_screen.dart';
 import 'map_dots_painter.dart';
 

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'package:lottie/lottie.dart';
-import 'package:oenigma/app_cliente/core/models/event_model.dart';
+import 'package:oenigma/core/models/event_model.dart';
 import '../screens/event_details_screen.dart';
-import 'package:oenigma/app_cliente/core/utils/app_colors.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 

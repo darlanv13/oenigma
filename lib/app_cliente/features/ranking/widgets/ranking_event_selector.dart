@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:oenigma/app_cliente/core/models/event_model.dart';
-import 'package:oenigma/app_cliente/core/utils/app_colors.dart';
+import 'package:oenigma/core/models/event_model.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class RankingEventSelector extends StatelessWidget {

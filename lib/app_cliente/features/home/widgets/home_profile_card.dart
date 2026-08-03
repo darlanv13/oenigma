@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:oenigma/app_cliente/core/models/user_wallet_model.dart';
-import 'package:oenigma/app_cliente/core/models/event_model.dart';
+import 'package:oenigma/core/models/user_wallet_model.dart';
+import 'package:oenigma/core/models/event_model.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 

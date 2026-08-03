@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:oenigma/app_cliente/core/models/user_wallet_model.dart';
-import 'package:oenigma/app_cliente/core/models/event_model.dart';
+import 'package:oenigma/core/models/user_wallet_model.dart';
+import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/app_cliente/features/event/widgets/event_card.dart';
 import 'package:oenigma/app_cliente/features/home/providers/home_events_provider.dart';
 import '../widgets/home_profile_card.dart';

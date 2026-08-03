@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:oenigma/app_cliente/core/models/user_wallet_model.dart';
+import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/app_cliente/features/wallet/providers/wallet_repository_provider.dart';
 
 final walletProvider = FutureProvider<UserWalletModel>((ref) async {

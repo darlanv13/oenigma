@@ -1,16 +1,16 @@
-import 'package:oenigma/app_cliente/core/services/push_notification_service.dart';
+import 'package:oenigma/core/services/push_notification_service.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oenigma/app_cliente/core/utils/app_colors.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/app_cliente/features/auth/screens/auth_wrapper.dart';
 import 'package:oenigma/app_cliente/features/auth/screens/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:oenigma/app_cliente/core/widgets/app_background.dart';
+import 'package:oenigma/core/widgets/app_background.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -23,6 +23,15 @@ class EnigmaModel {
   final String icon;
   final String difficulty;
 
+  final bool hasCompass;
+  final bool hasMap;
+  final bool hasRadar;
+  final double mapPrice;
+  final double radarPrice;
+  final String compassCoords;
+  final String mapCoords;
+  final String radarCoords;
+
   EnigmaModel({
     required this.id,
     required this.type,
@@ -40,10 +49,18 @@ class EnigmaModel {
     this.characteristics = const [],
     this.status,
     this.closedAt,
-    this.compassPrice = 0.0,
+    this.compassPrice = 15.0,
     this.compassDuration = 0,
     this.icon = 'skull',
     this.difficulty = 'MÉDIA',
+    this.hasCompass = false,
+    this.hasMap = false,
+    this.hasRadar = false,
+    this.mapPrice = 4.99,
+    this.radarPrice = 2.99,
+    this.compassCoords = '',
+    this.mapCoords = '',
+    this.radarCoords = '',
   });
 
   EnigmaModel copyWith({
@@ -66,6 +83,14 @@ class EnigmaModel {
     int? compassDuration,
     String? icon,
     String? difficulty,
+    bool? hasCompass,
+    bool? hasMap,
+    bool? hasRadar,
+    double? mapPrice,
+    double? radarPrice,
+    String? compassCoords,
+    String? mapCoords,
+    String? radarCoords,
   }) {
     return EnigmaModel(
       id: id ?? this.id,
@@ -87,6 +112,14 @@ class EnigmaModel {
       compassDuration: compassDuration ?? this.compassDuration,
       icon: icon ?? this.icon,
       difficulty: difficulty ?? this.difficulty,
+      hasCompass: hasCompass ?? this.hasCompass,
+      hasMap: hasMap ?? this.hasMap,
+      hasRadar: hasRadar ?? this.hasRadar,
+      mapPrice: mapPrice ?? this.mapPrice,
+      radarPrice: radarPrice ?? this.radarPrice,
+      compassCoords: compassCoords ?? this.compassCoords,
+      mapCoords: mapCoords ?? this.mapCoords,
+      radarCoords: radarCoords ?? this.radarCoords,
     );
   }
 
@@ -99,7 +132,22 @@ class EnigmaModel {
       final lat = (locationMap['_latitude'] as num?)?.toDouble() ?? 0.0;
       final lon = (locationMap['_longitude'] as num?)?.toDouble() ?? 0.0;
       parsedLocation = ParseGeoPoint(latitude: lat, longitude: lon);
+    } else if (map['compassCoords'] != null &&
+        map['compassCoords'].toString().isNotEmpty) {
+      try {
+        final parts = map['compassCoords'].toString().split(',');
+        if (parts.length == 2) {
+          final lat = double.tryParse(parts[0].trim());
+          final lon = double.tryParse(parts[1].trim());
+          if (lat != null && lon != null) {
+            parsedLocation = ParseGeoPoint(latitude: lat, longitude: lon);
+          }
+        }
+      } catch (e) {
+        // Ignora erro de parsing e deixa nulo
+      }
     }
+
     return EnigmaModel(
       id: map['id'] ?? '',
       type: map['type'] ?? 'text',
@@ -124,14 +172,22 @@ class EnigmaModel {
                 ? map['closedAt']
                 : DateTime.tryParse(map['closedAt'].toString()))
           : null,
-      compassPrice: (map['compassPrice'] as num?)?.toDouble() ?? 0.0,
+      compassPrice: (map['compassPrice'] as num?)?.toDouble() ?? 15.0,
       compassDuration: (map['compassDuration'] as num?)?.toInt() ?? 0,
       icon: map['icon'] ?? 'skull',
       difficulty: map['difficulty'] ?? 'MÉDIA',
+
+      hasCompass: map['hasCompass'] ?? false,
+      hasMap: map['hasMap'] ?? false,
+      hasRadar: map['hasRadar'] ?? false,
+      mapPrice: (map['mapPrice'] as num?)?.toDouble() ?? 4.99,
+      radarPrice: (map['radarPrice'] as num?)?.toDouble() ?? 2.99,
+      compassCoords: map['compassCoords'] ?? '',
+      mapCoords: map['mapCoords'] ?? '',
+      radarCoords: map['radarCoords'] ?? '',
     );
   }
 
-  // Adicione este método dentro da classe EnigmaModel
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -141,10 +197,10 @@ class EnigmaModel {
       'code': code,
       'imageUrl': imageUrl,
       'audioUrl': audioUrl,
-      'location': location, // O Back4App/Parse aceita ParseGeoPoint direto
+      'location': location,
       'hintType': hintType,
       'hintData': hintData,
-      'hintPrice': hintPrice, // Importante para sua monetização
+      'hintPrice': hintPrice,
       'prize': prize,
       'order': order,
       'characteristics': characteristics,
@@ -154,6 +210,15 @@ class EnigmaModel {
       'compassDuration': compassDuration,
       'icon': icon,
       'difficulty': difficulty,
+
+      'hasCompass': hasCompass,
+      'hasMap': hasMap,
+      'hasRadar': hasRadar,
+      'mapPrice': mapPrice,
+      'radarPrice': radarPrice,
+      'compassCoords': compassCoords,
+      'mapCoords': mapCoords,
+      'radarCoords': radarCoords,
     };
   }
 }

@@ -1,7 +1,7 @@
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
-import 'package:oenigma/app_cliente/core/models/event_model.dart';
+import 'package:oenigma/core/models/event_model.dart';
 
-import 'package:oenigma/app_cliente/core/models/enigma_model.dart';
+import 'package:oenigma/core/models/enigma_model.dart';
 
 class EnigmaRepository {
   Future<ParseResponse> callFunction(

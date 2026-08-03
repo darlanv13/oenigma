@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:oenigma/app_cliente/core/models/ranking_player_model.dart';
-import 'package:oenigma/app_cliente/core/models/event_model.dart';
-import 'package:oenigma/app_cliente/core/utils/app_colors.dart';
+import 'package:oenigma/core/models/ranking_player_model.dart';
+import 'package:oenigma/core/models/event_model.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/app_cliente/features/ranking/widgets/ranking_event_selector.dart';
 import 'package:oenigma/app_cliente/features/ranking/widgets/ranking_list.dart';
 import 'package:oenigma/app_cliente/features/ranking/widgets/ranking_podium.dart';
