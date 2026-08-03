@@ -4,9 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
 
-import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
-import 'package:oenigma/painel_admin/core/widgets/admin_item_card.dart';
-import 'package:oenigma/painel_admin/core/widgets/admin_modal.dart';
+import 'package:oenigma/painel_admin_web/core/utils/app_colors.dart';
+import 'package:oenigma/painel_admin_web/core/widgets/admin_item_card.dart';
+import 'package:oenigma/painel_admin_web/core/widgets/admin_modal.dart';
 
 class AdminBannersScreen extends StatefulWidget {
   const AdminBannersScreen({super.key});

@@ -3,7 +3,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
+import 'package:oenigma/painel_admin_web/core/utils/app_colors.dart';
 
 class CooldownDialog extends StatefulWidget {
   final DateTime cooldownUntil;

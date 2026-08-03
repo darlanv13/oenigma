@@ -1,11 +1,11 @@
 // lib/main_admin.dart
 
 import 'package:flutter/material.dart';
-import 'package:oenigma/painel_admin/core/utils/app_colors.dart';
+import 'package:oenigma/painel_admin_web/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:oenigma/painel_admin/features/auth/screens/login_screen.dart';
+import 'package:oenigma/painel_admin_web/features/auth/screens/login_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
