@@ -159,8 +159,8 @@ class EnigmaModel {
       location: parsedLocation,
       hintType: map['hintType'],
       hintData: map['hintData'],
-      prize: (map['prize'] as num?)?.toDouble() ?? 0.0,
-      order: map['order'] ?? 1,
+      prize: map['prize'] != null ? double.tryParse(map['prize'].toString()) ?? 0.0 : 0.0,
+      order: map['order'] != null ? int.tryParse(map['order'].toString()) ?? 1 : 1,
       characteristics:
           (map['characteristics'] as List<dynamic>?)
               ?.map((e) => e.toString())
@@ -172,16 +172,16 @@ class EnigmaModel {
                 ? map['closedAt']
                 : DateTime.tryParse(map['closedAt'].toString()))
           : null,
-      compassPrice: (map['compassPrice'] as num?)?.toDouble() ?? 15.0,
-      compassDuration: (map['compassDuration'] as num?)?.toInt() ?? 0,
+      compassPrice: map['compassPrice'] != null ? double.tryParse(map['compassPrice'].toString()) ?? 15.0 : 15.0,
+      compassDuration: map['compassDuration'] != null ? int.tryParse(map['compassDuration'].toString()) ?? 0 : 0,
       icon: map['icon'] ?? 'skull',
       difficulty: map['difficulty'] ?? 'MÉDIA',
 
       hasCompass: map['hasCompass'] ?? false,
       hasMap: map['hasMap'] ?? false,
       hasRadar: map['hasRadar'] ?? false,
-      mapPrice: (map['mapPrice'] as num?)?.toDouble() ?? 4.99,
-      radarPrice: (map['radarPrice'] as num?)?.toDouble() ?? 2.99,
+      mapPrice: map['mapPrice'] != null ? double.tryParse(map['mapPrice'].toString()) ?? 4.99 : 4.99,
+      radarPrice: map['radarPrice'] != null ? double.tryParse(map['radarPrice'].toString()) ?? 2.99 : 2.99,
       compassCoords: map['compassCoords'] ?? '',
       mapCoords: map['mapCoords'] ?? '',
       radarCoords: map['radarCoords'] ?? '',
