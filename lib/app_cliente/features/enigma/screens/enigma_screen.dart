@@ -51,7 +51,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF06080B),
       body: Stack(
         alignment: Alignment.center,
         children: [
@@ -1240,9 +1240,26 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent, // Background set to transparent to match Lobby and Events screens
+      backgroundColor: const Color(0xFF06080B),
       body: Stack(
         children: [
+          Positioned(
+            top: -MediaQuery.of(context).size.height * 0.1,
+            right: -MediaQuery.of(context).size.width * 0.2,
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.6,
+              height: MediaQuery.of(context).size.width * 0.6,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFFC0A060).withValues(alpha: 0.15),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
