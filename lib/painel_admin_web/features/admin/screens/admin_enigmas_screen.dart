@@ -1209,17 +1209,17 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                                     'type': tipo,
                                     'difficulty': dificuldade,
                                     'prize':
-                                        num.tryParse(
-                                          premioController.text
-                                              .trim()
-                                              .replaceAll('.', '')
-                                              .replaceAll(',', '.')
-                                              .replaceAll(
-                                                RegExp(r'[^0-9.]'),
-                                                '',
-                                              ),
-                                        ) ??
-                                        0,
+                                        (num.tryParse(
+                                              premioController.text
+                                                  .trim()
+                                                  .replaceAll('.', '')
+                                                  .replaceAll(',', '.')
+                                                  .replaceAll(
+                                                    RegExp(r'[^0-9.]'),
+                                                    '',
+                                                  ),
+                                            ) ??
+                                            0).toString(),
                                     if (!isEdit) 'status': 'open',
                                     'hasCompass': hasCompass,
                                     'compassCoords': compassCoordsCtrl.text
@@ -1246,7 +1246,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                             String newEnigmaId = enigmaRes.result is ParseObject
                                 ? (enigmaRes.result as ParseObject).objectId!
                                 : (enigmaRes.result is Map
-                                      ? enigmaRes.result['objectId']
+                                      ? (enigmaRes.result['enigmaId'] ?? enigmaRes.result['objectId'] ?? '')
                                       : '');
 
                             if (newEnigmaId.isNotEmpty) {
