@@ -1158,7 +1158,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
 
                           if (hasMap || hasCompass) {
                             final regex = RegExp(
-                              r'^-?([0-8]?[0-9]|90)\.{1}\d{1,6},\s?-?((1[0-7][0-9]|[0-9]{1,2})\.{1}\d{1,6}|180\.0{1,6})$',
+                              r'^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$',
                             );
                             if (!regex.hasMatch(compassCoordsCtrl.text.trim())) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -1209,17 +1209,17 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                                     'type': tipo,
                                     'difficulty': dificuldade,
                                     'prize':
-                                        num.tryParse(
-                                          premioController.text
-                                              .trim()
-                                              .replaceAll('.', '')
-                                              .replaceAll(',', '.')
-                                              .replaceAll(
-                                                RegExp(r'[^0-9.]'),
-                                                '',
-                                              ),
-                                        ) ??
-                                        0,
+                                        (num.tryParse(
+                                              premioController.text
+                                                  .trim()
+                                                  .replaceAll('.', '')
+                                                  .replaceAll(',', '.')
+                                                  .replaceAll(
+                                                    RegExp(r'[^0-9.]'),
+                                                    '',
+                                                  ),
+                                            ) ??
+                                            0).toString(),
                                     if (!isEdit) 'status': 'open',
                                     'hasCompass': hasCompass,
                                     'compassCoords': compassCoordsCtrl.text
@@ -1246,7 +1246,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                             String newEnigmaId = enigmaRes.result is ParseObject
                                 ? (enigmaRes.result as ParseObject).objectId!
                                 : (enigmaRes.result is Map
-                                      ? enigmaRes.result['objectId']
+                                      ? (enigmaRes.result['enigmaId'] ?? enigmaRes.result['objectId'] ?? '')
                                       : '');
 
                             if (newEnigmaId.isNotEmpty) {
