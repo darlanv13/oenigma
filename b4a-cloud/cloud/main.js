@@ -280,6 +280,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
       let isBlocked = false;
       let hasCompass = false;
       let hasMap = false;
+      let hasRadar = false;
       let destinationLocation = null;
 
       const Enigma = Parse.Object.extend("Enigma");
@@ -312,6 +313,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
 
         hasCompass = toolsPurchased.includes("compass");
         hasMap = toolsPurchased.includes("map");
+        hasRadar = toolsPurchased.includes("radar");
 
         let compassStr = enigma.get("compassCoords");
         if (compassStr) {
@@ -351,9 +353,11 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         isBlocked: isBlocked,
         hasCompass: hasCompass,
         hasMap: hasMap,
+        hasRadar: hasRadar,
         destinationLocation: destinationLocation,
         compassDuration: enigma ? (enigma.get("compassDuration") || 0) : 0,
-        compassPrice: enigma ? (enigma.get("compassPrice") || 15.0) : 15.0
+        compassPrice: enigma ? (enigma.get("compassPrice") || 15.0) : 15.0,
+        radarPrice: enigma ? (enigma.get("radarPrice") || 10.0) : 10.0
       };
     } else if (action === 'purchaseHint') {
       const pOrder = phaseOrder || eventProgress.currentPhase || 1;
