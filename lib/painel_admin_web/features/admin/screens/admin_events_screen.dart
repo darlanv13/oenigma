@@ -407,6 +407,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                 },
                               );
 
+                          if (!resEvent.success) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Erro ao criar evento: ${resEvent.error?.message ?? "Erro desconhecido"}',
+                                  ),
+                                ),
+                              );
+                            }
+                            return;
+                          }
+
                           if (resEvent.success &&
                               resEvent.result != null &&
                               eventType == 'classic') {
@@ -816,7 +829,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         'Salvar Evento',
                         isPrimary: true,
                         onTap: () async {
-                          await ParseCloudFunction(
+                          final resEvent = await ParseCloudFunction(
                             'createOrUpdateEvent',
                           ).execute(
                             parameters: {
@@ -839,6 +852,20 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               },
                             },
                           );
+
+                          if (!resEvent.success) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Erro ao salvar evento: ${resEvent.error?.message ?? "Erro desconhecido"}',
+                                  ),
+                                ),
+                              );
+                            }
+                            return;
+                          }
+
                           if (context.mounted) Navigator.of(context).pop();
                           _loadEvents();
                         },

@@ -499,9 +499,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                   'createOrUpdateEvent',
                                 ).execute(parameters: {'data': newData});
                                 if (!response.success)
-                                  throw response.error ?? ParseError();
+                                  throw response.error ?? ParseError(message: 'Erro desconhecido');
                               } else {
-                                await ParseCloudFunction(
+                                final response = await ParseCloudFunction(
                                   'createOrUpdateEvent',
                                 ).execute(
                                   parameters: {
@@ -509,6 +509,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                     'data': newData,
                                   },
                                 );
+                                if (!response.success)
+                                  throw response.error ?? ParseError(message: 'Erro desconhecido');
                               }
                               if (context.mounted) {
                                 Navigator.pop(context);
@@ -516,6 +518,15 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               }
                             } catch (e) {
                               debugPrint('Erro ao salvar evento: $e');
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Erro ao salvar evento: ${e is ParseError ? e.message : e.toString()}',
+                                    ),
+                                  ),
+                                );
+                              }
                             }
                           },
                           child: const Text('Salvar'),
