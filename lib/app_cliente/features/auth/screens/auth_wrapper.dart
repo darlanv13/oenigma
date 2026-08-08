@@ -38,11 +38,11 @@ class AuthWrapper extends ConsumerWidget {
         }
       },
       loading: () => const Scaffold(
-        backgroundColor: darkBackground,
+        backgroundColor: Colors.transparent,
         body: Center(child: CircularProgressIndicator(color: primaryAmber)),
       ),
       error: (error, stackTrace) => Scaffold(
-        backgroundColor: darkBackground,
+        backgroundColor: Colors.transparent,
         body: Center(child: Text('Erro: $error')),
       ),
     );
@@ -50,7 +50,7 @@ class AuthWrapper extends ConsumerWidget {
 
   Widget _buildAdminMobileBlockedScreen(BuildContext context) {
     return Scaffold(
-      backgroundColor: darkBackground,
+      backgroundColor: Colors.transparent,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),

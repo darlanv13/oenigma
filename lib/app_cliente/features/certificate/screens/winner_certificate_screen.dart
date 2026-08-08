@@ -76,6 +76,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
     );
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text("Parabéns, Caçador!"),
         centerTitle: true,

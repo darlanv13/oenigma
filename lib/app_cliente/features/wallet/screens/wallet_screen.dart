@@ -50,23 +50,9 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
-      backgroundColor: Colors.black, // Fundo base escuro
+      backgroundColor: Colors.transparent, // Fundo base transparente
       body: Stack(
         children: [
-          // Fundo com o mapa idêntico ao da HomePage
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/background.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          // Camada de escurecimento suave para dar leitura aos textos
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withOpacity(0.6),
-            ),
-          ),
-          
           SafeArea(
             child: Column(
               children: [

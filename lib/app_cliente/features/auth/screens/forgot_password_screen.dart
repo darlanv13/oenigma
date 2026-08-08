@@ -59,7 +59,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: darkBackground,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(
           'Recuperar Senha',

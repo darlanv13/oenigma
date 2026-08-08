@@ -53,7 +53,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.transparent,
       body: Stack(
         alignment: Alignment.center,
         children: [
@@ -1266,22 +1266,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Fundo base escuro
+      backgroundColor: Colors.transparent, // Fundo base transparente para mostrar neblina
       body: Stack(
         children: [
-          // Fundo imersivo do mapa
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/background.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withOpacity(0.6),
-            ),
-          ),
-
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [

@@ -247,22 +247,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Fundo base escuro
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // Fundo imersivo do mapa
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/background.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withOpacity(0.6),
-            ),
-          ),
-
           SafeArea(
             child: Column(
               children: [

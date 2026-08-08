@@ -26,6 +26,7 @@ class CertificateScreen extends StatelessWidget {
     );
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Certificado'),
         automaticallyImplyLeading: false, // Oculta o botão de voltar padrão
