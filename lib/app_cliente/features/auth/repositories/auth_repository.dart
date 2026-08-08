@@ -30,12 +30,12 @@ class AuthRepository {
     _authStateController.add(_currentUser);
   }
 
-  Future<String?> signInWithEmailAndPassword(
-    String email,
+  Future<String?> signInWithCpfAndPassword(
+    String cpf,
     String password,
   ) async {
     try {
-      final user = ParseUser(email.trim(), password.trim(), email.trim());
+      final user = ParseUser(cpf.trim(), password.trim(), null);
       final response = await user.login();
       if (response.success) {
         _currentUser = response.result;
@@ -77,8 +77,7 @@ class AuthRepository {
     }
   }
 
-  Future<String?> signUpWithEmailAndPassword({
-    required String email,
+  Future<String?> signUpWithCpfAndPassword({
     required String password,
     required String fullName,
     required String cpf,
@@ -86,7 +85,8 @@ class AuthRepository {
     required String phone,
   }) async {
     try {
-      final user = ParseUser(email.trim(), password.trim(), email.trim());
+      // Username is the clean CPF without special characters
+      final user = ParseUser(cpf.trim(), password.trim(), null);
       user.set('name', fullName);
       user.set('cpf', cpf);
       user.set('birthDate', birthDate);

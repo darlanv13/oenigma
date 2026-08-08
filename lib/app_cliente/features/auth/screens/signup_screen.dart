@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:pinput/pinput.dart';
 
 import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -15,60 +16,40 @@ class SignUpScreen extends ConsumerStatefulWidget {
 }
 
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
-  int _currentStep = 0;
-
-  // Controladores para os campos de texto
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _cpfController = TextEditingController();
   final _birthDateController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
-  final _formKeyStep1 = GlobalKey<FormState>();
-  final _formKeyStep2 = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
 
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
     _fullNameController.dispose();
     _cpfController.dispose();
     _birthDateController.dispose();
     _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _onStepContinue() {
-    if (_currentStep == 0) {
-      if (_formKeyStep1.currentState!.validate()) {
-        setState(() => _currentStep++);
-      }
-    } else {
-      _submitForm();
-    }
-  }
-
-  void _onStepCancel() {
-    if (_currentStep > 0) {
-      setState(() => _currentStep--);
-    }
-  }
-
   Future<void> _submitForm() async {
-    if (_formKeyStep2.currentState!.validate()) {
+    if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
       final authRepository = ref.read(authRepositoryProvider);
-      final error = await authRepository.signUpWithEmailAndPassword(
-        email: _emailController.text.trim(),
+
+      final cleanCpf = _cpfController.text.replaceAll(RegExp(r'\D'), '');
+
+      final error = await authRepository.signUpWithCpfAndPassword(
         password: _passwordController.text.trim(),
         fullName: _fullNameController.text.trim(),
-        cpf: _cpfController.text.trim(),
+        cpf: cleanCpf,
         birthDate: _birthDateController.text.trim(),
         phone: _phoneController.text.trim(),
       );
@@ -85,11 +66,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     }
   }
 
-  // --- VALIDAÇÃO DE CPF ---
   String? _validateCpf(String? value) {
     if (value == null || value.isEmpty) return 'Campo obrigatório';
 
-    // Remove caracteres não numéricos para validação
     final cleanCpf = value.replaceAll(RegExp(r'\D'), '');
 
     if (cleanCpf.length != 11) return 'CPF incompleto';
@@ -99,13 +78,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   }
 
   bool _isValidCpf(String cpf) {
-    // Rejeita CPFs com todos os números iguais (ex: 111.111.111-11)
     if (RegExp(r'^(\d)\1*$').hasMatch(cpf)) return false;
 
-    // Algoritmo de validação dos dígitos verificadores
     List<int> digits = cpf.split('').map(int.parse).toList();
 
-    // Primeiro dígito
     int sum1 = 0;
     for (int i = 0; i < 9; i++) {
       sum1 += digits[i] * (10 - i);
@@ -113,7 +89,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     int remainder1 = sum1 % 11;
     int digit1 = remainder1 < 2 ? 0 : 11 - remainder1;
 
-    // Segundo dígito
     int sum2 = 0;
     for (int i = 0; i < 9; i++) {
       sum2 += digits[i] * (11 - i);
@@ -140,158 +115,282 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: primaryAmber),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
-      body: Stepper(
-        type: StepperType.horizontal,
-        currentStep: _currentStep,
-        onStepContinue: _onStepContinue,
-        onStepCancel: _onStepCancel,
-        controlsBuilder: (context, details) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 24.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (_currentStep > 0)
-                  ElevatedButton.icon(
-                    onPressed: details.onStepCancel,
-                    icon: const FaIcon(FontAwesomeIcons.arrowLeft),
-                    label: const Text('Voltar'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: cardColor,
-                      foregroundColor: textColor,
-                    ),
-                  ),
-                const Spacer(),
-                ElevatedButton.icon(
-                  onPressed: _isLoading ? null : details.onStepContinue,
-                  icon: _isLoading
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: darkBackground,
-                          ),
-                        )
-                      : FaIcon(
-                          _currentStep == 0
-                              ? FontAwesomeIcons.arrowRight
-                              : FontAwesomeIcons.check,
-                        ),
-                  label: Text(_currentStep == 0 ? 'Avançar' : 'Concluir'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryAmber,
-                    foregroundColor: darkBackground,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-        steps: [_buildStep1(), _buildStep2()],
-      ),
-    );
-  }
-
-  Step _buildStep1() {
-    return Step(
-      title: const Text('Conta'),
-      isActive: _currentStep >= 0,
-      state: _currentStep > 0 ? StepState.complete : StepState.indexed,
-      content: Form(
-        key: _formKeyStep1,
-        child: Column(
-          children: [
-            _buildTextFormField(
-              controller: _emailController,
-              hintText: 'E-mail',
-              icon: FontAwesomeIcons.envelope,
-              validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
-              keyboardType: TextInputType.emailAddress,
-            ),
-            const SizedBox(height: 16),
-            _buildTextFormField(
-              controller: _passwordController,
-              hintText: 'Senha',
-              icon: FontAwesomeIcons.lock,
-              obscureText: true,
-              validator: (v) => v!.length < 6 ? 'Mínimo de 6 caracteres' : null,
-            ),
-            const SizedBox(height: 16),
-            _buildTextFormField(
-              controller: _confirmPasswordController,
-              hintText: 'Confirmar Senha',
-              icon: FontAwesomeIcons.lock,
-              obscureText: true,
-              validator: (v) => v != _passwordController.text
-                  ? 'As senhas não coincidem'
-                  : null,
-            ),
-          ],
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 32),
+              _buildSignUpForm(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Step _buildStep2() {
-    return Step(
-      title: const Text('Informações Pessoais'),
-      isActive: _currentStep >= 1,
-      content: Form(
-        key: _formKeyStep2,
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        const FaIcon(FontAwesomeIcons.magnifyingGlass, color: primaryAmber, size: 40),
+        const SizedBox(height: 16),
+        Text(
+          'ENIGMA CITY',
+          style: GoogleFonts.orbitron(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+            color: primaryAmberLight,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'JUNTE-SE À CAÇADA',
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            letterSpacing: 3,
+            color: primaryAmber.withValues(alpha: 0.8),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignUpForm() {
+    final defaultPinTheme = PinTheme(
+      width: 40,
+      height: 50,
+      textStyle: const TextStyle(
+          fontSize: 20, color: Colors.white, fontWeight: FontWeight.w600),
+      decoration: BoxDecoration(
+        color: darkBackground,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Form(
+        key: _formKey,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildFieldLabel('NOME COMPLETO', FontAwesomeIcons.solidUser),
+            const SizedBox(height: 8),
             _buildTextFormField(
               controller: _fullNameController,
-              hintText: 'Nome Completo',
-              icon: FontAwesomeIcons.user,
-              validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
+              hintText: "Seu nome completo",
               textCapitalization: TextCapitalization.words,
+              validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
             ),
-            const SizedBox(height: 16),
+
+            const SizedBox(height: 20),
+
+            _buildFieldLabel('CPF', FontAwesomeIcons.idBadge),
+            const SizedBox(height: 8),
             _buildTextFormField(
               controller: _cpfController,
-              hintText: 'CPF',
-              icon: FontAwesomeIcons.idBadge,
-              validator: _validateCpf, // Validador customizado
+              hintText: "000.000.000-00",
               keyboardType: TextInputType.number,
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
                 _CpfInputFormatter(),
               ],
+              validator: _validateCpf,
             ),
-            const SizedBox(height: 16),
-            _buildTextFormField(
-              controller: _birthDateController,
-              hintText: 'Data de Nascimento',
-              icon: FontAwesomeIcons.calendarDay,
-              validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
-              keyboardType: TextInputType.datetime,
+
+            const SizedBox(height: 20),
+
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFieldLabel('DATA NASC.', FontAwesomeIcons.calendarDay),
+                      const SizedBox(height: 8),
+                      _buildTextFormField(
+                        controller: _birthDateController,
+                        hintText: "11/11/1111",
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          _DateInputFormatter(),
+                        ],
+                        validator: (v) => v!.length < 10 ? 'Data inválida' : null,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFieldLabel('TELEFONE', FontAwesomeIcons.phone),
+                      const SizedBox(height: 8),
+                      _buildTextFormField(
+                        controller: _phoneController,
+                        hintText: "(11) 11111-1111",
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          _PhoneInputFormatter(),
+                        ],
+                        validator: (v) => v!.length < 14 ? 'Telefone inválido' : null,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            _buildTextFormField(
-              controller: _phoneController,
-              hintText: 'Telefone',
-              icon: FontAwesomeIcons.phone,
-              validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
-              keyboardType: TextInputType.phone,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                _PhoneInputFormatter(),
+
+            const SizedBox(height: 20),
+
+            _buildFieldLabel('SENHA (6 DÍGITOS)', FontAwesomeIcons.key),
+            const SizedBox(height: 8),
+            Center(
+              child: Pinput(
+                controller: _passwordController,
+                length: 6,
+                obscureText: true,
+                defaultPinTheme: defaultPinTheme,
+                focusedPinTheme: defaultPinTheme.copyWith(
+                  decoration: defaultPinTheme.decoration!.copyWith(
+                    border: Border.all(color: primaryAmber),
+                  ),
+                ),
+                validator: (s) {
+                  return s!.length == 6 ? null : 'Mín. 6 dígitos';
+                },
+                keyboardType: TextInputType.number,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            _buildFieldLabel('CONFIRMAR SENHA', FontAwesomeIcons.solidCircleCheck),
+            const SizedBox(height: 8),
+            Center(
+              child: Pinput(
+                controller: _confirmPasswordController,
+                length: 6,
+                obscureText: true,
+                defaultPinTheme: defaultPinTheme,
+                focusedPinTheme: defaultPinTheme.copyWith(
+                  decoration: defaultPinTheme.decoration!.copyWith(
+                    border: Border.all(color: primaryAmber),
+                  ),
+                ),
+                validator: (s) {
+                  if (s != _passwordController.text) return 'Senhas não coincidem';
+                  return s!.length == 6 ? null : 'Mín. 6 dígitos';
+                },
+                keyboardType: TextInputType.number,
+              ),
+            ),
+
+            const SizedBox(height: 32),
+
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _submitForm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryAmber,
+                  foregroundColor: darkBackground,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(color: darkBackground),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const FaIcon(FontAwesomeIcons.userPlus, size: 18),
+                          const SizedBox(width: 12),
+                          Text(
+                            "CRIAR CONTA",
+                            style: GoogleFonts.orbitron(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "Já tem uma conta? ",
+                  style: TextStyle(color: Colors.grey),
+                ),
+                GestureDetector(
+                  onTap: _isLoading
+                      ? null
+                      : () {
+                          Navigator.of(context).pop(); // Volta para o login
+                        },
+                  child: const Text(
+                    "Faça login",
+                    style: TextStyle(
+                      color: primaryAmber,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFieldLabel(String label, dynamic icon) {
+    return Row(
+      children: [
+        FaIcon(icon, size: 14, color: primaryAmber),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            color: primaryAmber,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String hintText,
-    required dynamic icon,
-    bool obscureText = false,
     String? Function(String?)? validator,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
@@ -299,29 +398,36 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   }) {
     return TextFormField(
       controller: controller,
-      obscureText: obscureText,
       validator: validator,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       textCapitalization: textCapitalization,
-      style: const TextStyle(color: textColor),
+      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       decoration: InputDecoration(
-        prefixIcon: FaIcon(icon, color: textColor.withValues(alpha: 0.7)),
-        hintText: hintText,
-        hintStyle: TextStyle(color: textColor.withValues(alpha: 0.7)),
         filled: true,
-        fillColor: cardColor,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide.none,
+        fillColor: darkBackground,
+        hintText: hintText,
+        hintStyle: TextStyle(
+          color: Colors.white.withValues(alpha: 0.2),
+          fontWeight: FontWeight.bold,
         ),
-        errorStyle: const TextStyle(color: primaryAmber),
+        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: primaryAmber, width: 1.5),
+        ),
       ),
     );
   }
 }
-
-// --- CLASSES AUXILIARES DE FORMATAÇÃO ---
 
 class _CpfInputFormatter extends TextInputFormatter {
   @override
@@ -330,8 +436,7 @@ class _CpfInputFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     final text = newValue.text;
-
-    if (text.length > 11) return oldValue; // Limita a 11 dígitos
+    if (text.length > 11) return oldValue;
 
     var newText = '';
     for (var i = 0; i < text.length; i++) {
@@ -342,7 +447,27 @@ class _CpfInputFormatter extends TextInputFormatter {
       }
       newText += text[i];
     }
+    return TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
+    );
+  }
+}
 
+class _DateInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text;
+    if (text.length > 8) return oldValue;
+
+    var newText = '';
+    for (var i = 0; i < text.length; i++) {
+      if (i == 2 || i == 4) newText += '/';
+      newText += text[i];
+    }
     return TextEditingValue(
       text: newText,
       selection: TextSelection.collapsed(offset: newText.length),
@@ -357,21 +482,15 @@ class _PhoneInputFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     final text = newValue.text;
-
-    if (text.length > 11) return oldValue; // Limita a 11 dígitos
+    if (text.length > 11) return oldValue;
 
     var newText = '';
-
-    // (00) 00000-0000
     for (var i = 0; i < text.length; i++) {
       if (i == 0) newText += '(';
-
       newText += text[i];
-
       if (i == 1) newText += ') ';
       if (i == 6) newText += '-';
     }
-
     return TextEditingValue(
       text: newText,
       selection: TextSelection.collapsed(offset: newText.length),

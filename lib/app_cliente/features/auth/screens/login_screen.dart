@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/app_cliente/features/auth/screens/signup_screen.dart';
 import 'package:oenigma/app_cliente/features/auth/screens/forgot_password_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:pinput/pinput.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -15,15 +19,14 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _cpfController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _isLoading = false;
-  bool _isPasswordVisible = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _cpfController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -32,8 +35,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       final authRepository = ref.read(authRepositoryProvider);
-      final error = await authRepository.signInWithEmailAndPassword(
-        _emailController.text.trim(),
+
+      // Clean CPF to match what is saved in parse server (as digits)
+      final cleanCpf = _cpfController.text.replaceAll(RegExp(r'\D'), '');
+
+      final error = await authRepository.signInWithCpfAndPassword(
+        cleanCpf,
         _passwordController.text.trim(),
       );
       if (mounted) {
@@ -53,14 +60,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: Text(
+          'Acessar',
+          style: GoogleFonts.orbitron(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              //_buildHeaderBusula(),
-              const SizedBox(height: 1),
               _buildHeader(),
               const SizedBox(height: 48),
               _buildLoginForm(),
@@ -74,74 +91,117 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        Image.asset('assets/images/logo_enigma_city.png', scale: 0.1), //
-        const SizedBox(height: 1),
+        const FaIcon(FontAwesomeIcons.magnifyingGlass, color: primaryAmber, size: 40),
+        const SizedBox(height: 16),
+        Text(
+          'ENIGMA CITY',
+          style: GoogleFonts.orbitron(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+            color: primaryAmberLight,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'CAÇA AO TESOURO URBANO',
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            letterSpacing: 3,
+            color: primaryAmber.withValues(alpha: 0.8),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
 
   Widget _buildLoginForm() {
+    final defaultPinTheme = PinTheme(
+      width: 50,
+      height: 60,
+      textStyle: const TextStyle(
+          fontSize: 20, color: Colors.white, fontWeight: FontWeight.w600),
+      decoration: BoxDecoration(
+        color: darkBackground,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(16),
+      ),
+    );
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
       ),
       child: Form(
         key: _formKey,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTextFormField(
-              controller: _emailController,
-              hintText: "Email",
-              prefixIcon: Container(
-                alignment: Alignment.center,
-                width: 48,
-                child: const FaIcon(
-                  FontAwesomeIcons.envelope,
-                  color: Colors.grey,
-                  size: 20,
+            Row(
+              children: [
+                FaIcon(FontAwesomeIcons.idBadge, size: 14, color: primaryAmber),
+                const SizedBox(width: 8),
+                Text(
+                  'CPF',
+                  style: GoogleFonts.inter(
+                    color: primaryAmber,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.5,
+                  ),
                 ),
-              ),
-              validator: (val) =>
-                  val!.isEmpty ? 'Por favor, insira um email' : null,
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             _buildTextFormField(
+              controller: _cpfController,
+              hintText: "000.000.000-00",
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                _CpfInputFormatter(),
+              ],
+              validator: (val) {
+                if (val == null || val.isEmpty) return 'Por favor, insira um CPF';
+                final cleanCpf = val.replaceAll(RegExp(r'\D'), '');
+                if (cleanCpf.length != 11) return 'CPF incompleto';
+                return null;
+              },
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                FaIcon(FontAwesomeIcons.key, size: 14, color: primaryAmber),
+                const SizedBox(width: 8),
+                Text(
+                  'SENHA (6 DÍGITOS)',
+                  style: GoogleFonts.inter(
+                    color: primaryAmber,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Pinput(
               controller: _passwordController,
-              hintText: "Senha",
-              prefixIcon: Container(
-                alignment: Alignment.center,
-                width: 48,
-                child: const FaIcon(
-                  FontAwesomeIcons.lock,
-                  color: Colors.grey,
-                  size: 20,
+              length: 6,
+              obscureText: true,
+              defaultPinTheme: defaultPinTheme,
+              focusedPinTheme: defaultPinTheme.copyWith(
+                decoration: defaultPinTheme.decoration!.copyWith(
+                  border: Border.all(color: primaryAmber),
                 ),
               ),
-              obscureText: !_isPasswordVisible,
-              suffixIcon: IconButton(
-                icon: FaIcon(
-                  _isPasswordVisible
-                      ? FontAwesomeIcons.solidEyeSlash
-                      : FontAwesomeIcons.solidEye,
-                  color: Colors.grey,
-                  size: 20,
-                ),
-                onPressed: () =>
-                    setState(() => _isPasswordVisible = !_isPasswordVisible),
-              ),
-              validator: (val) => val!.length < 6
-                  ? 'A senha deve ter no mínimo 6 caracteres'
-                  : null,
+              validator: (s) {
+                return s!.length == 6 ? null : 'Insira 6 dígitos';
+              },
+              keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 12),
             Align(
@@ -160,48 +220,39 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 56,
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _handleLogin,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: primaryAmber,
+                  foregroundColor: darkBackground,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  minimumSize: const Size(double.infinity, 50),
                 ),
                 child: _isLoading
                     ? const SizedBox(
                         height: 24,
                         width: 24,
-                        child: CircularProgressIndicator(color: Colors.black),
+                        child: CircularProgressIndicator(color: darkBackground),
                       )
-                    : const Text(
-                        "ENTRAR",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.0,
-                        ),
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const FaIcon(FontAwesomeIcons.rightToBracket, size: 18),
+                          const SizedBox(width: 12),
+                          Text(
+                            "ENTRAR",
+                            style: GoogleFonts.orbitron(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ],
                       ),
               ),
             ),
@@ -213,8 +264,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   "Não tem uma conta? ",
                   style: TextStyle(color: Colors.grey),
                 ),
-                TextButton(
-                  onPressed: _isLoading
+                GestureDetector(
+                  onTap: _isLoading
                       ? null
                       : () {
                           Navigator.of(context).push(
@@ -226,7 +277,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: const Text(
                     "Cadastre-se",
                     style: TextStyle(
-                      color: Color(0xFFD6B570),
+                      color: primaryAmber,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -242,36 +293,65 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String hintText,
-    required Widget prefixIcon,
-    bool obscureText = false,
-    Widget? suffixIcon,
     String? Function(String?)? validator,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
-      obscureText: obscureText,
       validator: validator,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
       decoration: InputDecoration(
         filled: true,
-        fillColor: const Color(0xFF121212),
+        fillColor: darkBackground,
         hintText: hintText,
-        hintStyle: const TextStyle(
-          color: Colors.grey,
+        hintStyle: TextStyle(
+          color: Colors.white.withValues(alpha: 0.2),
           fontWeight: FontWeight.bold,
         ),
-        prefixIcon: prefixIcon,
-        suffixIcon: suffixIcon,
-        contentPadding: const EdgeInsets.symmetric(vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFFFD54F), width: 1.5),
+          borderSide: const BorderSide(color: primaryAmber, width: 1.5),
         ),
       ),
+    );
+  }
+}
+
+class _CpfInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text;
+
+    if (text.length > 11) return oldValue;
+
+    var newText = '';
+    for (var i = 0; i < text.length; i++) {
+      if (i == 3 || i == 6) {
+        newText += '.';
+      } else if (i == 9) {
+        newText += '-';
+      }
+      newText += text[i];
+    }
+
+    return TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
     );
   }
 }
