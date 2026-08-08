@@ -27,8 +27,11 @@ import 'package:oenigma/app_cliente/features/event/repositories/event_repository
 import 'package:oenigma/app_cliente/features/wallet/screens/wallet_screen.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
+// Importação do padrão de cores
+import 'package:oenigma/core/utils/app_colors.dart';
+
 // ================================================================
-//  SCANNER SCREEN (mantido)
+//  SCANNER SCREEN
 // ================================================================
 class ScannerScreen extends StatefulWidget {
   final Function(String) onScan;
@@ -51,7 +54,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: darkBackground,
       body: Stack(
         alignment: Alignment.center,
         children: [
@@ -79,10 +82,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0B0E11).withValues(alpha: 0.8),
+                  color: darkBackground.withOpacity(0.8),
                   border: Border(
                     bottom: BorderSide(
-                      color: const Color(0xFFC0A060).withValues(alpha: 0.10),
+                      color: primaryAmber.withOpacity(0.10),
                       width: 1,
                     ),
                   ),
@@ -96,13 +99,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFC0A060).withValues(alpha: 0.06),
+                          color: primaryAmber.withOpacity(0.06),
                           shape: BoxShape.circle,
                         ),
                         child: const Center(
                           child: FaIcon(
                             FontAwesomeIcons.chevronLeft,
-                            color: Color(0xFFC0A060),
+                            color: primaryAmber,
                             size: 14,
                           ),
                         ),
@@ -113,7 +116,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                       style: GoogleFonts.orbitron(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFFF0E6C5),
+                        color: primaryAmberLight,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -137,10 +140,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
           padding: const EdgeInsets.all(32),
           width: MediaQuery.of(context).size.width * 0.85,
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E).withOpacity(0.9),
+            color: cardColor.withOpacity(0.9),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: const Color(0xFFC0A060).withOpacity(0.5),
+              color: primaryAmber.withOpacity(0.5),
               width: 2,
             ),
             boxShadow: [
@@ -156,14 +159,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
             children: [
               const FaIcon(
                 FontAwesomeIcons.qrcode,
-                color: Color(0xFFC0A060),
+                color: primaryAmber,
                 size: 40,
               ),
               const SizedBox(height: 16),
               const Text(
                 'Código Detectado',
                 style: TextStyle(
-                  color: Color(0xFFC0A060),
+                  color: primaryAmber,
                   fontSize: 20,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.0,
@@ -173,7 +176,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF121212),
+                  color: darkBackground,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -195,7 +198,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     Navigator.of(context).pop();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFC0A060),
+                    backgroundColor: primaryAmber,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -204,7 +207,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   child: const Text(
                     'CONFIRMAR',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: darkBackground,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -233,7 +236,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 }
 
 // ================================================================
-//  ENIGMA SCREEN COM NOVO DESIGN E LÓGICA COMPLETA
+//  ENIGMA SCREEN COM NOVO DESIGN E BUSCA DE DICAS
 // ================================================================
 class EnigmaScreen extends StatefulWidget {
   final EventModel event;
@@ -263,15 +266,14 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   final EventRepository _eventService = EventRepository();
 
   bool _isLoading = false;
-  bool _canBuyHint = false;
   StreamSubscription<Position>? _locationSubscription;
   bool _isNear = false;
   double? _distance;
-  bool _isHintVisible = false;
-  Map<String, dynamic>? _hintData;
   bool _isBlocked = false;
   Timer? _statusPollTimer;
   late EnigmaModel _currentEnigma;
+  
+  // Variáveis para Ferramentas e Dicas
   bool _hasCompass = false;
   bool _hasMap = false;
   bool _hasRadar = false;
@@ -279,6 +281,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   int _compassDuration = 0;
   double _compassPrice = 15.0;
   int? _compassRemainingSeconds;
+
+  List<ParseObject> _hintsList = [];
+  List<String> _hintsPurchased = [];
+  bool _isLoadingHints = true;
 
   late AnimationController _shakeController;
   late Animation<double> _shakeAnimation;
@@ -321,7 +327,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   // ================================================================
-  //  LÓGICA COMPLETA (mantida do código original)
+  //  LÓGICA COMPLETA
   // ================================================================
 
   Future<void> _resetEnigmaState() async {
@@ -329,17 +335,16 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     _statusPollTimer?.cancel();
     setState(() {
       _codeController.clear();
-      _isHintVisible = false;
-      _canBuyHint = false;
-      _hintData = null;
       _distance = null;
       _isNear = false;
       _isBlocked = false;
       _isLoading = true;
       _hasCompass = false;
       _hasMap = false;
+      _hasRadar = false;
       _destinationLocation = null;
       _compassRemainingSeconds = null;
+      _isLoadingHints = true;
     });
 
     try {
@@ -347,54 +352,70 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         await _initializeGpsListener();
       }
       if (mounted) {
+        await _loadHints();
         await _fetchInitialStatus();
       }
     } catch (e) {
       debugPrint("Erro na inicialização do enigma: $e");
-
-      // Offline fallback
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final cached = prefs.getString('enigma_cache_${_currentEnigma.id}');
-        if (cached != null && mounted) {
-          final statusData = Map<String, dynamic>.from(jsonDecode(cached));
-          setState(() {
-            _isHintVisible = statusData['isHintVisible'] ?? false;
-            _hintData = statusData['hintData'] != null
-                ? Map<String, dynamic>.from(statusData['hintData'])
-                : null;
-            _canBuyHint = statusData['canBuyHint'] ?? false;
-            _isBlocked = statusData['isBlocked'] ?? false;
-            _hasCompass = statusData['hasCompass'] ?? _currentEnigma.hasCompass;
-            _hasMap = statusData['hasMap'] ?? _currentEnigma.hasMap;
-            _hasRadar = statusData['hasRadar'] ?? _currentEnigma.hasRadar;
-            _compassDuration = statusData['compassDuration'] ??
-                _currentEnigma.compassDuration;
-            _compassPrice = (statusData['compassPrice'] as num?)?.toDouble() ??
-                _currentEnigma.compassPrice;
-            if (_compassPrice == 0.0) _compassPrice = 15.0;
-            if (statusData['destinationLocation'] != null) {
-              _destinationLocation = {
-                'latitude': (statusData['destinationLocation']['latitude'] as num)
-                    .toDouble(),
-                'longitude':
-                    (statusData['destinationLocation']['longitude'] as num)
-                        .toDouble(),
-              };
-            }
-            if (_compassRemainingSeconds == null) {
-              _compassRemainingSeconds = _compassDuration;
-            }
-          });
-          if (_isBlocked && statusData['cooldownUntil'] != null) {
-            _handleCooldown(statusData['cooldownUntil']);
-          }
-        }
-      } catch (_) {}
+      _loadOfflineCache();
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _loadOfflineCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString('enigma_cache_${_currentEnigma.id}');
+      if (cached != null && mounted) {
+        final statusData = Map<String, dynamic>.from(jsonDecode(cached));
+        setState(() {
+          _hintsPurchased = List<String>.from(statusData['hintsPurchased'] ?? []);
+          _isBlocked = statusData['isBlocked'] ?? false;
+          _hasCompass = statusData['hasCompass'] ?? _currentEnigma.hasCompass;
+          _hasMap = statusData['hasMap'] ?? _currentEnigma.hasMap;
+          _hasRadar = statusData['hasRadar'] ?? _currentEnigma.hasRadar;
+          _compassDuration = statusData['compassDuration'] ?? _currentEnigma.compassDuration;
+          _compassPrice = (statusData['compassPrice'] as num?)?.toDouble() ?? _currentEnigma.compassPrice;
+          if (_compassPrice == 0.0) _compassPrice = 15.0;
+          if (statusData['destinationLocation'] != null) {
+            _destinationLocation = {
+              'latitude': (statusData['destinationLocation']['latitude'] as num).toDouble(),
+              'longitude': (statusData['destinationLocation']['longitude'] as num).toDouble(),
+            };
+          }
+          if (_compassRemainingSeconds == null) {
+            _compassRemainingSeconds = _compassDuration;
+          }
+        });
+        if (_isBlocked && statusData['cooldownUntil'] != null) {
+          _handleCooldown(statusData['cooldownUntil']);
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadHints() async {
+    try {
+      final query = QueryBuilder<ParseObject>(ParseObject('Hint'))
+        ..whereEqualTo('linkedEnigmaId', _currentEnigma.id);
+      
+      final response = await query.query();
+
+      if (response.success && response.results != null) {
+        if (mounted) {
+          setState(() {
+            _hintsList = response.results as List<ParseObject>;
+            _isLoadingHints = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoadingHints = false);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingHints = false);
     }
   }
 
@@ -417,34 +438,28 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       if (mounted) {
         if (!result.success || result.result == null) throw Exception('API Call failed');
         final statusData = Map<String, dynamic>.from(result.result);
+        
         setState(() {
-          _isHintVisible = statusData['isHintVisible'] ?? false;
-          _hintData = statusData['hintData'] != null
-              ? Map<String, dynamic>.from(statusData['hintData'])
-              : null;
-          _canBuyHint = statusData['canBuyHint'] ?? false;
+          _hintsPurchased = List<String>.from(statusData['hintsPurchased'] ?? []);
           _isBlocked = statusData['isBlocked'] ?? false;
           _hasCompass = statusData['hasCompass'] ?? _currentEnigma.hasCompass;
           _hasMap = statusData['hasMap'] ?? _currentEnigma.hasMap;
           _hasRadar = statusData['hasRadar'] ?? _currentEnigma.hasRadar;
-          _compassDuration = statusData['compassDuration'] ??
-              _currentEnigma.compassDuration;
-          _compassPrice = (statusData['compassPrice'] as num?)?.toDouble() ??
-              _currentEnigma.compassPrice;
+          _compassDuration = statusData['compassDuration'] ?? _currentEnigma.compassDuration;
+          _compassPrice = (statusData['compassPrice'] as num?)?.toDouble() ?? _currentEnigma.compassPrice;
+          
           if (_compassPrice == 0.0) _compassPrice = 15.0;
           if (statusData['destinationLocation'] != null) {
             _destinationLocation = {
-              'latitude': (statusData['destinationLocation']['latitude'] as num)
-                  .toDouble(),
-              'longitude':
-                  (statusData['destinationLocation']['longitude'] as num)
-                      .toDouble(),
+              'latitude': (statusData['destinationLocation']['latitude'] as num).toDouble(),
+              'longitude': (statusData['destinationLocation']['longitude'] as num).toDouble(),
             };
           }
           if (_compassRemainingSeconds == null) {
             _compassRemainingSeconds = _compassDuration;
           }
         });
+        
         if (_isBlocked && statusData['cooldownUntil'] != null) {
           _handleCooldown(statusData['cooldownUntil']);
         }
@@ -499,9 +514,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           _isNear = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('⚠️ Fake GPS detectado!'),
-            backgroundColor: Colors.redAccent,
+          SnackBar(
+            content: const Text('⚠️ Fake GPS detectado!'),
+            backgroundColor: dangerColor,
           ),
         );
         ParseUser.currentUser().then((user) {
@@ -552,17 +567,15 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
               side: BorderSide(
-                color: const Color(0xFFC0A060).withOpacity(0.3),
+                color: primaryAmber.withOpacity(0.3),
                 width: 1,
               ),
             ),
-            backgroundColor: const Color(0xFF0b0e11),
+            backgroundColor: cardColor,
             title: Text(
               toolType == 'compass' ? 'Bússola Ativada!' : 'Mapa Ativado!',
               style: TextStyle(
-                color: toolType == 'compass'
-                    ? const Color(0xFFC0A060)
-                    : Colors.blueAccent,
+                color: toolType == 'compass' ? primaryAmber : Colors.blueAccent,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
@@ -575,16 +588,14 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       ? FontAwesomeIcons.compass
                       : FontAwesomeIcons.mapLocationDot,
                   size: 60,
-                  color: toolType == 'compass'
-                      ? const Color(0xFFC0A060)
-                      : Colors.blueAccent,
+                  color: toolType == 'compass' ? primaryAmber : Colors.blueAccent,
                 ),
                 const SizedBox(height: 20),
                 Text(
                   toolType == 'compass'
                       ? '1. O triângulo vermelho é você.\n2. O ponto brilhante é o alvo.\n3. Gire o celular para alinhar a direção.\n4. A distância digital mostrará quantos metros faltam.'
                       : '1. Você verá um círculo azul desenhado no mapa.\n2. O seu alvo está em algum lugar dentro deste raio.\n3. Dirija-se até a área e procure atentamente.',
-                  style: const TextStyle(color: Colors.white70, height: 1.5),
+                  style: const TextStyle(color: secondaryTextColor, height: 1.5),
                 ),
               ],
             ),
@@ -593,8 +604,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFC0A060),
-                    foregroundColor: Colors.black,
+                    backgroundColor: primaryAmber,
+                    foregroundColor: darkBackground,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -614,7 +625,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     } on ParseError catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.message), backgroundColor: dangerColor),
         );
       }
     } finally {
@@ -622,17 +633,38 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     }
   }
 
-  Future<void> _handleAction(String action,
-      {String? code, String? toolType}) async {
-    setState(() => _isLoading = true);
-    try {
-      final result = await _enigmaRepository.callEnigmaFunction(action, {
-        'eventId': widget.event.id,
-        'phaseOrder': widget.phase.order,
-        'enigmaId': _currentEnigma.id,
-        if (code != null) 'code': code,
-        if (toolType != null) 'toolType': toolType,
-      });
+  Future<void> _handleAction(String action, {String? code, String? toolType, String? hintId}) async {
+  setState(() => _isLoading = true);
+  try {
+    // Captura a localização exata do jogador no momento da ação
+    double? currentLat;
+    double? currentLng;
+    
+    // Se a ação for validar o código, forçamos a leitura do GPS
+    if (action == 'validateCode' || action == 'verify_code' || action == 'scan_enigma') {
+      try {
+        Position position = await Geolocator.getCurrentPosition(
+          // ignore: deprecated_member_use
+          desiredAccuracy: LocationAccuracy.high,
+        );
+        currentLat = position.latitude;
+        currentLng = position.longitude;
+      } catch (e) {
+        throw 'É necessário ativar o GPS para validar o enigma.';
+      }
+    }
+
+    final result = await _enigmaRepository.callEnigmaFunction(action, {
+      'eventId': widget.event.id,
+      'phaseOrder': widget.phase.order,
+      'enigmaId': _currentEnigma.id,
+      if (code != null) 'code': code,
+      if (toolType != null) 'toolType': toolType,
+      if (hintId != null) 'hintId': hintId,
+      // Envia as coordenadas para o backend analisar o Impossible Travel
+      if (currentLat != null) 'latitude': currentLat,
+      if (currentLng != null) 'longitude': currentLng,
+    });
 
       if (!mounted) return;
 
@@ -643,10 +675,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         if (action == 'consumeTool') {
           return;
         } else if (action == 'purchaseHint') {
-          setState(() {
-            _isHintVisible = true;
-            _hintData = Map<String, dynamic>.from(data['hint']);
-          });
+          await _fetchInitialStatus(); // Atualiza a lista de dicas compradas
         } else if (action == 'validateCode') {
           final nextStep = data['nextStep'] != null
               ? Map<String, dynamic>.from(data['nextStep'])
@@ -683,11 +712,11 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                     side: BorderSide(
-                      color: const Color(0xFFC0A060).withOpacity(0.3),
+                      color: primaryAmber.withOpacity(0.3),
                       width: 1,
                     ),
                   ),
-                  backgroundColor: const Color(0xFF0b0e11),
+                  backgroundColor: cardColor,
                   child: Padding(
                     padding: const EdgeInsets.all(32.0),
                     child: Column(
@@ -704,7 +733,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFFC0A060),
+                            color: primaryAmber,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -712,7 +741,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFC0A060),
+                              backgroundColor: primaryAmber,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
@@ -723,7 +752,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                               'PRÓXIMO DESAFIO',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.white,
+                                color: darkBackground,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
@@ -759,7 +788,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           _handleCooldown(data['cooldownUntil']);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
+            SnackBar(content: Text(message), backgroundColor: dangerColor),
           );
         }
       }
@@ -769,7 +798,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         _showInsufficientFundsDialog();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: Colors.redAccent),
+          SnackBar(content: Text(e.message), backgroundColor: dangerColor),
         );
       }
     } finally {
@@ -784,19 +813,19 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
-            color: const Color(0xFFC0A060).withOpacity(0.3),
+            color: primaryAmber.withOpacity(0.3),
             width: 1,
           ),
         ),
-        backgroundColor: const Color(0xFF0b0e11),
+        backgroundColor: cardColor,
         title: const Row(
           children: [
-            FaIcon(FontAwesomeIcons.wallet, color: Color(0xFFC0A060), size: 20),
+            FaIcon(FontAwesomeIcons.wallet, color: primaryAmber, size: 20),
             SizedBox(width: 10),
             Text(
               'Saldo Insuficiente',
               style: TextStyle(
-                color: Color(0xFFC0A060),
+                color: primaryAmber,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -804,7 +833,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         ),
         content: const Text(
           'Você não tem saldo suficiente para comprar este item. Deseja adicionar créditos?',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: secondaryTextColor),
         ),
         actions: [
           TextButton(
@@ -828,8 +857,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFC0A060),
-              foregroundColor: Colors.black,
+              backgroundColor: primaryAmber,
+              foregroundColor: darkBackground,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -854,19 +883,19 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
-            color: const Color(0xFFC0A060).withOpacity(0.3),
+            color: primaryAmber.withOpacity(0.3),
             width: 1,
           ),
         ),
-        backgroundColor: const Color(0xFF0b0e11),
+        backgroundColor: cardColor,
         title: const Row(
           children: [
-            FaIcon(FontAwesomeIcons.store, color: Color(0xFFC0A060), size: 20),
+            FaIcon(FontAwesomeIcons.store, color: primaryAmber, size: 20),
             SizedBox(width: 10),
             Text(
               'Confirmar Compra',
               style: TextStyle(
-                color: Color(0xFFC0A060),
+                color: primaryAmber,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -874,7 +903,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         ),
         content: Text(
           'Comprar $type por R\$ ${cost.toStringAsFixed(2)}?\n\nEste valor será deduzido do seu saldo atual.',
-          style: const TextStyle(color: Colors.white70),
+          style: const TextStyle(color: secondaryTextColor),
         ),
         actions: [
           TextButton(
@@ -884,8 +913,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFC0A060),
-              foregroundColor: Colors.black,
+              backgroundColor: primaryAmber,
+              foregroundColor: darkBackground,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -943,22 +972,21 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   // ================================================================
-  //  DIÁLOGOS DE FERRAMENTAS
+  //  DIÁLOGOS DE FERRAMENTAS E DICAS
   // ================================================================
 
-  void _openHintDialog() {
-    if (_hintData == null) return;
+  void _openHintDialog(ParseObject hint) {
     showDialog(
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
-            color: const Color(0xFFC0A060).withOpacity(0.3),
+            color: primaryAmber.withOpacity(0.3),
             width: 1,
           ),
         ),
-        backgroundColor: const Color(0xFF0b0e11),
+        backgroundColor: cardColor,
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -971,7 +999,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     children: [
                       FaIcon(
                         FontAwesomeIcons.lightbulb,
-                        color: Color(0xFFC0A060),
+                        color: primaryAmber,
                       ),
                       SizedBox(width: 12),
                       Text(
@@ -991,7 +1019,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 ],
               ),
               const SizedBox(height: 20),
-              _buildHintDialogContent(),
+              _buildHintDialogContent(hint),
             ],
           ),
         ),
@@ -999,20 +1027,22 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     );
   }
 
-  Widget _buildHintDialogContent() {
-    final String type = _hintData!['type']?.toString() ?? 'text';
-    final String data = _hintData!['data']?.toString() ?? '';
+  Widget _buildHintDialogContent(ParseObject hint) {
+    final String type = hint.get<String>('type') ?? 'text';
+    final String data = hint.get<String>('data') ?? '';
+    final String description = hint.get<String>('description') ?? '';
 
     if (type == 'photo') {
       return Column(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.network(data),
-          ),
+          if (data.isNotEmpty)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(data),
+            ),
           const SizedBox(height: 12),
           Text(
-            _hintData!['description']?.toString() ?? '',
+            description,
             style: const TextStyle(color: Colors.white, fontSize: 16),
           ),
         ],
@@ -1020,29 +1050,30 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     } else if (type == 'audio') {
       return Column(
         children: [
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFC0A060).withOpacity(0.1),
-              foregroundColor: const Color(0xFFC0A060),
+          if (data.isNotEmpty)
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryAmber.withOpacity(0.1),
+                foregroundColor: primaryAmber,
+              ),
+              onPressed: () async {
+                final player = AudioPlayer();
+                await player.play(UrlSource(data));
+              },
+              icon: const FaIcon(FontAwesomeIcons.play, size: 16),
+              label: const Text('Tocar Áudio'),
             ),
-            onPressed: () async {
-              final player = AudioPlayer();
-              await player.play(UrlSource(data));
-            },
-            icon: const FaIcon(FontAwesomeIcons.play, size: 16),
-            label: const Text('Tocar Áudio'),
-          ),
           const SizedBox(height: 12),
           Text(
-            _hintData!['description']?.toString() ?? '',
+            description,
             style: const TextStyle(color: Colors.white, fontSize: 16),
           ),
         ],
       );
     } else if (type == 'gps') {
       final coords = data.split(',');
-      final lat = double.tryParse(coords[0]) ?? 0.0;
-      final lng = double.tryParse(coords[1]) ?? 0.0;
+      final lat = double.tryParse(coords.isNotEmpty ? coords[0] : '') ?? 0.0;
+      final lng = double.tryParse(coords.length > 1 ? coords[1] : '') ?? 0.0;
       return SizedBox(
         height: 250,
         child: ClipRRect(
@@ -1068,12 +1099,12 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: const Color(0xFF121212),
+          color: darkBackground,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withOpacity(0.05)),
         ),
         child: Text(
-          data,
+          description.isNotEmpty ? description : data,
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: Colors.white,
@@ -1090,7 +1121,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Radar ativado! Em breve no jogo.'),
-        backgroundColor: Color(0xFFC0A060),
+        backgroundColor: primaryAmber,
       ),
     );
   }
@@ -1107,7 +1138,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             width: 1,
           ),
         ),
-        backgroundColor: const Color(0xFF0b0e11),
+        backgroundColor: cardColor,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -1163,11 +1194,11 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
-            color: const Color(0xFFC0A060).withOpacity(0.5),
+            color: primaryAmber.withOpacity(0.5),
             width: 1,
           ),
         ),
-        backgroundColor: const Color(0xFF0b0e11),
+        backgroundColor: cardColor,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -1180,7 +1211,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     children: [
                       FaIcon(
                         FontAwesomeIcons.compass,
-                        color: Color(0xFFC0A060),
+                        color: primaryAmber,
                       ),
                       SizedBox(width: 12),
                       Text(
@@ -1220,7 +1251,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('O tempo da bússola acabou!'),
-                        backgroundColor: Color(0xFFC0A060),
+                        backgroundColor: primaryAmber,
                       ),
                     );
                   }
@@ -1234,13 +1265,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   // ================================================================
-  //  CONSTRUÇÃO DA UI (NOVO DESIGN)
+  //  CONSTRUÇÃO DA UI (PADRÃO ESCURO E DOURADO)
   // ================================================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent, // Background set to transparent to match Lobby and Events screens
+      backgroundColor: darkBackground, 
       body: Stack(
         children: [
           CustomScrollView(
@@ -1254,7 +1285,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          color: const Color(0xFFC0A060).withValues(alpha: 0.10),
+                          color: primaryAmber.withOpacity(0.10),
                           width: 1,
                         ),
                       ),
@@ -1268,13 +1299,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFC0A060).withValues(alpha: 0.06),
+                              color: primaryAmber.withOpacity(0.06),
                               shape: BoxShape.circle,
                             ),
                             child: const Center(
                               child: FaIcon(
                                 FontAwesomeIcons.chevronLeft,
-                                color: Color(0xFFC0A060),
+                                color: primaryAmber,
                                 size: 14,
                               ),
                             ),
@@ -1291,7 +1322,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                             style: GoogleFonts.orbitron(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFFF0E6C5),
+                              color: primaryAmberLight,
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -1301,10 +1332,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.green.withValues(alpha: 0.1),
+                                  color: Colors.green.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: Colors.green.withValues(alpha: 0.5),
+                                    color: Colors.green.withOpacity(0.5),
                                     width: 1,
                                   ),
                                 ),
@@ -1331,18 +1362,18 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                                   ],
                                 ),
                               )
-                            : const SizedBox(width: 36), // Balance space
+                            : const SizedBox(width: 36),
                       ],
                     ),
                   ),
                 ),
               ),
               SliverToBoxAdapter(
-                child: _isLoading && !_isHintVisible
+                child: _isLoading && _hintsList.isEmpty
                     ? const Padding(
                         padding: EdgeInsets.only(top: 100),
                         child: Center(
-                          child: CircularProgressIndicator(color: Color(0xFFC0A060)),
+                          child: CircularProgressIndicator(color: primaryAmber),
                         ),
                       )
                     : Container(
@@ -1380,10 +1411,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E).withOpacity(0.6),
+            color: cardColor.withOpacity(0.6),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: const Color(0xFFC0A060).withOpacity(0.08),
+              color: primaryAmber.withOpacity(0.08),
               width: 1,
             ),
             boxShadow: [
@@ -1400,13 +1431,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               Row(
                 children: [
                   if (icon != null) ...[
-                    FaIcon(icon, color: const Color(0xFFC0A060), size: 16),
+                    FaIcon(icon, color: primaryAmber, size: 16),
                     const SizedBox(width: 10),
                   ],
                   Text(
                     title.toUpperCase(),
                     style: const TextStyle(
-                      color: Colors.grey,
+                      color: secondaryTextColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.5,
@@ -1433,14 +1464,14 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           MarkdownBody(
             data: _currentEnigma.instruction,
             styleSheet: MarkdownStyleSheet(
-              p: const TextStyle(
-                color: Colors.white,
+              p: GoogleFonts.inter(
+                color: textColor,
                 fontSize: 16,
                 height: 1.5,
                 fontWeight: FontWeight.w500,
               ),
-              strong: const TextStyle(
-                color: Color(0xFFC0A060),
+              strong: GoogleFonts.inter(
+                color: primaryAmber,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -1469,7 +1500,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   _buildMediaButton(
                     icon: FontAwesomeIcons.play,
                     label: 'Ouvir Áudio',
-                    color: const Color(0xFFC0A060),
+                    color: primaryAmber,
                     onPressed: () => _showMediaDialog(
                       context,
                       type: 'audio',
@@ -1509,99 +1540,105 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_isHintVisible && _hintData != null)
-          _buildCard(
-            title: 'Pista Encontrada',
-            icon: FontAwesomeIcons.magnifyingGlass,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFC0A060), Color(0xFFF57F17)],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFC0A060).withOpacity(0.3),
-                    blurRadius: 15,
+        if (_isLoadingHints)
+           const Center(child: CircularProgressIndicator(color: primaryAmber)),
+
+        if (!_isLoadingHints && _hintsList.isNotEmpty)
+          ..._hintsList.map((hint) {
+            final isPurchased = _hintsPurchased.contains(hint.objectId);
+            final price = hint.get<num>('price')?.toDouble() ?? 0.0;
+
+            if (isPurchased || price <= 0.0) {
+              return _buildCard(
+                title: 'Pista Encontrada',
+                icon: FontAwesomeIcons.magnifyingGlass,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryAmber.withOpacity(0.3),
+                        blurRadius: 15,
+                      ),
+                    ],
                   ),
-                ],
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openHintDialog(hint),
+                    icon: const FaIcon(
+                      FontAwesomeIcons.eye,
+                      color: Colors.black,
+                      size: 18,
+                    ),
+                    label: const Text(
+                      'ABRIR PISTA',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: primaryAmber.withOpacity(0.3),
+                ),
+                color: primaryAmber.withOpacity(0.05),
               ),
-              child: ElevatedButton.icon(
-                onPressed: _openHintDialog,
+              child: TextButton.icon(
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        final bool? confirmed = await _showPurchaseConfirmationDialog(
+                          price,
+                          type: 'Dica',
+                        );
+                        if (confirmed == true) {
+                          _handleAction('purchaseHint', hintId: hint.objectId);
+                        }
+                      },
                 icon: const FaIcon(
-                  FontAwesomeIcons.eye,
-                  color: Colors.black,
+                  FontAwesomeIcons.lightbulb,
+                  color: primaryAmber,
                   size: 18,
                 ),
-                label: const Text(
-                  'ABRIR PISTA',
-                  style: TextStyle(
-                    color: Colors.black,
+                label: Text(
+                  'COMPRAR PISTA (R\$ ${price.toStringAsFixed(2)})',
+                  style: const TextStyle(
+                    color: primaryAmber,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
+                    letterSpacing: 1.0,
                   ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(24),
                   ),
                 ),
               ),
-            ),
-          ),
+            );
+          }),
 
-        if (!_isHintVisible && _canBuyHint) _buildHintPurchaseButton(),
         _buildToolsPurchaseButtons(),
       ],
-    );
-  }
-
-  Widget _buildHintPurchaseButton() {
-    final hintCosts = {1: 5, 2: 10, 3: 15};
-    final cost = hintCosts[widget.phase.order] ?? 5;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: const Color(0xFFC0A060).withOpacity(0.3),
-        ),
-        color: const Color(0xFFC0A060).withOpacity(0.05),
-      ),
-      child: TextButton.icon(
-        onPressed: _isLoading
-            ? null
-            : () async {
-                final bool? confirmed = await _showPurchaseConfirmationDialog(
-                  cost.toDouble(),
-                  type: 'Dica',
-                );
-                if (confirmed == true) _handleAction('purchaseHint');
-              },
-        icon: const FaIcon(
-          FontAwesomeIcons.lightbulb,
-          color: Color(0xFFC0A060),
-          size: 18,
-        ),
-        label: Text(
-          'COMPRAR PISTA (R\$ ${cost.toStringAsFixed(2)})',
-          style: const TextStyle(
-            color: Color(0xFFC0A060),
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.0,
-          ),
-        ),
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-        ),
-      ),
     );
   }
 
@@ -1614,12 +1651,12 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       children: [
         const Row(
           children: [
-            FaIcon(FontAwesomeIcons.toolbox, color: Colors.grey, size: 16),
+            FaIcon(FontAwesomeIcons.toolbox, color: secondaryTextColor, size: 16),
             SizedBox(width: 10),
             Text(
               'FERRAMENTAS',
               style: TextStyle(
-                color: Colors.grey,
+                color: secondaryTextColor,
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1.5,
@@ -1630,41 +1667,44 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         const SizedBox(height: 16),
         Row(
           children: [
-            Expanded(
-              child: _buildToolPurchaseCard(
-                title: 'MAPA',
-                price: _currentEnigma.mapPrice,
-                type: 'Mapa',
-                toolKey: 'map',
-                icon: FontAwesomeIcons.mapLocationDot,
-                color: Colors.blueAccent,
-                isPurchased: _hasMap,
+            if (_currentEnigma.hasMap)
+              Expanded(
+                child: _buildToolPurchaseCard(
+                  title: 'MAPA',
+                  price: _currentEnigma.mapPrice,
+                  type: 'Mapa',
+                  toolKey: 'map',
+                  icon: FontAwesomeIcons.mapLocationDot,
+                  color: Colors.blueAccent,
+                  isPurchased: _hasMap,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildToolPurchaseCard(
-                title: 'BÚSSOLA',
-                price: _compassPrice,
-                type: 'Bússola',
-                toolKey: 'compass',
-                icon: FontAwesomeIcons.compass,
-                color: const Color(0xFFC0A060),
-                isPurchased: _hasCompass,
+            if (_currentEnigma.hasMap && _currentEnigma.hasCompass) const SizedBox(width: 12),
+            if (_currentEnigma.hasCompass)
+              Expanded(
+                child: _buildToolPurchaseCard(
+                  title: 'BÚSSOLA',
+                  price: _compassPrice,
+                  type: 'Bússola',
+                  toolKey: 'compass',
+                  icon: FontAwesomeIcons.compass,
+                  color: primaryAmber,
+                  isPurchased: _hasCompass,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildToolPurchaseCard(
-                title: 'RADAR',
-                price: _currentEnigma.radarPrice,
-                type: 'Radar',
-                toolKey: 'radar',
-                icon: FontAwesomeIcons.satelliteDish,
-                color: Colors.deepPurpleAccent,
-                isPurchased: _hasRadar,
+            if ((_currentEnigma.hasMap || _currentEnigma.hasCompass) && _currentEnigma.hasRadar) const SizedBox(width: 12),
+            if (_currentEnigma.hasRadar)
+              Expanded(
+                child: _buildToolPurchaseCard(
+                  title: 'RADAR',
+                  price: _currentEnigma.radarPrice,
+                  type: 'Radar',
+                  toolKey: 'radar',
+                  icon: FontAwesomeIcons.satelliteDish,
+                  color: Colors.deepPurpleAccent,
+                  isPurchased: _hasRadar,
+                ),
               ),
-            ),
           ],
         ),
       ],
@@ -1733,7 +1773,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
+          color: cardColor,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: color.withOpacity(0.3), width: 1.5),
         ),
@@ -1744,7 +1784,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             Text(
               title,
               style: const TextStyle(
-                color: Colors.white,
+                color: textColor,
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
                 letterSpacing: 1.0,
@@ -1754,13 +1794,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFF121212),
+                color: darkBackground,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 'R\$ ${price.toInt()}',
                 style: const TextStyle(
-                  color: Colors.grey,
+                  color: secondaryTextColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
@@ -1772,16 +1812,103 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     );
   }
 
-  // --- ÁREA DE AÇÃO (CÓDIGO / QR / GPS) ---
   Widget _buildActionArea() {
     if (_currentEnigma.type == 'gps') {
       return _buildGpsCard();
-    } else if (_currentEnigma.type == 'qrcode') {
-      return _buildQrCodeCard();
     }
-    return _buildCodeInputSection();
+    // Para todos os outros enigmas (texto, foto, áudio), a resposta
+    // obrigatoriamente será via leitura do QR Code físico.
+    return _buildQrScannerCard();
   }
 
+  Widget _buildQrScannerCard() {
+    return _buildCard(
+      title: 'Validação',
+      icon: FontAwesomeIcons.qrcode,
+      child: Column(
+        children: [
+          Text(
+            'Encontrou a resposta física?',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Aponte a câmera para o QR Code escondido no local para validar o enigma e resgatar seu prêmio.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              color: secondaryTextColor,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: _isBlocked
+                  ? const LinearGradient(
+                      colors: [Color(0xFF424242), Color(0xFF212121)],
+                    )
+                  : const LinearGradient(
+                      colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
+                    ),
+              boxShadow: [
+                if (!_isBlocked)
+                  BoxShadow(
+                    color: primaryAmber.withOpacity(0.4),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                  ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed: _isBlocked
+                  ? null
+                  : () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ScannerScreen(
+                            onScan: (scannedCode) => _handleAction(
+                              'validateCode',
+                              code: scannedCode,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+              icon: FaIcon(
+                _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.camera,
+                color: _isBlocked ? Colors.grey : darkBackground,
+                size: 20,
+              ),
+              label: Text(
+                _isBlocked ? 'COOLDOWN ATIVO' : 'ESCANEAR QR CODE',
+                style: GoogleFonts.orbitron(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                  color: _isBlocked ? Colors.grey : darkBackground,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                minimumSize: const Size(double.infinity, 50),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
   Widget _buildGpsCard() {
     final bool isActionReady = _isNear && !_isBlocked;
 
@@ -1794,7 +1921,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF121212),
+              color: darkBackground,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: Colors.white.withOpacity(0.05),
@@ -1809,14 +1936,14 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.grey,
+                          color: secondaryTextColor,
                         ),
                       ),
                       SizedBox(width: 12),
                       Text(
                         "Buscando satélites...",
                         style: TextStyle(
-                          color: Colors.grey,
+                          color: secondaryTextColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1829,9 +1956,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         _isNear
                             ? FontAwesomeIcons.locationCrosshairs
                             : FontAwesomeIcons.route,
-                        color: _isNear
-                            ? const Color(0xFFC0A060)
-                            : const Color(0xFFC0A060),
+                        color: _isNear ? primaryAmber : primaryAmber,
                         size: 16,
                       ),
                       const SizedBox(width: 10),
@@ -1841,9 +1966,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                             : "Distância: ${_distance!.toStringAsFixed(0)} metros",
                         style: TextStyle(
                           fontSize: 16,
-                          color: _isNear
-                              ? const Color(0xFFC0A060)
-                              : const Color(0xFFC0A060),
+                          color: _isNear ? primaryAmber : primaryAmber,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -1897,7 +2020,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     : (isActionReady
                         ? 'ESCANEAR ALVO'
                         : 'APROXIME-SE DO ALVO'),
-                style: TextStyle(
+                style: GoogleFonts.orbitron(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.0,
@@ -1920,220 +2043,11 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     );
   }
 
-  Widget _buildQrCodeCard() {
-    return _buildCard(
-      title: 'Escaneie o QR Code',
-      icon: FontAwesomeIcons.qrcode,
-      child: Column(
-        children: [
-          CustomPaint(
-            painter: DashedRectPainter(
-              color: const Color(0xFFC0A060).withValues(alpha: 0.3),
-              strokeWidth: 2,
-              gap: 6,
-            ),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Column(
-                children: [
-                  FaIcon(
-                    FontAwesomeIcons.qrcode,
-                    color: Colors.white.withValues(alpha: 0.2),
-                    size: 60,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Aponte para o QR\nCode',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 14,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30),
-              gradient: _isBlocked
-                  ? const LinearGradient(
-                      colors: [Color(0xFF424242), Color(0xFF212121)],
-                    )
-                  : const LinearGradient(
-                      colors: [Color(0xFFC0A060), Color(0xFFF57F17)],
-                    ),
-              boxShadow: [
-                if (!_isBlocked)
-                  BoxShadow(
-                    color: const Color(0xFFC0A060).withOpacity(0.4),
-                    blurRadius: 15,
-                    spreadRadius: 2,
-                  ),
-              ],
-            ),
-            child: ElevatedButton.icon(
-              onPressed: _isBlocked
-                  ? null
-                  : () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => ScannerScreen(
-                            onScan: (scannedCode) => _handleAction(
-                              'validateCode',
-                              code: scannedCode,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-              icon: FaIcon(
-                _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.camera,
-                color: _isBlocked ? Colors.grey : Colors.black,
-                size: 20,
-              ),
-              label: Text(
-                _isBlocked ? 'COOLDOWN ATIVO' : 'ESCANEAR AGORA',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0,
-                  color: _isBlocked ? Colors.grey : Colors.black,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                minimumSize: const Size(double.infinity, 50),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCodeInputSection() {
-    return _buildCard(
-      title: 'Solução',
-      icon: FontAwesomeIcons.key,
-      child: Column(
-        children: [
-          AnimatedBuilder(
-            animation: _shakeAnimation,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(sin(_shakeAnimation.value * pi) * 10, 0),
-                child: child,
-              );
-            },
-            child: TextField(
-              controller: _codeController,
-              enabled: !_isBlocked,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22,
-                letterSpacing: 4,
-                fontWeight: FontWeight.w900,
-                color: _isBlocked ? Colors.grey : Colors.white,
-              ),
-              decoration: InputDecoration(
-                hintText: 'DIGITE A SENHA',
-                hintStyle: TextStyle(
-                  color: Colors.grey.withOpacity(0.5),
-                  letterSpacing: 2,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                filled: true,
-                fillColor: const Color(0xFF121212),
-                contentPadding: const EdgeInsets.symmetric(vertical: 20),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFC0A060),
-                    width: 2,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30),
-              gradient: _isBlocked
-                  ? const LinearGradient(
-                      colors: [Color(0xFF424242), Color(0xFF212121)],
-                    )
-                  : const LinearGradient(
-                      colors: [Color(0xFFC0A060), Color(0xFFF57F17)],
-                    ),
-              boxShadow: [
-                if (!_isBlocked)
-                  BoxShadow(
-                    color: const Color(0xFFC0A060).withOpacity(0.4),
-                    blurRadius: 15,
-                    spreadRadius: 2,
-                  ),
-              ],
-            ),
-            child: ElevatedButton(
-              onPressed: _isLoading || _isBlocked
-                  ? null
-                  : () => _handleAction(
-                      'validateCode',
-                      code: _codeController.text.trim(),
-                    ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                minimumSize: const Size(double.infinity, 50),
-              ),
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        color: Colors.black,
-                        strokeWidth: 3,
-                      ),
-                    )
-                  : Text(
-                      _isBlocked ? 'COOLDOWN ATIVO' : 'ENVIAR RESPOSTA',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
-                        color: _isBlocked ? Colors.grey : Colors.black,
-                      ),
-                    ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  
 }
 
 // ================================================================
-//  AUDIO DIALOG (mantido)
+//  AUDIO DIALOG
 // ================================================================
 class _AudioDialog extends StatefulWidget {
   final String url;
@@ -2185,10 +2099,10 @@ class _AudioDialogState extends State<_AudioDialog> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFC0A060).withOpacity(0.3),
+          color: primaryAmber.withOpacity(0.3),
           width: 2,
         ),
       ),
@@ -2200,7 +2114,7 @@ class _AudioDialogState extends State<_AudioDialog> {
             children: [
               const Row(
                 children: [
-                  FaIcon(FontAwesomeIcons.music, color: Color(0xFFC0A060)),
+                  FaIcon(FontAwesomeIcons.music, color: primaryAmber),
                   SizedBox(width: 12),
                   Text(
                     'Pista em Áudio',
@@ -2221,13 +2135,13 @@ class _AudioDialogState extends State<_AudioDialog> {
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFF121212),
+              color: darkBackground,
             ),
             child: IconButton(
               iconSize: 48,
-              color: const Color(0xFFC0A060),
+              color: primaryAmber,
               icon: FaIcon(
                 _isPlaying ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
               ),
@@ -2243,10 +2157,10 @@ class _AudioDialogState extends State<_AudioDialog> {
           const SizedBox(height: 24),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: const Color(0xFFC0A060),
+              activeTrackColor: primaryAmber,
               inactiveTrackColor: Colors.white24,
-              thumbColor: const Color(0xFFC0A060),
-              overlayColor: const Color(0xFFC0A060).withOpacity(0.2),
+              thumbColor: primaryAmber,
+              overlayColor: primaryAmber.withOpacity(0.2),
               trackHeight: 4.0,
             ),
             child: Slider(
@@ -2287,6 +2201,7 @@ class _AudioDialogState extends State<_AudioDialog> {
     );
   }
 }
+
 // ================================================================
 //  DASHED RECT PAINTER
 // ================================================================

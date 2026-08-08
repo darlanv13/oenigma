@@ -103,8 +103,14 @@ Parse.Cloud.define("getHomeScreenData", async (request) => {
 
 Parse.Cloud.define("createPixCharge", async (request) => {
   const { amount } = request.params;
+  const user = request.user; // Usuário da requisição
+
   if (!amount || typeof amount !== 'number') {
     throw new Parse.Error(Parse.Error.INVALID_QUERY, "amount is required and must be a number.");
+  }
+  
+  if (!user) {
+    throw new Parse.Error(209, "Acesso negado.");
   }
 
   try {
@@ -116,9 +122,18 @@ Parse.Cloud.define("createPixCharge", async (request) => {
     transaction.set("type", "deposit");
     transaction.set("amount", amount);
     transaction.set("status", "pending");
-    if (request.user) {
-      transaction.set("user", request.user);
-    }
+    transaction.set("user", user);
+
+    // ==========================================
+    // APLICAÇÃO DE ACL (Row-Level Security)
+    // ==========================================
+    const acl = new Parse.ACL();
+    acl.setReadAccess(user.id, true);  // O jogador pode ler sua transação
+    acl.setWriteAccess(user.id, false); // O jogador NÃO pode alterar a transação
+    acl.setPublicReadAccess(false);     // O público não pode ler
+    acl.setPublicWriteAccess(false);    // O público não pode alterar
+    transaction.setACL(acl);
+
     await transaction.save(null, { useMasterKey: true });
 
     return {
@@ -131,8 +146,6 @@ Parse.Cloud.define("createPixCharge", async (request) => {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error creating Pix charge: " + error.message);
   }
 });
-
-
 
 // -----------------------------------------------------------------------------
 // Missing Frontend Functions
@@ -220,8 +233,15 @@ Parse.Cloud.define("getEventData", async (request) => {
     let enigmasJson = enigmas.map(e => {
       const json = e.toJSON();
       json.id = e.id;
-      // SECURITY: Remove the code so it's not exposed to the client!
-      delete json.code;
+      
+      // ==========================================
+      // BLINDAGEM DE PAYLOAD (SANITIZAÇÃO)
+      // ==========================================
+      delete json.code; 
+      delete json.compassCoords; 
+      delete json.createdAt;
+      delete json.updatedAt;
+
       return json;
     });
 
@@ -241,10 +261,34 @@ Parse.Cloud.define("getEventData", async (request) => {
   }
 });
 
+// ==========================================
+// FUNÇÃO DEDICADA DE BUSCA SEGURA
+// ==========================================
+Parse.Cloud.define("getSafeEnigmaData", async (request) => {
+  const { enigmaId } = request.params;
+  const user = request.user;
 
+  if (!user) throw new Parse.Error(209, "Acesso negado.");
+  if (!enigmaId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "enigmaId is required.");
 
+  try {
+    const query = new Parse.Query("Enigma");
+    const enigma = await query.get(enigmaId, { useMasterKey: true });
 
+    const safePayload = enigma.toJSON();
+    safePayload.id = enigma.id;
 
+    // Blindagem
+    delete safePayload.code; 
+    delete safePayload.compassCoords; 
+    delete safePayload.createdAt;
+    delete safePayload.updatedAt;
+
+    return safePayload;
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao buscar enigma seguro: " + error.message);
+  }
+});
 
 function getLeagueByXP(xp) {
   if (xp >= 6001) return 'Lenda';
@@ -296,10 +340,6 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
 
         if (hintsPurchased.includes(enigmaId) && linkedHints.length > 0) {
           isHintVisible = true;
-          // In a real scenario we'd fetch the purchased hint id, but for now we'll just fetch the first one
-          // to fulfill the existing logic where 'purchaseHint' just pushed the enigmaId, not hintId.
-          // In the next step, I'll update purchaseHint to link correctly. 
-          // For now, let's just fetch the first linked hint.
           const Hint = Parse.Object.extend("Hint");
           const hintQuery = new Parse.Query(Hint);
           const hintObj = await hintQuery.get(linkedHints[0], { useMasterKey: true });
@@ -361,7 +401,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
       };
     } else if (action === 'purchaseHint') {
       const pOrder = phaseOrder || eventProgress.currentPhase || 1;
-      const cost = pOrder * 5.0; // R$ 5,00 por fase (Fase 1: 5, Fase 2: 10, Fase 3: 15)
+      const cost = pOrder * 5.0; 
 
       if (balance < cost) {
         throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Saldo insuficiente para comprar a dica.");
@@ -378,7 +418,6 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
 
       const Hint = Parse.Object.extend("Hint");
       const hintQuery = new Parse.Query(Hint);
-      // Get random hint from linkedHints
       const randomIndex = Math.floor(Math.random() * linkedHints.length);
       const randomHintId = linkedHints[randomIndex];
       const hintObj = await hintQuery.get(randomHintId, { useMasterKey: true });
@@ -394,7 +433,6 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         data: hintObj.get("data")
       };
 
-      // We still store enigmaId to easily track if a hint was bought for THIS enigma
       hintsPurchased.push(enigmaId);
       eventProgress.hintsPurchased = hintsPurchased;
       userEvents[eventId] = eventProgress;
@@ -449,14 +487,68 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
       return { success: true, message: "Ferramenta comprada com sucesso." };
 
     } else if (action === 'validateCode' || action === 'verify_code' || action === 'scan_enigma') {
+      const { latitude, longitude } = request.params;
       const guess = code || answer;
+      
       const Enigma = Parse.Object.extend("Enigma");
       const query = new Parse.Query(Enigma);
       const enigma = await query.get(enigmaId, { useMasterKey: true });
 
+      // ==========================================
+      // VALIDAÇÃO DE "IMPOSSIBLE TRAVEL" E FAKE GPS
+      // ==========================================
+      if (latitude !== undefined && longitude !== undefined) {
+        const userGeoPoint = new Parse.GeoPoint({ latitude: parseFloat(latitude), longitude: parseFloat(longitude) });
+        const enigmaGeoPoint = enigma.get("location");
+        
+        // 1. Verificação de Proximidade (O jogador está realmente perto do enigma?)
+        // Raio de 150 metros (0.15 km). Evita que a pessoa adivinhe o código de casa.
+        if (enigmaGeoPoint) {
+          const distanceToEnigma = userGeoPoint.kilometersTo(enigmaGeoPoint);
+          if (distanceToEnigma > 0.15) {
+            throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Você não está próximo o suficiente do alvo para validar este código.");
+          }
+        }
+
+        // 2. Impossible Travel (Cálculo de Velocidade)
+        const lastLoc = user.get("lastLocation");
+        const lastTime = user.get("lastLocationTime");
+        const now = new Date();
+
+        if (lastLoc && lastTime) {
+          const distanceKm = lastLoc.kilometersTo(userGeoPoint);
+          // Diferença de tempo em horas
+          const timeDiffHours = (now.getTime() - lastTime.getTime()) / (1000 * 60 * 60);
+          
+          if (timeDiffHours > 0) {
+            const speedKmH = distanceKm / timeDiffHours;
+            
+            // Se a velocidade for maior que 120 km/h, é fraude (limite realista na cidade/estrada)
+            if (speedKmH > 120) {
+              
+              // Registra a fraude silenciosamente para auditoria
+              const FraudLog = Parse.Object.extend("FraudLog");
+              const fraud = new FraudLog();
+              fraud.set("user", user);
+              fraud.set("eventId", eventId);
+              fraud.set("enigmaId", enigmaId);
+              fraud.set("reason", "Impossible Travel Detectado");
+              fraud.set("speedKmH", speedKmH);
+              await fraud.save(null, { useMasterKey: true });
+
+              throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Movimentação irreal detectada. Sua ação foi bloqueada pelo sistema Anti-Fraude.");
+            }
+          }
+        }
+
+        // Se passou em todos os testes, atualiza a última localização conhecida
+        user.set("lastLocation", userGeoPoint);
+        user.set("lastLocationTime", now);
+        await user.save(null, { useMasterKey: true });
+      }
+
       if (enigma.get("code") === guess) {
 
-        // Fetch Event to know the eventType
         const Event = Parse.Object.extend("Event");
         const eventQuery = new Parse.Query(Event);
         const eventObj = await eventQuery.get(eventId, { useMasterKey: true });
@@ -466,20 +558,17 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
 
         let nextStepData = {};
         if (eventType === 'find_and_win') {
-          // Recompensa Instantânea: add to balance immediately
           user.set("balance", balance + enigmaPrize);
 
           let currentXP = user.get("xp") || 0;
-          currentXP += 50; // +50 XP per Enigma
+          currentXP += 50; 
           user.set("xp", currentXP);
           user.set("league", getLeagueByXP(currentXP));
 
-          // Atualizar status do enigma para bloquear para outros jogadores
           enigma.set("status", "closed");
           enigma.set("closedAt", new Date());
           await enigma.save(null, { useMasterKey: true });
 
-          // Registrar que enigma foi concluído no histórico
           let solvedEnigmas = eventProgress.solvedEnigmas || [];
           solvedEnigmas.push(enigmaId);
           eventProgress.solvedEnigmas = solvedEnigmas;
@@ -488,7 +577,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
           await user.save(null, { useMasterKey: true });
 
           nextStepData = {
-            type: 'next_enigma', // keeps the player in the loop
+            type: 'next_enigma', 
             prizeWon: enigmaPrize,
             enigmaData: {}
           };
@@ -499,8 +588,6 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
             nextStep: nextStepData
           };
         } else {
-          // Classic Mode: "Pote de Ouro" Final
-          // Verify progression
           const Phase = Parse.Object.extend("Phase");
           const phaseQuery = new Parse.Query(Phase);
           phaseQuery.equalTo("event", eventObj);
@@ -528,7 +615,6 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
           }
 
           if (!isLastPhase || !isLastEnigma) {
-            // Advancing in classic mode
             if (!isLastEnigma) {
               eventProgress.currentEnigma = currentEnigmaOrder + 1;
             } else {
@@ -540,7 +626,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
             user.set("events", userEvents);
 
             let currentXP = user.get("xp") || 0;
-            currentXP += 50; // +50 XP per Enigma
+            currentXP += 50; 
             user.set("xp", currentXP);
             user.set("league", getLeagueByXP(currentXP));
 
@@ -555,7 +641,6 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
               }
             };
           } else {
-            // Finished event
             let rawPrize = eventObj.get("prizePool") || eventObj.get("prize") || "0";
             if (typeof rawPrize === 'string') {
               rawPrize = rawPrize.replace('R$', '').replace(',', '.').trim();
@@ -566,7 +651,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
             user.set("lastWonEventName", eventObj.get("name"));
 
             let currentXP = user.get("xp") || 0;
-            currentXP += 250; // +200 XP for Event Finish + 50 for the final enigma
+            currentXP += 250; 
             user.set("xp", currentXP);
             user.set("league", getLeagueByXP(currentXP));
 
@@ -587,8 +672,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
           }
         }
       } else {
-        // Cooldown punishment
-        const cooldownTime = now + (3 * 60 * 1000); // 3 minutes cooldown
+        const cooldownTime = now + (3 * 60 * 1000); 
         eventProgress.cooldownUntil = cooldownTime;
         userEvents[eventId] = eventProgress;
         user.set("events", userEvents);
@@ -605,4 +689,30 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
   }
+});
+
+// ==========================================
+// INTERCEPTADORES DE SEGURANÇA (TRIGGERS)
+// ==========================================
+
+// Intercepta listas de Enigmas (QueryBuilder)
+Parse.Cloud.afterFind("Enigma", (request) => {
+  // Se a requisição veio do aplicativo (não é o Master/Admin)
+  if (!request.master) {
+    request.objects.forEach((enigma) => {
+      // Removemos os dados sensíveis do payload antes de enviar ao celular
+      enigma.unset("code");
+      enigma.unset("compassCoords");
+    });
+  }
+  return request.objects;
+});
+
+// Intercepta a busca de um único Enigma (Query.get)
+Parse.Cloud.afterGet("Enigma", (request) => {
+  if (!request.master && request.object) {
+    request.object.unset("code");
+    request.object.unset("compassCoords");
+  }
+  return request.object;
 });
