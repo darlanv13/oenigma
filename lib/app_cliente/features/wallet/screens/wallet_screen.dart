@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import 'package:oenigma/core/models/user_wallet_model.dart';
-import 'package:oenigma/app_cliente/features/wallet/providers/wallet_provider.dart';
-import 'package:oenigma/app_cliente/features/wallet/widgets/wallet_balance_card.dart';
+import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/app_cliente/features/wallet/widgets/wallet_credit_options_sheet.dart';
-import 'package:oenigma/app_cliente/features/wallet/widgets/wallet_history_list.dart';
+import 'package:oenigma/core/models/user_wallet_model.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+
+import 'package:oenigma/core/utils/app_colors.dart';
+// Importação restaurada do seu widget de depósito original
 
 class WalletScreen extends ConsumerStatefulWidget {
   const WalletScreen({super.key});
@@ -18,523 +17,380 @@ class WalletScreen extends ConsumerStatefulWidget {
   ConsumerState<WalletScreen> createState() => _WalletScreenState();
 }
 
-class _WalletScreenState extends ConsumerState<WalletScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+class _WalletScreenState extends ConsumerState<WalletScreen> {
+  void _handleDeposit(ParseUser user) {
 
-  @override
-  void initState() {
-    super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
+    final walletModel = UserWalletModel(
+      objectId: user.objectId ?? '',
+      name: user.get<String>('name') ?? 'Jogador',
+      email: user.get<String>('email') ?? '',
+      balance: user.get<num>('balance')?.toDouble() ?? 0.0,
+      photoURL: user.get<String>('photoURL'), transactions: [user.get('transactions') ?? []],
     );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeIn,
-    );
-  }
-
-  @override
-  void dispose() {
-    _fadeController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _refreshWalletData() async {
-    return await ref.refresh(walletProvider.future);
-  }
-
-  void _showAddFundsDialog(UserWalletModel wallet) {
-    HapticFeedback.lightImpact();
+    // Chamada restaurada para a sua tela/sheet de créditos original
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return CreditOptionsSheet(wallet: wallet);
-      },
-    ).then((_) {
-      _refreshWalletData();
-    });
+      isScrollControlled: true,
+      builder: (context) => CreditOptionsSheet(wallet: walletModel,), // Certifique-se de que walletModel está definido corretamente),
+    );
   }
 
-  void _showWithdrawDialog(UserWalletModel wallet) {
-    HapticFeedback.lightImpact();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: WithdrawSheet(wallet: wallet),
-        );
-      },
-    ).then((_) {
-      _refreshWalletData();
-    });
+  void _handleWithdraw() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Função de Saque em breve!'),
+        backgroundColor: primaryAmber,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final walletAsync = ref.watch(walletProvider);
+    final authState = ref.watch(authStateProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        leading: Container(
-          margin: const EdgeInsets.all(8.0),
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.1),
-              width: 1,
+      backgroundColor: Colors.black, // Fundo base escuro
+      body: Stack(
+        children: [
+          // Fundo com o mapa idêntico ao da HomePage
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background.png',
+              fit: BoxFit.cover,
             ),
           ),
-          child: IconButton(
-            icon: const FaIcon(
-              FontAwesomeIcons.angleLeft,
-              color: Color(0xFFD6B570),
-              size: 16,
+          // Camada de escurecimento suave para dar leitura aos textos
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.6),
             ),
-            onPressed: () {
-              if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              }
-            },
           ),
-        ),
-        title: Text(
-          'Carteira',
-          style: GoogleFonts.orbitron(
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            fontSize: 20,
+          
+          SafeArea(
+            child: Column(
+              children: [
+                // AppBar Customizada para casar com o design
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: primaryAmber.withOpacity(0.06),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: FaIcon(
+                              FontAwesomeIcons.chevronLeft,
+                              color: primaryAmber,
+                              size: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'TESOURO',
+                        style: GoogleFonts.orbitron(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: primaryAmber,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(width: 36), // Espaçamento para centralizar o título
+                    ],
+                  ),
+                ),
+                
+                Expanded(
+                  child: authState.when(
+                    data: (user) {
+                      if (user == null) {
+                        return const Center(
+                          child: Text('Sessão expirada.', style: TextStyle(color: Colors.white)),
+                        );
+                      }
+
+                      final balance = user.get<num>('balance')?.toDouble() ?? 0.0;
+
+                      return CustomScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildBalanceCard(balance),
+                                  const SizedBox(height: 24),
+                                  _buildActionButtons(user),
+                                  const SizedBox(height: 40),
+                                  _buildTransactionsHistory(user),
+                                  const SizedBox(height: 40),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                    loading: () => const Center(
+                      child: CircularProgressIndicator(color: primaryAmber),
+                    ),
+                    error: (err, stack) => Center(
+                      child: Text('Erro: $err', style: const TextStyle(color: dangerColor)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        centerTitle: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        titleSpacing: 0,
+        ],
       ),
-      body: walletAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: Color(0xFFFFD54F)),
+    );
+  }
+
+  Widget _buildBalanceCard(double balance) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E).withOpacity(0.8), // Fundo escuro translúcido como na Home
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: primaryAmber.withOpacity(0.3), // Borda fina dourada
+          width: 1,
         ),
-        error: (error, stack) => Center(
-          child: Column(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const FaIcon(
-                FontAwesomeIcons.circleExclamation,
-                size: 48,
-                color: Colors.redAccent,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Erro ao carregar tesouro',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _refreshWalletData,
-                icon: const FaIcon(
-                  FontAwesomeIcons.rotateRight,
-                  color: Colors.black,
-                ),
-                label: const Text(
-                  'TENTAR NOVAMENTE',
-                  style: TextStyle(fontWeight: FontWeight.w900),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFD54F),
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
+              const FaIcon(FontAwesomeIcons.coins, color: primaryAmber, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                'SALDO DISPONÍVEL',
+                style: GoogleFonts.inter(
+                  color: secondaryTextColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  letterSpacing: 1.5,
                 ),
               ),
             ],
           ),
-        ),
-        data: (walletData) {
-          _fadeController.forward();
-          return RefreshIndicator(
-            onRefresh: _refreshWalletData,
-            color: const Color(0xFFFFD54F),
-            backgroundColor: const Color(0xFF1E1E1E),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 16),
-                      WalletBalanceCard(
-                        wallet: walletData,
-                        onDeposit: () => _showAddFundsDialog(walletData),
-                        onWithdraw: () => _showWithdrawDialog(walletData),
-                      ),
-                      const SizedBox(height: 32),
-                      Text(
-                        'ÚLTIMAS TRANSAÇÕES',
-                        style: GoogleFonts.orbitron(
-                          color: const Color(0xFFD6B570),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      WalletHistoryList(wallet: walletData),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          FaIcon(
-                            FontAwesomeIcons.shieldHalved,
-                            color: Color(0xFFD6B570),
-                            size: 12,
-                          ),
-                          SizedBox(width: 6),
-                          Text(
-                            "Transações seguras",
-                            style: TextStyle(
-                              color: Colors.white54,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 40),
-                    ],
-                  ),
-                ),
-              ),
+          const SizedBox(height: 16),
+          Text(
+            'R\$ ${balance.toStringAsFixed(2).replaceAll('.', ',')}',
+            style: GoogleFonts.orbitron(
+              color: Colors.white,
+              fontSize: 38,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.0,
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
-}
 
-// --- WIDGET DO MODAL DE SAQUE ---
-class WithdrawSheet extends StatefulWidget {
-  final UserWalletModel wallet;
-
-  const WithdrawSheet({super.key, required this.wallet});
-
-  @override
-  State<WithdrawSheet> createState() => _WithdrawSheetState();
-}
-
-class _WithdrawSheetState extends State<WithdrawSheet> {
-  final _formKey = GlobalKey<FormState>();
-  final _amountController = TextEditingController();
-  final _pixKeyController = TextEditingController();
-  String _pixKeyType = 'cpf';
-  bool _isLoading = false;
-
-  @override
-  void dispose() {
-    _amountController.dispose();
-    _pixKeyController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _requestWithdrawal() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final amount =
-        double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0.0;
-
-    if (amount < 20.0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('O valor mínimo para saque é R\$ 20,00.'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
-
-    if (amount > widget.wallet.balance) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Saldo insuficiente para este saque.'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      // Salva a requisição de saque na tabela Withdrawal do Parse
-      final currentUser = await ParseUser.currentUser() as ParseUser?;
-      if (currentUser != null) {
-        final withdrawal = ParseObject('Withdrawal')
-          ..set('amount', amount)
-          ..set('pixKey', _pixKeyController.text.trim())
-          ..set('pixKeyType', _pixKeyType)
-          ..set('status', 'pending')
-          ..set(
-            'objectId',
-            currentUser.objectId,
-          ); // Passa o ID pra referência rápida do Admin
-
-        final response = await withdrawal.save();
-
-        if (response.success && mounted) {
-          // Desconta o saldo do usuário localmente no banco
-          currentUser.set('balance', widget.wallet.balance - amount);
-          await currentUser.save();
-
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Saque solicitado com sucesso! Em breve o valor estará na sua conta.',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else {
-          throw Exception(
-            response.error?.message ?? 'Erro ao processar saque.',
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro: $e'),
-            backgroundColor: Colors.redAccent,
+  Widget _buildActionButtons(ParseUser user) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildWalletButton(
+            icon: FontAwesomeIcons.arrowDown,
+            label: 'DEPOSITAR',
+            color: primaryAmber,
+            onTap: () => _handleDeposit(user),
           ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildWalletButton(
+            icon: FontAwesomeIcons.arrowUp,
+            label: 'SACAR',
+            color: Colors.white70,
+            onTap: _handleWithdraw,
+          ),
+        ),
+      ],
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        border: Border(top: BorderSide(color: Colors.white10)),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+  Widget _buildWalletButton({
+    required dynamic icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    // Design vazado (Outlined) idêntico ao botão "Entrada Grátis" da sua Home
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: color, width: 1.5),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[700],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              "RESGATAR TESOURO",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.5,
-              ),
-            ),
-            const SizedBox(height: 8),
+            FaIcon(icon, size: 14, color: color),
+            const SizedBox(width: 8),
             Text(
-              "Saldo disponível: R\$ ${widget.wallet.balance.toStringAsFixed(2).replaceAll('.', ',')}",
-              style: const TextStyle(
-                color: Color(0xFFFFD54F),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Campo de Valor
-            TextFormField(
-              controller: _amountController,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-              decoration: InputDecoration(
-                prefixIcon: const Padding(
-                  padding: EdgeInsets.all(14.0),
-                  child: FaIcon(
-                    FontAwesomeIcons.brazilianRealSign,
-                    color: Colors.grey,
-                    size: 18,
-                  ),
-                ),
-                labelText: 'Valor do Saque',
-                labelStyle: const TextStyle(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-                filled: true,
-                fillColor: const Color(0xFF121212),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Colors.white, width: 1.5),
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) return 'Informe o valor.';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Dropdown Tipo de Chave PIX
-            DropdownButtonFormField<String>(
-              value: _pixKeyType,
-              dropdownColor: const Color(0xFF121212),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-              decoration: InputDecoration(
-                labelText: 'Tipo de Chave PIX',
-                labelStyle: const TextStyle(color: Colors.grey),
-                filled: true,
-                fillColor: const Color(0xFF121212),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'cpf', child: Text('CPF/CNPJ')),
-                DropdownMenuItem(value: 'phone', child: Text('Telefone')),
-                DropdownMenuItem(value: 'email', child: Text('E-mail')),
-                DropdownMenuItem(
-                  value: 'random',
-                  child: Text('Chave Aleatória'),
-                ),
-              ],
-              onChanged: (val) {
-                setState(() {
-                  _pixKeyType = val!;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Campo Chave PIX
-            TextFormField(
-              controller: _pixKeyController,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-              decoration: InputDecoration(
-                prefixIcon: const Padding(
-                  padding: EdgeInsets.all(14.0),
-                  child: FaIcon(
-                    FontAwesomeIcons.pix,
-                    color: Colors.grey,
-                    size: 18,
-                  ),
-                ),
-                labelText: 'Sua Chave PIX',
-                labelStyle: const TextStyle(
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-                filled: true,
-                fillColor: const Color(0xFF121212),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: Colors.white, width: 1.5),
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty)
-                  return 'Informe sua chave PIX.';
-                return null;
-              },
-            ),
-
-            const SizedBox(height: 32),
-
-            // Botão Confirmar
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _requestWithdrawal,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.black,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Text(
-                        'CONFIRMAR SAQUE',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
+              label,
+              style: GoogleFonts.orbitron(
+                fontWeight: FontWeight.w700,
+                color: color,
+                fontSize: 13,
+                letterSpacing: 1.0,
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTransactionsHistory(ParseUser user) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const FaIcon(FontAwesomeIcons.clockRotateLeft, color: primaryAmber, size: 16),
+            const SizedBox(width: 10),
+            Text(
+              'HISTÓRICO RECENTE',
+              style: GoogleFonts.orbitron(
+                color: primaryAmber,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        FutureBuilder<ParseResponse>(
+          future: (QueryBuilder<ParseObject>(ParseObject('Transaction'))
+                ..whereEqualTo('user', user.toPointer())
+                ..orderByDescending('createdAt')
+                ..setLimit(10))
+              .query(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24.0),
+                  child: CircularProgressIndicator(color: primaryAmber),
+                ),
+              );
+            }
+
+            final results = snapshot.data?.results as List<ParseObject>? ?? [];
+
+            if (snapshot.hasError || results.isEmpty) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E).withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                ),
+                child: Column(
+                  children: [
+                    FaIcon(FontAwesomeIcons.receipt, color: Colors.white.withOpacity(0.1), size: 40),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Nenhuma transação ainda.',
+                      style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Seus ganhos e depósitos aparecerão aqui.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 13),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E).withOpacity(0.8),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withOpacity(0.05)),
+              ),
+              child: ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: results.length,
+                separatorBuilder: (context, index) => Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                itemBuilder: (context, index) {
+                  final tx = results[index];
+                  final type = tx.get<String>('type') ?? 'deposit';
+                  final status = tx.get<String>('status') ?? 'pending';
+                  final amount = tx.get<num>('amount')?.toDouble() ?? 0.0;
+                  final date = tx.createdAt;
+
+                  final isDeposit = type == 'deposit' || type == 'reward';
+                  final icon = isDeposit ? FontAwesomeIcons.arrowTrendUp : FontAwesomeIcons.arrowTrendDown;
+                  final color = isDeposit ? successColor : dangerColor;
+                  
+                  String dateStr = '';
+                  if (date != null) {
+                    dateStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+                  }
+
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: FaIcon(icon, color: color, size: 16),
+                    ),
+                    title: Text(
+                      isDeposit ? (type == 'reward' ? 'Prêmio Recebido' : 'Depósito via PIX') : 'Saque / Ferramenta',
+                      style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
+                    subtitle: Text(
+                      '$dateStr • ${status.toUpperCase()}',
+                      style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 11, fontWeight: FontWeight.bold),
+                    ),
+                    trailing: Text(
+                      '${isDeposit ? '+' : '-'} R\$ ${amount.toStringAsFixed(2)}',
+                      style: GoogleFonts.inter(color: color, fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }

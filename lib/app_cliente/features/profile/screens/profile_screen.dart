@@ -1,463 +1,607 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:oenigma/core/models/user_wallet_model.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
+import 'package:oenigma/core/models/user_wallet_model.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
-  final Map<String, dynamic> playerData;
-  final UserWalletModel walletData;
-
-  const ProfileScreen({
-    super.key,
-    required this.playerData,
-    required this.walletData,
-  });
+  const ProfileScreen({super.key, required Map<String, dynamic> playerData, required UserWalletModel walletData});
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  
+  // Função para abrir o Modal de Edição salvando no Parse
+  void _showEditProfileModal(ParseUser user) {
+    final nameController = TextEditingController(text: user.get<String>('name') ?? '');
+    final phoneController = TextEditingController(text: user.get<String>('phone') ?? '');
+    bool isSaving = false;
 
-  String _getInitials(String name) {
-    if (name.isEmpty) return '??';
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.length > 1) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase();
-  }
-
-  Widget _buildBackButton(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
-        }
-      },
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: const Color(0xFFC0A060).withValues(alpha: 0.06),
-          shape: BoxShape.circle,
-        ),
-        child: const Center(
-          child: Icon(
-            Icons.chevron_left,
-            color: Color(0xFFC0A060),
-            size: 22,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileSection(UserWalletModel walletData, Map<String, dynamic> playerData) {
-    final initials = _getInitials(walletData.name);
-    final email = playerData['email'] ?? walletData.email;
-
-    return Column(
-      children: [
-        Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              colors: [Color(0xFFC0A060), Color(0xFF8A7A4A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFC0A060).withValues(alpha: 0.3),
-                blurRadius: 24,
-              ),
-            ],
-          ),
-          child: Center(
-            child: Text(
-              initials,
-              style: GoogleFonts.inter(
-                fontSize: 32,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF06080B),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          walletData.name,
-          style: GoogleFonts.orbitron(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFFF0E6C5),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          email,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Color(0xFFB0A07A),
-          ),
-        ),
-        const SizedBox(height: 20),
-        _buildLeagueBadge(playerData),
-      ],
-    );
-  }
-
-  Widget _buildLeagueBadge(Map<String, dynamic> playerData) {
-    int xp = playerData['xp'] ?? 0;
-    String league = playerData['league'] ?? 'Bronze';
-
-    // League progress logic
-    int currentLeagueMin = 0;
-    int currentLeagueMax = 500;
-    Color leagueColor = Colors.brown[300]!;
-
-    if (league == 'Lenda') {
-      currentLeagueMin = 6001;
-      currentLeagueMax = 6001; // Maxed out
-      leagueColor = Colors.purpleAccent;
-    } else if (league == 'Diamante') {
-      currentLeagueMin = 3001;
-      currentLeagueMax = 6000;
-      leagueColor = Colors.blueAccent;
-    } else if (league == 'Ouro') {
-      currentLeagueMin = 1501;
-      currentLeagueMax = 3000;
-      leagueColor = Colors.amber;
-    } else if (league == 'Prata') {
-      currentLeagueMin = 501;
-      currentLeagueMax = 1500;
-      leagueColor = Colors.blueGrey[300]!;
-    }
-
-    double progress = 1.0;
-    if (league != 'Lenda') {
-      progress = (xp - currentLeagueMin) / (currentLeagueMax - currentLeagueMin);
-      if (progress < 0) progress = 0;
-      if (progress > 1) progress = 1;
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16181C).withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: leagueColor.withValues(alpha: 0.3), width: 1.5),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.shield, color: leagueColor, size: 24),
-              const SizedBox(width: 8),
-              Text(
-                'Liga $league'.toUpperCase(),
-                style: GoogleFonts.orbitron(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: leagueColor,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Stack(
-            children: [
-              Container(
-                height: 8,
-                width: double.infinity,
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.all(16),
+              child: Container(
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
+                  color: const Color(0xFF1E1E1E).withOpacity(0.95),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: primaryAmber.withOpacity(0.3), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.6), blurRadius: 20, offset: const Offset(0, 10)),
+                  ],
                 ),
-              ),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  return Container(
-                    height: 8,
-                    width: constraints.maxWidth * progress,
-                    decoration: BoxDecoration(
-                      color: leagueColor,
-                      borderRadius: BorderRadius.circular(4),
-                      boxShadow: [
-                        BoxShadow(color: leagueColor.withValues(alpha: 0.5), blurRadius: 8),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const FaIcon(FontAwesomeIcons.userPen, color: primaryAmber, size: 18),
+                            const SizedBox(width: 10),
+                            Text(
+                              'EDITAR PERFIL',
+                              style: GoogleFonts.orbitron(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (!isSaving)
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.grey),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
                       ],
                     ),
-                  );
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('$xp XP', style: TextStyle(color: leagueColor, fontWeight: FontWeight.bold, fontSize: 12)),
-              if (league != 'Lenda')
-                Text('Próxima Liga: ${currentLeagueMax + 1} XP', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10)),
-              if (league == 'Lenda')
-                Text('Nível Máximo', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+                    const SizedBox(height: 24),
+                    
+                    // Campo: Nome
+                    _buildInputField(
+                      controller: nameController,
+                      hint: 'Seu Nome',
+                      icon: FontAwesomeIcons.user,
+                      enabled: !isSaving,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Campo: Telefone
+                    _buildInputField(
+                      controller: phoneController,
+                      hint: 'Telefone',
+                      icon: FontAwesomeIcons.phone,
+                      enabled: !isSaving,
+                    ),
+                    const SizedBox(height: 24),
 
-  Widget _buildBalanceCard(UserWalletModel walletData) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16181C).withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const Text(
-            'SALDO DISPONÍVEL',
-            style: TextStyle(
-              color: Color(0xFF7A7A7A),
-              fontSize: 10, // ~0.7rem
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.5,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'R\$ ${walletData.balance.toStringAsFixed(2).replaceAll('.', ',')}',
-            style: GoogleFonts.orbitron(
-              fontSize: 30, // ~2.2rem
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFFF0E6C5),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                child: _buildActionButton(
-                  label: 'Depositar',
-                  isPrimary: true,
-                  onTap: () {}, // Can route to wallet deposit
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildActionButton(
-                  label: 'Sacar',
-                  isPrimary: false,
-                  onTap: () {}, // Can route to wallet withdraw
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({required String label, required bool isPrimary, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 40,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(40),
-          gradient: isPrimary
-              ? const LinearGradient(
-                  colors: [Color(0xFFC0A060), Color(0xFFA8894A)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: isPrimary ? null : Colors.transparent,
-          border: isPrimary ? null : Border.all(color: const Color(0xFFC0A060), width: 1.5),
-          boxShadow: isPrimary
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFFC0A060).withValues(alpha: 0.4),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: Text(
-            label.toUpperCase(),
-            style: GoogleFonts.orbitron(
-              fontSize: 11, // ~0.75rem
-              fontWeight: FontWeight.w700,
-              color: isPrimary ? const Color(0xFF06080B) : const Color(0xFFF0E6C5),
-              letterSpacing: 0.8,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyStateSection(String title, IconData icon, String message, {String? highlight}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 18, bottom: 10),
-          child: Text(
-            title,
-            style: GoogleFonts.orbitron(
-              fontSize: 12, // ~0.8rem
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFFC0A060),
-              letterSpacing: 1.5,
-            ),
-          ),
-        ),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF16181C).withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                icon,
-                size: 32, // ~2rem
-                color: const Color(0xFF4A4A4A),
-              ),
-              const SizedBox(height: 10),
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: const TextStyle(
-                    color: Color(0xFF7A7A7A),
-                    fontSize: 13, // ~0.85rem
-                    fontFamily: 'Inter',
-                  ),
-                  children: [
-                    TextSpan(text: message),
-                    if (highlight != null) ...[
-                      const TextSpan(text: '\n'),
-                      TextSpan(
-                        text: highlight,
-                        style: const TextStyle(
-                          color: Color(0xFFC0A060),
-                          fontWeight: FontWeight.w500,
+                    // Botão: Alterar Foto de Perfil
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        // Correção: Passando um callback para alterar o estado do modal
+                        onPressed: isSaving 
+                            ? null 
+                            : () => _updateProfilePhoto(user, (savingState) {
+                                setModalState(() => isSaving = savingState);
+                              }),
+                        icon: const FaIcon(FontAwesomeIcons.camera, size: 14, color: Colors.white),
+                        label: Text(
+                          'ALTERAR FOTO',
+                          style: GoogleFonts.orbitron(fontWeight: FontWeight.w700, color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.1),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                          ),
                         ),
                       ),
-                    ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Botão: Salvar Dados
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: isSaving
+                            ? null
+                            : () async {
+                                setModalState(() => isSaving = true);
+                                
+                                user.set('name', nameController.text.trim());
+                                user.set('phone', phoneController.text.trim());
+                                
+                                final response = await user.save();
+                                
+                                setModalState(() => isSaving = false);
+
+                                if (response.success) {
+                                  if (context.mounted) {
+                                    Navigator.of(context).pop();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Perfil atualizado!'), backgroundColor: successColor),
+                                    );
+                                    setState(() {}); // Força a tela a recarregar os novos dados
+                                  }
+                                } else {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Erro: ${response.error?.message}'), backgroundColor: dangerColor),
+                                    );
+                                  }
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryAmber,
+                          foregroundColor: darkBackground,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: isSaving
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: darkBackground, strokeWidth: 2))
+                            : Text(
+                                'SALVAR ALTERAÇÕES',
+                                style: GoogleFonts.orbitron(fontWeight: FontWeight.w900, fontSize: 14),
+                              ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ],
-          ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Lógica de Upload da Foto do Parse (Corrigida a assinatura)
+  Future<void> _updateProfilePhoto(ParseUser user, Function(bool) setSavingState) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    
+    if (pickedFile != null) {
+      setSavingState(true);
+      try {
+        final bytes = await pickedFile.readAsBytes();
+        ParseFileBase parseFile;
+        
+        if (kIsWeb) {
+          parseFile = ParseWebFile(bytes, name: 'avatar.jpg');
+        } else {
+          parseFile = ParseFile(File(pickedFile.path));
+        }
+
+        final response = await parseFile.save();
+        
+        if (response.success && parseFile.url != null) {
+          user.set('photoURL', parseFile.url);
+          await user.save();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Foto atualizada com sucesso!'), backgroundColor: successColor),
+            );
+            setState(() {}); // Recarrega a tela de perfil
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro ao enviar foto: $e'), backgroundColor: dangerColor),
+          );
+        }
+      } finally {
+        setSavingState(false);
+      }
+    }
+  }
+
+  Widget _buildInputField({required TextEditingController controller, required String hint, required FaIconData icon, required bool enabled}) {
+    return TextFormField(
+      controller: controller,
+      enabled: enabled,
+      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: darkBackground,
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.grey),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.all(14.0),
+          child: FaIcon(icon, color: primaryAmber, size: 18),
         ),
-      ],
+        contentPadding: const EdgeInsets.symmetric(vertical: 16),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: primaryAmber.withOpacity(0.5), width: 1.5),
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authStateProvider);
+
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // HEADER CUSTOMIZADO
-          SliverToBoxAdapter(
-            child: SafeArea(
-              bottom: false,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: const Color(0xFFC0A060).withValues(alpha: 0.10),
-                      width: 1,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildBackButton(context),
-                    Text(
-                      'Perfil',
-                      style: GoogleFonts.orbitron(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFFF0E6C5),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 36,
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Icon(
-                          Icons.more_vert, // fa-ellipsis-v
-                          color: Color(0xFFC0A060),
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+      backgroundColor: Colors.transparent, // Fundo base escuro
+      body: Stack(
+        children: [
+          // Fundo imersivo do mapa
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.6),
             ),
           ),
 
-          // CORPO DA TELA
-          SliverToBoxAdapter(
-            child: Container(
-              margin: const EdgeInsets.only(top: 20, left: 16, right: 16),
-              child: Column(
-                children: [
-                  _buildProfileSection(widget.walletData, widget.playerData),
-                  const SizedBox(height: 24),
-                  _buildBalanceCard(widget.walletData),
-                  const SizedBox(height: 10),
-                  _buildEmptyStateSection(
-                    'Meus prêmios',
-                    Icons.card_giftcard,
-                    'Nenhum prêmio ainda.',
-                    highlight: 'Participe de eventos para ganhar!',
+          SafeArea(
+            child: Column(
+              children: [
+                // AppBar Customizada
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Navigator.canPop(context)
+                          ? GestureDetector(
+                              onTap: () => Navigator.of(context).pop(),
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: primaryAmber.withOpacity(0.06),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Center(
+                                  child: FaIcon(FontAwesomeIcons.chevronLeft, color: primaryAmber, size: 14),
+                                ),
+                              ),
+                            )
+                          : const SizedBox(width: 36),
+                      Text(
+                        'MEU PERFIL',
+                        style: GoogleFonts.orbitron(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: primaryAmber,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(width: 36),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  _buildEmptyStateSection(
-                    'Histórico recente',
-                    Icons.access_time_outlined,
-                    'Nenhuma atividade recente.',
+                ),
+
+                Expanded(
+                  child: authState.when(
+                    data: (user) {
+                      if (user == null) {
+                        return const Center(
+                          child: Text('Sessão expirada. Faça login novamente.', style: TextStyle(color: Colors.white)),
+                        );
+                      }
+
+                      final name = user.get<String>('name') ?? 'Explorador';
+                      final email = user.get<String>('email') ?? 'Sem email';
+                      final phone = user.get<String>('phone') ?? 'Não informado';
+                      final xp = user.get<num>('xp')?.toInt() ?? 0;
+                      final league = user.get<String>('league') ?? 'Bronze';
+                      final photoUrl = user.get<String>('photoURL');
+
+                      final eventosJogados = user.get<Map<String, dynamic>>('events')?.keys.length ?? 0;
+                      final eventosVencidos = user.get<List<dynamic>>('winnerEvents')?.length ?? 0;
+
+                      return SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          children: [
+                            _buildAvatarSection(name, league, xp, photoUrl),
+                            const SizedBox(height: 32),
+                            _buildGamerStats(eventosJogados, eventosVencidos),
+                            const SizedBox(height: 24),
+                            _buildInfoCard(email, phone),
+                            const SizedBox(height: 32),
+                            _buildActionButtons(context, ref, user),
+                            const SizedBox(height: 40),
+                          ],
+                        ),
+                      );
+                    },
+                    loading: () => const Center(child: CircularProgressIndicator(color: primaryAmber)),
+                    error: (err, stack) => Center(child: Text('Erro: $err', style: const TextStyle(color: dangerColor))),
                   ),
-                  const SizedBox(height: 40),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarSection(String name, String league, int xp, String? photoUrl) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(color: primaryAmber.withOpacity(0.3), blurRadius: 20, spreadRadius: 2),
+            ],
+          ),
+          child: CircleAvatar(
+            radius: 50,
+            backgroundColor: darkBackground,
+            backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+            child: photoUrl == null
+                ? const FaIcon(FontAwesomeIcons.userNinja, size: 40, color: secondaryTextColor)
+                : null,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          name.toUpperCase(),
+          style: GoogleFonts.orbitron(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: 1.5,
+            shadows: [
+              Shadow(color: Colors.black.withOpacity(0.8), offset: const Offset(0, 2), blurRadius: 4),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E).withOpacity(0.8),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: primaryAmber.withOpacity(0.3), width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const FaIcon(FontAwesomeIcons.medal, color: primaryAmber, size: 14),
+              const SizedBox(width: 8),
+              Text(
+                'LIGA ${league.toUpperCase()}  •  $xp XP',
+                style: GoogleFonts.inter(
+                  color: primaryAmber,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGamerStats(int jogados, int vencidos) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E).withOpacity(0.8),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: primaryAmber.withOpacity(0.1)),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8)),
+              ],
+            ),
+            child: Column(
+              children: [
+                const FaIcon(FontAwesomeIcons.mapLocationDot, color: Colors.blueAccent, size: 24),
+                const SizedBox(height: 12),
+                Text(
+                  jogados.toString(),
+                  style: GoogleFonts.orbitron(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                Text('EXPLORADOS', style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 10, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E).withOpacity(0.8),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: primaryAmber.withOpacity(0.3)),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8)),
+              ],
+            ),
+            child: Column(
+              children: [
+                const FaIcon(FontAwesomeIcons.trophy, color: primaryAmber, size: 24),
+                const SizedBox(height: 12),
+                Text(
+                  vencidos.toString(),
+                  style: GoogleFonts.orbitron(color: primaryAmber, fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                Text('VITÓRIAS', style: GoogleFonts.inter(color: primaryAmber, fontSize: 10, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard(String email, String phone) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E).withOpacity(0.8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: primaryAmber.withOpacity(0.2), width: 1),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const FaIcon(FontAwesomeIcons.idCard, color: secondaryTextColor, size: 16),
+              const SizedBox(width: 12),
+              Text(
+                'DADOS DA CONTA',
+                style: GoogleFonts.inter(
+                  color: secondaryTextColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildInfoRow(FontAwesomeIcons.envelope, 'E-mail', email),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Divider(color: primaryAmber.withOpacity(0.1), height: 1),
+          ),
+          _buildInfoRow(FontAwesomeIcons.phone, 'Telefone', phone),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(dynamic icon, String label, String value) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: darkBackground,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: primaryAmber.withOpacity(0.1)),
+          ),
+          child: FaIcon(icon, color: primaryAmber, size: 16),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context, WidgetRef ref, ParseUser user) {
+    return Column(
+      children: [
+        _buildProfileButton(
+          icon: FontAwesomeIcons.penToSquare,
+          label: 'EDITAR PERFIL',
+          color: Colors.white70,
+          onTap: () => _showEditProfileModal(user),
+        ),
+        const SizedBox(height: 16),
+        _buildProfileButton(
+          icon: FontAwesomeIcons.arrowRightFromBracket,
+          label: 'SAIR DA CONTA',
+          color: dangerColor,
+          onTap: () async {
+            await ref.read(authRepositoryProvider).signOut();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileButton({
+    required dynamic icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: color, width: 1.5),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FaIcon(icon, size: 14, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.orbitron(
+                fontWeight: FontWeight.w700,
+                color: color,
+                fontSize: 14,
+                letterSpacing: 1.0,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

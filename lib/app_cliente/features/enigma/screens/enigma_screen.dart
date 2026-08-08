@@ -27,7 +27,6 @@ import 'package:oenigma/app_cliente/features/event/repositories/event_repository
 import 'package:oenigma/app_cliente/features/wallet/screens/wallet_screen.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
-// Importação do padrão de cores
 import 'package:oenigma/core/utils/app_colors.dart';
 
 // ================================================================
@@ -54,7 +53,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: darkBackground,
+      backgroundColor: Colors.black,
       body: Stack(
         alignment: Alignment.center,
         children: [
@@ -82,10 +81,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: darkBackground.withOpacity(0.8),
+                  color: Colors.black.withOpacity(0.8),
                   border: Border(
                     bottom: BorderSide(
-                      color: primaryAmber.withOpacity(0.10),
+                      color: primaryAmber.withOpacity(0.2),
                       width: 1,
                     ),
                   ),
@@ -112,12 +111,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
                       ),
                     ),
                     Text(
-                      'Ler QR Code',
+                      'LENDO ALVO...',
                       style: GoogleFonts.orbitron(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: primaryAmberLight,
-                        letterSpacing: 0.5,
+                        letterSpacing: 1.5,
                       ),
                     ),
                     const SizedBox(width: 36),
@@ -140,11 +139,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
           padding: const EdgeInsets.all(32),
           width: MediaQuery.of(context).size.width * 0.85,
           decoration: BoxDecoration(
-            color: cardColor.withOpacity(0.9),
+            color: const Color(0xFF1E1E1E).withOpacity(0.9),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: primaryAmber.withOpacity(0.5),
-              width: 2,
+              width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
@@ -176,8 +175,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: darkBackground,
+                  color: Colors.black,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: primaryAmber.withOpacity(0.2)),
                 ),
                 child: Text(
                   _detectedQRCode!,
@@ -205,10 +205,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     ),
                   ),
                   child: const Text(
-                    'CONFIRMAR',
+                    'VALIDAR ALVO',
                     style: TextStyle(
-                      color: darkBackground,
+                      color: Colors.black,
                       fontWeight: FontWeight.w900,
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ),
@@ -236,7 +237,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 }
 
 // ================================================================
-//  ENIGMA SCREEN COM NOVO DESIGN E BUSCA DE DICAS
+//  ENIGMA SCREEN COM DESIGN ALINHADO
 // ================================================================
 class EnigmaScreen extends StatefulWidget {
   final EventModel event;
@@ -261,7 +262,6 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   // ================================================================
   //  VARIÁVEIS
   // ================================================================
-  final TextEditingController _codeController = TextEditingController();
   final EnigmaRepository _enigmaRepository = EnigmaRepository();
   final EventRepository _eventService = EventRepository();
 
@@ -315,7 +315,6 @@ class _EnigmaScreenState extends State<EnigmaScreen>
 
   @override
   void dispose() {
-    _codeController.dispose();
     _locationSubscription?.cancel();
     _statusPollTimer?.cancel();
     _shakeController.dispose();
@@ -327,14 +326,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   // ================================================================
-  //  LÓGICA COMPLETA
+  //  LÓGICA
   // ================================================================
 
   Future<void> _resetEnigmaState() async {
     _locationSubscription?.cancel();
     _statusPollTimer?.cancel();
     setState(() {
-      _codeController.clear();
       _distance = null;
       _isNear = false;
       _isBlocked = false;
@@ -514,8 +512,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           _isNear = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('⚠️ Fake GPS detectado!'),
+          const SnackBar(
+            content: Text('⚠️ Fake GPS detectado!'),
             backgroundColor: dangerColor,
           ),
         );
@@ -571,7 +569,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 width: 1,
               ),
             ),
-            backgroundColor: cardColor,
+            backgroundColor: const Color(0xFF1E1E1E),
             title: Text(
               toolType == 'compass' ? 'Bússola Ativada!' : 'Mapa Ativado!',
               style: TextStyle(
@@ -605,7 +603,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryAmber,
-                    foregroundColor: darkBackground,
+                    foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -634,37 +632,34 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   Future<void> _handleAction(String action, {String? code, String? toolType, String? hintId}) async {
-  setState(() => _isLoading = true);
-  try {
-    // Captura a localização exata do jogador no momento da ação
-    double? currentLat;
-    double? currentLng;
-    
-    // Se a ação for validar o código, forçamos a leitura do GPS
-    if (action == 'validateCode' || action == 'verify_code' || action == 'scan_enigma') {
-      try {
-        Position position = await Geolocator.getCurrentPosition(
-          // ignore: deprecated_member_use
-          desiredAccuracy: LocationAccuracy.high,
-        );
-        currentLat = position.latitude;
-        currentLng = position.longitude;
-      } catch (e) {
-        throw 'É necessário ativar o GPS para validar o enigma.';
+    setState(() => _isLoading = true);
+    try {
+      double? currentLat;
+      double? currentLng;
+      
+      // Validação Geográfica para o Anti-Fraude
+      if (action == 'validateCode' || action == 'verify_code' || action == 'scan_enigma') {
+        try {
+          Position position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+          );
+          currentLat = position.latitude;
+          currentLng = position.longitude;
+        } catch (e) {
+          throw 'É necessário ativar o GPS para validar o enigma.';
+        }
       }
-    }
 
-    final result = await _enigmaRepository.callEnigmaFunction(action, {
-      'eventId': widget.event.id,
-      'phaseOrder': widget.phase.order,
-      'enigmaId': _currentEnigma.id,
-      if (code != null) 'code': code,
-      if (toolType != null) 'toolType': toolType,
-      if (hintId != null) 'hintId': hintId,
-      // Envia as coordenadas para o backend analisar o Impossible Travel
-      if (currentLat != null) 'latitude': currentLat,
-      if (currentLng != null) 'longitude': currentLng,
-    });
+      final result = await _enigmaRepository.callEnigmaFunction(action, {
+        'eventId': widget.event.id,
+        'phaseOrder': widget.phase.order,
+        'enigmaId': _currentEnigma.id,
+        if (code != null) 'code': code,
+        if (toolType != null) 'toolType': toolType,
+        if (hintId != null) 'hintId': hintId,
+        if (currentLat != null) 'latitude': currentLat,
+        if (currentLng != null) 'longitude': currentLng,
+      });
 
       if (!mounted) return;
 
@@ -675,7 +670,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         if (action == 'consumeTool') {
           return;
         } else if (action == 'purchaseHint') {
-          await _fetchInitialStatus(); // Atualiza a lista de dicas compradas
+          await _fetchInitialStatus();
         } else if (action == 'validateCode') {
           final nextStep = data['nextStep'] != null
               ? Map<String, dynamic>.from(data['nextStep'])
@@ -716,7 +711,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       width: 1,
                     ),
                   ),
-                  backgroundColor: cardColor,
+                  backgroundColor: const Color(0xFF1E1E1E),
                   child: Padding(
                     padding: const EdgeInsets.all(32.0),
                     child: Column(
@@ -752,7 +747,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                               'PRÓXIMO DESAFIO',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: darkBackground,
+                                color: Colors.black,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
@@ -801,6 +796,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           SnackBar(content: Text(e.message), backgroundColor: dangerColor),
         );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: dangerColor),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -817,7 +816,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             width: 1,
           ),
         ),
-        backgroundColor: cardColor,
+        backgroundColor: const Color(0xFF1E1E1E),
         title: const Row(
           children: [
             FaIcon(FontAwesomeIcons.wallet, color: primaryAmber, size: 20),
@@ -858,7 +857,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryAmber,
-              foregroundColor: darkBackground,
+              foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -887,7 +886,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             width: 1,
           ),
         ),
-        backgroundColor: cardColor,
+        backgroundColor: const Color(0xFF1E1E1E),
         title: const Row(
           children: [
             FaIcon(FontAwesomeIcons.store, color: primaryAmber, size: 20),
@@ -914,7 +913,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryAmber,
-              foregroundColor: darkBackground,
+              foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -930,7 +929,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   // ================================================================
-  //  DIÁLOGOS DE MÍDIA
+  //  DIÁLOGOS DE MÍDIA E FERRAMENTAS
   // ================================================================
 
   void _showMediaDialog(
@@ -971,10 +970,6 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     );
   }
 
-  // ================================================================
-  //  DIÁLOGOS DE FERRAMENTAS E DICAS
-  // ================================================================
-
   void _openHintDialog(ParseObject hint) {
     showDialog(
       context: context,
@@ -986,7 +981,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             width: 1,
           ),
         ),
-        backgroundColor: cardColor,
+        backgroundColor: const Color(0xFF1E1E1E),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -1099,7 +1094,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: darkBackground,
+          color: Colors.black,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withOpacity(0.05)),
         ),
@@ -1138,7 +1133,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             width: 1,
           ),
         ),
-        backgroundColor: cardColor,
+        backgroundColor: const Color(0xFF1E1E1E),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -1198,7 +1193,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             width: 1,
           ),
         ),
-        backgroundColor: cardColor,
+        backgroundColor: const Color(0xFF1E1E1E),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -1265,15 +1260,28 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }
 
   // ================================================================
-  //  CONSTRUÇÃO DA UI (PADRÃO ESCURO E DOURADO)
+  //  CONSTRUÇÃO DA UI (PADRÃO ESCURO E MAPA)
   // ================================================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: darkBackground, 
+      backgroundColor: Colors.black, // Fundo base escuro
       body: Stack(
         children: [
+          // Fundo imersivo do mapa
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.6),
+            ),
+          ),
+
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
@@ -1322,8 +1330,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                             style: GoogleFonts.orbitron(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: primaryAmberLight,
-                              letterSpacing: 0.5,
+                              color: primaryAmber,
+                              letterSpacing: 1.5,
                             ),
                           ),
                         ),
@@ -1411,10 +1419,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: cardColor.withOpacity(0.6),
+            color: const Color(0xFF1E1E1E).withOpacity(0.8), // Fundo translucido premium
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: primaryAmber.withOpacity(0.08),
+              color: primaryAmber.withOpacity(0.3),
               width: 1,
             ),
             boxShadow: [
@@ -1436,7 +1444,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   ],
                   Text(
                     title.toUpperCase(),
-                    style: const TextStyle(
+                    style: GoogleFonts.inter(
                       color: secondaryTextColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
@@ -1465,7 +1473,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             data: _currentEnigma.instruction,
             styleSheet: MarkdownStyleSheet(
               p: GoogleFonts.inter(
-                color: textColor,
+                color: Colors.white,
                 fontSize: 16,
                 height: 1.5,
                 fontWeight: FontWeight.w500,
@@ -1572,9 +1580,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       color: Colors.black,
                       size: 18,
                     ),
-                    label: const Text(
+                    label: Text(
                       'ABRIR PISTA',
-                      style: TextStyle(
+                      style: GoogleFonts.orbitron(
                         color: Colors.black,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 1.2,
@@ -1600,7 +1608,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 border: Border.all(
                   color: primaryAmber.withOpacity(0.3),
                 ),
-                color: primaryAmber.withOpacity(0.05),
+                color: const Color(0xFF1E1E1E).withOpacity(0.8),
               ),
               child: TextButton.icon(
                 onPressed: _isLoading
@@ -1621,7 +1629,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 ),
                 label: Text(
                   'COMPRAR PISTA (R\$ ${price.toStringAsFixed(2)})',
-                  style: const TextStyle(
+                  style: GoogleFonts.orbitron(
                     color: primaryAmber,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.0,
@@ -1649,13 +1657,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Row(
+        Row(
           children: [
-            FaIcon(FontAwesomeIcons.toolbox, color: secondaryTextColor, size: 16),
-            SizedBox(width: 10),
+            const FaIcon(FontAwesomeIcons.toolbox, color: secondaryTextColor, size: 16),
+            const SizedBox(width: 10),
             Text(
               'FERRAMENTAS',
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 color: secondaryTextColor,
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
@@ -1741,7 +1749,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           icon: FaIcon(icon, size: 14, color: Colors.white),
           label: Text(
             'ABRIR $title',
-            style: const TextStyle(
+            style: GoogleFonts.orbitron(
               fontWeight: FontWeight.w900,
               fontSize: 12,
               letterSpacing: 1.0,
@@ -1773,7 +1781,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
-          color: cardColor,
+          color: const Color(0xFF1E1E1E).withOpacity(0.8),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: color.withOpacity(0.3), width: 1.5),
         ),
@@ -1783,8 +1791,8 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             const SizedBox(height: 12),
             Text(
               title,
-              style: const TextStyle(
-                color: textColor,
+              style: GoogleFonts.orbitron(
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
                 letterSpacing: 1.0,
@@ -1794,12 +1802,12 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: darkBackground,
+                color: Colors.black,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 'R\$ ${price.toInt()}',
-                style: const TextStyle(
+                style: GoogleFonts.inter(
                   color: secondaryTextColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
@@ -1812,103 +1820,14 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     );
   }
 
+  // --- ÁREA DE AÇÃO (SOMENTE GPS E QR CODE) ---
   Widget _buildActionArea() {
     if (_currentEnigma.type == 'gps') {
       return _buildGpsCard();
     }
-    // Para todos os outros enigmas (texto, foto, áudio), a resposta
-    // obrigatoriamente será via leitura do QR Code físico.
     return _buildQrScannerCard();
   }
 
-  Widget _buildQrScannerCard() {
-    return _buildCard(
-      title: 'Validação',
-      icon: FontAwesomeIcons.qrcode,
-      child: Column(
-        children: [
-          Text(
-            'Encontrou a resposta física?',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Aponte a câmera para o QR Code escondido no local para validar o enigma e resgatar seu prêmio.',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              color: secondaryTextColor,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30),
-              gradient: _isBlocked
-                  ? const LinearGradient(
-                      colors: [Color(0xFF424242), Color(0xFF212121)],
-                    )
-                  : const LinearGradient(
-                      colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
-                    ),
-              boxShadow: [
-                if (!_isBlocked)
-                  BoxShadow(
-                    color: primaryAmber.withOpacity(0.4),
-                    blurRadius: 15,
-                    spreadRadius: 2,
-                  ),
-              ],
-            ),
-            child: ElevatedButton.icon(
-              onPressed: _isBlocked
-                  ? null
-                  : () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => ScannerScreen(
-                            onScan: (scannedCode) => _handleAction(
-                              'validateCode',
-                              code: scannedCode,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-              icon: FaIcon(
-                _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.camera,
-                color: _isBlocked ? Colors.grey : darkBackground,
-                size: 20,
-              ),
-              label: Text(
-                _isBlocked ? 'COOLDOWN ATIVO' : 'ESCANEAR QR CODE',
-                style: GoogleFonts.orbitron(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.0,
-                  color: _isBlocked ? Colors.grey : darkBackground,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                minimumSize: const Size(double.infinity, 50),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
   Widget _buildGpsCard() {
     final bool isActionReady = _isNear && !_isBlocked;
 
@@ -1921,17 +1840,17 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: darkBackground,
+              color: Colors.black,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.white.withOpacity(0.05),
+                color: primaryAmber.withOpacity(0.3),
               ),
             ),
             child: _distance == null
-                ? const Row(
+                ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(
+                      const SizedBox(
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
@@ -1939,10 +1858,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                           color: secondaryTextColor,
                         ),
                       ),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       Text(
                         "Buscando satélites...",
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           color: secondaryTextColor,
                           fontWeight: FontWeight.bold,
                         ),
@@ -1956,7 +1875,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         _isNear
                             ? FontAwesomeIcons.locationCrosshairs
                             : FontAwesomeIcons.route,
-                        color: _isNear ? primaryAmber : primaryAmber,
+                        color: primaryAmber,
                         size: 16,
                       ),
                       const SizedBox(width: 10),
@@ -1964,9 +1883,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         _isNear
                             ? "VOCÊ CHEGOU!"
                             : "Distância: ${_distance!.toStringAsFixed(0)} metros",
-                        style: TextStyle(
+                        style: GoogleFonts.orbitron(
                           fontSize: 16,
-                          color: _isNear ? primaryAmber : primaryAmber,
+                          color: primaryAmber,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
@@ -2043,7 +1962,93 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     );
   }
 
-  
+  Widget _buildQrScannerCard() {
+    return _buildCard(
+      title: 'Validação',
+      icon: FontAwesomeIcons.qrcode,
+      child: Column(
+        children: [
+          Text(
+            'Encontrou a resposta física?',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Aponte a câmera para o QR Code escondido no local para validar o enigma e resgatar seu prêmio.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              color: secondaryTextColor,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: _isBlocked
+                  ? const LinearGradient(
+                      colors: [Color(0xFF424242), Color(0xFF212121)],
+                    )
+                  : const LinearGradient(
+                      colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
+                    ),
+              boxShadow: [
+                if (!_isBlocked)
+                  BoxShadow(
+                    color: primaryAmber.withOpacity(0.4),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                  ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed: _isBlocked
+                  ? null
+                  : () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ScannerScreen(
+                            onScan: (scannedCode) => _handleAction(
+                              'validateCode',
+                              code: scannedCode,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+              icon: FaIcon(
+                _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.camera,
+                color: _isBlocked ? Colors.grey : Colors.black,
+                size: 20,
+              ),
+              label: Text(
+                _isBlocked ? 'COOLDOWN ATIVO' : 'ESCANEAR QR CODE',
+                style: GoogleFonts.orbitron(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                  color: _isBlocked ? Colors.grey : Colors.black,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                minimumSize: const Size(double.infinity, 50),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ================================================================
@@ -2099,7 +2104,7 @@ class _AudioDialogState extends State<_AudioDialog> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cardColor,
+        color: const Color(0xFF1E1E1E).withOpacity(0.95),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: primaryAmber.withOpacity(0.3),
@@ -2135,9 +2140,9 @@ class _AudioDialogState extends State<_AudioDialog> {
           const SizedBox(height: 24),
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: darkBackground,
+              color: Colors.black,
             ),
             child: IconButton(
               iconSize: 48,
