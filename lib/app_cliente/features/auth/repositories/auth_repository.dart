@@ -85,10 +85,23 @@ class AuthRepository {
     required String phone,
   }) async {
     try {
+      final cleanCpf = cpf.trim();
+
+      // Check if user with this CPF already exists
+      final query = QueryBuilder<ParseUser>(ParseUser.forQuery())
+        ..whereEqualTo('username', cleanCpf);
+      final queryResponse = await query.query();
+
+      if (queryResponse.success && queryResponse.results != null && queryResponse.results!.isNotEmpty) {
+        return 'Este CPF já está cadastrado.';
+      }
+
       // Username is the clean CPF without special characters
-      final user = ParseUser(cpf.trim(), password.trim(), null);
+      // Parse requires an email if allowWithoutEmail is false, so we provide a dummy email.
+      final dummyEmail = '$cleanCpf@enigmacity.com';
+      final user = ParseUser(cleanCpf, password.trim(), dummyEmail);
       user.set('name', fullName);
-      user.set('cpf', cpf);
+      user.set('cpf', cleanCpf);
       user.set('birthDate', birthDate);
       user.set('phone', phone);
       user.set('balance', 0);
