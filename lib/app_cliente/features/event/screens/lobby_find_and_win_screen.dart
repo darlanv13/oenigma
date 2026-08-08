@@ -9,17 +9,17 @@ import 'package:oenigma/core/models/enigma_model.dart';
 
 import '../widgets/card_enigma.dart';
 
-class FindAndWinProgressScreen extends ConsumerStatefulWidget {
+class LobbyFindEndWinScreen extends ConsumerStatefulWidget {
   final EventModel event;
-  const FindAndWinProgressScreen({super.key, required this.event});
+  const LobbyFindEndWinScreen({super.key, required this.event});
 
   @override
-  ConsumerState<FindAndWinProgressScreen> createState() =>
+  ConsumerState<LobbyFindEndWinScreen> createState() =>
       _FindAndWinProgressScreenState();
 }
 
 class _FindAndWinProgressScreenState
-    extends ConsumerState<FindAndWinProgressScreen>
+    extends ConsumerState<LobbyFindEndWinScreen>
     with SingleTickerProviderStateMixin {
   late final Stream<List<EnigmaModel>> _enigmasStream;
   late AnimationController _animationController;

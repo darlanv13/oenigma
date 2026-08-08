@@ -673,7 +673,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          FindAndWinProgressScreen(event: widget.event),
+                          LobbyFindEndWinScreen(event: widget.event),
                     ),
                   );
                 } else {
