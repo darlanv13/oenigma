@@ -1,8 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/app_cliente/features/auth/screens/signup_screen.dart';
 import 'package:oenigma/app_cliente/features/auth/screens/forgot_password_screen.dart';
@@ -34,8 +34,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      final authRepository = ref.read(authRepositoryProvider);
 
+      final authRepository = ref.read(authRepositoryProvider);
       // Clean CPF to match what is saved in parse server (as digits)
       final cleanCpf = _cpfController.text.replaceAll(RegExp(r'\D'), '');
 
@@ -43,10 +43,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         cleanCpf,
         _passwordController.text.trim(),
       );
+
       if (mounted) {
         if (error != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(error, style: const TextStyle(fontWeight: FontWeight.bold)),
+              backgroundColor: dangerColor,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
           );
         } else {
           Navigator.of(context).popUntil((route) => route.isFirst);
@@ -74,13 +80,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildHeader(),
               const SizedBox(height: 48),
               _buildLoginForm(),
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -91,25 +99,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        const FaIcon(FontAwesomeIcons.magnifyingGlass, color: primaryAmber, size: 40),
-        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: primaryAmber.withOpacity(0.1),
+            boxShadow: [
+              BoxShadow(
+                color: primaryAmber.withOpacity(0.2),
+                blurRadius: 30,
+                spreadRadius: 5,
+              ),
+            ],
+            border: Border.all(color: primaryAmber.withOpacity(0.3), width: 1.5),
+          ),
+          child: const FaIcon(FontAwesomeIcons.compass, color: primaryAmber, size: 48),
+        ),
+        const SizedBox(height: 24),
         Text(
           'ENIGMA CITY',
           style: GoogleFonts.orbitron(
-            fontSize: 24,
+            fontSize: 28,
             fontWeight: FontWeight.w900,
-            letterSpacing: 2,
+            letterSpacing: 3,
             color: primaryAmberLight,
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.5),
+                offset: const Offset(0, 2),
+                blurRadius: 4,
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'CAÇA AO TESOURO URBANO',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            letterSpacing: 3,
-            color: primaryAmber.withValues(alpha: 0.8),
-            fontWeight: FontWeight.w600,
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.4),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
+          ),
+          child: Text(
+            'CAÇA AO TESOURO URBANO',
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              letterSpacing: 2.5,
+              color: primaryAmber.withOpacity(0.9),
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       ],
@@ -120,179 +158,232 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final defaultPinTheme = PinTheme(
       width: 50,
       height: 60,
-      textStyle: const TextStyle(
-          fontSize: 20, color: Colors.white, fontWeight: FontWeight.w600),
+      textStyle: GoogleFonts.orbitron(
+        fontSize: 22,
+        color: primaryAmberLight,
+        fontWeight: FontWeight.w700,
+      ),
       decoration: BoxDecoration(
-        color: darkBackground,
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.black.withOpacity(0.4),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
     );
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                FaIcon(FontAwesomeIcons.idBadge, size: 14, color: primaryAmber),
-                const SizedBox(width: 8),
-                Text(
-                  'CPF',
-                  style: GoogleFonts.inter(
-                    color: primaryAmber,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            _buildTextFormField(
-              controller: _cpfController,
-              hintText: "000.000.000-00",
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                _CpfInputFormatter(),
-              ],
-              validator: (val) {
-                if (val == null || val.isEmpty) return 'Por favor, insira um CPF';
-                final cleanCpf = val.replaceAll(RegExp(r'\D'), '');
-                if (cleanCpf.length != 11) return 'CPF incompleto';
-                return null;
-              },
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                FaIcon(FontAwesomeIcons.key, size: 14, color: primaryAmber),
-                const SizedBox(width: 8),
-                Text(
-                  'SENHA (6 DÍGITOS)',
-                  style: GoogleFonts.inter(
-                    color: primaryAmber,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Pinput(
-              controller: _passwordController,
-              length: 6,
-              obscureText: true,
-              defaultPinTheme: defaultPinTheme,
-              focusedPinTheme: defaultPinTheme.copyWith(
-                decoration: defaultPinTheme.decoration!.copyWith(
-                  border: Border.all(color: primaryAmber),
-                ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: cardColor.withOpacity(0.6),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 20,
+                spreadRadius: 1,
+                offset: const Offset(0, 10),
               ),
-              validator: (s) {
-                return s!.length == 6 ? null : 'Insira 6 dígitos';
-              },
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const ForgotPasswordScreen(),
-                    ),
-                  );
-                },
-                child: const Text(
-                  "Esqueceu a senha?",
-                  style: TextStyle(color: Colors.grey),
+            ],
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFieldLabel('CPF DE ACESSO', FontAwesomeIcons.idBadge),
+                const SizedBox(height: 10),
+                _buildTextFormField(
+                  controller: _cpfController,
+                  hintText: "000.000.000-00",
+                  keyboardType: TextInputType.number,
+                  icon: FontAwesomeIcons.userAstronaut,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    _CpfInputFormatter(),
+                  ],
+                  validator: (val) {
+                    if (val == null || val.isEmpty) return 'Por favor, insira um CPF';
+                    final cleanCpf = val.replaceAll(RegExp(r'\D'), '');
+                    if (cleanCpf.length != 11) return 'CPF incompleto';
+                    return null;
+                  },
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryAmber,
-                  foregroundColor: darkBackground,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(color: darkBackground),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const FaIcon(FontAwesomeIcons.rightToBracket, size: 18),
-                          const SizedBox(width: 12),
-                          Text(
-                            "ENTRAR",
-                            style: GoogleFonts.orbitron(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.5,
-                            ),
+                const SizedBox(height: 24),
+                _buildFieldLabel('SENHA (CÓDIGO SECRETO)', FontAwesomeIcons.key),
+                const SizedBox(height: 10),
+                Center(
+                  child: Pinput(
+                    controller: _passwordController,
+                    length: 6,
+                    obscureText: true,
+                    obscuringWidget: const FaIcon(FontAwesomeIcons.asterisk, size: 14, color: primaryAmber),
+                    defaultPinTheme: defaultPinTheme,
+                    focusedPinTheme: defaultPinTheme.copyWith(
+                      decoration: defaultPinTheme.decoration!.copyWith(
+                        border: Border.all(color: primaryAmber, width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryAmber.withOpacity(0.2),
+                            blurRadius: 8,
+                            spreadRadius: 1,
                           ),
                         ],
                       ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  "Não tem uma conta? ",
-                  style: TextStyle(color: Colors.grey),
-                ),
-                GestureDetector(
-                  onTap: _isLoading
-                      ? null
-                      : () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const SignUpScreen(),
-                            ),
-                          );
-                        },
-                  child: const Text(
-                    "Cadastre-se",
-                    style: TextStyle(
-                      color: primaryAmber,
-                      fontWeight: FontWeight.bold,
                     ),
+                    errorPinTheme: defaultPinTheme.copyWith(
+                      decoration: defaultPinTheme.decoration!.copyWith(
+                        border: Border.all(color: dangerColor),
+                      ),
+                    ),
+                    validator: (s) {
+                      return s!.length == 6 ? null : 'Insira 6 dígitos';
+                    },
+                    keyboardType: TextInputType.number,
                   ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const ForgotPasswordScreen(),
+                              ),
+                            );
+                          },
+                    style: TextButton.styleFrom(
+                      foregroundColor: primaryAmberHover,
+                      textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                    child: const Text("Esqueceu a senha?"),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: double.infinity,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    boxShadow: _isLoading
+                        ? []
+                        : [
+                            BoxShadow(
+                              color: primaryAmber.withOpacity(0.4),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _handleLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryAmber,
+                      foregroundColor: Colors.black,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.black,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "INICIAR SESSÃO",
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const FaIcon(FontAwesomeIcons.arrowRightToBracket, size: 16),
+                            ],
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Novo por aqui? ",
+                      style: GoogleFonts.inter(color: Colors.grey, fontSize: 13),
+                    ),
+                    GestureDetector(
+                      onTap: _isLoading
+                          ? null
+                          : () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const SignUpScreen(),
+                                ),
+                              );
+                            },
+                      child: Text(
+                        "Aliste-se agora",
+                        style: GoogleFonts.inter(
+                          color: primaryAmber,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildFieldLabel(String label, FaIconData icon) {
+    return Row(
+      children: [
+        FaIcon(icon, size: 14, color: primaryAmber),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            color: primaryAmber,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String hintText,
+    required FaIconData icon,
     String? Function(String?)? validator,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
@@ -302,27 +393,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       validator: validator,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      style: GoogleFonts.orbitron(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 1.5,
+      ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: darkBackground,
+        fillColor: Colors.black.withOpacity(0.3),
         hintText: hintText,
-        hintStyle: TextStyle(
-          color: Colors.white.withValues(alpha: 0.2),
-          fontWeight: FontWeight.bold,
+        hintStyle: GoogleFonts.orbitron(
+          color: Colors.white.withOpacity(0.2),
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1.5,
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: FaIcon(icon, color: Colors.white54, size: 16),
+        ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: primaryAmber, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: dangerColor, width: 1.5),
         ),
       ),
     );
@@ -336,9 +441,7 @@ class _CpfInputFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     final text = newValue.text;
-
     if (text.length > 11) return oldValue;
-
     var newText = '';
     for (var i = 0; i < text.length; i++) {
       if (i == 3 || i == 6) {
@@ -348,7 +451,6 @@ class _CpfInputFormatter extends TextInputFormatter {
       }
       newText += text[i];
     }
-
     return TextEditingValue(
       text: newText,
       selection: TextSelection.collapsed(offset: newText.length),
