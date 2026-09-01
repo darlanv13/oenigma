@@ -486,7 +486,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             final newData = {
                               'title': titleCtrl.text,
                               'description': descCtrl.text,
-                              'prizePool': num.tryParse(prizeCtrl.text) ?? 0,
+                              'prizePool':
+                                  (num.tryParse(
+                                        prizeCtrl.text
+                                            .trim()
+                                            .replaceAll('.', '')
+                                            .replaceAll(',', '.')
+                                            .replaceAll(
+                                              RegExp(r'[^0-9.]'),
+                                              '',
+                                            ),
+                                      ) ??
+                                      0)
+                                      .toString(),
                               'order': int.tryParse(orderCtrl.text) ?? 1,
                               'icon': iconCtrl.text,
                               'location': locationCtrl.text.trim(),
