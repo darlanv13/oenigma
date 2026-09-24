@@ -49,11 +49,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final homeDataAsync = ref.watch(homeEventsProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFF0F4F8),
       body: SafeArea(
         child: homeDataAsync.when(
           loading: () => const Center(
-            child: CircularProgressIndicator(color: Color(0xFFFFD54F)),
+            child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
           ),
           error: (error, stack) => Center(
             child: Column(
@@ -62,13 +62,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const FaIcon(
                   FontAwesomeIcons.circleExclamation,
                   size: 48,
-                  color: Colors.redAccent,
+                  color: Color(0xFFF87171),
                 ),
                 const SizedBox(height: 16),
                 const Text(
                   'Erro ao carregar dados.',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Color(0xFF1E293B),
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -78,7 +78,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 32.0),
                   child: Text(
                     '$error',
-                    style: const TextStyle(color: Colors.grey),
+                    style: const TextStyle(color: Color(0xFF64748B)),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -87,15 +87,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   onPressed: _reloadData,
                   icon: const FaIcon(
                     FontAwesomeIcons.rotateRight,
-                    color: Colors.black,
+                    color: Color(0xFF4C1D95),
                   ),
                   label: const Text(
                     "TENTAR NOVAMENTE",
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFD54F),
-                    foregroundColor: Colors.black,
+                    backgroundColor: const Color(0xFFC4B5FD),
+                    foregroundColor: const Color(0xFF4C1D95),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -249,13 +249,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: _currentCarouselIndex == entry.key
-                          ? const Color(0xFFC0A060)
-                          : const Color(0xFF3A3A3A),
+                          ? const Color(0xFF8B5CF6)
+                          : const Color(0xFFE2E8F0),
                       boxShadow: _currentCarouselIndex == entry.key
                           ? [
                               BoxShadow(
-                                color: const Color(0xFFC0A060).withValues(alpha: 0.6),
-                                blurRadius: 12,
+                                color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
                               ),
                             ]
                           : [],
