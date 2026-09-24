@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import '../screens/event_details_screen.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -65,20 +64,25 @@ class _EventCardState extends State<EventCard> {
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color.fromRGBO(22, 24, 28, 0.85),
-            borderRadius: BorderRadius.circular(24),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(32),
             boxShadow: [
+              const BoxShadow(
+                color: Color(0xFFFFFFFF),
+                blurRadius: 12,
+                offset: Offset(-4, -4),
+              ),
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: const Color(0xFFCBD5E1).withValues(alpha: 0.8),
+                blurRadius: 12,
+                offset: const Offset(6, 6),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(32),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -92,7 +96,7 @@ class _EventCardState extends State<EventCard> {
                 // PAINEL (Textos e Botão)
                 Positioned.fill(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -107,19 +111,19 @@ class _EventCardState extends State<EventCard> {
                               children: [
                                 const FaIcon(
                                   FontAwesomeIcons.coins,
-                                  color: Color(0xFFC0A060),
-                                  size: 19.2, // 1.2rem
+                                  color: Color(0xFFF59E0B),
+                                  size: 20, // 1.25rem
                                 ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: 8),
                                 Text(
                                   widget.event.prize.replaceAll(
                                     'R\$ ',
                                     'R\$ ', // Add space as per CSS
                                   ),
-                                  style: GoogleFonts.orbitron(
-                                    fontSize: 28.8, // 1.8rem
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 28, // 1.75rem
                                     fontWeight: FontWeight.w800,
-                                    color: const Color(0xFFF0E6C5),
+                                    color: const Color(0xFF1E293B),
                                     letterSpacing: -0.5,
                                   ),
                                 ),
@@ -127,31 +131,28 @@ class _EventCardState extends State<EventCard> {
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
+                                horizontal: 14,
+                                vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFC0A060).withValues(alpha: 0.18),
+                                color: widget.event.status == 'dev' ? const Color(0xFFFDE047) : const Color(0xFF86EFAC),
                                 borderRadius: BorderRadius.circular(30),
-                                border: Border.all(
-                                  color: const Color(0xFFC0A060).withValues(alpha: 0.25),
-                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   FaIcon(
                                     widget.event.status == 'dev' ? FontAwesomeIcons.clock : FontAwesomeIcons.mapPin,
-                                    color: const Color(0xFFC0A060),
+                                    color: widget.event.status == 'dev' ? const Color(0xFFA16207) : const Color(0xFF166534),
                                     size: 10,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     widget.event.status == 'dev' ? 'NOVO' : 'ATIVO',
-                                    style: const TextStyle(
-                                      color: Color(0xFFC0A060),
-                                      fontSize: 10.4, // 0.65rem
-                                      fontWeight: FontWeight.w600,
+                                    style: TextStyle(
+                                      color: widget.event.status == 'dev' ? const Color(0xFFA16207) : const Color(0xFF166534),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
                                       letterSpacing: 0.5,
                                       fontFamily: 'Inter',
                                     ),
@@ -161,29 +162,28 @@ class _EventCardState extends State<EventCard> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
 
                         // Título do Evento (.hunt-name)
                         Text(
                           eventTitle,
-                          style: const TextStyle(
-                            fontSize: 16, // 1rem
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFFF0E6C5),
-                            fontFamily: 'Inter',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF334155),
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
 
                         // Localização (.hunt-location)
                         Row(
                           children: [
                             const FaIcon(
                               FontAwesomeIcons.locationDot,
-                              color: Color(0xFFC0A060),
-                              size: 11.2, // 0.7rem
+                              color: Color(0xFF3B82F6),
+                              size: 12,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 widget.event.location.isNotEmpty &&
@@ -192,8 +192,9 @@ class _EventCardState extends State<EventCard> {
                                     ? widget.event.location
                                     : _formatDate(widget.event.startDate),
                                 style: const TextStyle(
-                                  color: Color(0xFFB0A07A),
-                                  fontSize: 12.8, // 0.8rem
+                                  color: Color(0xFF64748B),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
                                   fontFamily: 'Inter',
                                 ),
                                 maxLines: 1,
@@ -202,35 +203,33 @@ class _EventCardState extends State<EventCard> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
 
                         // Dificuldade (.difficulty)
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
-                            vertical: 2,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.04),
+                            color: const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: const Color(0xFFC0A060).withValues(alpha: 0.10),
-                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: const [
                               FaIcon(
                                 FontAwesomeIcons.star,
-                                color: Color(0xFFC0A060),
+                                color: Color(0xFFF59E0B),
                                 size: 10,
                               ),
                               SizedBox(width: 8),
                               Text(
                                 'Dificuldade: Média',
                                 style: TextStyle(
-                                  color: Color(0xFF8A7A5A),
-                                  fontSize: 11.2, // 0.7rem
+                                  color: Color(0xFF475569),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
                                   fontFamily: 'Inter',
                                 ),
                               ),
@@ -242,18 +241,15 @@ class _EventCardState extends State<EventCard> {
 
                         // BOTÃO (.free-entry .btn-free)
                         Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                           decoration: BoxDecoration(
-                            color: Colors.transparent,
+                            color: const Color(0xFF3B82F6),
                             borderRadius: BorderRadius.circular(40),
-                            border: Border.all(
-                              color: const Color(0xFFC0A060),
-                              width: 1.5,
-                            ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFC0A060).withValues(alpha: 0.15),
+                                color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
                                 blurRadius: 12,
+                                offset: const Offset(0, 4),
                               ),
                             ]
                           ),
@@ -262,18 +258,18 @@ class _EventCardState extends State<EventCard> {
                             children: [
                               const FaIcon(
                                 FontAwesomeIcons.ticket,
-                                color: Color(0xFFC0A060),
+                                color: Colors.white,
                                 size: 14,
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 8),
                               Text(
                                 widget.event.price == 0
                                     ? "ENTRADA GRÁTIS"
                                     : "INSCRIÇÃO: R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}",
-                                style: GoogleFonts.orbitron(
-                                  color: const Color(0xFFF0E6C5),
-                                  fontSize: 12.8, // 0.8rem
-                                  fontWeight: FontWeight.w600,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
                                   letterSpacing: 1.0,
                                 ),
                               ),
@@ -302,20 +298,20 @@ class _EventCardState extends State<EventCard> {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.75),
-          borderRadius: BorderRadius.circular(24),
+          color: Colors.white.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(32),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Lottie.asset('assets/animations/trofel.json', height: 90),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'FINALIZADO',
-              style: TextStyle(
-                color: primaryAmber,
+              style: GoogleFonts.poppins(
+                color: const Color(0xFF1E293B),
                 fontWeight: FontWeight.w900,
-                fontSize: 22,
+                fontSize: 24,
                 letterSpacing: 3,
               ),
             ),
@@ -326,9 +322,9 @@ class _EventCardState extends State<EventCard> {
                   const Text(
                     "Vencedor",
                     style: TextStyle(
-                      color: secondaryTextColor,
+                      color: Color(0xFF64748B),
                       fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -337,7 +333,7 @@ class _EventCardState extends State<EventCard> {
                     children: [
                       CircleAvatar(
                         radius: 18,
-                        backgroundColor: darkBackground,
+                        backgroundColor: const Color(0xFFF1F5F9),
                         backgroundImage: event.winnerPhotoURL != null
                             ? NetworkImage(event.winnerPhotoURL!)
                             : null,
@@ -345,15 +341,15 @@ class _EventCardState extends State<EventCard> {
                             ? const FaIcon(
                                 FontAwesomeIcons.solidUser,
                                 size: 18,
-                                color: secondaryTextColor,
+                                color: Color(0xFF94A3B8),
                               )
                             : null,
                       ),
                       const SizedBox(width: 10),
                       Text(
                         winnerFirstName,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: GoogleFonts.poppins(
+                          color: const Color(0xFF334155),
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -372,8 +368,8 @@ class _EventCardState extends State<EventCard> {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.8),
-          borderRadius: BorderRadius.circular(24),
+          color: Colors.white.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(32),
         ),
         child: Center(
           child: Column(
@@ -383,22 +379,19 @@ class _EventCardState extends State<EventCard> {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white.withValues(alpha: 0.08),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.1),
-                  ),
+                  color: const Color(0xFFFDE047).withValues(alpha: 0.2),
                 ),
                 child: const FaIcon(
                   FontAwesomeIcons.hourglassHalf,
-                  color: primaryAmber,
+                  color: Color(0xFFEAB308),
                   size: 40,
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'EM BREVE',
-                style: TextStyle(
-                  color: Colors.white,
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF1E293B),
                   fontWeight: FontWeight.w900,
                   fontSize: 24,
                   letterSpacing: 6,
@@ -415,52 +408,47 @@ class _EventCardState extends State<EventCard> {
 class _MapBackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFC0A060).withValues(alpha: 0.12)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
-
-    // First dashed path
-    final path1 = Path();
-    path1.moveTo(size.width * 0.05, size.height * 0.9);
-    path1.quadraticBezierTo(size.width * 0.2, size.height * 0.7, size.width * 0.35, size.height * 0.85);
-    path1.quadraticBezierTo(size.width * 0.6, size.height * 0.6, size.width * 0.6, size.height * 0.6);
-    path1.quadraticBezierTo(size.width * 0.85, size.height * 0.75, size.width * 0.85, size.height * 0.75);
-    path1.quadraticBezierTo(size.width * 0.95, size.height * 0.5, size.width * 0.95, size.height * 0.5);
-
-    // Second dashed path
-    final path2 = Path();
-    path2.moveTo(size.width * 0.1, size.height * 0.1);
-    path2.quadraticBezierTo(size.width * 0.3, size.height * 0.25, size.width * 0.45, size.height * 0.15);
-    path2.quadraticBezierTo(size.width * 0.7, size.height * 0.35, size.width * 0.7, size.height * 0.35);
-    path2.quadraticBezierTo(size.width * 0.9, size.height * 0.2, size.width * 0.9, size.height * 0.2);
-
-    _drawDashedPath(canvas, path1, paint);
-    _drawDashedPath(canvas, path2, paint..color = const Color(0xFFC0A060).withValues(alpha: 0.10));
-
-    final circlePaint = Paint()
-      ..color = const Color(0xFFC0A060).withValues(alpha: 0.10)
+    // Pastel blob 1
+    final blobPaint1 = Paint()
+      ..color = const Color(0xFFFEF3C7).withValues(alpha: 0.6) // soft pastel yellow
       ..style = PaintingStyle.fill;
 
-    // Draw points
-    final points = [
-      Offset(size.width * 0.25, size.height * 0.75),
-      Offset(size.width * 0.5, size.height * 0.5),
-      Offset(size.width * 0.8, size.height * 0.65),
-      Offset(size.width * 0.9, size.height * 0.3),
-      Offset(size.width * 0.1, size.height * 0.2),
-    ];
+    final path1 = Path();
+    path1.moveTo(size.width * 0.1, size.height * 0.2);
+    path1.quadraticBezierTo(size.width * 0.4, size.height * 0.1, size.width * 0.3, size.height * 0.4);
+    path1.quadraticBezierTo(size.width * 0.2, size.height * 0.7, size.width * -0.1, size.height * 0.5);
+    path1.close();
+    canvas.drawPath(path1, blobPaint1);
 
-    for (var point in points) {
-      canvas.drawCircle(point, 1.5, circlePaint);
-    }
-  }
+    // Pastel blob 2
+    final blobPaint2 = Paint()
+      ..color = const Color(0xFFE0E7FF).withValues(alpha: 0.6) // soft pastel blue
+      ..style = PaintingStyle.fill;
 
-  void _drawDashedPath(Canvas canvas, Path path, Paint paint) {
+    final path2 = Path();
+    path2.moveTo(size.width * 0.8, size.height * 0.6);
+    path2.quadraticBezierTo(size.width * 1.0, size.height * 0.5, size.width * 1.1, size.height * 0.8);
+    path2.quadraticBezierTo(size.width * 1.0, size.height * 1.1, size.width * 0.7, size.height * 0.9);
+    path2.close();
+    canvas.drawPath(path2, blobPaint2);
 
-    // Simplification of dashed path logic since dart:ui PathMetrics isn't imported here by default and we want a simple approach
-    // In a real app we'd use path_drawing package or extract path metrics, for now just drawing the continuous path.
-    canvas.drawPath(path, paint);
+    // Small pastel dots (Memphis style)
+    final dotPaint = Paint()
+      ..color = const Color(0xFFFBCFE8) // soft pastel pink
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.2), 6, dotPaint);
+    canvas.drawCircle(Offset(size.width * 0.4, size.height * 0.8), 4, dotPaint);
+
+    final crossPaint = Paint()
+      ..color = const Color(0xFFC7D2FE) // soft indigo
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    final cx = size.width * 0.2;
+    final cy = size.height * 0.85;
+    canvas.drawLine(Offset(cx - 5, cy), Offset(cx + 5, cy), crossPaint);
+    canvas.drawLine(Offset(cx, cy - 5), Offset(cx, cy + 5), crossPaint);
   }
 
   @override

@@ -23,15 +23,23 @@ class HomeProfileCard extends StatelessWidget {
     final String firstName = wallet.name.split(' ').first;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.only(bottom: 18),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: const Color(0xFFC0A060).withValues(alpha: 0.10),
-            width: 1,
+        color: const Color(0xFFE0F2FE),
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          const BoxShadow(
+            color: Color(0xFFFFFFFF),
+            blurRadius: 16,
+            offset: Offset(-8, -8),
           ),
-        ),
+          BoxShadow(
+            color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
+            blurRadius: 16,
+            offset: const Offset(8, 8),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -41,27 +49,32 @@ class HomeProfileCard extends StatelessWidget {
             children: [
               const FaIcon(
                 FontAwesomeIcons.solidCircleUser,
-                color: Color(0xFFC0A060),
-                size: 20,
+                color: Color(0xFF3B82F6),
+                size: 24,
               ),
-              const SizedBox(width: 6),
-              Text(
-                'Olá, ',
-                style: const TextStyle(
-                  color: Color(0xFFB0A07A),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Inter',
-                ),
-              ),
-              Text(
-                firstName.isNotEmpty ? firstName : 'Visitante!',
-                style: const TextStyle(
-                  color: Color(0xFFF0E6C5),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Inter',
-                ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Olá, ',
+                    style: const TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
+                  Text(
+                    firstName.isNotEmpty ? firstName : 'Visitante!',
+                    style: GoogleFonts.poppins(
+                      color: const Color(0xFF1E293B),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -89,22 +102,23 @@ class HomeProfileCard extends StatelessWidget {
       {required bool isBalance}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           label,
           style: const TextStyle(
-            color: Color(0xFF7A7A7A),
+            color: Color(0xFF64748B),
             fontSize: 10,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             letterSpacing: 1.0,
             fontFamily: 'Inter',
           ),
         ),
         Text(
           value,
-          style: GoogleFonts.orbitron(
-            color: isBalance ? const Color(0xFFF0E6C5) : const Color(0xFFC0A060),
-            fontSize: 16,
+          style: GoogleFonts.poppins(
+            color: isBalance ? const Color(0xFF1E293B) : const Color(0xFF3B82F6),
+            fontSize: 15,
             fontWeight: FontWeight.w700,
           ),
         ),
