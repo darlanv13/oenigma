@@ -32,10 +32,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final homeDataAsync = ref.watch(homeEventsProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFF0F4F8),
       body: homeDataAsync.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: Color(0xFFFFD54F)),
+          child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
         ),
         error: (error, stack) => Center(
           child: Column(
@@ -44,13 +44,13 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               const FaIcon(
                 FontAwesomeIcons.circleExclamation,
                 size: 48,
-                color: Colors.redAccent,
+                color: Color(0xFFF87171),
               ),
               const SizedBox(height: 16),
               const Text(
                 'Erro ao carregar dados.',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Color(0xFF1E293B),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -60,7 +60,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 32.0),
                 child: Text(
                   '$error',
-                  style: const TextStyle(color: Colors.grey),
+                  style: const TextStyle(color: Color(0xFF64748B)),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -69,15 +69,15 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 onPressed: () => ref.refresh(homeEventsProvider.future),
                 icon: const FaIcon(
                   FontAwesomeIcons.rotateRight,
-                  color: Colors.black,
+                  color: Color(0xFF4C1D95),
                 ),
                 label: const Text(
                   "TENTAR NOVAMENTE",
                   style: TextStyle(fontWeight: FontWeight.w900),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFD54F),
-                  foregroundColor: Colors.black,
+                  backgroundColor: const Color(0xFFC4B5FD),
+                  foregroundColor: const Color(0xFF4C1D95),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -123,10 +123,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.transparent, // Fundo escuro premium
+          color: Colors.white,
           border: Border(
             top: BorderSide(
-              color: const Color(0xFFC0A060).withValues(alpha: 0.15),
+              color: const Color(0xFFE2E8F0),
               width: 1,
             ),
           ),
@@ -134,16 +134,16 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         child: Padding(
           padding: const EdgeInsets.only(top: 8.0),
           child: BottomNavigationBar(
-            backgroundColor: Colors.transparent,
+            backgroundColor: Colors.white,
             type: BottomNavigationBarType.fixed,
-            selectedItemColor: const Color(0xFFC0A060),
-            unselectedItemColor: const Color(0xFF7A7A7A),
+            selectedItemColor: const Color(0xFF8B5CF6),
+            unselectedItemColor: const Color(0xFF94A3B8),
             elevation: 0,
             currentIndex: _selectedIndex,
             onTap: _onItemTapped,
             selectedLabelStyle: const TextStyle(
               fontFamily: 'Inter',
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
               fontSize: 10,
               letterSpacing: 0.3,
             ),
@@ -169,8 +169,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     size: 22,
                     shadows: [
                       Shadow(
-                        color: const Color(0xFFC0A060).withValues(alpha: 0.5),
-                        blurRadius: 12,
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                        blurRadius: 8,
                       ),
                     ],
                   ),
@@ -192,8 +192,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     size: 22,
                     shadows: [
                       Shadow(
-                        color: const Color(0xFFC0A060).withValues(alpha: 0.5),
-                        blurRadius: 12,
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                        blurRadius: 8,
                       ),
                     ],
                   ),
@@ -215,8 +215,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     size: 22,
                     shadows: [
                       Shadow(
-                        color: const Color(0xFFC0A060).withValues(alpha: 0.5),
-                        blurRadius: 12,
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                        blurRadius: 8,
                       ),
                     ],
                   ),
@@ -238,8 +238,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     size: 22,
                     shadows: [
                       Shadow(
-                        color: const Color(0xFFC0A060).withValues(alpha: 0.5),
-                        blurRadius: 12,
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                        blurRadius: 8,
                       ),
                     ],
                   ),

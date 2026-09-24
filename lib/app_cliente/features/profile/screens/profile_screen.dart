@@ -247,7 +247,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFFF0F4F8),
       body: Stack(
         children: [
           SafeArea(
@@ -266,21 +266,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 width: 36,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  color: primaryAmber.withOpacity(0.06),
+                                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Center(
-                                  child: FaIcon(FontAwesomeIcons.chevronLeft, color: primaryAmber, size: 14),
+                                  child: FaIcon(FontAwesomeIcons.chevronLeft, color: Color(0xFF8B5CF6), size: 14),
                                 ),
                               ),
                             )
                           : const SizedBox(width: 36),
                       Text(
                         'MEU PERFIL',
-                        style: GoogleFonts.orbitron(
+                        style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: primaryAmber,
+                          color: const Color(0xFF1E293B),
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -294,7 +294,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     data: (user) {
                       if (user == null) {
                         return const Center(
-                          child: Text('Sessão expirada. Faça login novamente.', style: TextStyle(color: Colors.white)),
+                          child: Text('Sessão expirada. Faça login novamente.', style: TextStyle(color: Color(0xFF1E293B))),
                         );
                       }
 
@@ -411,22 +411,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E).withOpacity(0.8),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: primaryAmber.withOpacity(0.1)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(32),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8)),
+                BoxShadow(color: const Color(0xFFCBD5E1).withValues(alpha: 0.5), blurRadius: 15, offset: const Offset(0, 8)),
               ],
             ),
             child: Column(
               children: [
-                const FaIcon(FontAwesomeIcons.mapLocationDot, color: Colors.blueAccent, size: 24),
+                const FaIcon(FontAwesomeIcons.mapLocationDot, color: Color(0xFF3B82F6), size: 24),
                 const SizedBox(height: 12),
                 Text(
                   jogados.toString(),
-                  style: GoogleFonts.orbitron(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.poppins(color: const Color(0xFF1E293B), fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                Text('EXPLORADOS', style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 10, fontWeight: FontWeight.bold)),
+                Text('EXPLORADOS', style: GoogleFonts.inter(color: const Color(0xFF64748B), fontSize: 10, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -436,22 +435,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           child: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E).withOpacity(0.8),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: primaryAmber.withOpacity(0.3)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(32),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8)),
+                BoxShadow(color: const Color(0xFFCBD5E1).withValues(alpha: 0.5), blurRadius: 15, offset: const Offset(0, 8)),
               ],
             ),
             child: Column(
               children: [
-                const FaIcon(FontAwesomeIcons.trophy, color: primaryAmber, size: 24),
+                const FaIcon(FontAwesomeIcons.trophy, color: Color(0xFFF59E0B), size: 24),
                 const SizedBox(height: 12),
                 Text(
                   vencidos.toString(),
-                  style: GoogleFonts.orbitron(color: primaryAmber, fontSize: 24, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.poppins(color: const Color(0xFF1E293B), fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                Text('VITÓRIAS', style: GoogleFonts.inter(color: primaryAmber, fontSize: 10, fontWeight: FontWeight.bold)),
+                Text('VITÓRIAS', style: GoogleFonts.inter(color: const Color(0xFF64748B), fontSize: 10, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -464,11 +462,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E).withOpacity(0.8),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: primaryAmber.withOpacity(0.2), width: 1),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 8)),
+          BoxShadow(color: const Color(0xFFCBD5E1).withValues(alpha: 0.5), blurRadius: 15, offset: const Offset(0, 8)),
         ],
       ),
       child: Column(
@@ -476,12 +473,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         children: [
           Row(
             children: [
-              const FaIcon(FontAwesomeIcons.idCard, color: secondaryTextColor, size: 16),
+              const FaIcon(FontAwesomeIcons.idCard, color: Color(0xFF64748B), size: 16),
               const SizedBox(width: 12),
               Text(
                 'DADOS DA CONTA',
                 style: GoogleFonts.inter(
-                  color: secondaryTextColor,
+                  color: const Color(0xFF64748B),
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.5,
@@ -569,20 +566,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: color == Colors.white70 ? const Color(0xFF8B5CF6) : Colors.transparent,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: color, width: 1.5),
+          border: color != Colors.white70 ? Border.all(color: color, width: 1.5) : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            FaIcon(icon, size: 14, color: color),
+            FaIcon(icon, size: 14, color: color == Colors.white70 ? Colors.white : color),
             const SizedBox(width: 8),
             Text(
               label,
-              style: GoogleFonts.orbitron(
+              style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w700,
-                color: color,
+                color: color == Colors.white70 ? Colors.white : color,
                 fontSize: 14,
                 letterSpacing: 1.0,
               ),

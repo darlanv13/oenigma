@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oenigma/core/models/ranking_player_model.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class RankingPodium extends StatelessWidget {
   final List<RankingPlayerModel> top3;
@@ -11,11 +11,11 @@ class RankingPodium extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Definindo cores e estilos para os lugares
+    // Definindo cores e estilos para os lugares (cores pastéis ou suaves)
     final podiumConfig = {
-      1: {'color': const Color(0xFFFFC107), 'height': 160.0}, // Ouro
-      2: {'color': const Color(0xFFE0E0E0), 'height': 120.0}, // Prata
-      3: {'color': const Color(0xFFA1887F), 'height': 90.0}, // Bronze
+      1: {'color': const Color(0xFFFDE047), 'height': 160.0}, // Amarelo suave
+      2: {'color': const Color(0xFFE2E8F0), 'height': 120.0}, // Cinza azulado claro
+      3: {'color': const Color(0xFFFED7AA), 'height': 90.0}, // Laranja pastel
     };
 
     final List<Widget> podiumPlaces = [];
@@ -77,6 +77,7 @@ class _PodiumPlace extends StatelessWidget {
   });
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Column(
@@ -100,7 +101,7 @@ class _PodiumPlace extends StatelessWidget {
                 ),
                 child: CircleAvatar(
                   radius: isFirstPlace ? 40 : 30,
-                  backgroundColor: darkBackground,
+                  backgroundColor: const Color(0xFFF1F5F9),
                   backgroundImage: player.photoURL != null
                       ? NetworkImage(player.photoURL!)
                       : null,
@@ -108,7 +109,7 @@ class _PodiumPlace extends StatelessWidget {
                       ? FaIcon(
                           FontAwesomeIcons.solidUser,
                           size: isFirstPlace ? 30 : 20,
-                          color: secondaryTextColor,
+                          color: const Color(0xFF94A3B8),
                         )
                       : null,
                 ),
@@ -135,7 +136,7 @@ class _PodiumPlace extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.5),
+                        color: color.withValues(alpha: 0.5),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -143,8 +144,8 @@ class _PodiumPlace extends StatelessWidget {
                   ),
                   child: Text(
                     "$placeº",
-                    style: const TextStyle(
-                      color: Colors.black,
+                    style: GoogleFonts.poppins(
+                      color: const Color(0xFF1E293B),
                       fontWeight: FontWeight.w900,
                       fontSize: 14,
                     ),
@@ -156,9 +157,9 @@ class _PodiumPlace extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             player.name.split(' ').first,
-            style: const TextStyle(
+            style: GoogleFonts.poppins(
               fontWeight: FontWeight.bold,
-              color: textColor,
+              color: const Color(0xFF1E293B),
               fontSize: 14,
             ),
             overflow: TextOverflow.ellipsis,
@@ -170,31 +171,15 @@ class _PodiumPlace extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 4),
             height: height,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  color.withValues(alpha: 0.9),
-                  color.withValues(alpha: 0.2),
-                ],
-              ),
+              color: Colors.white,
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-              border: Border(
-                top: BorderSide(color: color, width: 2),
-                left: BorderSide(color: color.withValues(alpha: 0.5), width: 1),
-                right: BorderSide(
-                  color: color.withValues(alpha: 0.5),
-                  width: 1,
-                ),
+                top: Radius.circular(32), // Mais arredondado para combinar com Home
               ),
               boxShadow: [
                 BoxShadow(
-                  color: color.withValues(alpha: 0.2),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                  offset: const Offset(0, -5),
+                  color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
+                  blurRadius: 15,
+                  offset: const Offset(0, -5), // Sombra Neumórfica superior
                 ),
               ],
             ),
@@ -203,15 +188,15 @@ class _PodiumPlace extends StatelessWidget {
               children: [
                 Text(
                   '${player.phasesCompleted}',
-                  style: const TextStyle(
+                  style: GoogleFonts.poppins(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: color, // Número usa a cor do troféu
                   ),
                 ),
-                const Text(
+                Text(
                   'Fases',
-                  style: TextStyle(fontSize: 10, color: Colors.white70),
+                  style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B)),
                 ),
               ],
             ),

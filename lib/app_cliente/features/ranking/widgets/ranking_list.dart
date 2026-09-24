@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/core/models/ranking_player_model.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class RankingList extends ConsumerWidget {
   final List<RankingPlayerModel> players;
@@ -29,19 +29,18 @@ class RankingList extends ConsumerWidget {
         return Container(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           decoration: BoxDecoration(
-            color: cardColor,
-            borderRadius: BorderRadius.circular(20),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(32),
             border: isCurrentUser
-                ? Border.all(color: primaryAmber, width: 1.5)
-                : Border.all(color: Colors.white.withValues(alpha: 0.05)),
-            boxShadow: isCurrentUser
-                ? [
-                    BoxShadow(
-                      color: primaryAmber.withValues(alpha: 0.15),
-                      blurRadius: 10,
-                    ),
-                  ]
-                : [],
+                ? Border.all(color: const Color(0xFF8B5CF6), width: 1.5)
+                : null,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
+                blurRadius: 10,
+                offset: const Offset(4, 4),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -49,8 +48,8 @@ class RankingList extends ConsumerWidget {
                 width: 30,
                 child: Text(
                   player.position.toString(),
-                  style: const TextStyle(
-                    color: secondaryTextColor,
+                  style: GoogleFonts.poppins(
+                    color: const Color(0xFF64748B),
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -61,12 +60,13 @@ class RankingList extends ConsumerWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isCurrentUser ? primaryAmber : Colors.transparent,
+                    color: isCurrentUser ? const Color(0xFF8B5CF6) : Colors.transparent,
                     width: 2,
                   ),
                 ),
                 child: CircleAvatar(
                   radius: 20,
+                  backgroundColor: const Color(0xFFF1F5F9),
                   backgroundImage: player.photoURL != null
                       ? NetworkImage(player.photoURL!)
                       : null,
@@ -74,7 +74,7 @@ class RankingList extends ConsumerWidget {
                       ? const FaIcon(
                           FontAwesomeIcons.solidUser,
                           size: 20,
-                          color: secondaryTextColor,
+                          color: Color(0xFF94A3B8),
                         )
                       : null,
                 ),
@@ -86,10 +86,10 @@ class RankingList extends ConsumerWidget {
                   children: [
                     Text(
                       player.name,
-                      style: const TextStyle(
+                      style: GoogleFonts.poppins(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: textColor,
+                        color: const Color(0xFF1E293B),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -101,15 +101,15 @@ class RankingList extends ConsumerWidget {
                 children: [
                   Text(
                     '${player.phasesCompleted}',
-                    style: const TextStyle(
-                      color: primaryAmber,
+                    style: GoogleFonts.poppins(
+                      color: const Color(0xFF8B5CF6),
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
-                  const Text(
+                  Text(
                     'Fases',
-                    style: TextStyle(color: secondaryTextColor, fontSize: 10),
+                    style: GoogleFonts.inter(color: const Color(0xFF64748B), fontSize: 10),
                   ),
                 ],
               ),

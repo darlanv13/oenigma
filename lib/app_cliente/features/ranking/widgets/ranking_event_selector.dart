@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/models/event_model.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class RankingEventSelector extends StatelessWidget {
   final String? selectedEventId;
@@ -18,17 +18,24 @@ class RankingEventSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
+            blurRadius: 10,
+            offset: const Offset(4, 4),
+          ),
+        ],
       ),
       child: DropdownButton<String>(
         value: selectedEventId,
         isExpanded: true,
-        dropdownColor: cardColor,
-        icon: const FaIcon(FontAwesomeIcons.chevronDown, color: primaryAmber),
+        dropdownColor: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        icon: const FaIcon(FontAwesomeIcons.chevronDown, color: Color(0xFF8B5CF6), size: 16),
         underline: const SizedBox(),
         onChanged: onChanged,
         items: availableEvents.map<DropdownMenuItem<String>>((
@@ -38,8 +45,8 @@ class RankingEventSelector extends StatelessWidget {
             value: event.id,
             child: Text(
               event.name,
-              style: const TextStyle(
-                color: textColor,
+              style: GoogleFonts.poppins(
+                color: const Color(0xFF1E293B),
                 fontWeight: FontWeight.bold,
               ),
               overflow: TextOverflow.ellipsis,
