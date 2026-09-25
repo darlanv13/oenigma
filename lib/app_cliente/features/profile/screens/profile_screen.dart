@@ -37,11 +37,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E).withOpacity(0.95),
+                  color: const Color(0xFF1E1E1E).withValues(alpha: 0.95),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: primaryAmber.withOpacity(0.3), width: 1.5),
+                  border: Border.all(color: primaryAmber.withValues(alpha: 0.3), width: 1.5),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.6), blurRadius: 20, offset: const Offset(0, 10)),
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.6), blurRadius: 20, offset: const Offset(0, 10)),
                   ],
                 ),
                 child: Column(
@@ -108,11 +108,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           style: GoogleFonts.orbitron(fontWeight: FontWeight.w700, color: Colors.white),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white.withOpacity(0.1),
+                          backgroundColor: Colors.white.withValues(alpha: 0.1),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                            side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
                           ),
                         ),
                       ),
@@ -236,7 +236,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: primaryAmber.withOpacity(0.5), width: 1.5),
+          borderSide: BorderSide(color: primaryAmber.withValues(alpha: 0.5), width: 1.5),
         ),
       ),
     );
@@ -350,7 +350,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               end: Alignment.bottomRight,
             ),
             boxShadow: [
-              BoxShadow(color: primaryAmber.withOpacity(0.3), blurRadius: 20, spreadRadius: 2),
+              BoxShadow(color: primaryAmber.withValues(alpha: 0.3), blurRadius: 20, spreadRadius: 2),
             ],
           ),
           child: CircleAvatar(
@@ -371,7 +371,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             color: Colors.white,
             letterSpacing: 1.5,
             shadows: [
-              Shadow(color: Colors.black.withOpacity(0.8), offset: const Offset(0, 2), blurRadius: 4),
+              Shadow(color: Colors.black.withValues(alpha: 0.8), offset: const Offset(0, 2), blurRadius: 4),
             ],
           ),
         ),
@@ -379,9 +379,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E).withOpacity(0.8),
+            color: const Color(0xFF1E1E1E).withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: primaryAmber.withOpacity(0.3), width: 1),
+            border: Border.all(color: primaryAmber.withValues(alpha: 0.3), width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -490,7 +490,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildInfoRow(FontAwesomeIcons.envelope, 'E-mail', email),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Divider(color: primaryAmber.withOpacity(0.1), height: 1),
+            child: Divider(color: primaryAmber.withValues(alpha: 0.1), height: 1),
           ),
           _buildInfoRow(FontAwesomeIcons.phone, 'Telefone', phone),
         ],
@@ -506,7 +506,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           decoration: BoxDecoration(
             color: darkBackground,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: primaryAmber.withOpacity(0.1)),
+            border: Border.all(color: primaryAmber.withValues(alpha: 0.1)),
           ),
           child: FaIcon(icon, color: primaryAmber, size: 16),
         ),

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,10 +32,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       final authRepository = ref.read(authRepositoryProvider);
       final cleanCpf = _cpfController.text.replaceAll(RegExp(r'\D'), '');
 
-      // TODO: Verifique o nome correto do método no seu AuthRepository (ex: resetPassword, recoverPassword)
-      // Substitua caso necessário. Estou assumindo um método genérico chamado `resetPassword`
       try {
-        final error = await authRepository.resetPassword(cleanCpf);
+        final dummyEmail = '$cleanCpf@enigmacity.com';
+        final error = await authRepository.sendPasswordResetEmail(dummyEmail);
 
         if (mounted) {
           if (error != null) {
@@ -82,16 +80,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       appBar: AppBar(
         title: Text(
           'Recuperar Acesso',
-          style: GoogleFonts.orbitron(
+          style: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: const Color(0xFF1E293B),
           ),
         ),
         centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const FaIcon(FontAwesomeIcons.arrowLeft, color: primaryAmber, size: 20),
+          icon: const FaIcon(FontAwesomeIcons.arrowLeft, color: Color(0xFF1E293B), size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -120,33 +118,26 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: primaryAmber.withOpacity(0.1),
+            color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
             boxShadow: [
               BoxShadow(
-                color: primaryAmber.withOpacity(0.2),
+                color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
                 blurRadius: 30,
                 spreadRadius: 5,
               ),
             ],
-            border: Border.all(color: primaryAmber.withOpacity(0.3), width: 1.5),
+            border: Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.3), width: 1.5),
           ),
-          child: const FaIcon(FontAwesomeIcons.userShield, color: primaryAmber, size: 48),
+          child: const FaIcon(FontAwesomeIcons.userShield, color: Color(0xFF8B5CF6), size: 48),
         ),
         const SizedBox(height: 24),
         Text(
           'CÓDIGO PERDIDO?',
-          style: GoogleFonts.orbitron(
+          style: GoogleFonts.poppins(
             fontSize: 24,
             fontWeight: FontWeight.w900,
             letterSpacing: 2,
-            color: primaryAmberLight,
-            shadows: [
-              Shadow(
-                color: Colors.black.withOpacity(0.5),
-                offset: const Offset(0, 2),
-                blurRadius: 4,
-              ),
-            ],
+            color: const Color(0xFF1E293B),
           ),
         ),
         const SizedBox(height: 12),
@@ -158,7 +149,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             style: GoogleFonts.inter(
               fontSize: 12,
               height: 1.5,
-              color: Colors.white70,
+              color: const Color(0xFF64748B),
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -168,83 +159,78 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   Widget _buildRecoveryForm() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            color: cardColor.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20,
-                spreadRadius: 1,
-                offset: const Offset(0, 10),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
+            blurRadius: 20,
+            spreadRadius: 1,
+            offset: const Offset(0, 10),
           ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildFieldLabel('CPF DE ACESSO', FontAwesomeIcons.idBadge),
-                const SizedBox(height: 10),
-                _buildTextFormField(
-                  controller: _cpfController,
-                  hintText: "000.000.000-00",
-                  keyboardType: TextInputType.number,
-                  icon: FontAwesomeIcons.fingerprint,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    _CpfInputFormatter(),
-                  ],
-                  validator: (val) {
-                    if (val == null || val.isEmpty) return 'Por favor, insira seu CPF';
-                    final cleanCpf = val.replaceAll(RegExp(r'\D'), '');
-                    if (cleanCpf.length != 11) return 'CPF incompleto';
-                    return null;
-                  },
-                ),
-                
-                const SizedBox(height: 32),
-                
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: double.infinity,
-                  height: 56,
-                  decoration: BoxDecoration(
+        ],
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildFieldLabel('CPF DE ACESSO', FontAwesomeIcons.idBadge),
+            const SizedBox(height: 10),
+            _buildTextFormField(
+              controller: _cpfController,
+              hintText: "000.000.000-00",
+              keyboardType: TextInputType.number,
+              icon: FontAwesomeIcons.fingerprint,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                _CpfInputFormatter(),
+              ],
+              validator: (val) {
+                if (val == null || val.isEmpty) return 'Por favor, insira seu CPF';
+                final cleanCpf = val.replaceAll(RegExp(r'\D'), '');
+                if (cleanCpf.length != 11) return 'CPF incompleto';
+                return null;
+              },
+            ),
+
+            const SizedBox(height: 32),
+
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: double.infinity,
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: _isLoading
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+              ),
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _handleResetPassword,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF8B5CF6),
+                  foregroundColor: Colors.white,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
-                    boxShadow: _isLoading
-                        ? []
-                        : [
-                            BoxShadow(
-                              color: primaryAmber.withOpacity(0.4),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
                   ),
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleResetPassword,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryAmber,
-                      foregroundColor: Colors.black,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
                     ),
                     child: _isLoading
                         ? const SizedBox(
                             height: 24,
                             width: 24,
                             child: CircularProgressIndicator(
-                              color: Colors.black,
+                              color: Colors.white,
                               strokeWidth: 2.5,
                             ),
                           )
@@ -253,9 +239,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             children: [
                               Text(
                                 "ENVIAR INSTRUÇÕES",
-                                style: GoogleFonts.orbitron(
+                                style: GoogleFonts.poppins(
                                   fontSize: 14,
-                                  fontWeight: FontWeight.w900,
+                                  fontWeight: FontWeight.w700,
                                   letterSpacing: 1.2,
                                 ),
                               ),
@@ -284,20 +270,18 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               ],
             ),
           ),
-        ),
-      ),
     );
   }
 
   Widget _buildFieldLabel(String label, FaIconData icon) {
     return Row(
       children: [
-        FaIcon(icon, size: 14, color: primaryAmber),
+        FaIcon(icon, size: 14, color: const Color(0xFF8B5CF6)),
         const SizedBox(width: 8),
         Text(
           label,
           style: GoogleFonts.inter(
-            color: primaryAmber,
+            color: const Color(0xFF8B5CF6),
             fontSize: 11,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
@@ -310,7 +294,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String hintText,
-    required IconData icon,
+    required FaIconData icon,
     String? Function(String?)? validator,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
@@ -320,41 +304,41 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       validator: validator,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      style: GoogleFonts.orbitron(
-        color: Colors.white,
+      style: GoogleFonts.poppins(
+        color: const Color(0xFF1E293B),
         fontWeight: FontWeight.w600,
         letterSpacing: 1.5,
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: Colors.black.withOpacity(0.3),
+        fillColor: const Color(0xFFF1F5F9),
         hintText: hintText,
-        hintStyle: GoogleFonts.orbitron(
-          color: Colors.white.withOpacity(0.2),
+        hintStyle: GoogleFonts.poppins(
+          color: const Color(0xFF94A3B8),
           fontWeight: FontWeight.w600,
           letterSpacing: 1.5,
         ),
         prefixIcon: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: FaIcon(icon, color: Colors.white54, size: 16),
+          child: FaIcon(icon, color: const Color(0xFF94A3B8), size: 16),
         ),
         prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderSide: const BorderSide(color: Colors.transparent),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderSide: const BorderSide(color: Colors.transparent),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryAmber, width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: dangerColor, width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFFF87171), width: 1.5),
         ),
       ),
     );

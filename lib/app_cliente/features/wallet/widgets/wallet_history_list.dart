@@ -11,12 +11,12 @@ class WalletHistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (wallet.lastEventRank == null && wallet.lastWonEventName == null) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 32.0),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32.0),
         child: Center(
           child: Text(
             'Nenhuma atividade recente.',
-            style: TextStyle(color: Colors.white54),
+            style: GoogleFonts.inter(color: const Color(0xFF94A3B8)),
           ),
         ),
       );
@@ -55,26 +55,31 @@ class _HistoryItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final highlightColor = isPositive
-        ? const Color(0xFF4CAF50)
-        : const Color(0xFFC76F7A);
+        ? const Color(0xFF10B981) // Pastel Green
+        : const Color(0xFFF43F5E); // Pastel Rose
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E), // Fundo painel escuro
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.05),
-          width: 1.0,
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.transparent),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
+            blurRadius: 10,
+            spreadRadius: 1,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: highlightColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: FaIcon(icon, color: highlightColor, size: 16),
@@ -86,16 +91,16 @@ class _HistoryItem extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Color(0xFFDCD6CC),
+                  style: GoogleFonts.poppins(
+                    color: const Color(0xFF1E293B),
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(color: Colors.white54, fontSize: 10),
+                  style: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 10),
                 ),
               ],
             ),

@@ -103,15 +103,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: primaryAmber.withOpacity(0.1),
+            color: primaryAmber.withValues(alpha: 0.1),
             boxShadow: [
               BoxShadow(
-                color: primaryAmber.withOpacity(0.2),
+                color: primaryAmber.withValues(alpha: 0.2),
                 blurRadius: 30,
                 spreadRadius: 5,
               ),
             ],
-            border: Border.all(color: primaryAmber.withOpacity(0.3), width: 1.5),
+            border: Border.all(color: primaryAmber.withValues(alpha: 0.3), width: 1.5),
           ),
           child: const FaIcon(FontAwesomeIcons.compass, color: primaryAmber, size: 48),
         ),
@@ -125,7 +125,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             color: primaryAmberLight,
             shadows: [
               Shadow(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 offset: const Offset(0, 2),
                 blurRadius: 4,
               ),
@@ -136,16 +136,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           child: Text(
             'CAÇA AO TESOURO URBANO',
             style: GoogleFonts.inter(
               fontSize: 10,
               letterSpacing: 2.5,
-              color: primaryAmber.withOpacity(0.9),
+              color: primaryAmber.withValues(alpha: 0.9),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -164,12 +164,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         fontWeight: FontWeight.w700,
       ),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.4),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        color: Colors.black.withValues(alpha: 0.4),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -184,12 +184,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: cardColor.withOpacity(0.6),
+            color: cardColor.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 20,
                 spreadRadius: 1,
                 offset: const Offset(0, 10),
@@ -234,7 +234,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         border: Border.all(color: primaryAmber, width: 1.5),
                         boxShadow: [
                           BoxShadow(
-                            color: primaryAmber.withOpacity(0.2),
+                            color: primaryAmber.withValues(alpha: 0.2),
                             blurRadius: 8,
                             spreadRadius: 1,
                           ),
@@ -283,7 +283,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ? []
                         : [
                             BoxShadow(
-                              color: primaryAmber.withOpacity(0.4),
+                              color: primaryAmber.withValues(alpha: 0.4),
                               blurRadius: 15,
                               offset: const Offset(0, 5),
                             ),
@@ -400,10 +400,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: Colors.black.withOpacity(0.3),
+        fillColor: Colors.black.withValues(alpha: 0.3),
         hintText: hintText,
         hintStyle: GoogleFonts.orbitron(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           fontWeight: FontWeight.w600,
           letterSpacing: 1.5,
         ),
@@ -415,11 +415,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),

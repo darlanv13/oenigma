@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:math' show pi, sin;
-import 'dart:ui';
 
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
@@ -81,10 +79,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.8),
+                  color: Colors.white,
                   border: Border(
                     bottom: BorderSide(
-                      color: primaryAmber.withOpacity(0.2),
+                      color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
                       width: 1,
                     ),
                   ),
@@ -98,13 +96,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: primaryAmber.withOpacity(0.06),
+                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: const Center(
                           child: FaIcon(
                             FontAwesomeIcons.chevronLeft,
-                            color: primaryAmber,
+                            color: Color(0xFF8B5CF6),
                             size: 14,
                           ),
                         ),
@@ -112,10 +110,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     ),
                     Text(
                       'LENDO ALVO...',
-                      style: GoogleFonts.orbitron(
+                      style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: primaryAmberLight,
+                        color: const Color(0xFF1E293B),
                         letterSpacing: 1.5,
                       ),
                     ),
@@ -131,108 +129,99 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   Widget _buildConfirmationOverlay() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          width: MediaQuery.of(context).size.width * 0.85,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E).withOpacity(0.9),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: primaryAmber.withOpacity(0.5),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.6),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.all(32),
+      width: MediaQuery.of(context).size.width * 0.85,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
+            blurRadius: 20,
+            spreadRadius: 1,
+            offset: const Offset(0, 10),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const FaIcon(
-                FontAwesomeIcons.qrcode,
-                color: primaryAmber,
-                size: 40,
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const FaIcon(
+            FontAwesomeIcons.qrcode,
+            color: Color(0xFF8B5CF6),
+            size: 40,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Código Detectado',
+            style: GoogleFonts.poppins(
+              color: const Color(0xFF1E293B),
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.transparent),
+            ),
+            child: Text(
+              _detectedQRCode!,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                color: const Color(0xFF64748B),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 16),
-              const Text(
-                'Código Detectado',
-                style: TextStyle(
-                  color: primaryAmber,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                widget.onScan(_detectedQRCode!);
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8B5CF6),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+              child: Text(
+                'VALIDAR ALVO',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.0,
                 ),
               ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: primaryAmber.withOpacity(0.2)),
-                ),
-                child: Text(
-                  _detectedQRCode!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    widget.onScan(_detectedQRCode!);
-                    Navigator.of(context).pop();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryAmber,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'VALIDAR ALVO',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ),
-              ),
+            ),
+          ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () {
                   setState(() => _detectedQRCode = null);
                   _scannerController.start();
                 },
-                child: const Text(
+                child: Text(
                   'Escanear Novamente',
-                  style: TextStyle(
-                    color: Colors.grey,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF94A3B8),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ],
           ),
-        ),
-      ),
-    );
+        );
   }
 }
 
@@ -565,7 +554,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
               side: BorderSide(
-                color: primaryAmber.withOpacity(0.3),
+                color: primaryAmber.withValues(alpha: 0.3),
                 width: 1,
               ),
             ),
@@ -707,7 +696,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                     side: BorderSide(
-                      color: primaryAmber.withOpacity(0.3),
+                      color: primaryAmber.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
@@ -812,7 +801,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
-            color: primaryAmber.withOpacity(0.3),
+            color: primaryAmber.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -882,7 +871,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
-            color: primaryAmber.withOpacity(0.3),
+            color: primaryAmber.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -977,7 +966,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
-            color: primaryAmber.withOpacity(0.3),
+            color: primaryAmber.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -1048,7 +1037,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           if (data.isNotEmpty)
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: primaryAmber.withOpacity(0.1),
+                backgroundColor: primaryAmber.withValues(alpha: 0.1),
                 foregroundColor: primaryAmber,
               ),
               onPressed: () async {
@@ -1096,7 +1085,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         decoration: BoxDecoration(
           color: Colors.black,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         ),
         child: Text(
           description.isNotEmpty ? description : data,
@@ -1129,7 +1118,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
-            color: Colors.blueAccent.withOpacity(0.5),
+            color: Colors.blueAccent.withValues(alpha: 0.5),
             width: 1,
           ),
         ),
@@ -1189,7 +1178,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
-            color: primaryAmber.withOpacity(0.5),
+            color: primaryAmber.withValues(alpha: 0.5),
             width: 1,
           ),
         ),
@@ -1280,7 +1269,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          color: primaryAmber.withOpacity(0.10),
+                          color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
                           width: 1,
                         ),
                       ),
@@ -1294,13 +1283,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: primaryAmber.withOpacity(0.06),
+                              color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: const Center(
                               child: FaIcon(
                                 FontAwesomeIcons.chevronLeft,
-                                color: primaryAmber,
+                                color: Color(0xFF8B5CF6),
                                 size: 14,
                               ),
                             ),
@@ -1314,10 +1303,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                                     ? "Enigma Rápido"
                                     : "Fase ${widget.phase.order} - Enigma ${widget.phase.enigmas.indexOf(_currentEnigma) + 1}",
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.orbitron(
+                            style: GoogleFonts.poppins(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: primaryAmber,
+                              color: const Color(0xFF1E293B),
                               letterSpacing: 1.5,
                             ),
                           ),
@@ -1327,10 +1316,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.green.withOpacity(0.1),
+                                  color: Colors.green.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: Colors.green.withOpacity(0.5),
+                                    color: Colors.green.withValues(alpha: 0.5),
                                     width: 1,
                                   ),
                                 ),
@@ -1399,52 +1388,44 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     required Widget child,
     dynamic icon,
   }) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E).withOpacity(0.8), // Fundo translucido premium
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: primaryAmber.withOpacity(0.3),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.4),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.transparent),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
+            blurRadius: 20,
+            spreadRadius: 1,
+            offset: const Offset(0, 10),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  if (icon != null) ...[
-                    FaIcon(icon, color: primaryAmber, size: 16),
-                    const SizedBox(width: 10),
-                  ],
-                  Text(
-                    title.toUpperCase(),
-                    style: GoogleFonts.inter(
-                      color: secondaryTextColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ],
+              if (icon != null) ...[
+                FaIcon(icon, color: const Color(0xFF8B5CF6), size: 16),
+                const SizedBox(width: 10),
+              ],
+              Text(
+                title.toUpperCase(),
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF94A3B8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.5,
+                ),
               ),
-              const SizedBox(height: 16),
-              child,
             ],
           ),
-        ),
+          const SizedBox(height: 16),
+          child,
+        ],
       ),
     );
   }
@@ -1460,13 +1441,13 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             data: _currentEnigma.instruction,
             styleSheet: MarkdownStyleSheet(
               p: GoogleFonts.inter(
-                color: Colors.white,
+                color: const Color(0xFF64748B),
                 fontSize: 16,
                 height: 1.5,
                 fontWeight: FontWeight.w500,
               ),
               strong: GoogleFonts.inter(
-                color: primaryAmber,
+                color: const Color(0xFF1E293B),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -1518,7 +1499,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
   }) {
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
-        backgroundColor: color.withOpacity(0.1),
+        backgroundColor: color.withValues(alpha: 0.1),
         foregroundColor: color,
         side: BorderSide(color: color, width: 1.5),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -1526,7 +1507,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       ),
       onPressed: onPressed,
       icon: FaIcon(icon, size: 16),
-      label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+      label: Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
     );
   }
 
@@ -1536,7 +1517,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (_isLoadingHints)
-           const Center(child: CircularProgressIndicator(color: primaryAmber)),
+           const Center(child: CircularProgressIndicator(color: Color(0xFF8B5CF6))),
 
         if (!_isLoadingHints && _hintsList.isNotEmpty)
           ..._hintsList.map((hint) {
@@ -1550,13 +1531,12 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(30),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
-                    ),
+                    color: const Color(0xFF8B5CF6),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryAmber.withOpacity(0.3),
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
                         blurRadius: 15,
+                        offset: const Offset(0, 5),
                       ),
                     ],
                   ),
@@ -1564,14 +1544,14 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     onPressed: () => _openHintDialog(hint),
                     icon: const FaIcon(
                       FontAwesomeIcons.eye,
-                      color: Colors.black,
+                      color: Colors.white,
                       size: 18,
                     ),
                     label: Text(
                       'ABRIR PISTA',
-                      style: GoogleFonts.orbitron(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w900,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -1593,9 +1573,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: primaryAmber.withOpacity(0.3),
+                  color: Colors.transparent,
                 ),
-                color: const Color(0xFF1E1E1E).withOpacity(0.8),
+                color: const Color(0xFFF1F5F9),
               ),
               child: TextButton.icon(
                 onPressed: _isLoading
@@ -1611,14 +1591,14 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                       },
                 icon: const FaIcon(
                   FontAwesomeIcons.lightbulb,
-                  color: primaryAmber,
+                  color: Color(0xFF8B5CF6),
                   size: 18,
                 ),
                 label: Text(
                   'COMPRAR PISTA (R\$ ${price.toStringAsFixed(2)})',
-                  style: GoogleFonts.orbitron(
-                    color: primaryAmber,
-                    fontWeight: FontWeight.w900,
+                  style: GoogleFonts.poppins(
+                    color: const Color(0xFF8B5CF6),
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 1.0,
                   ),
                 ),
@@ -1646,14 +1626,14 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       children: [
         Row(
           children: [
-            const FaIcon(FontAwesomeIcons.toolbox, color: secondaryTextColor, size: 16),
+            const FaIcon(FontAwesomeIcons.toolbox, color: Color(0xFF94A3B8), size: 16),
             const SizedBox(width: 10),
             Text(
               'FERRAMENTAS',
-              style: GoogleFonts.inter(
-                color: secondaryTextColor,
+              style: GoogleFonts.poppins(
+                color: const Color(0xFF94A3B8),
                 fontSize: 12,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
               ),
             ),
@@ -1683,7 +1663,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   type: 'Bússola',
                   toolKey: 'compass',
                   icon: FontAwesomeIcons.compass,
-                  color: primaryAmber,
+                  color: const Color(0xFF8B5CF6),
                   isPurchased: _hasCompass,
                 ),
               ),
@@ -1721,7 +1701,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               blurRadius: 15,
               spreadRadius: 1,
             ),
@@ -1768,9 +1748,9 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E).withOpacity(0.8),
+          color: const Color(0xFF1E1E1E).withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
         ),
         child: Column(
           children: [
@@ -1827,10 +1807,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.black,
+              color: const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: primaryAmber.withOpacity(0.3),
+                color: Colors.transparent,
               ),
             ),
             child: _distance == null
@@ -1842,14 +1822,14 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                         height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: secondaryTextColor,
+                          color: Color(0xFF94A3B8),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Text(
                         "Buscando satélites...",
                         style: GoogleFonts.inter(
-                          color: secondaryTextColor,
+                          color: const Color(0xFF64748B),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1884,19 +1864,15 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
-              gradient: isActionReady
-                  ? const LinearGradient(
-                      colors: [Color(0xFF00FFFF), Color(0xFF0088FF)],
-                    )
-                  : const LinearGradient(
-                      colors: [Color(0xFF424242), Color(0xFF212121)],
-                    ),
+              color: isActionReady
+                  ? const Color(0xFF8B5CF6)
+                  : const Color(0xFFF1F5F9),
               boxShadow: [
                 if (isActionReady)
                   BoxShadow(
-                    color: const Color(0xFF00FFFF).withOpacity(0.4),
+                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
                     blurRadius: 15,
-                    spreadRadius: 2,
+                    offset: const Offset(0, 5),
                   ),
               ],
             ),
@@ -1917,7 +1893,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                   : null,
               icon: FaIcon(
                 _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.qrcode,
-                color: isActionReady ? Colors.white : Colors.grey,
+                color: isActionReady ? Colors.white : const Color(0xFF94A3B8),
                 size: 20,
               ),
               label: Text(
@@ -1926,11 +1902,11 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     : (isActionReady
                         ? 'ESCANEAR ALVO'
                         : 'APROXIME-SE DO ALVO'),
-                style: GoogleFonts.orbitron(
+                style: GoogleFonts.poppins(
                   fontSize: 14,
-                  fontWeight: FontWeight.w900,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.0,
-                  color: isActionReady ? Colors.white : Colors.grey,
+                  color: isActionReady ? Colors.white : const Color(0xFF94A3B8),
                 ),
               ),
               style: ElevatedButton.styleFrom(
@@ -1957,10 +1933,10 @@ class _EnigmaScreenState extends State<EnigmaScreen>
         children: [
           Text(
             'Encontrou a resposta física?',
-            style: GoogleFonts.inter(
-              color: Colors.white,
+            style: GoogleFonts.poppins(
+              color: const Color(0xFF1E293B),
               fontSize: 16,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
@@ -1968,7 +1944,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
             'Aponte a câmera para o QR Code escondido no local para validar o enigma e resgatar seu prêmio.',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
-              color: secondaryTextColor,
+              color: const Color(0xFF64748B),
               fontSize: 13,
             ),
           ),
@@ -1976,19 +1952,15 @@ class _EnigmaScreenState extends State<EnigmaScreen>
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(30),
-              gradient: _isBlocked
-                  ? const LinearGradient(
-                      colors: [Color(0xFF424242), Color(0xFF212121)],
-                    )
-                  : const LinearGradient(
-                      colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
-                    ),
+              color: _isBlocked
+                  ? const Color(0xFFF1F5F9)
+                  : const Color(0xFF8B5CF6),
               boxShadow: [
                 if (!_isBlocked)
                   BoxShadow(
-                    color: primaryAmber.withOpacity(0.4),
+                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
                     blurRadius: 15,
-                    spreadRadius: 2,
+                    offset: const Offset(0, 5),
                   ),
               ],
             ),
@@ -2009,16 +1981,16 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                     },
               icon: FaIcon(
                 _isBlocked ? FontAwesomeIcons.clock : FontAwesomeIcons.camera,
-                color: _isBlocked ? Colors.grey : Colors.black,
+                color: _isBlocked ? const Color(0xFF94A3B8) : Colors.white,
                 size: 20,
               ),
               label: Text(
                 _isBlocked ? 'COOLDOWN ATIVO' : 'ESCANEAR QR CODE',
-                style: GoogleFonts.orbitron(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.0,
-                  color: _isBlocked ? Colors.grey : Colors.black,
+                  color: _isBlocked ? const Color(0xFF94A3B8) : Colors.white,
                 ),
               ),
               style: ElevatedButton.styleFrom(
@@ -2091,10 +2063,10 @@ class _AudioDialogState extends State<_AudioDialog> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E).withOpacity(0.95),
+        color: const Color(0xFF1E1E1E).withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: primaryAmber.withOpacity(0.3),
+          color: primaryAmber.withValues(alpha: 0.3),
           width: 2,
         ),
       ),
@@ -2152,7 +2124,7 @@ class _AudioDialogState extends State<_AudioDialog> {
               activeTrackColor: primaryAmber,
               inactiveTrackColor: Colors.white24,
               thumbColor: primaryAmber,
-              overlayColor: primaryAmber.withOpacity(0.2),
+              overlayColor: primaryAmber.withValues(alpha: 0.2),
               trackHeight: 4.0,
             ),
             child: Slider(
