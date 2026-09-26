@@ -6,7 +6,6 @@ import 'package:oenigma/app_cliente/features/event/widgets/event_card.dart';
 import 'package:oenigma/app_cliente/features/home/providers/home_events_provider.dart';
 import '../widgets/home_profile_card.dart';
 import '../widgets/home_banner_carousel.dart';
-import '../widgets/events_section_header.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
@@ -150,7 +149,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       opacity: _fadeAnimation,
                       child: const Padding(
                         padding: EdgeInsets.fromLTRB(20.0, 24.0, 20.0, 16.0),
-                        child: EventsSectionHeader(),
                       ),
                     ),
                   ),

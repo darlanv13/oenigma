@@ -767,7 +767,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         color: Colors.grey.shade900,
         borderRadius: BorderRadius.circular(32),
         border: Border.all(
-          color: Color(0xFF1E293B).withValues(alpha: 0.1),
+          color: Color(0xFFE2E8F0),
           width: 1,
         ),
         boxShadow: [

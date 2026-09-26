@@ -246,9 +246,9 @@ class _FindAndWinProgressScreenState
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Color(0xFF1E293B).withValues(alpha: 0.05),
+                            color: Color(0xFFF1F5F9),
                             border: Border.all(
-                              color: Color(0xFF1E293B).withValues(alpha: 0.1),
+                              color: Color(0xFFE2E8F0),
                             ),
                           ),
                           child: const FaIcon(
