@@ -22,21 +22,21 @@ class OnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const bodyStyle = TextStyle(fontSize: 16.0, color: Colors.white70);
+    const bodyStyle = TextStyle(fontSize: 16.0, color: Color(0xFF475569));
     const pageDecoration = PageDecoration(
       titleTextStyle: TextStyle(
         fontSize: 28.0,
         fontWeight: FontWeight.bold,
-        color: primaryAmber,
+        color: Color(0xFF8B5CF6),
       ),
       bodyTextStyle: bodyStyle,
       bodyPadding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
-      pageColor: darkBackground,
+      pageColor: Color(0xFFF0F4F8),
       imagePadding: EdgeInsets.zero,
     );
 
     return IntroductionScreen(
-      globalBackgroundColor: darkBackground,
+      globalBackgroundColor: Color(0xFFF0F4F8),
       pages: [
         PageViewModel(
           title: "Bem-vindo ao O Enigma!",
@@ -46,7 +46,7 @@ class OnboardingScreen extends StatelessWidget {
             child: FaIcon(
               FontAwesomeIcons.compass,
               size: 140,
-              color: primaryAmber,
+              color: Color(0xFF8B5CF6),
             ),
           ),
           decoration: pageDecoration,
@@ -97,23 +97,23 @@ class OnboardingScreen extends StatelessWidget {
       skipOrBackFlex: 0,
       nextFlex: 0,
       showBackButton: false,
-      back: const FaIcon(FontAwesomeIcons.arrowLeft, color: primaryAmber),
+      back: const FaIcon(FontAwesomeIcons.arrowLeft, color: Color(0xFF8B5CF6)),
       skip: const Text(
         'Pular',
-        style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white70),
+        style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF475569)),
       ),
-      next: const FaIcon(FontAwesomeIcons.arrowRight, color: primaryAmber),
+      next: const FaIcon(FontAwesomeIcons.arrowRight, color: Color(0xFF8B5CF6)),
       done: const Text(
         'Começar',
-        style: TextStyle(fontWeight: FontWeight.w600, color: primaryAmber),
+        style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF8B5CF6)),
       ),
       curve: Curves.fastLinearToSlowEaseIn,
       controlsMargin: const EdgeInsets.all(16),
       dotsDecorator: const DotsDecorator(
         size: Size(10.0, 10.0),
-        color: Colors.white24,
+        color: Color(0xFFCBD5E1),
         activeSize: Size(22.0, 10.0),
-        activeColor: primaryAmber,
+        activeColor: Color(0xFF8B5CF6),
         activeShape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(25.0)),
         ),

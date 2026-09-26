@@ -37,45 +37,47 @@ class PhaseCard extends StatelessWidget {
       transform: Matrix4.diagonal3Values(scale, scale, 1.0),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: primaryAmber.withValues(alpha: 0.2),
+                  color: Color(0xFF8B5CF6).withValues(alpha: 0.2),
                   blurRadius: 20,
-                  spreadRadius: 2,
+                  spreadRadius: -5,
                 ),
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: Color(0xFFF0F4F8).withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
               ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(32),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
               color: isLocked
-                  ? darkBackground.withValues(alpha: 0.6)
-                  : cardColor.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(20),
+                  ? Color(0xFFF0F4F8).withValues(alpha: 0.6)
+                  : Color(0xFF1E293B).withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(32),
               border: Border.all(
                 color: isActive
-                    ? primaryAmber.withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: isLocked ? 0.05 : 0.1),
+                    ? Color(0xFF8B5CF6).withValues(alpha: 0.5)
+                    : Color(
+                        0xFF1E293B,
+                      ).withValues(alpha: isLocked ? 0.05 : 0.1),
                 width: isActive ? 1.5 : 1,
               ),
             ),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(20),
-                splashColor: primaryAmber.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(32),
+                splashColor: Color(0xFF8B5CF6).withValues(alpha: 0.2),
                 onTap: isPlayable
                     ? () {
                         if (phase.enigmas.isNotEmpty) {
@@ -125,8 +127,8 @@ class PhaseCard extends StatelessWidget {
                                     color: isLocked
                                         ? secondaryTextColor
                                         : (isActive
-                                              ? primaryAmber
-                                              : Colors.white),
+                                              ? Color(0xFF8B5CF6)
+                                              : Color(0xFF1E293B)),
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 1.5,
@@ -135,7 +137,7 @@ class PhaseCard extends StatelessWidget {
                                 if (isPlayable)
                                   const FaIcon(
                                     FontAwesomeIcons.chevronRight,
-                                    color: primaryAmber,
+                                    color: Color(0xFF8B5CF6),
                                     size: 16,
                                   ),
                               ],
@@ -165,21 +167,21 @@ class PhaseCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: darkBackground.withValues(alpha: 0.8),
-            blurRadius: 4,
+            color: Color(0xFFF0F4F8).withValues(alpha: 0.8),
+            blurRadius: 20,
             blurStyle: BlurStyle.inner,
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(32),
         child: LinearProgressIndicator(
           value: progress,
-          backgroundColor: Colors.black.withValues(alpha: 0.5),
-          color: isCompleted ? Colors.greenAccent : primaryAmber,
+          backgroundColor: Color(0xFFF0F4F8).withValues(alpha: 0.5),
+          color: isCompleted ? Colors.greenAccent : Color(0xFF8B5CF6),
           minHeight: 6,
         ),
       ),
@@ -189,7 +191,7 @@ class PhaseCard extends StatelessWidget {
   Widget _buildLeftIcon() {
     dynamic iconData;
     Color backgroundColor;
-    Color iconColor = Colors.white;
+    Color iconColor = Color(0xFF1E293B);
 
     if (isCompleted) {
       iconData = FontAwesomeIcons.check;
@@ -197,11 +199,11 @@ class PhaseCard extends StatelessWidget {
       iconColor = Colors.greenAccent;
     } else if (isActive) {
       iconData = FontAwesomeIcons.compass;
-      backgroundColor = primaryAmber.withValues(alpha: 0.15);
-      iconColor = primaryAmber;
+      backgroundColor = Color(0xFF8B5CF6).withValues(alpha: 0.15);
+      iconColor = Color(0xFF8B5CF6);
     } else {
       iconData = FontAwesomeIcons.lock;
-      backgroundColor = Colors.white.withValues(alpha: 0.05);
+      backgroundColor = Color(0xFF1E293B).withValues(alpha: 0.05);
       iconColor = secondaryTextColor.withValues(alpha: 0.5);
     }
 
@@ -212,7 +214,7 @@ class PhaseCard extends StatelessWidget {
         color: backgroundColor,
         shape: BoxShape.circle,
         border: isActive
-            ? Border.all(color: primaryAmber.withValues(alpha: 0.3))
+            ? Border.all(color: Color(0xFF8B5CF6).withValues(alpha: 0.3))
             : null,
       ),
       child: Center(child: FaIcon(iconData, color: iconColor, size: 22)),
@@ -244,7 +246,7 @@ class PhaseCard extends StatelessWidget {
           child: FaIcon(
             isSolved ? FontAwesomeIcons.solidStar : FontAwesomeIcons.star,
             color: isSolved
-                ? primaryAmber
+                ? Color(0xFF8B5CF6)
                 : secondaryTextColor.withValues(alpha: 0.5),
             size: 14,
           ),

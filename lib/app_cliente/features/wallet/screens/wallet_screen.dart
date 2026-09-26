@@ -19,20 +19,22 @@ class WalletScreen extends ConsumerStatefulWidget {
 
 class _WalletScreenState extends ConsumerState<WalletScreen> {
   void _handleDeposit(ParseUser user) {
-
     final walletModel = UserWalletModel(
       objectId: user.objectId ?? '',
       name: user.get<String>('name') ?? 'Jogador',
       email: user.get<String>('email') ?? '',
       balance: user.get<num>('balance')?.toDouble() ?? 0.0,
-      photoURL: user.get<String>('photoURL'), transactions: [user.get('transactions') ?? []],
+      photoURL: user.get<String>('photoURL'),
+      transactions: [user.get('transactions') ?? []],
     );
     // Chamada restaurada para a sua tela/sheet de créditos original
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => CreditOptionsSheet(wallet: walletModel,), // Certifique-se de que walletModel está definido corretamente),
+      builder: (context) => CreditOptionsSheet(
+        wallet: walletModel,
+      ), // Certifique-se de que walletModel está definido corretamente),
     );
   }
 
@@ -40,7 +42,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Função de Saque em breve!'),
-        backgroundColor: primaryAmber,
+        backgroundColor: Color(0xFF8B5CF6),
       ),
     );
   }
@@ -50,7 +52,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8), // Fundo claro e limpo
+      backgroundColor: Color(0xFFF0F4F8), // Fundo claro e limpo
       body: Stack(
         children: [
           SafeArea(
@@ -58,7 +60,10 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
               children: [
                 // AppBar Customizada para casar com o design
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -68,7 +73,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                            color: Color(0xFF8B5CF6).withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Center(
@@ -89,21 +94,27 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                           letterSpacing: 1.5,
                         ),
                       ),
-                      const SizedBox(width: 36), // Espaçamento para centralizar o título
+                      const SizedBox(
+                        width: 36,
+                      ), // Espaçamento para centralizar o título
                     ],
                   ),
                 ),
-                
+
                 Expanded(
                   child: authState.when(
                     data: (user) {
                       if (user == null) {
                         return const Center(
-                          child: Text('Sessão expirada.', style: TextStyle(color: Colors.white)),
+                          child: Text(
+                            'Sessão expirada.',
+                            style: TextStyle(color: Color(0xFF1E293B)),
+                          ),
                         );
                       }
 
-                      final balance = user.get<num>('balance')?.toDouble() ?? 0.0;
+                      final balance =
+                          user.get<num>('balance')?.toDouble() ?? 0.0;
 
                       return CustomScrollView(
                         physics: const BouncingScrollPhysics(),
@@ -128,10 +139,15 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                       );
                     },
                     loading: () => const Center(
-                      child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF8B5CF6),
+                      ),
                     ),
                     error: (err, stack) => Center(
-                      child: Text('Erro: $err', style: const TextStyle(color: Color(0xFFF87171))),
+                      child: Text(
+                        'Erro: $err',
+                        style: TextStyle(color: Color(0xFFF87171)),
+                      ),
                     ),
                   ),
                 ),
@@ -152,12 +168,12 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
         boxShadow: [
           const BoxShadow(
             color: Color(0xFFFFFFFF),
-            blurRadius: 12,
+            blurRadius: 20,
             offset: Offset(-4, -4),
           ),
           BoxShadow(
-            color: const Color(0xFFCBD5E1).withValues(alpha: 0.8),
-            blurRadius: 12,
+            color: Color(0xFFCBD5E1).withValues(alpha: 0.8),
+            blurRadius: 20,
             offset: const Offset(6, 6),
           ),
         ],
@@ -167,12 +183,16 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const FaIcon(FontAwesomeIcons.coins, color: Color(0xFFF59E0B), size: 18),
+              const FaIcon(
+                FontAwesomeIcons.coins,
+                color: Color(0xFFF59E0B),
+                size: 18,
+              ),
               const SizedBox(width: 8),
               Text(
                 'SALDO DISPONÍVEL',
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF64748B),
+                style: GoogleFonts.poppins(
+                  color: Color(0xFF64748B),
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
                   letterSpacing: 1.5,
@@ -202,8 +222,8 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
           child: _buildWalletButton(
             icon: FontAwesomeIcons.arrowDown,
             label: 'DEPOSITAR',
-            backgroundColor: const Color(0xFF3B82F6),
-            textColor: Colors.white,
+            backgroundColor: Color(0xFF3B82F6),
+            textColor: Color(0xFF1E293B),
             onTap: () => _handleDeposit(user),
           ),
         ),
@@ -213,8 +233,8 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
             icon: FontAwesomeIcons.arrowUp,
             label: 'SACAR',
             backgroundColor: Colors.transparent,
-            textColor: const Color(0xFF3B82F6),
-            borderColor: const Color(0xFF3B82F6),
+            textColor: Color(0xFF3B82F6),
+            borderColor: Color(0xFF3B82F6),
             onTap: _handleWithdraw,
           ),
         ),
@@ -232,20 +252,24 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(32),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(30),
-          border: borderColor != null ? Border.all(color: borderColor, width: 1.5) : null,
-          boxShadow: backgroundColor != Colors.transparent ? [
-            BoxShadow(
-              color: backgroundColor.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ] : null,
+          borderRadius: BorderRadius.circular(32),
+          border: borderColor != null
+              ? Border.all(color: borderColor, width: 1.5)
+              : null,
+          boxShadow: backgroundColor != Colors.transparent
+              ? [
+                  BoxShadow(
+                    color: backgroundColor.withValues(alpha: 0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -273,12 +297,16 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
       children: [
         Row(
           children: [
-            const FaIcon(FontAwesomeIcons.clockRotateLeft, color: Color(0xFF64748B), size: 16),
+            const FaIcon(
+              FontAwesomeIcons.clockRotateLeft,
+              color: Color(0xFF64748B),
+              size: 16,
+            ),
             const SizedBox(width: 10),
             Text(
               'HISTÓRICO RECENTE',
               style: GoogleFonts.poppins(
-                color: const Color(0xFF64748B),
+                color: Color(0xFF64748B),
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
@@ -288,11 +316,12 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
         ),
         const SizedBox(height: 16),
         FutureBuilder<ParseResponse>(
-          future: (QueryBuilder<ParseObject>(ParseObject('Transaction'))
-                ..whereEqualTo('user', user.toPointer())
-                ..orderByDescending('createdAt')
-                ..setLimit(10))
-              .query(),
+          future:
+              (QueryBuilder<ParseObject>(ParseObject('Transaction'))
+                    ..whereEqualTo('user', user.toPointer())
+                    ..orderByDescending('createdAt')
+                    ..setLimit(10))
+                  .query(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
@@ -314,25 +343,35 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
-                      blurRadius: 10,
+                      color: Color(0xFFCBD5E1).withValues(alpha: 0.5),
+                      blurRadius: 20,
                       offset: const Offset(4, 4),
                     ),
                   ],
                 ),
                 child: Column(
                   children: [
-                    FaIcon(FontAwesomeIcons.receipt, color: const Color(0xFFCBD5E1), size: 40),
+                    FaIcon(
+                      FontAwesomeIcons.receipt,
+                      color: Color(0xFFCBD5E1),
+                      size: 40,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Nenhuma transação ainda.',
-                      style: GoogleFonts.inter(color: const Color(0xFF1E293B), fontWeight: FontWeight.bold),
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFF1E293B),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Seus ganhos e depósitos aparecerão aqui.',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(color: const Color(0xFF64748B), fontSize: 13),
+                      style: GoogleFonts.poppins(
+                        color: Color(0xFF64748B),
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -345,8 +384,8 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
-                    blurRadius: 10,
+                    color: Color(0xFFCBD5E1).withValues(alpha: 0.5),
+                    blurRadius: 20,
                     offset: const Offset(4, 4),
                   ),
                 ],
@@ -355,7 +394,8 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: results.length,
-                separatorBuilder: (context, index) => Divider(color: const Color(0xFFE2E8F0), height: 1),
+                separatorBuilder: (context, index) =>
+                    Divider(color: Color(0xFFE2E8F0), height: 1),
                 itemBuilder: (context, index) {
                   final tx = results[index];
                   final type = tx.get<String>('type') ?? 'deposit';
@@ -364,16 +404,24 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                   final date = tx.createdAt;
 
                   final isDeposit = type == 'deposit' || type == 'reward';
-                  final icon = isDeposit ? FontAwesomeIcons.arrowTrendUp : FontAwesomeIcons.arrowTrendDown;
-                  final color = isDeposit ? const Color(0xFF10B981) : const Color(0xFFEF4444);
-                  
+                  final icon = isDeposit
+                      ? FontAwesomeIcons.arrowTrendUp
+                      : FontAwesomeIcons.arrowTrendDown;
+                  final color = isDeposit
+                      ? Color(0xFF10B981)
+                      : Color(0xFFEF4444);
+
                   String dateStr = '';
                   if (date != null) {
-                    dateStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+                    dateStr =
+                        '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
                   }
 
                   return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
                     leading: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
@@ -383,16 +431,32 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                       child: FaIcon(icon, color: color, size: 16),
                     ),
                     title: Text(
-                      isDeposit ? (type == 'reward' ? 'Prêmio Recebido' : 'Depósito via PIX') : 'Saque / Ferramenta',
-                      style: GoogleFonts.inter(color: const Color(0xFF1E293B), fontWeight: FontWeight.w600, fontSize: 14),
+                      isDeposit
+                          ? (type == 'reward'
+                                ? 'Prêmio Recebido'
+                                : 'Depósito via PIX')
+                          : 'Saque / Ferramenta',
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFF1E293B),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                     ),
                     subtitle: Text(
                       '$dateStr • ${status.toUpperCase()}',
-                      style: GoogleFonts.inter(color: const Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.poppins(
+                        color: Color(0xFF64748B),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     trailing: Text(
                       '${isDeposit ? '+' : '-'} R\$ ${amount.toStringAsFixed(2)}',
-                      style: GoogleFonts.inter(color: color, fontWeight: FontWeight.bold, fontSize: 14),
+                      style: GoogleFonts.poppins(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   );
                 },

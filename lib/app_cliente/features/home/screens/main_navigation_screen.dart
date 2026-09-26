@@ -32,7 +32,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final homeDataAsync = ref.watch(homeEventsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: Color(0xFFF0F4F8),
       body: homeDataAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
@@ -50,7 +50,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               const Text(
                 'Erro ao carregar dados.',
                 style: TextStyle(
-                  color: Color(0xFF1E293B),
+                  color: const Color(0xFF1E293B),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -60,7 +60,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 32.0),
                 child: Text(
                   '$error',
-                  style: const TextStyle(color: Color(0xFF64748B)),
+                  style: TextStyle(color: Color(0xFF64748B)),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -76,10 +76,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   style: TextStyle(fontWeight: FontWeight.w900),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFC4B5FD),
-                  foregroundColor: const Color(0xFF4C1D95),
+                  backgroundColor: Color(0xFFC4B5FD),
+                  foregroundColor: Color(0xFF4C1D95),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(32),
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
@@ -124,30 +124,25 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border(
-            top: BorderSide(
-              color: const Color(0xFFE2E8F0),
-              width: 1,
-            ),
-          ),
+          border: Border(top: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
         ),
         child: Padding(
           padding: const EdgeInsets.only(top: 8.0),
           child: BottomNavigationBar(
             backgroundColor: Colors.white,
             type: BottomNavigationBarType.fixed,
-            selectedItemColor: const Color(0xFF8B5CF6),
-            unselectedItemColor: const Color(0xFF94A3B8),
+            selectedItemColor: Color(0xFF8B5CF6),
+            unselectedItemColor: Color(0xFF94A3B8),
             elevation: 0,
             currentIndex: _selectedIndex,
             onTap: _onItemTapped,
-            selectedLabelStyle: const TextStyle(
+            selectedLabelStyle: TextStyle(
               fontFamily: 'Inter',
               fontWeight: FontWeight.w600,
               fontSize: 10,
               letterSpacing: 0.3,
             ),
-            unselectedLabelStyle: const TextStyle(
+            unselectedLabelStyle: TextStyle(
               fontFamily: 'Inter',
               fontWeight: FontWeight.w500,
               fontSize: 10,
@@ -157,10 +152,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               BottomNavigationBarItem(
                 icon: const Padding(
                   padding: EdgeInsets.only(bottom: 4.0),
-                  child: FaIcon(
-                    FontAwesomeIcons.compass,
-                    size: 22,
-                  ),
+                  child: FaIcon(FontAwesomeIcons.compass, size: 22),
                 ),
                 activeIcon: Padding(
                   padding: const EdgeInsets.only(bottom: 4.0),
@@ -169,8 +161,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     size: 22,
                     shadows: [
                       Shadow(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-                        blurRadius: 8,
+                        color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                        blurRadius: 20,
                       ),
                     ],
                   ),
@@ -180,10 +172,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               BottomNavigationBarItem(
                 icon: const Padding(
                   padding: EdgeInsets.only(bottom: 4.0),
-                  child: FaIcon(
-                    FontAwesomeIcons.gem,
-                    size: 22,
-                  ),
+                  child: FaIcon(FontAwesomeIcons.gem, size: 22),
                 ),
                 activeIcon: Padding(
                   padding: const EdgeInsets.only(bottom: 4.0),
@@ -192,8 +181,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     size: 22,
                     shadows: [
                       Shadow(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-                        blurRadius: 8,
+                        color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                        blurRadius: 20,
                       ),
                     ],
                   ),
@@ -203,10 +192,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               BottomNavigationBarItem(
                 icon: const Padding(
                   padding: EdgeInsets.only(bottom: 4.0),
-                  child: FaIcon(
-                    FontAwesomeIcons.trophy,
-                    size: 22,
-                  ),
+                  child: FaIcon(FontAwesomeIcons.trophy, size: 22),
                 ),
                 activeIcon: Padding(
                   padding: const EdgeInsets.only(bottom: 4.0),
@@ -215,8 +201,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     size: 22,
                     shadows: [
                       Shadow(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-                        blurRadius: 8,
+                        color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                        blurRadius: 20,
                       ),
                     ],
                   ),
@@ -226,10 +212,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               BottomNavigationBarItem(
                 icon: const Padding(
                   padding: EdgeInsets.only(bottom: 4.0),
-                  child: FaIcon(
-                    FontAwesomeIcons.solidUser,
-                    size: 22,
-                  ),
+                  child: FaIcon(FontAwesomeIcons.solidUser, size: 22),
                 ),
                 activeIcon: Padding(
                   padding: const EdgeInsets.only(bottom: 4.0),
@@ -238,8 +221,8 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     size: 22,
                     shadows: [
                       Shadow(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-                        blurRadius: 8,
+                        color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                        blurRadius: 20,
                       ),
                     ],
                   ),

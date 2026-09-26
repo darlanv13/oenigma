@@ -93,10 +93,10 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: cardColor,
-                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(32),
                       border: Border.all(
-                        color: primaryAmber.withValues(alpha: 0.5),
+                        color: Color(0xFF8B5CF6).withValues(alpha: 0.5),
                         width: 2,
                       ),
                     ),
@@ -111,7 +111,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                         const Text(
                           "CERTIFICADO DE CONQUISTA",
                           style: TextStyle(
-                            color: primaryAmber,
+                            color: Color(0xFF8B5CF6),
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.5,
@@ -127,7 +127,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                             ),
                             CircleAvatar(
                               radius: 45,
-                              backgroundColor: darkBackground,
+                              backgroundColor: Color(0xFFF0F4F8),
                               backgroundImage: winnerPhotoURL != null
                                   ? NetworkImage(winnerPhotoURL)
                                   : null,
@@ -142,7 +142,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                               top: -1,
                               child: FaIcon(
                                 FontAwesomeIcons.medal,
-                                color: primaryAmber,
+                                color: Color(0xFF8B5CF6),
                                 size: 30,
                               ),
                             ),
@@ -151,7 +151,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                         const SizedBox(height: 12),
                         Text(
                           winnerFirstName.toUpperCase(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                             color: textColor,
@@ -162,7 +162,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                           "O CAÇADOR Nº 1",
                           style: TextStyle(
                             fontSize: 16,
-                            color: primaryAmber,
+                            color: Color(0xFF8B5CF6),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -185,7 +185,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                         const SizedBox(height: 10),
                         Text(
                           'Evento: "${widget.event.name}"',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: secondaryTextColor,
                             fontStyle: FontStyle.italic,
                           ),
@@ -197,11 +197,11 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE1306C), // Instagram color
-                    foregroundColor: Colors.white,
+                    backgroundColor: Color(0xFFE1306C), // Instagram color
+                    foregroundColor: Color(0xFF1E293B),
                     minimumSize: const Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(32),
                     ),
                   ),
                   onPressed: _shareCertificate,
@@ -218,7 +218,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Text(
                     "Voltar para o Início",
-                    style: TextStyle(color: primaryAmber),
+                    style: TextStyle(color: Color(0xFF8B5CF6)),
                   ),
                 ),
               ],
@@ -265,7 +265,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
           ),
           TextSpan(
             text: 'CITY',
-            style: TextStyle(color: primaryAmber),
+            style: TextStyle(color: Color(0xFF8B5CF6)),
           ),
         ],
       ),
@@ -282,11 +282,11 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
           const SizedBox(width: 10),
           Text(
             "$label: ",
-            style: const TextStyle(color: secondaryTextColor, fontSize: 16),
+            style: TextStyle(color: secondaryTextColor, fontSize: 16),
           ),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               color: textColor,
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -301,8 +301,8 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: darkBackground,
-        borderRadius: BorderRadius.circular(15),
+        color: Color(0xFFF0F4F8),
+        borderRadius: BorderRadius.circular(32),
         border: Border.all(color: Colors.grey[800]!),
       ),
       child: Column(
@@ -310,12 +310,12 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
         children: [
           const Row(
             children: [
-              FaIcon(FontAwesomeIcons.circleQuestion, color: primaryAmber),
+              FaIcon(FontAwesomeIcons.circleQuestion, color: Color(0xFF8B5CF6)),
               SizedBox(width: 10),
               Text(
                 "Como Receber seu Prêmio",
                 style: TextStyle(
-                  color: primaryAmber,
+                  color: Color(0xFF8B5CF6),
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),

@@ -42,24 +42,24 @@ class EnigmaCityApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'O Enigma',
-      theme: ThemeData.dark().copyWith(
-        primaryColor: primaryAmber,
-        scaffoldBackgroundColor: Colors.transparent,
-        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+      theme: ThemeData.light().copyWith(
+        primaryColor: Color(0xFF8B5CF6),
+        scaffoldBackgroundColor: Color(0xFFF0F4F8),
+        textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
-          titleTextStyle: GoogleFonts.orbitron(
+          titleTextStyle: GoogleFonts.poppins(
             fontSize: 22,
             fontWeight: FontWeight.w900,
-            color: primaryAmber,
+            color: Color(0xFF8B5CF6),
             letterSpacing: 2,
             shadows: [
               Shadow(
-                color: primaryAmber.withValues(alpha: 0.5),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
+                color: Color(0xFF8B5CF6).withValues(alpha: 0.5),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
             ],
           ),

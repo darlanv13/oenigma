@@ -179,14 +179,14 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget> {
     return Container(
       height: 300,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(32),
         border: Border.all(
           color: Colors.blueAccent.withValues(alpha: 0.3),
           width: 2,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(32),
         child: GoogleMap(
           initialCameraPosition: CameraPosition(
             target: _obfuscatedCenter,
@@ -202,7 +202,11 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget> {
             Marker(
               markerId: const MarkerId('destination'),
               position: _obfuscatedCenter,
-              icon: _customMarkerIcon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+              icon:
+                  _customMarkerIcon ??
+                  BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueOrange,
+                  ),
             ),
           },
           circles: {
@@ -210,8 +214,8 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget> {
               circleId: const CircleId('search_area'),
               center: _obfuscatedCenter,
               radius: 300.0, // Raio de busca de 300 metros
-              fillColor: const Color(0xFF00FFFF).withValues(alpha: 0.1),
-              strokeColor: const Color(0xFF00FFFF),
+              fillColor: Color(0xFF00FFFF).withValues(alpha: 0.1),
+              strokeColor: Color(0xFF00FFFF),
               strokeWidth: 3,
             ),
           },

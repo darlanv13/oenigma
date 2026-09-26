@@ -26,17 +26,17 @@ class HomeProfileCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0F2FE),
+        color: Color(0xFFE0F2FE),
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           const BoxShadow(
             color: Color(0xFFFFFFFF),
-            blurRadius: 16,
+            blurRadius: 20,
             offset: Offset(-8, -8),
           ),
           BoxShadow(
-            color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
-            blurRadius: 16,
+            color: Color(0xFFCBD5E1).withValues(alpha: 0.5),
+            blurRadius: 20,
             offset: const Offset(8, 8),
           ),
         ],
@@ -59,7 +59,7 @@ class HomeProfileCard extends StatelessWidget {
                 children: [
                   Text(
                     'Olá, ',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Color(0xFF64748B),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -98,15 +98,18 @@ class HomeProfileCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatColumn(String label, String value,
-      {required bool isBalance}) {
+  Widget _buildStatColumn(
+    String label,
+    String value, {
+    required bool isBalance,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: Color(0xFF64748B),
             fontSize: 10,
             fontWeight: FontWeight.w600,
@@ -117,7 +120,7 @@ class HomeProfileCard extends StatelessWidget {
         Text(
           value,
           style: GoogleFonts.poppins(
-            color: isBalance ? const Color(0xFF1E293B) : const Color(0xFF3B82F6),
+            color: isBalance ? Color(0xFF1E293B) : Color(0xFF3B82F6),
             fontSize: 15,
             fontWeight: FontWeight.w700,
           ),

@@ -24,8 +24,8 @@ class RankingEventSelector extends StatelessWidget {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
-            blurRadius: 10,
+            color: Color(0xFFCBD5E1).withValues(alpha: 0.5),
+            blurRadius: 20,
             offset: const Offset(4, 4),
           ),
         ],
@@ -33,9 +33,13 @@ class RankingEventSelector extends StatelessWidget {
       child: DropdownButton<String>(
         value: selectedEventId,
         isExpanded: true,
-        dropdownColor: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        icon: const FaIcon(FontAwesomeIcons.chevronDown, color: Color(0xFF8B5CF6), size: 16),
+        dropdownColor: Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(32),
+        icon: const FaIcon(
+          FontAwesomeIcons.chevronDown,
+          color: Color(0xFF8B5CF6),
+          size: 16,
+        ),
         underline: const SizedBox(),
         onChanged: onChanged,
         items: availableEvents.map<DropdownMenuItem<String>>((

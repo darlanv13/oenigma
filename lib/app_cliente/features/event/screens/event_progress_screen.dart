@@ -59,7 +59,7 @@ class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
       appBar: AppBar(
         title: Text(
           widget.event.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -71,7 +71,7 @@ class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(color: primaryAmber),
+              child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
             );
           }
 
@@ -81,7 +81,7 @@ class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
 
           return RefreshIndicator(
             onRefresh: _loadEventData,
-            color: primaryAmber,
+            color: Color(0xFF8B5CF6),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(
