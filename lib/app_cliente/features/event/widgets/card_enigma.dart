@@ -105,18 +105,15 @@ class _CardEnigmaState extends State<CardEnigma> {
       }
     }
 
-    final currencyFormat = NumberFormat.currency(
-      locale: 'pt_BR',
-      symbol: r'',
-    );
+    final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: r'');
 
     Color statusColor;
     if (isTemporarilyBlocked) {
-      statusColor = const Color(0xFFC0A060); // Gold for completed
+      statusColor = Color(0xFFC0A060); // Gold for completed
     } else if (!isClosed) {
-      statusColor = const Color(0xFF4CAF50); // Green for available
+      statusColor = Color(0xFF4CAF50); // Green for available
     } else {
-      statusColor = const Color(0xFF555555); // Grey for blocked (if used)
+      statusColor = Color(0xFF555555); // Grey for blocked (if used)
     }
 
     return GestureDetector(
@@ -131,11 +128,9 @@ class _CardEnigmaState extends State<CardEnigma> {
         duration: const Duration(milliseconds: 150),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF16181C).withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(20),
-            border: Border(
-              left: BorderSide(color: statusColor, width: 3),
-            ),
+            color: Color(0xFF16181C).withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(32),
+            border: Border(left: BorderSide(color: statusColor, width: 3)),
           ),
           clipBehavior: Clip.antiAlias,
           child: Stack(
@@ -143,12 +138,15 @@ class _CardEnigmaState extends State<CardEnigma> {
               Positioned.fill(
                 child: CustomPaint(
                   painter: MapDotsPainter(
-                    dotColor: const Color(0xFFC0A060).withValues(alpha: 0.04),
+                    dotColor: Color(0xFFC0A060).withValues(alpha: 0.04),
                   ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 16.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18.0,
+                  vertical: 16.0,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -158,14 +156,16 @@ class _CardEnigmaState extends State<CardEnigma> {
                       height: 40,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFFC0A060).withValues(alpha: 0.08),
+                        color: Color(0xFFC0A060).withValues(alpha: 0.08),
                         border: Border.all(
-                          color: const Color(0xFFC0A060).withValues(alpha: 0.1),
+                          color: Color(0xFFC0A060).withValues(alpha: 0.1),
                         ),
                       ),
                       child: Center(
                         child: FaIcon(
-                          isTemporarilyBlocked ? FontAwesomeIcons.circleCheck : _getIconData(widget.enigma.icon),
+                          isTemporarilyBlocked
+                              ? FontAwesomeIcons.circleCheck
+                              : _getIconData(widget.enigma.icon),
                           size: 16,
                           color: statusColor,
                         ),
@@ -184,8 +184,8 @@ class _CardEnigmaState extends State<CardEnigma> {
                               Flexible(
                                 child: Text(
                                   widget.enigma.title,
-                                  style: GoogleFonts.inter(
-                                    color: const Color(0xFFF0E6C5),
+                                  style: GoogleFonts.poppins(
+                                    color: Color(0xFFF0E6C5),
                                     fontWeight: FontWeight.w600,
                                     fontSize: 13,
                                   ),
@@ -195,18 +195,27 @@ class _CardEnigmaState extends State<CardEnigma> {
                               ),
                               const SizedBox(width: 6),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 1,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFC0A060).withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(20),
+                                  color: Color(
+                                    0xFFC0A060,
+                                  ).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(32),
                                   border: Border.all(
-                                    color: const Color(0xFFC0A060).withValues(alpha: 0.1),
+                                    color: Color(
+                                      0xFFC0A060,
+                                    ).withValues(alpha: 0.1),
                                   ),
                                 ),
                                 child: Text(
-                                  isTemporarilyBlocked ? 'CONCLUÍDO' : 'DISPONÍVEL',
-                                  style: GoogleFonts.inter(
-                                    color: const Color(0xFFC0A060),
+                                  isTemporarilyBlocked
+                                      ? 'CONCLUÍDO'
+                                      : 'DISPONÍVEL',
+                                  style: GoogleFonts.poppins(
+                                    color: Color(0xFFC0A060),
                                     fontSize: 8,
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 0.5,
@@ -221,9 +230,11 @@ class _CardEnigmaState extends State<CardEnigma> {
                             children: [
                               Flexible(
                                 child: Text(
-                                  widget.enigma.instruction.isNotEmpty ? widget.enigma.instruction : 'Encontre a resposta',
-                                  style: GoogleFonts.inter(
-                                    color: const Color(0xFF8A7A5A),
+                                  widget.enigma.instruction.isNotEmpty
+                                      ? widget.enigma.instruction
+                                      : 'Encontre a resposta',
+                                  style: GoogleFonts.poppins(
+                                    color: Color(0xFF8A7A5A),
                                     fontSize: 10,
                                   ),
                                   maxLines: 1,
@@ -237,13 +248,13 @@ class _CardEnigmaState extends State<CardEnigma> {
                                   FaIcon(
                                     FontAwesomeIcons.star,
                                     size: 8,
-                                    color: const Color(0xFFC0A060),
+                                    color: Color(0xFFC0A060),
                                   ),
                                   const SizedBox(width: 2),
                                   Text(
                                     widget.enigma.difficulty,
-                                    style: GoogleFonts.inter(
-                                      color: const Color(0xFFB0A07A),
+                                    style: GoogleFonts.poppins(
+                                      color: Color(0xFFB0A07A),
                                       fontSize: 10,
                                     ),
                                   ),
@@ -254,12 +265,17 @@ class _CardEnigmaState extends State<CardEnigma> {
                           const SizedBox(height: 4),
                           // Prize
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFC0A060).withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(20),
+                              color: Color(0xFFC0A060).withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(32),
                               border: Border.all(
-                                color: const Color(0xFFC0A060).withValues(alpha: 0.15),
+                                color: Color(
+                                  0xFFC0A060,
+                                ).withValues(alpha: 0.15),
                               ),
                             ),
                             child: Row(
@@ -273,8 +289,8 @@ class _CardEnigmaState extends State<CardEnigma> {
                                 const SizedBox(width: 4),
                                 Text(
                                   'R\$ ${currencyFormat.format(widget.enigma.prize).trim()}',
-                                  style: GoogleFonts.orbitron(
-                                    color: const Color(0xFFF0E6C5),
+                                  style: GoogleFonts.poppins(
+                                    color: Color(0xFFF0E6C5),
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
                                   ),
@@ -296,7 +312,7 @@ class _CardEnigmaState extends State<CardEnigma> {
                             builder: (context, snapshot) {
                               return Text(
                                 snapshot.data ?? "--:--",
-                                style: GoogleFonts.inter(
+                                style: GoogleFonts.poppins(
                                   color: statusColor,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 11,
@@ -308,7 +324,7 @@ class _CardEnigmaState extends State<CardEnigma> {
                         else
                           Text(
                             'ABRIR',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.poppins(
                               color: statusColor,
                               fontWeight: FontWeight.w600,
                               fontSize: 11,

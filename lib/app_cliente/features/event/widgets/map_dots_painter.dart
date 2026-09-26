@@ -12,12 +12,32 @@ class MapDotsPainter extends CustomPainter {
       ..color = dotColor
       ..style = PaintingStyle.fill;
 
-    _drawRadialPattern(canvas, Offset(size.width * 0.2, size.height * 0.4), size.width * 0.3, paint);
-    _drawRadialPattern(canvas, Offset(size.width * 0.7, size.height * 0.8), size.width * 0.2, paint);
-    _drawRadialPattern(canvas, Offset(size.width * 0.9, size.height * 0.2), size.width * 0.25, paint);
+    _drawRadialPattern(
+      canvas,
+      Offset(size.width * 0.2, size.height * 0.4),
+      size.width * 0.3,
+      paint,
+    );
+    _drawRadialPattern(
+      canvas,
+      Offset(size.width * 0.7, size.height * 0.8),
+      size.width * 0.2,
+      paint,
+    );
+    _drawRadialPattern(
+      canvas,
+      Offset(size.width * 0.9, size.height * 0.2),
+      size.width * 0.25,
+      paint,
+    );
   }
 
-  void _drawRadialPattern(Canvas canvas, Offset center, double radius, Paint paint) {
+  void _drawRadialPattern(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    Paint paint,
+  ) {
     const double step = 20.0;
     for (double r = step; r < radius; r += step) {
       double circumference = 2 * pi * r;

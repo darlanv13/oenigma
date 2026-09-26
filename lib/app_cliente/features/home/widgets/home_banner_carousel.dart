@@ -39,10 +39,11 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<ParseResponse>(
-      future: (QueryBuilder<ParseObject>(ParseObject('Banner'))
-            ..whereEqualTo('isActive', true)
-            ..orderByAscending('order'))
-          .query(),
+      future:
+          (QueryBuilder<ParseObject>(ParseObject('Banner'))
+                ..whereEqualTo('isActive', true)
+                ..orderByAscending('order'))
+              .query(),
       builder: (context, snapshot) {
         if (!snapshot.hasData ||
             !snapshot.data!.success ||
@@ -59,7 +60,8 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
             children: [
               CarouselSlider(
                 options: CarouselOptions(
-                  height: 150.0, // Fixed height from HTML banner-carousel-wrapper
+                  height:
+                      150.0, // Fixed height from HTML banner-carousel-wrapper
                   autoPlay: true,
                   autoPlayInterval: const Duration(seconds: 4),
                   enlargeCenterPage: false,
@@ -95,20 +97,26 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
                     },
                     child: Container(
                       width: MediaQuery.of(context).size.width,
-                      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 8.0,
+                        vertical: 4.0,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 20.0,
+                      ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFEDD5),
+                        color: Color(0xFFFFEDD5),
                         borderRadius: BorderRadius.circular(32.0),
                         boxShadow: [
                           const BoxShadow(
                             color: Color(0xFFFFFFFF),
-                            blurRadius: 12,
+                            blurRadius: 20,
                             offset: Offset(-4, -4),
                           ),
                           BoxShadow(
-                            color: const Color(0xFFFED7AA).withValues(alpha: 0.8),
-                            blurRadius: 12,
+                            color: Color(0xFFFED7AA).withValues(alpha: 0.8),
+                            blurRadius: 20,
                             offset: const Offset(6, 6),
                           ),
                         ],
@@ -124,12 +132,14 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
                             child: Align(
                               alignment: Alignment.centerRight,
                               child: _getIconData(bgIcon) != null
-                                ? FaIcon(
-                                    _getIconData(bgIcon)!,
-                                    size: 80, // roughly 4.5rem
-                                    color: const Color(0xFFF97316).withValues(alpha: 0.10),
-                                  )
-                                : const SizedBox.shrink(),
+                                  ? FaIcon(
+                                      _getIconData(bgIcon)!,
+                                      size: 80, // roughly 4.5rem
+                                      color: Color(
+                                        0xFFF97316,
+                                      ).withValues(alpha: 0.10),
+                                    )
+                                  : const SizedBox.shrink(),
                             ),
                           ),
                           // Content
@@ -140,11 +150,16 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
                               // Tag
                               if (tagText.isNotEmpty)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
                                   margin: const EdgeInsets.only(bottom: 4),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFDBA74).withValues(alpha: 0.3),
-                                    borderRadius: BorderRadius.circular(20),
+                                    color: Color(
+                                      0xFFFDBA74,
+                                    ).withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(32),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -154,13 +169,13 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
                                           FaIcon(
                                             _getIconData(tagIcon)!,
                                             size: 10,
-                                            color: const Color(0xFFEA580C),
+                                            color: Color(0xFFEA580C),
                                           ),
                                         const SizedBox(width: 4),
                                       ],
                                       Text(
                                         tagText.toUpperCase(),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: Color(0xFFEA580C),
                                           fontSize: 9, // roughly 0.55rem
                                           fontWeight: FontWeight.w700,
@@ -188,7 +203,7 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
                               if (description.isNotEmpty)
                                 Text(
                                   description,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Color(0xFF64748B),
                                     fontSize: 12, // roughly 0.75rem
                                     fontWeight: FontWeight.w500,
@@ -200,23 +215,28 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
                               // Button
                               if (buttonText.isNotEmpty)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 18,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFDBA74),
-                                    borderRadius: BorderRadius.circular(30),
+                                    color: Color(0xFFFDBA74),
+                                    borderRadius: BorderRadius.circular(32),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFF97316).withValues(alpha: 0.2),
-                                        spreadRadius: 0,
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
+                                        color: Color(
+                                          0xFFF97316,
+                                        ).withValues(alpha: 0.2),
+                                        spreadRadius: -5,
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 10),
                                       ),
                                     ],
                                   ),
                                   child: Text(
                                     buttonText,
                                     style: GoogleFonts.poppins(
-                                      color: const Color(0xFF7C2D12),
+                                      color: Color(0xFF7C2D12),
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -242,19 +262,19 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: _currentCarouselIndex == entry.key
-                          ? const Color(0xFFF97316)
-                          : const Color(0xFFFFEDD5),
+                          ? Color(0xFFF97316)
+                          : Color(0xFFFFEDD5),
                       boxShadow: _currentCarouselIndex == entry.key
                           ? [
                               BoxShadow(
-                                color: const Color(0xFFF97316).withValues(alpha: 0.4),
-                                blurRadius: 8,
+                                color: Color(0xFFF97316).withValues(alpha: 0.4),
+                                blurRadius: 20,
                               ),
                             ]
                           : [
                               BoxShadow(
-                                color: const Color(0xFFFED7AA).withValues(alpha: 0.6),
-                                blurRadius: 4,
+                                color: Color(0xFFFED7AA).withValues(alpha: 0.6),
+                                blurRadius: 20,
                                 offset: const Offset(1, 1),
                               ),
                             ],

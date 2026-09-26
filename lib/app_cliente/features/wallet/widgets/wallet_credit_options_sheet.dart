@@ -18,7 +18,7 @@ class CreditOptionsSheet extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Color(0xFF1E1E1E),
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        border: Border(top: BorderSide(color: Colors.white10)),
+        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -29,7 +29,7 @@ class CreditOptionsSheet extends StatelessWidget {
             height: 4,
             decoration: BoxDecoration(
               color: Colors.grey[700],
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(32),
             ),
           ),
           const SizedBox(height: 24),
@@ -46,7 +46,7 @@ class CreditOptionsSheet extends StatelessWidget {
           const Text(
             "Escolha o valor que deseja adicionar à sua carteira.",
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(color: Color(0xFF475569)),
           ),
           const SizedBox(height: 24),
           GridView.builder(
@@ -62,15 +62,13 @@ class CreditOptionsSheet extends StatelessWidget {
             itemBuilder: (context, index) {
               return ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(
-                    0xFFFFD54F,
-                  ).withValues(alpha: 0.1),
-                  foregroundColor: const Color(0xFFFFD54F),
+                  backgroundColor: Color(0xFFFFD54F).withValues(alpha: 0.1),
+                  foregroundColor: Color(0xFFFFD54F),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(32),
                     side: BorderSide(
-                      color: const Color(0xFFFFD54F).withValues(alpha: 0.5),
+                      color: Color(0xFFFFD54F).withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -90,10 +88,7 @@ class CreditOptionsSheet extends StatelessWidget {
                 },
                 child: Text(
                   "R\$ ${amounts[index].toStringAsFixed(0)}",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
                 ),
               );
             },
@@ -165,7 +160,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
       decoration: const BoxDecoration(
         color: Color(0xFF1E1E1E),
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        border: Border(top: BorderSide(color: Colors.white10)),
+        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -176,7 +171,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             height: 4,
             decoration: BoxDecoration(
               color: Colors.grey[700],
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(32),
             ),
           ),
           const SizedBox(height: 24),
@@ -199,7 +194,10 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         SizedBox(height: 16),
         Text(
           "Gerando Cobrança Pix...",
-          style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Color(0xFF475569),
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
@@ -217,7 +215,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         const Text(
           "Erro ao gerar Pix",
           style: TextStyle(
-            color: Colors.white,
+            color: const Color(0xFF1E293B),
             fontSize: 18,
             fontWeight: FontWeight.w900,
           ),
@@ -225,7 +223,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         const SizedBox(height: 8),
         Text(
           _error ?? "Erro desconhecido",
-          style: const TextStyle(color: Colors.grey),
+          style: TextStyle(color: Colors.grey),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -233,17 +231,17 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
           width: double.infinity,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white10,
+              backgroundColor: Color(0xFFE2E8F0),
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(32),
               ),
             ),
             onPressed: () => Navigator.pop(context),
             child: const Text(
               "FECHAR",
               style: TextStyle(
-                color: Colors.white,
+                color: const Color(0xFF1E293B),
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -288,8 +286,8 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             const SizedBox(height: 8),
             Text(
               "R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')}",
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: const Color(0xFF1E293B),
                 fontSize: 32,
                 fontWeight: FontWeight.w900,
               ),
@@ -299,12 +297,12 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFFFD54F), width: 3),
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(color: Color(0xFFFFD54F), width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
-                      blurRadius: 15,
+                      color: Color(0xFFFFD54F).withValues(alpha: 0.3),
+                      blurRadius: 20,
                     ),
                   ],
                 ),
@@ -341,28 +339,28 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             const SizedBox(height: 24),
             Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
+                borderRadius: BorderRadius.circular(32),
                 gradient: const LinearGradient(
                   colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
+                    color: Color(0xFFFFD54F).withValues(alpha: 0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
               child: ElevatedButton.icon(
                 icon: const FaIcon(
                   FontAwesomeIcons.copy,
-                  color: Colors.black,
+                  color: Color(0xFFF0F4F8),
                   size: 18,
                 ),
                 label: const Text(
                   "COPIAR CÓDIGO PIX",
                   style: TextStyle(
-                    color: Colors.black,
+                    color: Color(0xFFF0F4F8),
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.0,
                   ),
@@ -372,7 +370,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                   shadowColor: Colors.transparent,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(32),
                   ),
                   minimumSize: const Size(double.infinity, 50),
                 ),
@@ -412,7 +410,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         const Text(
           "PAGAMENTO CONFIRMADO!",
           style: TextStyle(
-            color: Colors.white,
+            color: const Color(0xFF1E293B),
             fontSize: 20,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.0,
@@ -421,7 +419,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         const SizedBox(height: 8),
         Text(
           "O valor de R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')} já está na sua carteira.",
-          style: const TextStyle(color: Colors.white70),
+          style: TextStyle(color: Color(0xFF475569)),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
@@ -432,14 +430,14 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               backgroundColor: Colors.green,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(32),
               ),
             ),
             onPressed: () => Navigator.pop(context),
             child: const Text(
               "CONCLUIR",
               style: TextStyle(
-                color: Colors.white,
+                color: const Color(0xFF1E293B),
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1.0,
               ),

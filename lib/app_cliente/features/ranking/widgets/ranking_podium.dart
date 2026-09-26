@@ -13,9 +13,9 @@ class RankingPodium extends StatelessWidget {
   Widget build(BuildContext context) {
     // Definindo cores e estilos para os lugares (cores pastéis ou suaves)
     final podiumConfig = {
-      1: {'color': const Color(0xFFFDE047), 'height': 160.0}, // Amarelo suave
-      2: {'color': const Color(0xFFE2E8F0), 'height': 120.0}, // Cinza azulado claro
-      3: {'color': const Color(0xFFFED7AA), 'height': 90.0}, // Laranja pastel
+      1: {'color': Color(0xFFFDE047), 'height': 160.0}, // Amarelo suave
+      2: {'color': Color(0xFFE2E8F0), 'height': 120.0}, // Cinza azulado claro
+      3: {'color': Color(0xFFFED7AA), 'height': 90.0}, // Laranja pastel
     };
 
     final List<Widget> podiumPlaces = [];
@@ -101,7 +101,7 @@ class _PodiumPlace extends StatelessWidget {
                 ),
                 child: CircleAvatar(
                   radius: isFirstPlace ? 40 : 30,
-                  backgroundColor: const Color(0xFFF1F5F9),
+                  backgroundColor: Color(0xFFF1F5F9),
                   backgroundImage: player.photoURL != null
                       ? NetworkImage(player.photoURL!)
                       : null,
@@ -109,7 +109,7 @@ class _PodiumPlace extends StatelessWidget {
                       ? FaIcon(
                           FontAwesomeIcons.solidUser,
                           size: isFirstPlace ? 30 : 20,
-                          color: const Color(0xFF94A3B8),
+                          color: Color(0xFF94A3B8),
                         )
                       : null,
                 ),
@@ -133,12 +133,12 @@ class _PodiumPlace extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(32),
                     boxShadow: [
                       BoxShadow(
                         color: color.withValues(alpha: 0.5),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
@@ -173,12 +173,14 @@ class _PodiumPlace extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(32), // Mais arredondado para combinar com Home
+                top: Radius.circular(
+                  32,
+                ), // Mais arredondado para combinar com Home
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
-                  blurRadius: 15,
+                  color: Color(0xFFCBD5E1).withValues(alpha: 0.5),
+                  blurRadius: 20,
                   offset: const Offset(0, -5), // Sombra Neumórfica superior
                 ),
               ],
@@ -196,7 +198,10 @@ class _PodiumPlace extends StatelessWidget {
                 ),
                 Text(
                   'Fases',
-                  style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B)),
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    color: Color(0xFF64748B),
+                  ),
                 ),
               ],
             ),

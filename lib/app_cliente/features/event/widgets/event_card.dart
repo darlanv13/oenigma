@@ -71,12 +71,12 @@ class _EventCardState extends State<EventCard> {
             boxShadow: [
               const BoxShadow(
                 color: Color(0xFFFFFFFF),
-                blurRadius: 12,
+                blurRadius: 20,
                 offset: Offset(-4, -4),
               ),
               BoxShadow(
-                color: const Color(0xFFCBD5E1).withValues(alpha: 0.8),
-                blurRadius: 12,
+                color: Color(0xFFCBD5E1).withValues(alpha: 0.8),
+                blurRadius: 20,
                 offset: const Offset(6, 6),
               ),
             ],
@@ -88,15 +88,16 @@ class _EventCardState extends State<EventCard> {
               children: [
                 // Fundo com Mapa (.map-bg and .map-svg)
                 Positioned.fill(
-                  child: CustomPaint(
-                    painter: _MapBackgroundPainter(),
-                  ),
+                  child: CustomPaint(painter: _MapBackgroundPainter()),
                 ),
 
                 // PAINEL (Textos e Botão)
                 Positioned.fill(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 20,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -135,22 +136,32 @@ class _EventCardState extends State<EventCard> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: widget.event.status == 'dev' ? const Color(0xFFFDE047) : const Color(0xFF86EFAC),
-                                borderRadius: BorderRadius.circular(30),
+                                color: widget.event.status == 'dev'
+                                    ? Color(0xFFFDE047)
+                                    : Color(0xFF86EFAC),
+                                borderRadius: BorderRadius.circular(32),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   FaIcon(
-                                    widget.event.status == 'dev' ? FontAwesomeIcons.clock : FontAwesomeIcons.mapPin,
-                                    color: widget.event.status == 'dev' ? const Color(0xFFA16207) : const Color(0xFF166534),
+                                    widget.event.status == 'dev'
+                                        ? FontAwesomeIcons.clock
+                                        : FontAwesomeIcons.mapPin,
+                                    color: widget.event.status == 'dev'
+                                        ? Color(0xFFA16207)
+                                        : Color(0xFF166534),
                                     size: 10,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    widget.event.status == 'dev' ? 'NOVO' : 'ATIVO',
+                                    widget.event.status == 'dev'
+                                        ? 'NOVO'
+                                        : 'ATIVO',
                                     style: TextStyle(
-                                      color: widget.event.status == 'dev' ? const Color(0xFFA16207) : const Color(0xFF166534),
+                                      color: widget.event.status == 'dev'
+                                          ? Color(0xFFA16207)
+                                          : Color(0xFF166534),
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.5,
@@ -170,7 +181,7 @@ class _EventCardState extends State<EventCard> {
                           style: GoogleFonts.poppins(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF334155),
+                            color: Color(0xFF334155),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -191,7 +202,7 @@ class _EventCardState extends State<EventCard> {
                                             'Local não definido'
                                     ? widget.event.location
                                     : _formatDate(widget.event.startDate),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Color(0xFF64748B),
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -212,8 +223,8 @@ class _EventCardState extends State<EventCard> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(20),
+                            color: Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(32),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -241,24 +252,27 @@ class _EventCardState extends State<EventCard> {
 
                         // BOTÃO (.free-entry .btn-free)
                         Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 16,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF3B82F6),
-                            borderRadius: BorderRadius.circular(40),
+                            color: Color(0xFF3B82F6),
+                            borderRadius: BorderRadius.circular(32),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
+                                color: Color(0xFF3B82F6).withValues(alpha: 0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
                               ),
-                            ]
+                            ],
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const FaIcon(
                                 FontAwesomeIcons.ticket,
-                                color: Colors.white,
+                                color: const Color(0xFF1E293B),
                                 size: 14,
                               ),
                               const SizedBox(width: 8),
@@ -267,7 +281,7 @@ class _EventCardState extends State<EventCard> {
                                     ? "ENTRADA GRÁTIS"
                                     : "INSCRIÇÃO: R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}",
                                 style: GoogleFonts.poppins(
-                                  color: Colors.white,
+                                  color: const Color(0xFF1E293B),
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 1.0,
@@ -298,7 +312,7 @@ class _EventCardState extends State<EventCard> {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.85),
+          color: Color(0xFF1E293B).withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(32),
         ),
         child: Column(
@@ -333,7 +347,7 @@ class _EventCardState extends State<EventCard> {
                     children: [
                       CircleAvatar(
                         radius: 18,
-                        backgroundColor: const Color(0xFFF1F5F9),
+                        backgroundColor: Color(0xFFF1F5F9),
                         backgroundImage: event.winnerPhotoURL != null
                             ? NetworkImage(event.winnerPhotoURL!)
                             : null,
@@ -349,7 +363,7 @@ class _EventCardState extends State<EventCard> {
                       Text(
                         winnerFirstName,
                         style: GoogleFonts.poppins(
-                          color: const Color(0xFF334155),
+                          color: Color(0xFF334155),
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -368,7 +382,7 @@ class _EventCardState extends State<EventCard> {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.85),
+          color: Color(0xFF1E293B).withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(32),
         ),
         child: Center(
@@ -379,7 +393,7 @@ class _EventCardState extends State<EventCard> {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFFDE047).withValues(alpha: 0.2),
+                  color: Color(0xFFFDE047).withValues(alpha: 0.2),
                 ),
                 child: const FaIcon(
                   FontAwesomeIcons.hourglassHalf,
@@ -410,38 +424,62 @@ class _MapBackgroundPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Pastel blob 1
     final blobPaint1 = Paint()
-      ..color = const Color(0xFFFEF3C7).withValues(alpha: 0.6) // soft pastel yellow
+      ..color = Color(0xFFFEF3C7)
+          .withValues(alpha: 0.6) // soft pastel yellow
       ..style = PaintingStyle.fill;
 
     final path1 = Path();
     path1.moveTo(size.width * 0.1, size.height * 0.2);
-    path1.quadraticBezierTo(size.width * 0.4, size.height * 0.1, size.width * 0.3, size.height * 0.4);
-    path1.quadraticBezierTo(size.width * 0.2, size.height * 0.7, size.width * -0.1, size.height * 0.5);
+    path1.quadraticBezierTo(
+      size.width * 0.4,
+      size.height * 0.1,
+      size.width * 0.3,
+      size.height * 0.4,
+    );
+    path1.quadraticBezierTo(
+      size.width * 0.2,
+      size.height * 0.7,
+      size.width * -0.1,
+      size.height * 0.5,
+    );
     path1.close();
     canvas.drawPath(path1, blobPaint1);
 
     // Pastel blob 2
     final blobPaint2 = Paint()
-      ..color = const Color(0xFFE0E7FF).withValues(alpha: 0.6) // soft pastel blue
+      ..color = Color(0xFFE0E7FF)
+          .withValues(alpha: 0.6) // soft pastel blue
       ..style = PaintingStyle.fill;
 
     final path2 = Path();
     path2.moveTo(size.width * 0.8, size.height * 0.6);
-    path2.quadraticBezierTo(size.width * 1.0, size.height * 0.5, size.width * 1.1, size.height * 0.8);
-    path2.quadraticBezierTo(size.width * 1.0, size.height * 1.1, size.width * 0.7, size.height * 0.9);
+    path2.quadraticBezierTo(
+      size.width * 1.0,
+      size.height * 0.5,
+      size.width * 1.1,
+      size.height * 0.8,
+    );
+    path2.quadraticBezierTo(
+      size.width * 1.0,
+      size.height * 1.1,
+      size.width * 0.7,
+      size.height * 0.9,
+    );
     path2.close();
     canvas.drawPath(path2, blobPaint2);
 
     // Small pastel dots (Memphis style)
     final dotPaint = Paint()
-      ..color = const Color(0xFFFBCFE8) // soft pastel pink
+      ..color =
+          Color(0xFFFBCFE8) // soft pastel pink
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.2), 6, dotPaint);
     canvas.drawCircle(Offset(size.width * 0.4, size.height * 0.8), 4, dotPaint);
 
     final crossPaint = Paint()
-      ..color = const Color(0xFFC7D2FE) // soft indigo
+      ..color =
+          Color(0xFFC7D2FE) // soft indigo
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
 

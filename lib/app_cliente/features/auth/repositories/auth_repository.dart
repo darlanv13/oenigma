@@ -30,10 +30,7 @@ class AuthRepository {
     _authStateController.add(_currentUser);
   }
 
-  Future<String?> signInWithCpfAndPassword(
-    String cpf,
-    String password,
-  ) async {
+  Future<String?> signInWithCpfAndPassword(String cpf, String password) async {
     try {
       final user = ParseUser(cpf.trim(), password.trim(), null);
       final response = await user.login();
@@ -108,7 +105,9 @@ class AuthRepository {
         ..whereEqualTo('username', cleanCpf);
       final queryResponse = await query.query();
 
-      if (queryResponse.success && queryResponse.results != null && queryResponse.results!.isNotEmpty) {
+      if (queryResponse.success &&
+          queryResponse.results != null &&
+          queryResponse.results!.isNotEmpty) {
         return 'Este CPF já está cadastrado.';
       }
 

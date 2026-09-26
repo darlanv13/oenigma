@@ -16,7 +16,7 @@ class WalletHistoryList extends StatelessWidget {
         child: Center(
           child: Text(
             'Nenhuma atividade recente.',
-            style: TextStyle(color: Colors.white54),
+            style: TextStyle(color: Color(0xFF64748B)),
           ),
         ),
       );
@@ -54,18 +54,16 @@ class _HistoryItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final highlightColor = isPositive
-        ? const Color(0xFF4CAF50)
-        : const Color(0xFFC76F7A);
+    final highlightColor = isPositive ? Color(0xFF4CAF50) : Color(0xFFC76F7A);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E), // Fundo painel escuro
-        borderRadius: BorderRadius.circular(16),
+        color: Color(0xFF1E1E1E), // Fundo painel escuro
+        borderRadius: BorderRadius.circular(32),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: Color(0xFF1E293B).withValues(alpha: 0.05),
           width: 1.0,
         ),
       ),
@@ -74,7 +72,7 @@ class _HistoryItem extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Color(0xFFF0F4F8).withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
             child: FaIcon(icon, color: highlightColor, size: 16),
@@ -86,7 +84,7 @@ class _HistoryItem extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Color(0xFFDCD6CC),
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -95,7 +93,7 @@ class _HistoryItem extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(color: Colors.white54, fontSize: 10),
+                  style: TextStyle(color: Color(0xFF64748B), fontSize: 10),
                 ),
               ],
             ),
@@ -103,7 +101,7 @@ class _HistoryItem extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             amountText,
-            style: GoogleFonts.orbitron(
+            style: GoogleFonts.poppins(
               color: highlightColor,
               fontSize: 14,
               fontWeight: FontWeight.w700,

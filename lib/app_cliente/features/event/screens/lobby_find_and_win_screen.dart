@@ -45,7 +45,10 @@ class _FindAndWinProgressScreenState
           final doc = e as ParseObject;
           return EnigmaModel.fromMap({
             'id': doc.objectId,
-            'title': doc.get<dynamic>('title')?.toString() ?? doc.get<dynamic>('name')?.toString() ?? '',
+            'title':
+                doc.get<dynamic>('title')?.toString() ??
+                doc.get<dynamic>('name')?.toString() ??
+                '',
             'instruction': doc.get<dynamic>('instruction')?.toString() ?? '',
             'prize': doc.get<dynamic>('prize') ?? 0,
             'imageUrl': doc.get<dynamic>('imageUrl')?.toString(),
@@ -108,9 +111,7 @@ class _FindAndWinProgressScreenState
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              color: const Color(
-                                0xFFC0A060,
-                              ).withValues(alpha: 0.06),
+                              color: Color(0xFFC0A060).withValues(alpha: 0.06),
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
@@ -126,8 +127,8 @@ class _FindAndWinProgressScreenState
                             child: Text(
                               'Enigmas',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.orbitron(
-                                color: const Color(0xFFF0E6C5),
+                              style: GoogleFonts.poppins(
+                                color: Color(0xFFF0E6C5),
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.5,
@@ -140,7 +141,7 @@ class _FindAndWinProgressScreenState
                               alignment: Alignment.centerRight,
                               child: FaIcon(
                                 FontAwesomeIcons.ellipsisVertical,
-                                color: const Color(0xFFC0A060),
+                                color: Color(0xFFC0A060),
                                 size: 18,
                               ),
                             ),
@@ -148,7 +149,7 @@ class _FindAndWinProgressScreenState
                         ],
                       ),
                       const SizedBox(height: 16),
-                      const Divider(color: Colors.white12, height: 1),
+                      const Divider(color: Color(0xFFE2E8F0), height: 1),
                       const SizedBox(height: 16),
                       // Hunt Info
                       Container(
@@ -157,8 +158,8 @@ class _FindAndWinProgressScreenState
                           vertical: 12,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF16181C).withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(20),
+                          color: Color(0xFF16181C).withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(32),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -173,8 +174,8 @@ class _FindAndWinProgressScreenState
                                 const SizedBox(width: 8),
                                 Text(
                                   'Ache & Ganhe',
-                                  style: GoogleFonts.inter(
-                                    color: const Color(0xFFF0E6C5),
+                                  style: GoogleFonts.poppins(
+                                    color: Color(0xFFF0E6C5),
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -187,27 +188,27 @@ class _FindAndWinProgressScreenState
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(
+                                color: Color(
                                   0xFFC0A060,
                                 ).withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(32),
                                 border: Border.all(
-                                  color: const Color(
+                                  color: Color(
                                     0xFFC0A060,
                                   ).withValues(alpha: 0.1),
                                 ),
                               ),
                               child: RichText(
                                 text: TextSpan(
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.poppins(
                                     fontSize: 12,
-                                    color: const Color(0xFFB0A07A),
+                                    color: Color(0xFFB0A07A),
                                   ),
                                   children: [
                                     TextSpan(
                                       text:
                                           '${enigmas.where((e) => e.status == 'closed').length}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: Color(0xFFC0A060),
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -245,9 +246,9 @@ class _FindAndWinProgressScreenState
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.05),
+                            color: Color(0xFF1E293B).withValues(alpha: 0.05),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.1),
+                              color: Color(0xFF1E293B).withValues(alpha: 0.1),
                             ),
                           ),
                           child: const FaIcon(
@@ -262,7 +263,7 @@ class _FindAndWinProgressScreenState
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                            color: const Color(0xFF1E293B),
                             letterSpacing: 2,
                           ),
                         ),
@@ -306,9 +307,7 @@ class _FindAndWinProgressScreenState
                     decoration: BoxDecoration(
                       border: Border(
                         top: BorderSide(
-                          color: const Color(
-                            0xFFC0A060,
-                          ).withValues(alpha: 0.06),
+                          color: Color(0xFFC0A060).withValues(alpha: 0.06),
                         ),
                       ),
                     ),
@@ -324,9 +323,9 @@ class _FindAndWinProgressScreenState
                         const SizedBox(width: 4),
                         Text(
                           'Caçada segura',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.poppins(
                             fontSize: 10,
-                            color: const Color(0xFF4A4A4A),
+                            color: Color(0xFF4A4A4A),
                             letterSpacing: 1.0,
                           ),
                         ),

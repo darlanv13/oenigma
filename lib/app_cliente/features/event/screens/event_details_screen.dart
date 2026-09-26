@@ -108,7 +108,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         title: const Text(
           'Confirmar Inscrição',
           style: TextStyle(
@@ -118,7 +118,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         ),
         content: Text(
           'Confirma a sua inscrição no evento "${widget.event.name}"?',
-          style: const TextStyle(color: Colors.white70),
+          style: TextStyle(color: Color(0xFF475569)),
         ),
         actions: [
           TextButton(
@@ -128,10 +128,10 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD54F),
-              foregroundColor: Colors.black,
+              backgroundColor: Color(0xFFFFD54F),
+              foregroundColor: Color(0xFFF0F4F8),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(32),
               ),
             ),
             child: const Text(
@@ -148,7 +148,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         title: const Row(
           children: [
             FaIcon(
@@ -168,7 +168,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         ),
         content: const Text(
           'Você precisa criar uma conta ou fazer login para iniciar a caçada.',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: Color(0xFF475569)),
         ),
         actions: [
           TextButton(
@@ -187,10 +187,10 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD54F),
-              foregroundColor: Colors.black,
+              backgroundColor: Color(0xFFFFD54F),
+              foregroundColor: Color(0xFFF0F4F8),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(32),
               ),
             ),
             child: const Text(
@@ -207,7 +207,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         title: const Row(
           children: [
             FaIcon(FontAwesomeIcons.wallet, color: Color(0xFFFFD54F), size: 20),
@@ -223,7 +223,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         ),
         content: const Text(
           'Você não tem saldo para se inscrever. Deseja adicionar créditos à sua carteira?',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: Color(0xFF475569)),
         ),
         actions: [
           TextButton(
@@ -265,10 +265,10 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD54F),
-              foregroundColor: Colors.black,
+              backgroundColor: Color(0xFFFFD54F),
+              foregroundColor: Color(0xFFF0F4F8),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(32),
               ),
             ),
             child: const Text(
@@ -298,11 +298,14 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 child: SafeArea(
                   bottom: false,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          color: const Color(0xFFC0A060).withValues(alpha: 0.10),
+                          color: Color(0xFFC0A060).withValues(alpha: 0.10),
                           width: 1,
                         ),
                       ),
@@ -313,10 +316,10 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                         _buildBackButton(context),
                         Text(
                           'Detalhes',
-                          style: GoogleFonts.orbitron(
+                          style: GoogleFonts.poppins(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFFF0E6C5),
+                            color: Color(0xFFF0E6C5),
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -333,24 +336,28 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                   clipBehavior: Clip.none,
                   children: [
                     Container(
-                      margin: const EdgeInsets.only(top: 20, left: 16, right: 16),
+                      margin: const EdgeInsets.only(
+                        top: 20,
+                        left: 16,
+                        right: 16,
+                      ),
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             widget.event.name,
-                            style: GoogleFonts.orbitron(
+                            style: GoogleFonts.poppins(
                               fontSize: 26,
                               fontWeight: FontWeight.w800,
-                              color: const Color(0xFFF0E6C5),
+                              color: Color(0xFFF0E6C5),
                               letterSpacing: -0.5,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             eventTitle,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               color: Color(0xFFB0A07A),
                             ),
@@ -359,8 +366,8 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                           Container(
                             padding: const EdgeInsets.fromLTRB(14, 8, 18, 8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFC0A060).withValues(alpha: 0.06),
-                              borderRadius: BorderRadius.circular(40),
+                              color: Color(0xFFC0A060).withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(32),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -373,10 +380,10 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                                 const SizedBox(width: 8),
                                 Text(
                                   widget.event.prize.replaceAll('R\$ ', 'R\$'),
-                                  style: GoogleFonts.orbitron(
+                                  style: GoogleFonts.poppins(
                                     fontSize: 24,
                                     fontWeight: FontWeight.w800,
-                                    color: const Color(0xFFF0E6C5),
+                                    color: Color(0xFFF0E6C5),
                                   ),
                                 ),
                               ],
@@ -401,7 +408,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                               Text(
                                 "Caçada segura",
                                 style: TextStyle(
-                                  color: Colors.white54,
+                                  color: Color(0xFF64748B),
                                   fontSize: 12,
                                 ),
                               ),
@@ -426,8 +433,8 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           decoration: BoxDecoration(
-            color: const Color(0xFF16181C).withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(20),
+            color: Color(0xFF16181C).withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(32),
           ),
           child: GridView.count(
             crossAxisCount: 2,
@@ -446,11 +453,17 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                     final solved = snapshot.data?['solved'] ?? 0;
                     final total = snapshot.data?['total'] ?? 0;
                     return _buildInfoItem(
-                        FontAwesomeIcons.chartSimple, 'PROGRESSO', '$solved / $total');
+                      FontAwesomeIcons.chartSimple,
+                      'PROGRESSO',
+                      '$solved / $total',
+                    );
                   } else {
                     final total = snapshot.data?['total'] ?? 0;
                     return _buildInfoItem(
-                        FontAwesomeIcons.chartSimple, 'FASES', total.toString());
+                      FontAwesomeIcons.chartSimple,
+                      'FASES',
+                      total.toString(),
+                    );
                   }
                 },
               ),
@@ -463,7 +476,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 FontAwesomeIcons.star,
                 'DIFICULDADE',
                 'Média',
-                iconColor: const Color(0xFFC0A060),
+                iconColor: Color(0xFFC0A060),
               ),
             ],
           ),
@@ -477,7 +490,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             gradient: LinearGradient(
               colors: [
                 Colors.transparent,
-                const Color(0xFFC0A060).withValues(alpha: 0.15),
+                Color(0xFFC0A060).withValues(alpha: 0.15),
                 Colors.transparent,
               ],
             ),
@@ -489,16 +502,16 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
 
   Widget _buildEventStatus() {
     String statusText = 'Em andamento';
-    Color statusColor = const Color(0xFF4CAF50);
+    Color statusColor = Color(0xFF4CAF50);
     dynamic iconData = FontAwesomeIcons.circleCheck;
 
     if (widget.event.status == 'dev') {
       statusText = 'Em breve';
-      statusColor = const Color(0xFFFF9800);
+      statusColor = Color(0xFFFF9800);
       iconData = FontAwesomeIcons.clock;
     } else if (widget.event.status == 'closed') {
       statusText = 'Finalizado';
-      statusColor = const Color(0xFFF44336);
+      statusColor = Color(0xFFF44336);
       iconData = FontAwesomeIcons.circleXmark;
     }
 
@@ -507,11 +520,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       children: [
         Row(
           children: [
-            FaIcon(
-              FontAwesomeIcons.circle,
-              color: statusColor,
-              size: 6,
-            ),
+            FaIcon(FontAwesomeIcons.circle, color: statusColor, size: 6),
             const SizedBox(width: 4),
             const Text(
               'STATUS DO EVENTO',
@@ -546,13 +555,18 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     );
   }
 
-  Widget _buildInfoItem(dynamic icon, String label, String value, {Color iconColor = const Color(0xFFC0A060)}) {
+  Widget _buildInfoItem(
+    dynamic icon,
+    String label,
+    String value, {
+    Color iconColor = const Color(0xFFC0A060),
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: Color(0xFF7A7A7A),
             fontSize: 9,
             fontWeight: FontWeight.w600,
@@ -571,7 +585,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             Expanded(
               child: Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Color(0xFFF0E6C5),
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
@@ -591,10 +605,10 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       children: [
         Text(
           'Sobre a caçada',
-          style: GoogleFonts.orbitron(
+          style: GoogleFonts.poppins(
             fontSize: 13, // 0.8rem
             fontWeight: FontWeight.w700,
-            color: const Color(0xFFC0A060),
+            color: Color(0xFFC0A060),
             letterSpacing: 1.5,
           ),
         ),
@@ -602,11 +616,11 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(16),
+            color: Color(0xFFF0F4F8).withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(32),
             border: Border(
               left: BorderSide(
-                color: const Color(0xFFC0A060).withValues(alpha: 0.2),
+                color: Color(0xFFC0A060).withValues(alpha: 0.2),
                 width: 2,
               ),
             ),
@@ -615,7 +629,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             widget.event.fullDescription.isNotEmpty
                 ? widget.event.fullDescription
                 : 'Encontre pistas espalhadas pela cidade, escaneie QR codes e desvende o mistério. O primeiro a completar todas as etapas leva o prêmio de R\$ 5.000,00.',
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xFFB0A07A),
               fontSize: 14, // ~0.9rem
               height: 1.6,
@@ -633,7 +647,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: const Color(0xFFC0A060).withValues(alpha: 0.06),
+          color: Color(0xFFC0A060).withValues(alpha: 0.06),
           shape: BoxShape.circle,
         ),
         child: const Center(
@@ -698,12 +712,12 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(40),
+          borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFC0A060).withValues(alpha: 0.4),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
+              color: Color(0xFFC0A060).withValues(alpha: 0.4),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
@@ -732,8 +746,8 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                     : (isFree
                           ? 'INICIAR CAÇADA (GRÁTIS)'
                           : "INSCRIÇÃO: R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}"),
-                style: GoogleFonts.orbitron(
-                  color: const Color(0xFF06080B),
+                style: GoogleFonts.poppins(
+                  color: Color(0xFF06080B),
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.0,
@@ -751,16 +765,16 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       height: 60,
       decoration: BoxDecoration(
         color: Colors.grey.shade900,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(32),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
+          color: Color(0xFF1E293B).withValues(alpha: 0.1),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Color(0xFFF0F4F8).withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -769,7 +783,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.grey,
               fontSize: 16,
               fontWeight: FontWeight.w900,
