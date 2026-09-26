@@ -36,7 +36,7 @@ class CreditOptionsSheet extends StatelessWidget {
           const Text(
             "ADICIONAR SALDO",
             style: TextStyle(
-              color: Color(0xFFFFD54F),
+              color: Color(0xFF8B5CF6),
               fontSize: 18,
               fontWeight: FontWeight.w900,
               letterSpacing: 1.5,
@@ -62,13 +62,13 @@ class CreditOptionsSheet extends StatelessWidget {
             itemBuilder: (context, index) {
               return ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFFFD54F).withValues(alpha: 0.1),
-                  foregroundColor: Color(0xFFFFD54F),
+                  backgroundColor: Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                  foregroundColor: Color(0xFF8B5CF6),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(32),
                     side: BorderSide(
-                      color: Color(0xFFFFD54F).withValues(alpha: 0.5),
+                      color: Color(0xFF8B5CF6).withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -190,7 +190,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   Widget _buildLoadingState() {
     return const Column(
       children: [
-        CircularProgressIndicator(color: Color(0xFFFFD54F)),
+        CircularProgressIndicator(color: Color(0xFF8B5CF6)),
         SizedBox(height: 16),
         Text(
           "Gerando Cobrança Pix...",
@@ -277,7 +277,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             const Text(
               "PAGAMENTO PIX",
               style: TextStyle(
-                color: Color(0xFFFFD54F),
+                color: Color(0xFF8B5CF6),
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1.5,
@@ -298,10 +298,10 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: Color(0xFFFFD54F), width: 3),
+                  border: Border.all(color: Color(0xFF8B5CF6), width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFFFFD54F).withValues(alpha: 0.3),
+                      color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
                       blurRadius: 20,
                     ),
                   ],
@@ -322,14 +322,14 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Color(0xFFFFD54F),
+                    color: Color(0xFF8B5CF6),
                   ),
                 ),
                 SizedBox(width: 12),
                 Text(
                   "Aguardando confirmação...",
                   style: TextStyle(
-                    color: Color(0xFFFFD54F),
+                    color: Color(0xFF8B5CF6),
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -341,11 +341,11 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(32),
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
+                  colors: [Color(0xFF8B5CF6), Color(0xFFF57F17)],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFFFFD54F).withValues(alpha: 0.3),
+                    color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),

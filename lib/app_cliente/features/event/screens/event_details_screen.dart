@@ -112,7 +112,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         title: const Text(
           'Confirmar Inscrição',
           style: TextStyle(
-            color: Color(0xFFFFD54F),
+            color: Color(0xFF8B5CF6),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -128,7 +128,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFFFD54F),
+              backgroundColor: Color(0xFF8B5CF6),
               foregroundColor: Color(0xFFF0F4F8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(32),
@@ -153,14 +153,14 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           children: [
             FaIcon(
               FontAwesomeIcons.userLock,
-              color: Color(0xFFFFD54F),
+              color: Color(0xFF8B5CF6),
               size: 20,
             ),
             SizedBox(width: 10),
             Text(
               'Login Necessário',
               style: TextStyle(
-                color: Color(0xFFFFD54F),
+                color: Color(0xFF8B5CF6),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -187,7 +187,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFFFD54F),
+              backgroundColor: Color(0xFF8B5CF6),
               foregroundColor: Color(0xFFF0F4F8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(32),
@@ -210,12 +210,12 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         title: const Row(
           children: [
-            FaIcon(FontAwesomeIcons.wallet, color: Color(0xFFFFD54F), size: 20),
+            FaIcon(FontAwesomeIcons.wallet, color: Color(0xFF8B5CF6), size: 20),
             SizedBox(width: 10),
             Text(
               'Saldo Insuficiente',
               style: TextStyle(
-                color: Color(0xFFFFD54F),
+                color: Color(0xFF8B5CF6),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -239,7 +239,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 context: context,
                 barrierDismissible: false,
                 builder: (_) => const Center(
-                  child: CircularProgressIndicator(color: Color(0xFFFFD54F)),
+                  child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
                 ),
               );
 
@@ -265,7 +265,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFFFD54F),
+              backgroundColor: Color(0xFF8B5CF6),
               foregroundColor: Color(0xFFF0F4F8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(32),
@@ -305,7 +305,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          color: Color(0xFFC0A060).withValues(alpha: 0.10),
+                          color: Color(0xFF8B5CF6).withValues(alpha: 0.10),
                           width: 1,
                         ),
                       ),
@@ -319,7 +319,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFFF0E6C5),
+                            color: Color(0xFFC4B5FD),
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -350,7 +350,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 26,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFFF0E6C5),
+                              color: Color(0xFFC4B5FD),
                               letterSpacing: -0.5,
                             ),
                           ),
@@ -359,14 +359,14 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                             eventTitle,
                             style: TextStyle(
                               fontSize: 14,
-                              color: Color(0xFFB0A07A),
+                              color: Color(0xFF7C3AED),
                             ),
                           ),
                           const SizedBox(height: 16),
                           Container(
                             padding: const EdgeInsets.fromLTRB(14, 8, 18, 8),
                             decoration: BoxDecoration(
-                              color: Color(0xFFC0A060).withValues(alpha: 0.06),
+                              color: Color(0xFF8B5CF6).withValues(alpha: 0.06),
                               borderRadius: BorderRadius.circular(32),
                             ),
                             child: Row(
@@ -374,7 +374,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                               children: [
                                 const FaIcon(
                                   FontAwesomeIcons.coins,
-                                  color: Color(0xFFC0A060),
+                                  color: Color(0xFF8B5CF6),
                                   size: 16,
                                 ),
                                 const SizedBox(width: 8),
@@ -383,7 +383,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                                   style: GoogleFonts.poppins(
                                     fontSize: 24,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFFF0E6C5),
+                                    color: Color(0xFFC4B5FD),
                                   ),
                                 ),
                               ],
@@ -401,7 +401,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                             children: const [
                               FaIcon(
                                 FontAwesomeIcons.shieldHalved,
-                                color: Color(0xFFD6B570),
+                                color: Color(0xFF8B5CF6),
                                 size: 12,
                               ),
                               SizedBox(width: 6),
@@ -433,7 +433,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           decoration: BoxDecoration(
-            color: Color(0xFF16181C).withValues(alpha: 0.4),
+            color: Colors.white.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(32),
           ),
           child: GridView.count(
@@ -476,7 +476,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 FontAwesomeIcons.star,
                 'DIFICULDADE',
                 'Média',
-                iconColor: Color(0xFFC0A060),
+                iconColor: Color(0xFF8B5CF6),
               ),
             ],
           ),
@@ -490,7 +490,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             gradient: LinearGradient(
               colors: [
                 Colors.transparent,
-                Color(0xFFC0A060).withValues(alpha: 0.15),
+                Color(0xFF8B5CF6).withValues(alpha: 0.15),
                 Colors.transparent,
               ],
             ),
@@ -559,7 +559,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     dynamic icon,
     String label,
     String value, {
-    Color iconColor = const Color(0xFFC0A060),
+    Color iconColor = const Color(0xFF8B5CF6),
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -586,7 +586,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               child: Text(
                 value,
                 style: TextStyle(
-                  color: Color(0xFFF0E6C5),
+                  color: Color(0xFFC4B5FD),
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
                 ),
@@ -608,7 +608,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           style: GoogleFonts.poppins(
             fontSize: 13, // 0.8rem
             fontWeight: FontWeight.w700,
-            color: Color(0xFFC0A060),
+            color: Color(0xFF8B5CF6),
             letterSpacing: 1.5,
           ),
         ),
@@ -620,7 +620,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             borderRadius: BorderRadius.circular(32),
             border: Border(
               left: BorderSide(
-                color: Color(0xFFC0A060).withValues(alpha: 0.2),
+                color: Color(0xFF8B5CF6).withValues(alpha: 0.2),
                 width: 2,
               ),
             ),
@@ -630,7 +630,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 ? widget.event.fullDescription
                 : 'Encontre pistas espalhadas pela cidade, escaneie QR codes e desvende o mistério. O primeiro a completar todas as etapas leva o prêmio de R\$ 5.000,00.',
             style: TextStyle(
-              color: Color(0xFFB0A07A),
+              color: Color(0xFF7C3AED),
               fontSize: 14, // ~0.9rem
               height: 1.6,
             ),
@@ -647,13 +647,13 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: Color(0xFFC0A060).withValues(alpha: 0.06),
+          color: Color(0xFF8B5CF6).withValues(alpha: 0.06),
           shape: BoxShape.circle,
         ),
         child: const Center(
           child: FaIcon(
             FontAwesomeIcons.chevronLeft,
-            color: Color(0xFFC0A060),
+            color: Color(0xFF8B5CF6),
             size: 14,
           ),
         ),
@@ -708,14 +708,14 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFFC0A060), Color(0xFFA8894A)],
+            colors: [Color(0xFF8B5CF6), Color(0xFFA8894A)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: Color(0xFFC0A060).withValues(alpha: 0.4),
+              color: Color(0xFF8B5CF6).withValues(alpha: 0.4),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -729,7 +729,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
-                  color: Color(0xFF06080B),
+                  color: Color(0xFFF0F4F8),
                   strokeWidth: 2,
                 ),
               )
@@ -737,7 +737,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               const FaIcon(
                 FontAwesomeIcons.play,
                 size: 16,
-                color: Color(0xFF06080B),
+                color: Color(0xFFF0F4F8),
               ),
               const SizedBox(width: 10),
               Text(
@@ -747,7 +747,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                           ? 'INICIAR CAÇADA (GRÁTIS)'
                           : "INSCRIÇÃO: R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}"),
                 style: GoogleFonts.poppins(
-                  color: Color(0xFF06080B),
+                  color: Color(0xFFF0F4F8),
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.0,

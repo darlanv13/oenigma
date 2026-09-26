@@ -124,7 +124,7 @@ class _EventCardState extends State<EventCard> {
                                   style: GoogleFonts.poppins(
                                     fontSize: 28, // 1.75rem
                                     fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF1E293B),
+                                    color: Color(0xFF1E293B),
                                     letterSpacing: -0.5,
                                   ),
                                 ),
@@ -272,7 +272,7 @@ class _EventCardState extends State<EventCard> {
                             children: [
                               const FaIcon(
                                 FontAwesomeIcons.ticket,
-                                color: const Color(0xFF1E293B),
+                                color: Color(0xFF1E293B),
                                 size: 14,
                               ),
                               const SizedBox(width: 8),
@@ -281,7 +281,7 @@ class _EventCardState extends State<EventCard> {
                                     ? "ENTRADA GRÁTIS"
                                     : "INSCRIÇÃO: R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}",
                                 style: GoogleFonts.poppins(
-                                  color: const Color(0xFF1E293B),
+                                  color: Color(0xFF1E293B),
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 1.0,
@@ -323,7 +323,7 @@ class _EventCardState extends State<EventCard> {
             Text(
               'FINALIZADO',
               style: GoogleFonts.poppins(
-                color: const Color(0xFF1E293B),
+                color: Color(0xFF1E293B),
                 fontWeight: FontWeight.w900,
                 fontSize: 24,
                 letterSpacing: 3,
@@ -405,7 +405,7 @@ class _EventCardState extends State<EventCard> {
               Text(
                 'EM BREVE',
                 style: GoogleFonts.poppins(
-                  color: const Color(0xFF1E293B),
+                  color: Color(0xFF1E293B),
                   fontWeight: FontWeight.w900,
                   fontSize: 24,
                   letterSpacing: 6,
