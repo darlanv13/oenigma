@@ -310,7 +310,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String hintText,
-    required IconData icon,
+    required FaIconData icon,
     String? Function(String?)? validator,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,

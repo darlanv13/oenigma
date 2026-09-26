@@ -49,6 +49,22 @@ class AuthRepository {
     }
   }
 
+  Future<String?> resetPassword(String cpf) async {
+    try {
+      final cleanCpf = cpf.trim();
+      final dummyEmail = '$cleanCpf@enigmacity.app';
+      final ParseUser user = ParseUser(null, null, dummyEmail);
+      final response = await user.requestPasswordReset();
+      if (response.success) {
+        return null;
+      } else {
+        return response.error?.message ?? "Ocorreu um erro desconhecido.";
+      }
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
   Future<String?> signInAdminWithEmailAndPassword(
     String email,
     String password,
