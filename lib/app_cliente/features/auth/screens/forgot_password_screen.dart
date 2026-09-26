@@ -11,7 +11,8 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -51,7 +52,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         }
       } catch (e) {
         if (mounted) {
-          _showSnackBar('Ocorreu um erro ao tentar recuperar a senha.', isError: true);
+          _showSnackBar(
+            'Ocorreu um erro ao tentar recuperar a senha.',
+            isError: true,
+          );
         }
       } finally {
         if (mounted) {
@@ -66,11 +70,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1E293B),
+          ),
         ),
         backgroundColor: isError ? dangerColor : Colors.green[700],
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
       ),
     );
   }
@@ -82,16 +89,20 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       appBar: AppBar(
         title: Text(
           'Recuperar Acesso',
-          style: GoogleFonts.orbitron(
+          style: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: const Color(0xFF1E293B),
           ),
         ),
         centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const FaIcon(FontAwesomeIcons.arrowLeft, color: primaryAmber, size: 20),
+          icon: const FaIcon(
+            FontAwesomeIcons.arrowLeft,
+            color: Color(0xFF8B5CF6),
+            size: 20,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -120,31 +131,38 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: primaryAmber.withOpacity(0.1),
+            color: Color(0xFF8B5CF6).withOpacity(0.1),
             boxShadow: [
               BoxShadow(
-                color: primaryAmber.withOpacity(0.2),
-                blurRadius: 30,
-                spreadRadius: 5,
+                color: Color(0xFF8B5CF6).withOpacity(0.2),
+                blurRadius: 20,
+                spreadRadius: -5,
               ),
             ],
-            border: Border.all(color: primaryAmber.withOpacity(0.3), width: 1.5),
+            border: Border.all(
+              color: Color(0xFF8B5CF6).withOpacity(0.3),
+              width: 1.5,
+            ),
           ),
-          child: const FaIcon(FontAwesomeIcons.userShield, color: primaryAmber, size: 48),
+          child: const FaIcon(
+            FontAwesomeIcons.userShield,
+            color: Color(0xFF8B5CF6),
+            size: 48,
+          ),
         ),
         const SizedBox(height: 24),
         Text(
           'CÓDIGO PERDIDO?',
-          style: GoogleFonts.orbitron(
+          style: GoogleFonts.poppins(
             fontSize: 24,
             fontWeight: FontWeight.w900,
             letterSpacing: 2,
-            color: primaryAmberLight,
+            color: Color(0xFFC4B5FD),
             shadows: [
               Shadow(
-                color: Colors.black.withOpacity(0.5),
-                offset: const Offset(0, 2),
-                blurRadius: 4,
+                color: Color(0xFFF0F4F8).withOpacity(0.5),
+                offset: const Offset(0, 10),
+                blurRadius: 20,
               ),
             ],
           ),
@@ -155,10 +173,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           child: Text(
             'Não se preocupe, explorador. Informe seu CPF de registro para recuperar sua credencial de acesso à Enigma City.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.poppins(
               fontSize: 12,
               height: 1.5,
-              color: Colors.white70,
+              color: Color(0xFF475569),
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -169,20 +187,23 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   Widget _buildRecoveryForm() {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(32),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: cardColor.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+            color: Color(0xFF1E293B).withOpacity(0.6),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(
+              color: Color(0xFF1E293B).withOpacity(0.08),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Color(0xFFF0F4F8).withOpacity(0.3),
                 blurRadius: 20,
-                spreadRadius: 1,
+                spreadRadius: -5,
                 offset: const Offset(0, 10),
               ),
             ],
@@ -204,39 +225,40 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     _CpfInputFormatter(),
                   ],
                   validator: (val) {
-                    if (val == null || val.isEmpty) return 'Por favor, insira seu CPF';
+                    if (val == null || val.isEmpty)
+                      return 'Por favor, insira seu CPF';
                     final cleanCpf = val.replaceAll(RegExp(r'\D'), '');
                     if (cleanCpf.length != 11) return 'CPF incompleto';
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 32),
-                
+
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   width: double.infinity,
                   height: 56,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(32),
                     boxShadow: _isLoading
                         ? []
                         : [
                             BoxShadow(
-                              color: primaryAmber.withOpacity(0.4),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
+                              color: Color(0xFF8B5CF6).withOpacity(0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
                             ),
                           ],
                   ),
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _handleResetPassword,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryAmber,
-                      foregroundColor: Colors.black,
+                      backgroundColor: Color(0xFF8B5CF6),
+                      foregroundColor: Color(0xFFF0F4F8),
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(32),
                       ),
                     ),
                     child: _isLoading
@@ -244,7 +266,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             height: 24,
                             width: 24,
                             child: CircularProgressIndicator(
-                              color: Colors.black,
+                              color: Color(0xFFF0F4F8),
                               strokeWidth: 2.5,
                             ),
                           )
@@ -253,27 +275,32 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             children: [
                               Text(
                                 "ENVIAR INSTRUÇÕES",
-                                style: GoogleFonts.orbitron(
+                                style: GoogleFonts.poppins(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.2,
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              const FaIcon(FontAwesomeIcons.paperPlane, size: 16),
+                              const FaIcon(
+                                FontAwesomeIcons.paperPlane,
+                                size: 16,
+                              ),
                             ],
                           ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
                 Center(
                   child: GestureDetector(
-                    onTap: _isLoading ? null : () => Navigator.of(context).pop(),
+                    onTap: _isLoading
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     child: Text(
                       "Voltar para o Login",
-                      style: GoogleFonts.inter(
-                        color: Colors.white70,
+                      style: GoogleFonts.poppins(
+                        color: Color(0xFF475569),
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                         decoration: TextDecoration.underline,
@@ -292,12 +319,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Widget _buildFieldLabel(String label, FaIconData icon) {
     return Row(
       children: [
-        FaIcon(icon, size: 14, color: primaryAmber),
+        FaIcon(icon, size: 14, color: Color(0xFF8B5CF6)),
         const SizedBox(width: 8),
         Text(
           label,
-          style: GoogleFonts.inter(
-            color: primaryAmber,
+          style: GoogleFonts.poppins(
+            color: Color(0xFF8B5CF6),
             fontSize: 11,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
@@ -320,40 +347,46 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       validator: validator,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      style: GoogleFonts.orbitron(
-        color: Colors.white,
+      style: GoogleFonts.poppins(
+        color: const Color(0xFF1E293B),
         fontWeight: FontWeight.w600,
         letterSpacing: 1.5,
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: Colors.black.withOpacity(0.3),
+        fillColor: Color(0xFFF0F4F8).withOpacity(0.3),
         hintText: hintText,
-        hintStyle: GoogleFonts.orbitron(
-          color: Colors.white.withOpacity(0.2),
+        hintStyle: GoogleFonts.poppins(
+          color: Color(0xFF1E293B).withOpacity(0.2),
           fontWeight: FontWeight.w600,
           letterSpacing: 1.5,
         ),
         prefixIcon: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: FaIcon(icon, color: Colors.white54, size: 16),
+          child: FaIcon(icon, color: Color(0xFF64748B), size: 16),
         ),
-        prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 40,
+          minHeight: 40,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 18,
+          horizontal: 20,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(32),
+          borderSide: BorderSide(color: Color(0xFF1E293B).withOpacity(0.05)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(32),
+          borderSide: BorderSide(color: Color(0xFF1E293B).withOpacity(0.05)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryAmber, width: 1.5),
+          borderRadius: BorderRadius.circular(32),
+          borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(32),
           borderSide: const BorderSide(color: dangerColor, width: 1.5),
         ),
       ),

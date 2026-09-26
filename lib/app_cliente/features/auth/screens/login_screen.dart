@@ -48,10 +48,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         if (error != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(error, style: const TextStyle(fontWeight: FontWeight.bold)),
+              content: Text(
+                error,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               backgroundColor: dangerColor,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(32),
+              ),
             ),
           );
         } else {
@@ -69,9 +74,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       appBar: AppBar(
         title: Text(
           'Acessar',
-          style: GoogleFonts.orbitron(
+          style: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: const Color(0xFF1E293B),
           ),
         ),
         centerTitle: false,
@@ -103,31 +108,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: primaryAmber.withOpacity(0.1),
+            color: Color(0xFF8B5CF6).withOpacity(0.1),
             boxShadow: [
               BoxShadow(
-                color: primaryAmber.withOpacity(0.2),
-                blurRadius: 30,
-                spreadRadius: 5,
+                color: Color(0xFF8B5CF6).withOpacity(0.2),
+                blurRadius: 20,
+                spreadRadius: -5,
               ),
             ],
-            border: Border.all(color: primaryAmber.withOpacity(0.3), width: 1.5),
+            border: Border.all(
+              color: Color(0xFF8B5CF6).withOpacity(0.3),
+              width: 1.5,
+            ),
           ),
-          child: const FaIcon(FontAwesomeIcons.compass, color: primaryAmber, size: 48),
+          child: const FaIcon(
+            FontAwesomeIcons.compass,
+            color: Color(0xFF8B5CF6),
+            size: 48,
+          ),
         ),
         const SizedBox(height: 24),
         Text(
           'ENIGMA CITY',
-          style: GoogleFonts.orbitron(
+          style: GoogleFonts.poppins(
             fontSize: 28,
             fontWeight: FontWeight.w900,
             letterSpacing: 3,
-            color: primaryAmberLight,
+            color: Color(0xFFC4B5FD),
             shadows: [
               Shadow(
-                color: Colors.black.withOpacity(0.5),
-                offset: const Offset(0, 2),
-                blurRadius: 4,
+                color: Color(0xFFF0F4F8).withOpacity(0.5),
+                offset: const Offset(0, 10),
+                blurRadius: 20,
               ),
             ],
           ),
@@ -136,16 +148,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            color: Color(0xFFF0F4F8).withOpacity(0.4),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: Color(0xFF1E293B).withOpacity(0.05)),
           ),
           child: Text(
             'CAÇA AO TESOURO URBANO',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.poppins(
               fontSize: 10,
               letterSpacing: 2.5,
-              color: primaryAmber.withOpacity(0.9),
+              color: Color(0xFF8B5CF6).withOpacity(0.9),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -158,40 +170,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final defaultPinTheme = PinTheme(
       width: 50,
       height: 60,
-      textStyle: GoogleFonts.orbitron(
+      textStyle: GoogleFonts.poppins(
         fontSize: 22,
-        color: primaryAmberLight,
+        color: Color(0xFFC4B5FD),
         fontWeight: FontWeight.w700,
       ),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.4),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-        borderRadius: BorderRadius.circular(12),
+        color: Color(0xFFF0F4F8).withOpacity(0.4),
+        border: Border.all(color: Color(0xFF1E293B).withOpacity(0.1)),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Color(0xFFF0F4F8).withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
     );
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(32),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: cardColor.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
+            color: Color(0xFF1E293B).withOpacity(0.6),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(
+              color: Color(0xFF1E293B).withOpacity(0.08),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Color(0xFFF0F4F8).withOpacity(0.3),
                 blurRadius: 20,
-                spreadRadius: 1,
+                spreadRadius: -5,
                 offset: const Offset(0, 10),
               ),
             ],
@@ -213,30 +228,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     _CpfInputFormatter(),
                   ],
                   validator: (val) {
-                    if (val == null || val.isEmpty) return 'Por favor, insira um CPF';
+                    if (val == null || val.isEmpty)
+                      return 'Por favor, insira um CPF';
                     final cleanCpf = val.replaceAll(RegExp(r'\D'), '');
                     if (cleanCpf.length != 11) return 'CPF incompleto';
                     return null;
                   },
                 ),
                 const SizedBox(height: 24),
-                _buildFieldLabel('SENHA (CÓDIGO SECRETO)', FontAwesomeIcons.key),
+                _buildFieldLabel(
+                  'SENHA (CÓDIGO SECRETO)',
+                  FontAwesomeIcons.key,
+                ),
                 const SizedBox(height: 10),
                 Center(
                   child: Pinput(
                     controller: _passwordController,
                     length: 6,
                     obscureText: true,
-                    obscuringWidget: const FaIcon(FontAwesomeIcons.asterisk, size: 14, color: primaryAmber),
+                    obscuringWidget: const FaIcon(
+                      FontAwesomeIcons.asterisk,
+                      size: 14,
+                      color: Color(0xFF8B5CF6),
+                    ),
                     defaultPinTheme: defaultPinTheme,
                     focusedPinTheme: defaultPinTheme.copyWith(
                       decoration: defaultPinTheme.decoration!.copyWith(
-                        border: Border.all(color: primaryAmber, width: 1.5),
+                        border: Border.all(
+                          color: Color(0xFF8B5CF6),
+                          width: 1.5,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: primaryAmber.withOpacity(0.2),
-                            blurRadius: 8,
-                            spreadRadius: 1,
+                            color: Color(0xFF8B5CF6).withOpacity(0.2),
+                            blurRadius: 20,
+                            spreadRadius: -5,
                           ),
                         ],
                       ),
@@ -261,13 +287,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         : () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => const ForgotPasswordScreen(),
+                                builder: (context) =>
+                                    const ForgotPasswordScreen(),
                               ),
                             );
                           },
                     style: TextButton.styleFrom(
-                      foregroundColor: primaryAmberHover,
-                      textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                      foregroundColor: Color(0xFF7C3AED),
+                      textStyle: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     child: const Text("Esqueceu a senha?"),
                   ),
@@ -278,25 +308,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   width: double.infinity,
                   height: 56,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(32),
                     boxShadow: _isLoading
                         ? []
                         : [
                             BoxShadow(
-                              color: primaryAmber.withOpacity(0.4),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
+                              color: Color(0xFF8B5CF6).withOpacity(0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
                             ),
                           ],
                   ),
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryAmber,
-                      foregroundColor: Colors.black,
+                      backgroundColor: Color(0xFF8B5CF6),
+                      foregroundColor: Color(0xFFF0F4F8),
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(32),
                       ),
                     ),
                     child: _isLoading
@@ -304,7 +334,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             height: 24,
                             width: 24,
                             child: CircularProgressIndicator(
-                              color: Colors.black,
+                              color: Color(0xFFF0F4F8),
                               strokeWidth: 2.5,
                             ),
                           )
@@ -313,14 +343,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             children: [
                               Text(
                                 "INICIAR SESSÃO",
-                                style: GoogleFonts.orbitron(
+                                style: GoogleFonts.poppins(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.5,
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              const FaIcon(FontAwesomeIcons.arrowRightToBracket, size: 16),
+                              const FaIcon(
+                                FontAwesomeIcons.arrowRightToBracket,
+                                size: 16,
+                              ),
                             ],
                           ),
                   ),
@@ -331,7 +364,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     Text(
                       "Novo por aqui? ",
-                      style: GoogleFonts.inter(color: Colors.grey, fontSize: 13),
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey,
+                        fontSize: 13,
+                      ),
                     ),
                     GestureDetector(
                       onTap: _isLoading
@@ -345,8 +381,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             },
                       child: Text(
                         "Aliste-se agora",
-                        style: GoogleFonts.inter(
-                          color: primaryAmber,
+                        style: GoogleFonts.poppins(
+                          color: Color(0xFF8B5CF6),
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
@@ -365,12 +401,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildFieldLabel(String label, FaIconData icon) {
     return Row(
       children: [
-        FaIcon(icon, size: 14, color: primaryAmber),
+        FaIcon(icon, size: 14, color: Color(0xFF8B5CF6)),
         const SizedBox(width: 8),
         Text(
           label,
-          style: GoogleFonts.inter(
-            color: primaryAmber,
+          style: GoogleFonts.poppins(
+            color: Color(0xFF8B5CF6),
             fontSize: 11,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
@@ -393,40 +429,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       validator: validator,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      style: GoogleFonts.orbitron(
-        color: Colors.white,
+      style: GoogleFonts.poppins(
+        color: const Color(0xFF1E293B),
         fontWeight: FontWeight.w600,
         letterSpacing: 1.5,
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: Colors.black.withOpacity(0.3),
+        fillColor: Color(0xFFF0F4F8).withOpacity(0.3),
         hintText: hintText,
-        hintStyle: GoogleFonts.orbitron(
-          color: Colors.white.withOpacity(0.2),
+        hintStyle: GoogleFonts.poppins(
+          color: Color(0xFF1E293B).withOpacity(0.2),
           fontWeight: FontWeight.w600,
           letterSpacing: 1.5,
         ),
         prefixIcon: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: FaIcon(icon, color: Colors.white54, size: 16),
+          child: FaIcon(icon, color: Color(0xFF64748B), size: 16),
         ),
-        prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 40,
+          minHeight: 40,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 18,
+          horizontal: 20,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(32),
+          borderSide: BorderSide(color: Color(0xFF1E293B).withOpacity(0.05)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(32),
+          borderSide: BorderSide(color: Color(0xFF1E293B).withOpacity(0.05)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: primaryAmber, width: 1.5),
+          borderRadius: BorderRadius.circular(32),
+          borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(32),
           borderSide: const BorderSide(color: dangerColor, width: 1.5),
         ),
       ),

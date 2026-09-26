@@ -56,23 +56,20 @@ class CertificateScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 32.0,
                       fontWeight: FontWeight.bold,
-                      color: primaryAmber,
+                      color: Color(0xFF8B5CF6),
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16.0),
                   Text(
                     'Você desvendou um enigma no evento:',
-                    style: const TextStyle(
-                      fontSize: 18.0,
-                      color: secondaryTextColor,
-                    ),
+                    style: TextStyle(fontSize: 18.0, color: secondaryTextColor),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8.0),
                   Text(
                     eventName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24.0,
                       fontWeight: FontWeight.bold,
                     ),
@@ -81,16 +78,13 @@ class CertificateScreen extends StatelessWidget {
                   const SizedBox(height: 16.0),
                   Text(
                     'E ganhou:',
-                    style: const TextStyle(
-                      fontSize: 18.0,
-                      color: secondaryTextColor,
-                    ),
+                    style: TextStyle(fontSize: 18.0, color: secondaryTextColor),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8.0),
                   Text(
                     currencyFormat.format(prize),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 28.0,
                       fontWeight: FontWeight.bold,
                       color: Colors.green,
@@ -118,8 +112,8 @@ class CertificateScreen extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryAmber,
-                      foregroundColor: darkBackground,
+                      backgroundColor: Color(0xFF8B5CF6),
+                      foregroundColor: Color(0xFFF0F4F8),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24.0,
                         vertical: 12.0,

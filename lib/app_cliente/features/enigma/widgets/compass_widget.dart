@@ -161,7 +161,7 @@ class _CompassWidgetState extends State<CompassWidget>
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
               color: Colors.redAccent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(32),
               border: Border.all(color: Colors.redAccent, width: 2),
             ),
             child: Row(
@@ -171,7 +171,7 @@ class _CompassWidgetState extends State<CompassWidget>
                 const SizedBox(width: 8),
                 Text(
                   _formatTime(_remainingSeconds),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.redAccent,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -187,22 +187,22 @@ class _CompassWidgetState extends State<CompassWidget>
           height: 280,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: const Color(
+            color: Color(
               0xFFDCDCDC,
             ), // Cinza clássico da carcaça do Dragon Radar
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.6),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
+                color: Color(0xFFF0F4F8).withValues(alpha: 0.6),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
               const BoxShadow(
-                color: Colors.white,
-                blurRadius: 4,
+                color: const Color(0xFF1E293B),
+                blurRadius: 20,
                 offset: Offset(-2, -2),
               ), // Bezel highlight
             ],
-            border: Border.all(color: const Color(0xFF8B8B8B), width: 8),
+            border: Border.all(color: Color(0xFF8B8B8B), width: 8),
           ),
           child: Padding(
             padding: const EdgeInsets.all(4.0),
@@ -228,16 +228,16 @@ class _CompassWidgetState extends State<CompassWidget>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.black87,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF88C928), width: 2),
+            color: Color(0xFFF0F4F8),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: Color(0xFF88C928), width: 2),
             boxShadow: const [
-              BoxShadow(color: Color(0xFF88C928), blurRadius: 8),
+              BoxShadow(color: Color(0xFF88C928), blurRadius: 20),
             ],
           ),
           child: Text(
             '${distance.toStringAsFixed(0)} M',
-            style: const TextStyle(
+            style: TextStyle(
               color: Color(0xFF88C928),
               fontSize: 24,
               fontWeight: FontWeight.w900,
@@ -280,7 +280,7 @@ class DragonRadarPainter extends CustomPainter {
 
     // 2. Grade Cibernética (Grid Lines)
     final gridPaint = Paint()
-      ..color = const Color(0xFFB5E655).withValues(alpha: 0.4)
+      ..color = Color(0xFFB5E655).withValues(alpha: 0.4)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
@@ -322,12 +322,11 @@ class DragonRadarPainter extends CustomPainter {
 
     // O Efeito Neon da Esfera
     final glowPaint = Paint()
-      ..color = const Color(0xFFC0A060)
+      ..color = Color(0xFFC0A060)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
     canvas.drawCircle(targetOffset, 12, glowPaint);
 
-    final dotPaint = Paint()
-      ..color = const Color(0xFFFFD700); // Amarelo Dourado
+    final dotPaint = Paint()..color = Color(0xFFFFD700); // Amarelo Dourado
     canvas.drawCircle(targetOffset, 8, dotPaint);
 
     // Pequeno centro vermelho (simulando a estrela)
@@ -339,8 +338,8 @@ class DragonRadarPainter extends CustomPainter {
       ..shader = SweepGradient(
         colors: [
           Colors.transparent,
-          const Color(0xFFB5E655).withValues(alpha: 0.1),
-          const Color(0xFFE8FFB7).withValues(alpha: 0.6),
+          Color(0xFFB5E655).withValues(alpha: 0.1),
+          Color(0xFFE8FFB7).withValues(alpha: 0.6),
         ],
         stops: const [0.0, 0.8, 1.0],
         transform: GradientRotation(scannerAngle - math.pi / 2),
@@ -358,7 +357,7 @@ class DragonRadarPainter extends CustomPainter {
 
     // Linha forte do scanner
     final scannerLinePaint = Paint()
-      ..color = const Color(0xFFE8FFB7)
+      ..color = Color(0xFFE8FFB7)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
     final lineEndX = center.dx + radius * math.cos(scannerAngle - math.pi / 2);
@@ -378,7 +377,7 @@ class DragonRadarPainter extends CustomPainter {
     path.close();
 
     // Sombra do jogador
-    canvas.drawShadow(path, Colors.black, 4, true);
+    canvas.drawShadow(path, Color(0xFFF0F4F8), 4, true);
     canvas.drawPath(path, playerPaint);
   }
 

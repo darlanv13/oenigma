@@ -49,7 +49,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final homeDataAsync = ref.watch(homeEventsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: Color(0xFFF0F4F8),
       body: SafeArea(
         child: homeDataAsync.when(
           loading: () => const Center(
@@ -68,7 +68,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const Text(
                   'Erro ao carregar dados.',
                   style: TextStyle(
-                    color: Color(0xFF1E293B),
+                    color: const Color(0xFF1E293B),
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -78,7 +78,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 32.0),
                   child: Text(
                     '$error',
-                    style: const TextStyle(color: Color(0xFF64748B)),
+                    style: TextStyle(color: Color(0xFF64748B)),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -94,10 +94,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFC4B5FD),
-                    foregroundColor: const Color(0xFF4C1D95),
+                    backgroundColor: Color(0xFFC4B5FD),
+                    foregroundColor: Color(0xFF4C1D95),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(32),
                     ),
                   ),
                 ),
@@ -120,7 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
             return RefreshIndicator(
               onRefresh: _reloadData,
-              color: const Color(0xFFFFD54F),
+              color: Color(0xFFFFD54F),
 
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -183,7 +183,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: Color(0xFF1E293B).withValues(alpha: 0.05),
                   ),
                   child: const FaIcon(
                     FontAwesomeIcons.calendarXmark,
@@ -245,18 +245,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   return Container(
                     width: 10.0,
                     height: 10.0,
-                    margin: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 4.0,
+                      vertical: 8.0,
+                    ),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: _currentCarouselIndex == entry.key
-                          ? const Color(0xFF8B5CF6)
-                          : const Color(0xFFE2E8F0),
+                          ? Color(0xFF8B5CF6)
+                          : Color(0xFFE2E8F0),
                       boxShadow: _currentCarouselIndex == entry.key
                           ? [
                               BoxShadow(
-                                color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                                color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
                               ),
                             ]
                           : [],
@@ -266,7 +269,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ],
           );
-        }
+        },
       ),
     );
   }

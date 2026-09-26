@@ -135,7 +135,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: Color(0xFFF0F4F8),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Text(
@@ -165,11 +165,11 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(32),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
-                          blurRadius: 10,
+                          color: Color(0xFFCBD5E1).withValues(alpha: 0.5),
+                          blurRadius: 20,
                           offset: const Offset(4, 4),
                         ),
                       ],
@@ -188,9 +188,9 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
                                 color: _selectedTimeFilter == 'all_time'
-                                    ? const Color(0xFFC4B5FD)
+                                    ? Color(0xFFC4B5FD)
                                     : Colors.transparent,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(32),
                               ),
                               child: Text(
                                 'Global',
@@ -198,8 +198,8 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: _selectedTimeFilter == 'all_time'
-                                      ? const Color(0xFF4C1D95)
-                                      : const Color(0xFF64748B),
+                                      ? Color(0xFF4C1D95)
+                                      : Color(0xFF64748B),
                                 ),
                               ),
                             ),
@@ -217,9 +217,9 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
                                 color: _selectedTimeFilter == 'monthly'
-                                    ? const Color(0xFFC4B5FD)
+                                    ? Color(0xFFC4B5FD)
                                     : Colors.transparent,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(32),
                               ),
                               child: Text(
                                 'Mensal',
@@ -227,8 +227,8 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: _selectedTimeFilter == 'monthly'
-                                      ? const Color(0xFF4C1D95)
-                                      : const Color(0xFF64748B),
+                                      ? Color(0xFF4C1D95)
+                                      : Color(0xFF64748B),
                                 ),
                               ),
                             ),
