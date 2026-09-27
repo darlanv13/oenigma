@@ -1,3 +1,4 @@
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
@@ -111,13 +112,13 @@ class _FindAndWinProgressScreenState
                         children: [
                           Container(
                             decoration: BoxDecoration(
-                              color: Color(0xFF8B5CF6).withValues(alpha: 0.06),
+                              color: primaryAmber.withValues(alpha: 0.06),
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
                               icon: const FaIcon(
                                 FontAwesomeIcons.chevronLeft,
-                                color: Color(0xFF8B5CF6),
+                                color: primaryAmber,
                                 size: 16,
                               ),
                               onPressed: () => Navigator.pop(context),
@@ -128,7 +129,7 @@ class _FindAndWinProgressScreenState
                               'Enigmas',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
-                                color: Color(0xFFC4B5FD),
+                                color: primaryAmberLight,
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.5,
@@ -141,7 +142,7 @@ class _FindAndWinProgressScreenState
                               alignment: Alignment.centerRight,
                               child: FaIcon(
                                 FontAwesomeIcons.ellipsisVertical,
-                                color: Color(0xFF8B5CF6),
+                                color: primaryAmber,
                                 size: 18,
                               ),
                             ),
@@ -168,14 +169,14 @@ class _FindAndWinProgressScreenState
                               children: [
                                 const FaIcon(
                                   FontAwesomeIcons.mapPin,
-                                  color: Color(0xFF8B5CF6),
+                                  color: primaryAmber,
                                   size: 14,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Ache & Ganhe',
                                   style: GoogleFonts.poppins(
-                                    color: Color(0xFFC4B5FD),
+                                    color: primaryAmberLight,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -202,14 +203,14 @@ class _FindAndWinProgressScreenState
                                 text: TextSpan(
                                   style: GoogleFonts.poppins(
                                     fontSize: 12,
-                                    color: Color(0xFF7C3AED),
+                                    color: primaryAmberHover,
                                   ),
                                   children: [
                                     TextSpan(
                                       text:
                                           '${enigmas.where((e) => e.status == 'closed').length}',
                                       style: TextStyle(
-                                        color: Color(0xFF8B5CF6),
+                                        color: primaryAmber,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -231,7 +232,7 @@ class _FindAndWinProgressScreenState
                   !snapshot.hasData)
                 const SliverFillRemaining(
                   child: Center(
-                    child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+                    child: CircularProgressIndicator(color: primaryAmber),
                   ),
                 )
               // Estado Vazio (Finalizado)
@@ -247,14 +248,12 @@ class _FindAndWinProgressScreenState
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: Color(0xFFF1F5F9),
-                            border: Border.all(
-                              color: Color(0xFFE2E8F0),
-                            ),
+                            border: Border.all(color: Color(0xFFE2E8F0)),
                           ),
                           child: const FaIcon(
                             FontAwesomeIcons.flagCheckered,
                             size: 50,
-                            color: Color(0xFF8B5CF6),
+                            color: primaryAmber,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -263,7 +262,7 @@ class _FindAndWinProgressScreenState
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
-                            color: const Color(0xFF1E293B),
+                            color: textColor,
                             letterSpacing: 2,
                           ),
                         ),
@@ -307,7 +306,7 @@ class _FindAndWinProgressScreenState
                     decoration: BoxDecoration(
                       border: Border(
                         top: BorderSide(
-                          color: Color(0xFF8B5CF6).withValues(alpha: 0.06),
+                          color: primaryAmber.withValues(alpha: 0.06),
                         ),
                       ),
                     ),
@@ -317,7 +316,7 @@ class _FindAndWinProgressScreenState
                       children: [
                         const FaIcon(
                           FontAwesomeIcons.shieldHalved,
-                          color: Color(0xFF8B5CF6),
+                          color: primaryAmber,
                           size: 10,
                         ),
                         const SizedBox(width: 4),

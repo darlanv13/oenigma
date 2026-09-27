@@ -1,13 +1,12 @@
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
-import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/app_cliente/features/home/providers/home_events_provider.dart';
 import 'package:oenigma/app_cliente/features/home/screens/home_screen.dart';
 import 'package:oenigma/app_cliente/features/auth/screens/login_screen.dart';
 import 'package:oenigma/app_cliente/features/profile/screens/profile_screen.dart';
-import 'package:oenigma/app_cliente/features/ranking/screens/ranking_screen.dart';
 import 'package:oenigma/app_cliente/features/wallet/screens/wallet_screen.dart';
 
 class MainNavigationScreen extends ConsumerStatefulWidget {
@@ -32,11 +31,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final homeDataAsync = ref.watch(homeEventsProvider);
 
     return Scaffold(
-      backgroundColor: Color(0xFFF0F4F8),
+      backgroundColor: darkBackground,
       body: homeDataAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
-        ),
+        loading: () =>
+            const Center(child: CircularProgressIndicator(color: primaryAmber)),
         error: (error, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -50,7 +48,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               const Text(
                 'Erro ao carregar dados.',
                 style: TextStyle(
-                  color: const Color(0xFF1E293B),
+                  color: textColor,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -76,7 +74,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                   style: TextStyle(fontWeight: FontWeight.w900),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFC4B5FD),
+                  backgroundColor: primaryAmberLight,
                   foregroundColor: Color(0xFF4C1D95),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(32),
@@ -91,28 +89,18 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           ),
         ),
         data: (data) {
-          final List<EventModel> events = (data['events'] as List)
-              .map((e) => EventModel.fromMap(Map<String, dynamic>.from(e)))
-              .toList();
           final UserWalletModel walletData = UserWalletModel.fromMap(
             Map<String, dynamic>.from(data['walletData']),
           );
           final Map<String, dynamic> playerData = data['playerData'] != null
               ? Map<String, dynamic>.from(data['playerData'])
               : {};
-          final List<dynamic> allPlayers = data['allPlayers'] ?? [];
 
           final bool isGuest = walletData.objectId == "visitante";
 
           final List<Widget> screens = [
             const HomeScreen(),
             isGuest ? const LoginScreen() : const WalletScreen(),
-            RankingScreen(
-              availableEvents: events
-                  .where((e) => e.status != 'closed')
-                  .toList(),
-              allPlayers: allPlayers,
-            ),
             isGuest
                 ? const LoginScreen()
                 : ProfileScreen(playerData: playerData, walletData: walletData),
@@ -131,7 +119,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           child: BottomNavigationBar(
             backgroundColor: Colors.white,
             type: BottomNavigationBarType.fixed,
-            selectedItemColor: Color(0xFF8B5CF6),
+            selectedItemColor: primaryAmber,
             unselectedItemColor: Color(0xFF94A3B8),
             elevation: 0,
             currentIndex: _selectedIndex,
@@ -152,16 +140,16 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               BottomNavigationBarItem(
                 icon: const Padding(
                   padding: EdgeInsets.only(bottom: 4.0),
-                  child: FaIcon(FontAwesomeIcons.compass, size: 22),
+                  child: FaIcon(FontAwesomeIcons.mapLocationDot, size: 22),
                 ),
                 activeIcon: Padding(
                   padding: const EdgeInsets.only(bottom: 4.0),
                   child: FaIcon(
-                    FontAwesomeIcons.compass,
+                    FontAwesomeIcons.mapLocationDot,
                     size: 22,
                     shadows: [
                       Shadow(
-                        color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                        color: primaryAmber.withValues(alpha: 0.3),
                         blurRadius: 20,
                       ),
                     ],
@@ -181,33 +169,13 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     size: 22,
                     shadows: [
                       Shadow(
-                        color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                        color: primaryAmber.withValues(alpha: 0.3),
                         blurRadius: 20,
                       ),
                     ],
                   ),
                 ),
                 label: 'TESOURO',
-              ),
-              BottomNavigationBarItem(
-                icon: const Padding(
-                  padding: EdgeInsets.only(bottom: 4.0),
-                  child: FaIcon(FontAwesomeIcons.trophy, size: 22),
-                ),
-                activeIcon: Padding(
-                  padding: const EdgeInsets.only(bottom: 4.0),
-                  child: FaIcon(
-                    FontAwesomeIcons.trophy,
-                    size: 22,
-                    shadows: [
-                      Shadow(
-                        color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
-                        blurRadius: 20,
-                      ),
-                    ],
-                  ),
-                ),
-                label: 'RANKING',
               ),
               BottomNavigationBarItem(
                 icon: const Padding(
@@ -221,7 +189,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
                     size: 22,
                     shadows: [
                       Shadow(
-                        color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                        color: primaryAmber.withValues(alpha: 0.3),
                         blurRadius: 20,
                       ),
                     ],

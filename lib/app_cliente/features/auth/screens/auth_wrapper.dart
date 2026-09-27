@@ -39,9 +39,7 @@ class AuthWrapper extends ConsumerWidget {
       },
       loading: () => const Scaffold(
         backgroundColor: Colors.transparent,
-        body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
-        ),
+        body: Center(child: CircularProgressIndicator(color: primaryAmber)),
       ),
       error: (error, stackTrace) => Scaffold(
         backgroundColor: Colors.transparent,
@@ -62,13 +60,13 @@ class AuthWrapper extends ConsumerWidget {
               const FaIcon(
                 FontAwesomeIcons.desktop,
                 size: 80,
-                color: Color(0xFF8B5CF6),
+                color: primaryAmber,
               ),
               const SizedBox(height: 24),
               const Text(
                 'Acesso Restrito',
                 style: TextStyle(
-                  color: const Color(0xFF1E293B),
+                  color: textColor,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
@@ -92,8 +90,8 @@ class AuthWrapper extends ConsumerWidget {
                 icon: const FaIcon(FontAwesomeIcons.arrowRightFromBracket),
                 label: const Text('Sair e Trocar de Conta'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF8B5CF6),
-                  foregroundColor: Color(0xFFF0F4F8),
+                  backgroundColor: primaryAmber,
+                  foregroundColor: darkBackground,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
                     vertical: 12,

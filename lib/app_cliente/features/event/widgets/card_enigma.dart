@@ -1,3 +1,4 @@
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -109,7 +110,7 @@ class _CardEnigmaState extends State<CardEnigma> {
 
     Color statusColor;
     if (isTemporarilyBlocked) {
-      statusColor = Color(0xFFC0A060); // Gold for completed
+      statusColor = primaryAmber; // Gold for completed
     } else if (!isClosed) {
       statusColor = Color(0xFF4CAF50); // Green for available
     } else {
@@ -128,7 +129,7 @@ class _CardEnigmaState extends State<CardEnigma> {
         duration: const Duration(milliseconds: 150),
         child: Container(
           decoration: BoxDecoration(
-            color: Color(0xFF16181C).withValues(alpha: 0.6),
+            color: Colors.white.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(32),
             border: Border(left: BorderSide(color: statusColor, width: 3)),
           ),
@@ -138,7 +139,7 @@ class _CardEnigmaState extends State<CardEnigma> {
               Positioned.fill(
                 child: CustomPaint(
                   painter: MapDotsPainter(
-                    dotColor: Color(0xFFC0A060).withValues(alpha: 0.04),
+                    dotColor: primaryAmber.withValues(alpha: 0.04),
                   ),
                 ),
               ),
@@ -156,9 +157,9 @@ class _CardEnigmaState extends State<CardEnigma> {
                       height: 40,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Color(0xFFC0A060).withValues(alpha: 0.08),
+                        color: primaryAmber.withValues(alpha: 0.08),
                         border: Border.all(
-                          color: Color(0xFFC0A060).withValues(alpha: 0.1),
+                          color: primaryAmber.withValues(alpha: 0.1),
                         ),
                       ),
                       child: Center(
@@ -185,7 +186,7 @@ class _CardEnigmaState extends State<CardEnigma> {
                                 child: Text(
                                   widget.enigma.title,
                                   style: GoogleFonts.poppins(
-                                    color: Color(0xFFF0E6C5),
+                                    color: primaryAmberLight,
                                     fontWeight: FontWeight.w600,
                                     fontSize: 13,
                                   ),
@@ -215,7 +216,7 @@ class _CardEnigmaState extends State<CardEnigma> {
                                       ? 'CONCLUÍDO'
                                       : 'DISPONÍVEL',
                                   style: GoogleFonts.poppins(
-                                    color: Color(0xFFC0A060),
+                                    color: primaryAmber,
                                     fontSize: 8,
                                     fontWeight: FontWeight.w600,
                                     letterSpacing: 0.5,
@@ -248,13 +249,13 @@ class _CardEnigmaState extends State<CardEnigma> {
                                   FaIcon(
                                     FontAwesomeIcons.star,
                                     size: 8,
-                                    color: Color(0xFFC0A060),
+                                    color: primaryAmber,
                                   ),
                                   const SizedBox(width: 2),
                                   Text(
                                     widget.enigma.difficulty,
                                     style: GoogleFonts.poppins(
-                                      color: Color(0xFFB0A07A),
+                                      color: primaryAmberHover,
                                       fontSize: 10,
                                     ),
                                   ),
@@ -270,7 +271,7 @@ class _CardEnigmaState extends State<CardEnigma> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Color(0xFFC0A060).withValues(alpha: 0.08),
+                              color: primaryAmber.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(32),
                               border: Border.all(
                                 color: Color(
@@ -284,13 +285,13 @@ class _CardEnigmaState extends State<CardEnigma> {
                                 const FaIcon(
                                   FontAwesomeIcons.coins,
                                   size: 10,
-                                  color: Color(0xFFC0A060),
+                                  color: primaryAmber,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   'R\$ ${currencyFormat.format(widget.enigma.prize).trim()}',
                                   style: GoogleFonts.poppins(
-                                    color: Color(0xFFF0E6C5),
+                                    color: primaryAmberLight,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
                                   ),

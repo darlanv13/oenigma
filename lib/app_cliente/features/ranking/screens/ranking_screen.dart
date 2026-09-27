@@ -135,14 +135,14 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Color(0xFFF0F4F8),
+      backgroundColor: darkBackground,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Text(
           'Ranking',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1E293B),
+            color: textColor,
             fontSize: 20,
           ),
         ),
@@ -188,7 +188,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
                                 color: _selectedTimeFilter == 'all_time'
-                                    ? Color(0xFFC4B5FD)
+                                    ? primaryAmberLight
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(32),
                               ),
@@ -217,7 +217,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
                                 color: _selectedTimeFilter == 'monthly'
-                                    ? Color(0xFFC4B5FD)
+                                    ? primaryAmberLight
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(32),
                               ),

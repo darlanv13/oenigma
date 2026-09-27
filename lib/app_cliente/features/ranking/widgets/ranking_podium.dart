@@ -1,3 +1,4 @@
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oenigma/core/models/ranking_player_model.dart';
@@ -145,7 +146,7 @@ class _PodiumPlace extends StatelessWidget {
                   child: Text(
                     "$placeº",
                     style: GoogleFonts.poppins(
-                      color: const Color(0xFF1E293B),
+                      color: textColor,
                       fontWeight: FontWeight.w900,
                       fontSize: 14,
                     ),
@@ -159,7 +160,7 @@ class _PodiumPlace extends StatelessWidget {
             player.name.split(' ').first,
             style: GoogleFonts.poppins(
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF1E293B),
+              color: textColor,
               fontSize: 14,
             ),
             overflow: TextOverflow.ellipsis,

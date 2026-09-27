@@ -71,7 +71,7 @@ class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+              child: CircularProgressIndicator(color: primaryAmber),
             );
           }
 
@@ -81,7 +81,7 @@ class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
 
           return RefreshIndicator(
             onRefresh: _loadEventData,
-            color: Color(0xFF8B5CF6),
+            color: primaryAmber,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.symmetric(

@@ -56,7 +56,7 @@ class CertificateScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 32.0,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF8B5CF6),
+                      color: primaryAmber,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -112,8 +112,8 @@ class CertificateScreen extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF8B5CF6),
-                      foregroundColor: Color(0xFFF0F4F8),
+                      backgroundColor: primaryAmber,
+                      foregroundColor: darkBackground,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24.0,
                         vertical: 12.0,

@@ -1,3 +1,4 @@
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/core/models/ranking_player_model.dart';
@@ -32,7 +33,7 @@ class RankingList extends ConsumerWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(32),
             border: isCurrentUser
-                ? Border.all(color: Color(0xFF8B5CF6), width: 1.5)
+                ? Border.all(color: primaryAmber, width: 1.5)
                 : null,
             boxShadow: [
               BoxShadow(
@@ -60,9 +61,7 @@ class RankingList extends ConsumerWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isCurrentUser
-                        ? Color(0xFF8B5CF6)
-                        : Colors.transparent,
+                    color: isCurrentUser ? primaryAmber : Colors.transparent,
                     width: 2,
                   ),
                 ),
@@ -91,7 +90,7 @@ class RankingList extends ConsumerWidget {
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: const Color(0xFF1E293B),
+                        color: textColor,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -104,7 +103,7 @@ class RankingList extends ConsumerWidget {
                   Text(
                     '${player.phasesCompleted}',
                     style: GoogleFonts.poppins(
-                      color: Color(0xFF8B5CF6),
+                      color: primaryAmber,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),

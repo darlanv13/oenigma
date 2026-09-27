@@ -1,3 +1,4 @@
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -130,7 +131,7 @@ class _CompassWidgetState extends State<CompassWidget>
 
     if (_currentPosition == null) {
       return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF88C928)),
+        child: CircularProgressIndicator(color: primaryAmber),
       );
     }
 
@@ -192,12 +193,12 @@ class _CompassWidgetState extends State<CompassWidget>
             ), // Cinza clássico da carcaça do Dragon Radar
             boxShadow: [
               BoxShadow(
-                color: Color(0xFFF0F4F8).withValues(alpha: 0.6),
+                color: darkBackground.withValues(alpha: 0.6),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
               const BoxShadow(
-                color: const Color(0xFF1E293B),
+                color: textColor,
                 blurRadius: 20,
                 offset: Offset(-2, -2),
               ), // Bezel highlight
@@ -228,17 +229,15 @@ class _CompassWidgetState extends State<CompassWidget>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           decoration: BoxDecoration(
-            color: Color(0xFFF0F4F8),
+            color: darkBackground,
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Color(0xFF88C928), width: 2),
-            boxShadow: const [
-              BoxShadow(color: Color(0xFF88C928), blurRadius: 20),
-            ],
+            border: Border.all(color: primaryAmber, width: 2),
+            boxShadow: const [BoxShadow(color: primaryAmber, blurRadius: 20)],
           ),
           child: Text(
             '${distance.toStringAsFixed(0)} M',
             style: TextStyle(
-              color: Color(0xFF88C928),
+              color: primaryAmber,
               fontSize: 24,
               fontWeight: FontWeight.w900,
               fontFamily: 'Courier', // Fonte estilo digital
@@ -273,14 +272,14 @@ class DragonRadarPainter extends CustomPainter {
     // 1. Fundo Verde do Radar
     final bgPaint = Paint()
       ..shader = RadialGradient(
-        colors: const [Color(0xFF88C928), Color(0xFF426815)],
+        colors: const [primaryAmber, primaryAmberHover],
         stops: const [0.3, 1.0],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, bgPaint);
 
     // 2. Grade Cibernética (Grid Lines)
     final gridPaint = Paint()
-      ..color = Color(0xFFB5E655).withValues(alpha: 0.4)
+      ..color = primaryAmberLight.withValues(alpha: 0.4)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
@@ -322,7 +321,7 @@ class DragonRadarPainter extends CustomPainter {
 
     // O Efeito Neon da Esfera
     final glowPaint = Paint()
-      ..color = Color(0xFFC0A060)
+      ..color = primaryAmber
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
     canvas.drawCircle(targetOffset, 12, glowPaint);
 
@@ -338,8 +337,8 @@ class DragonRadarPainter extends CustomPainter {
       ..shader = SweepGradient(
         colors: [
           Colors.transparent,
-          Color(0xFFB5E655).withValues(alpha: 0.1),
-          Color(0xFFE8FFB7).withValues(alpha: 0.6),
+          primaryAmberLight.withValues(alpha: 0.1),
+          primaryAmberLight.withValues(alpha: 0.6),
         ],
         stops: const [0.0, 0.8, 1.0],
         transform: GradientRotation(scannerAngle - math.pi / 2),
@@ -357,7 +356,7 @@ class DragonRadarPainter extends CustomPainter {
 
     // Linha forte do scanner
     final scannerLinePaint = Paint()
-      ..color = Color(0xFFE8FFB7)
+      ..color = primaryAmberLight
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
     final lineEndX = center.dx + radius * math.cos(scannerAngle - math.pi / 2);
@@ -377,7 +376,7 @@ class DragonRadarPainter extends CustomPainter {
     path.close();
 
     // Sombra do jogador
-    canvas.drawShadow(path, Color(0xFFF0F4F8), 4, true);
+    canvas.drawShadow(path, darkBackground, 4, true);
     canvas.drawPath(path, playerPaint);
   }
 

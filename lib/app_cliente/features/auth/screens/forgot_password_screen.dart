@@ -70,10 +70,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       SnackBar(
         content: Text(
           message,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF1E293B),
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: textColor),
         ),
         backgroundColor: isError ? dangerColor : Colors.green[700],
         behavior: SnackBarBehavior.floating,
@@ -91,7 +88,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           'Recuperar Acesso',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1E293B),
+            color: textColor,
           ),
         ),
         centerTitle: false,
@@ -100,7 +97,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         leading: IconButton(
           icon: const FaIcon(
             FontAwesomeIcons.arrowLeft,
-            color: Color(0xFF8B5CF6),
+            color: primaryAmber,
             size: 20,
           ),
           onPressed: () => Navigator.of(context).pop(),
@@ -131,22 +128,22 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Color(0xFF8B5CF6).withOpacity(0.1),
+            color: primaryAmber.withOpacity(0.1),
             boxShadow: [
               BoxShadow(
-                color: Color(0xFF8B5CF6).withOpacity(0.2),
+                color: primaryAmber.withOpacity(0.2),
                 blurRadius: 20,
                 spreadRadius: -5,
               ),
             ],
             border: Border.all(
-              color: Color(0xFF8B5CF6).withOpacity(0.3),
+              color: primaryAmber.withOpacity(0.3),
               width: 1.5,
             ),
           ),
           child: const FaIcon(
             FontAwesomeIcons.userShield,
-            color: Color(0xFF8B5CF6),
+            color: primaryAmber,
             size: 48,
           ),
         ),
@@ -157,10 +154,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             fontSize: 24,
             fontWeight: FontWeight.w900,
             letterSpacing: 2,
-            color: Color(0xFFC4B5FD),
+            color: primaryAmberLight,
             shadows: [
               Shadow(
-                color: Color(0xFFF0F4F8).withOpacity(0.5),
+                color: darkBackground.withOpacity(0.5),
                 offset: const Offset(0, 10),
                 blurRadius: 20,
               ),
@@ -193,15 +190,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         child: Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: Color(0xFF1E293B).withOpacity(0.6),
+            color: textColor.withOpacity(0.6),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(
-              color: Color(0xFF1E293B).withOpacity(0.08),
-              width: 1,
-            ),
+            border: Border.all(color: textColor.withOpacity(0.08), width: 1),
             boxShadow: [
               BoxShadow(
-                color: Color(0xFFF0F4F8).withOpacity(0.3),
+                color: darkBackground.withOpacity(0.3),
                 blurRadius: 20,
                 spreadRadius: -5,
                 offset: const Offset(0, 10),
@@ -245,7 +239,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         ? []
                         : [
                             BoxShadow(
-                              color: Color(0xFF8B5CF6).withOpacity(0.4),
+                              color: primaryAmber.withOpacity(0.4),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -254,8 +248,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _handleResetPassword,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF8B5CF6),
-                      foregroundColor: Color(0xFFF0F4F8),
+                      backgroundColor: primaryAmber,
+                      foregroundColor: darkBackground,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(32),
@@ -266,7 +260,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             height: 24,
                             width: 24,
                             child: CircularProgressIndicator(
-                              color: Color(0xFFF0F4F8),
+                              color: darkBackground,
                               strokeWidth: 2.5,
                             ),
                           )
@@ -319,12 +313,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Widget _buildFieldLabel(String label, FaIconData icon) {
     return Row(
       children: [
-        FaIcon(icon, size: 14, color: Color(0xFF8B5CF6)),
+        FaIcon(icon, size: 14, color: primaryAmber),
         const SizedBox(width: 8),
         Text(
           label,
           style: GoogleFonts.poppins(
-            color: Color(0xFF8B5CF6),
+            color: primaryAmber,
             fontSize: 11,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
@@ -348,16 +342,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       style: GoogleFonts.poppins(
-        color: const Color(0xFF1E293B),
+        color: textColor,
         fontWeight: FontWeight.w600,
         letterSpacing: 1.5,
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: Color(0xFFF0F4F8).withOpacity(0.3),
+        fillColor: darkBackground.withOpacity(0.3),
         hintText: hintText,
         hintStyle: GoogleFonts.poppins(
-          color: Color(0xFF1E293B).withOpacity(0.2),
+          color: textColor.withOpacity(0.2),
           fontWeight: FontWeight.w600,
           letterSpacing: 1.5,
         ),
@@ -375,15 +369,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(32),
-          borderSide: BorderSide(color: Color(0xFF1E293B).withOpacity(0.05)),
+          borderSide: BorderSide(color: textColor.withOpacity(0.05)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(32),
-          borderSide: BorderSide(color: Color(0xFF1E293B).withOpacity(0.05)),
+          borderSide: BorderSide(color: textColor.withOpacity(0.05)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(32),
-          borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 1.5),
+          borderSide: const BorderSide(color: primaryAmber, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(32),

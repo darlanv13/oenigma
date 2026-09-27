@@ -1,3 +1,4 @@
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -124,7 +125,7 @@ class _EventCardState extends State<EventCard> {
                                   style: GoogleFonts.poppins(
                                     fontSize: 28, // 1.75rem
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF1E293B),
+                                    color: textColor,
                                     letterSpacing: -0.5,
                                   ),
                                 ),
@@ -272,7 +273,7 @@ class _EventCardState extends State<EventCard> {
                             children: [
                               const FaIcon(
                                 FontAwesomeIcons.ticket,
-                                color: Color(0xFF1E293B),
+                                color: textColor,
                                 size: 14,
                               ),
                               const SizedBox(width: 8),
@@ -281,7 +282,7 @@ class _EventCardState extends State<EventCard> {
                                     ? "ENTRADA GRÁTIS"
                                     : "INSCRIÇÃO: R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}",
                                 style: GoogleFonts.poppins(
-                                  color: Color(0xFF1E293B),
+                                  color: textColor,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 1.0,
@@ -312,7 +313,7 @@ class _EventCardState extends State<EventCard> {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          color: Color(0xFF1E293B).withValues(alpha: 0.85),
+          color: textColor.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(32),
         ),
         child: Column(
@@ -323,7 +324,7 @@ class _EventCardState extends State<EventCard> {
             Text(
               'FINALIZADO',
               style: GoogleFonts.poppins(
-                color: Color(0xFF1E293B),
+                color: textColor,
                 fontWeight: FontWeight.w900,
                 fontSize: 24,
                 letterSpacing: 3,
@@ -382,7 +383,7 @@ class _EventCardState extends State<EventCard> {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          color: Color(0xFF1E293B).withValues(alpha: 0.85),
+          color: textColor.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(32),
         ),
         child: Center(
@@ -405,7 +406,7 @@ class _EventCardState extends State<EventCard> {
               Text(
                 'EM BREVE',
                 style: GoogleFonts.poppins(
-                  color: Color(0xFF1E293B),
+                  color: textColor,
                   fontWeight: FontWeight.w900,
                   fontSize: 24,
                   letterSpacing: 6,

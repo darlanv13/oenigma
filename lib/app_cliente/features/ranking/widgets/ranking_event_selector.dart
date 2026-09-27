@@ -1,3 +1,4 @@
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -33,11 +34,11 @@ class RankingEventSelector extends StatelessWidget {
       child: DropdownButton<String>(
         value: selectedEventId,
         isExpanded: true,
-        dropdownColor: Color(0xFF1E293B),
+        dropdownColor: textColor,
         borderRadius: BorderRadius.circular(32),
         icon: const FaIcon(
           FontAwesomeIcons.chevronDown,
-          color: Color(0xFF8B5CF6),
+          color: primaryAmber,
           size: 16,
         ),
         underline: const SizedBox(),
@@ -50,7 +51,7 @@ class RankingEventSelector extends StatelessWidget {
             child: Text(
               event.name,
               style: GoogleFonts.poppins(
-                color: const Color(0xFF1E293B),
+                color: textColor,
                 fontWeight: FontWeight.bold,
               ),
               overflow: TextOverflow.ellipsis,

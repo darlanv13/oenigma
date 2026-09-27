@@ -26,12 +26,12 @@ class ProgressHeader extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Color(0xFF1E293B).withValues(alpha: 0.4),
+            color: textColor.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Color(0xFF1E293B).withValues(alpha: 0.1)),
+            border: Border.all(color: textColor.withValues(alpha: 0.1)),
             boxShadow: [
               BoxShadow(
-                color: Color(0xFFF0F4F8).withValues(alpha: 0.2),
+                color: darkBackground.withValues(alpha: 0.2),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -45,12 +45,12 @@ class ProgressHeader extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                      color: primaryAmber.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: const FaIcon(
                       FontAwesomeIcons.route,
-                      color: Color(0xFF8B5CF6),
+                      color: primaryAmber,
                       size: 16,
                     ),
                   ),
@@ -72,7 +72,7 @@ class ProgressHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFFF0F4F8).withValues(alpha: 0.8),
+                      color: darkBackground.withValues(alpha: 0.8),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                       blurStyle: BlurStyle.inner,
@@ -84,10 +84,10 @@ class ProgressHeader extends StatelessWidget {
                     Container(
                       height: 12,
                       decoration: BoxDecoration(
-                        color: Color(0xFFF0F4F8),
+                        color: darkBackground,
                         borderRadius: BorderRadius.circular(32),
                         border: Border.all(
-                          color: Color(0xFF1E293B).withValues(alpha: 0.05),
+                          color: textColor.withValues(alpha: 0.05),
                         ),
                       ),
                     ),
@@ -100,14 +100,14 @@ class ProgressHeader extends StatelessWidget {
                           height: 12,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF8B5CF6), Color(0xFFFFD54F)],
+                              colors: [primaryAmber, primaryAmber],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
                             borderRadius: BorderRadius.circular(32),
                             boxShadow: [
                               BoxShadow(
-                                color: Color(0xFF8B5CF6).withValues(alpha: 0.6),
+                                color: primaryAmber.withValues(alpha: 0.6),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -134,7 +134,7 @@ class ProgressHeader extends StatelessWidget {
                   Text(
                     '$completedPhases / $totalPhases',
                     style: TextStyle(
-                      color: const Color(0xFF1E293B),
+                      color: textColor,
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                     ),

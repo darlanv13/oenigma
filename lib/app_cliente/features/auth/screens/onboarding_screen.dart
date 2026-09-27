@@ -27,16 +27,16 @@ class OnboardingScreen extends StatelessWidget {
       titleTextStyle: TextStyle(
         fontSize: 28.0,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF8B5CF6),
+        color: primaryAmber,
       ),
       bodyTextStyle: bodyStyle,
       bodyPadding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
-      pageColor: Color(0xFFF0F4F8),
+      pageColor: darkBackground,
       imagePadding: EdgeInsets.zero,
     );
 
     return IntroductionScreen(
-      globalBackgroundColor: Color(0xFFF0F4F8),
+      globalBackgroundColor: darkBackground,
       pages: [
         PageViewModel(
           title: "Bem-vindo ao O Enigma!",
@@ -46,7 +46,7 @@ class OnboardingScreen extends StatelessWidget {
             child: FaIcon(
               FontAwesomeIcons.compass,
               size: 140,
-              color: Color(0xFF8B5CF6),
+              color: primaryAmber,
             ),
           ),
           decoration: pageDecoration,
@@ -97,15 +97,15 @@ class OnboardingScreen extends StatelessWidget {
       skipOrBackFlex: 0,
       nextFlex: 0,
       showBackButton: false,
-      back: const FaIcon(FontAwesomeIcons.arrowLeft, color: Color(0xFF8B5CF6)),
+      back: const FaIcon(FontAwesomeIcons.arrowLeft, color: primaryAmber),
       skip: const Text(
         'Pular',
         style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF475569)),
       ),
-      next: const FaIcon(FontAwesomeIcons.arrowRight, color: Color(0xFF8B5CF6)),
+      next: const FaIcon(FontAwesomeIcons.arrowRight, color: primaryAmber),
       done: const Text(
         'Começar',
-        style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF8B5CF6)),
+        style: TextStyle(fontWeight: FontWeight.w600, color: primaryAmber),
       ),
       curve: Curves.fastLinearToSlowEaseIn,
       controlsMargin: const EdgeInsets.all(16),
@@ -113,7 +113,7 @@ class OnboardingScreen extends StatelessWidget {
         size: Size(10.0, 10.0),
         color: Color(0xFFCBD5E1),
         activeSize: Size(22.0, 10.0),
-        activeColor: Color(0xFF8B5CF6),
+        activeColor: primaryAmber,
         activeShape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(25.0)),
         ),

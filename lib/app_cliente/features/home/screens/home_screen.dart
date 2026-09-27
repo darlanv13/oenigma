@@ -1,3 +1,4 @@
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
@@ -48,11 +49,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final homeDataAsync = ref.watch(homeEventsProvider);
 
     return Scaffold(
-      backgroundColor: Color(0xFFF0F4F8),
+      backgroundColor: darkBackground,
       body: SafeArea(
         child: homeDataAsync.when(
           loading: () => const Center(
-            child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+            child: CircularProgressIndicator(color: primaryAmber),
           ),
           error: (error, stack) => Center(
             child: Column(
@@ -67,7 +68,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const Text(
                   'Erro ao carregar dados.',
                   style: TextStyle(
-                    color: const Color(0xFF1E293B),
+                    color: textColor,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -93,7 +94,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFC4B5FD),
+                    backgroundColor: primaryAmberLight,
                     foregroundColor: Color(0xFF4C1D95),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(32),
@@ -119,7 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
             return RefreshIndicator(
               onRefresh: _reloadData,
-              color: Color(0xFFFFD54F),
+              color: primaryAmber,
 
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -181,7 +182,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(0xFF1E293B).withValues(alpha: 0.05),
+                    color: textColor.withValues(alpha: 0.05),
                   ),
                   child: const FaIcon(
                     FontAwesomeIcons.calendarXmark,
@@ -250,12 +251,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: _currentCarouselIndex == entry.key
-                          ? Color(0xFF8B5CF6)
+                          ? primaryAmber
                           : Color(0xFFE2E8F0),
                       boxShadow: _currentCarouselIndex == entry.key
                           ? [
                               BoxShadow(
-                                color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                                color: primaryAmber.withValues(alpha: 0.3),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),

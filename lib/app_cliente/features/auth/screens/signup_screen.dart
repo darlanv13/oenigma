@@ -114,18 +114,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           'Alistamento',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1E293B),
+            color: textColor,
           ),
         ),
         centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios,
-            color: Color(0xFF8B5CF6),
-            size: 20,
-          ),
+          icon: const Icon(Icons.arrow_back_ios, color: primaryAmber, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -154,12 +150,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Color(0xFF8B5CF6).withOpacity(0.1),
-            border: Border.all(color: Color(0xFF8B5CF6).withOpacity(0.3)),
+            color: primaryAmber.withOpacity(0.1),
+            border: Border.all(color: primaryAmber.withOpacity(0.3)),
           ),
           child: const FaIcon(
             FontAwesomeIcons.userSecret,
-            color: Color(0xFF8B5CF6),
+            color: primaryAmber,
             size: 32,
           ),
         ),
@@ -170,10 +166,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             fontSize: 22,
             fontWeight: FontWeight.w900,
             letterSpacing: 2,
-            color: Color(0xFFC4B5FD),
+            color: primaryAmberLight,
             shadows: [
               Shadow(
-                color: Color(0xFFF0F4F8).withOpacity(0.5),
+                color: darkBackground.withOpacity(0.5),
                 offset: const Offset(0, 10),
                 blurRadius: 20,
               ),
@@ -186,7 +182,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           style: GoogleFonts.poppins(
             fontSize: 10,
             letterSpacing: 3,
-            color: Color(0xFF8B5CF6).withOpacity(0.8),
+            color: primaryAmber.withOpacity(0.8),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -200,16 +196,16 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       height: 55,
       textStyle: GoogleFonts.poppins(
         fontSize: 20,
-        color: Color(0xFFC4B5FD),
+        color: primaryAmberLight,
         fontWeight: FontWeight.w700,
       ),
       decoration: BoxDecoration(
-        color: Color(0xFFF0F4F8).withOpacity(0.4),
-        border: Border.all(color: Color(0xFF1E293B).withOpacity(0.1)),
+        color: darkBackground.withOpacity(0.4),
+        border: Border.all(color: textColor.withOpacity(0.1)),
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Color(0xFFF0F4F8).withOpacity(0.2),
+            color: darkBackground.withOpacity(0.2),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -224,15 +220,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         child: Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: Color(0xFF1E293B).withOpacity(0.6),
+            color: textColor.withOpacity(0.6),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(
-              color: Color(0xFF1E293B).withOpacity(0.08),
-              width: 1,
-            ),
+            border: Border.all(color: textColor.withOpacity(0.08), width: 1),
             boxShadow: [
               BoxShadow(
-                color: Color(0xFFF0F4F8).withOpacity(0.3),
+                color: darkBackground.withOpacity(0.3),
                 blurRadius: 20,
                 spreadRadius: -5,
                 offset: const Offset(0, 10),
@@ -341,18 +334,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     obscuringWidget: const FaIcon(
                       FontAwesomeIcons.asterisk,
                       size: 14,
-                      color: Color(0xFF8B5CF6),
+                      color: primaryAmber,
                     ),
                     defaultPinTheme: defaultPinTheme,
                     focusedPinTheme: defaultPinTheme.copyWith(
                       decoration: defaultPinTheme.decoration!.copyWith(
-                        border: Border.all(
-                          color: Color(0xFF8B5CF6),
-                          width: 1.5,
-                        ),
+                        border: Border.all(color: primaryAmber, width: 1.5),
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0xFF8B5CF6).withOpacity(0.2),
+                            color: primaryAmber.withOpacity(0.2),
                             blurRadius: 20,
                           ),
                         ],
@@ -374,18 +364,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     obscuringWidget: const FaIcon(
                       FontAwesomeIcons.asterisk,
                       size: 14,
-                      color: Color(0xFF8B5CF6),
+                      color: primaryAmber,
                     ),
                     defaultPinTheme: defaultPinTheme,
                     focusedPinTheme: defaultPinTheme.copyWith(
                       decoration: defaultPinTheme.decoration!.copyWith(
-                        border: Border.all(
-                          color: Color(0xFF8B5CF6),
-                          width: 1.5,
-                        ),
+                        border: Border.all(color: primaryAmber, width: 1.5),
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0xFF8B5CF6).withOpacity(0.2),
+                            color: primaryAmber.withOpacity(0.2),
                             blurRadius: 20,
                           ),
                         ],
@@ -412,7 +399,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         ? []
                         : [
                             BoxShadow(
-                              color: Color(0xFF8B5CF6).withOpacity(0.4),
+                              color: primaryAmber.withOpacity(0.4),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -421,8 +408,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _submitForm,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF8B5CF6),
-                      foregroundColor: Color(0xFFF0F4F8),
+                      backgroundColor: primaryAmber,
+                      foregroundColor: darkBackground,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(32),
@@ -433,7 +420,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                             height: 24,
                             width: 24,
                             child: CircularProgressIndicator(
-                              color: Color(0xFFF0F4F8),
+                              color: darkBackground,
                               strokeWidth: 2.5,
                             ),
                           )
@@ -474,7 +461,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       child: Text(
                         "Fazer Login",
                         style: GoogleFonts.poppins(
-                          color: Color(0xFF8B5CF6),
+                          color: primaryAmber,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
@@ -509,7 +496,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           width: double.infinity,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF8B5CF6).withOpacity(0.5), Colors.transparent],
+              colors: [primaryAmber.withOpacity(0.5), Colors.transparent],
             ),
           ),
         ),
@@ -521,12 +508,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Widget _buildFieldLabel(String label, FaIconData icon) {
     return Row(
       children: [
-        FaIcon(icon, size: 12, color: Color(0xFF8B5CF6)),
+        FaIcon(icon, size: 12, color: primaryAmber),
         const SizedBox(width: 8),
         Text(
           label,
           style: GoogleFonts.poppins(
-            color: Color(0xFF8B5CF6),
+            color: primaryAmber,
             fontSize: 10,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
@@ -552,16 +539,16 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       inputFormatters: inputFormatters,
       textCapitalization: textCapitalization,
       style: GoogleFonts.poppins(
-        color: const Color(0xFF1E293B),
+        color: textColor,
         fontWeight: FontWeight.w600,
         fontSize: 14,
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: Color(0xFFF0F4F8).withOpacity(0.3),
+        fillColor: darkBackground.withOpacity(0.3),
         hintText: hintText,
         hintStyle: GoogleFonts.poppins(
-          color: Color(0xFF1E293B).withOpacity(0.2),
+          color: textColor.withOpacity(0.2),
           fontWeight: FontWeight.w500,
           fontSize: 14,
         ),
@@ -579,15 +566,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(32),
-          borderSide: BorderSide(color: Color(0xFF1E293B).withOpacity(0.05)),
+          borderSide: BorderSide(color: textColor.withOpacity(0.05)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(32),
-          borderSide: BorderSide(color: Color(0xFF1E293B).withOpacity(0.05)),
+          borderSide: BorderSide(color: textColor.withOpacity(0.05)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(32),
-          borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 1.5),
+          borderSide: const BorderSide(color: primaryAmber, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(32),

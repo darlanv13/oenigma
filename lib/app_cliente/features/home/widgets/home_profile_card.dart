@@ -1,3 +1,4 @@
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
@@ -69,7 +70,7 @@ class HomeProfileCard extends StatelessWidget {
                   Text(
                     firstName.isNotEmpty ? firstName : 'Visitante!',
                     style: GoogleFonts.poppins(
-                      color: const Color(0xFF1E293B),
+                      color: textColor,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
@@ -120,7 +121,7 @@ class HomeProfileCard extends StatelessWidget {
         Text(
           value,
           style: GoogleFonts.poppins(
-            color: isBalance ? Color(0xFF1E293B) : Color(0xFF3B82F6),
+            color: isBalance ? textColor : Color(0xFF3B82F6),
             fontSize: 15,
             fontWeight: FontWeight.w700,
           ),

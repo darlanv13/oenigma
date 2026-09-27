@@ -42,7 +42,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Função de Saque em breve!'),
-        backgroundColor: Color(0xFF8B5CF6),
+        backgroundColor: primaryAmber,
       ),
     );
   }
@@ -52,7 +52,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
-      backgroundColor: Color(0xFFF0F4F8), // Fundo claro e limpo
+      backgroundColor: darkBackground, // Fundo claro e limpo
       body: Stack(
         children: [
           SafeArea(
@@ -73,13 +73,13 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                            color: primaryAmber.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Center(
                             child: FaIcon(
                               FontAwesomeIcons.chevronLeft,
-                              color: Color(0xFF8B5CF6),
+                              color: primaryAmber,
                               size: 14,
                             ),
                           ),
@@ -90,7 +90,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1E293B),
+                          color: textColor,
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -108,7 +108,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                         return const Center(
                           child: Text(
                             'Sessão expirada.',
-                            style: TextStyle(color: Color(0xFF1E293B)),
+                            style: TextStyle(color: textColor),
                           ),
                         );
                       }
@@ -139,9 +139,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                       );
                     },
                     loading: () => const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF8B5CF6),
-                      ),
+                      child: CircularProgressIndicator(color: primaryAmber),
                     ),
                     error: (err, stack) => Center(
                       child: Text(
@@ -204,7 +202,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
           Text(
             'R\$ ${balance.toStringAsFixed(2).replaceAll('.', ',')}',
             style: GoogleFonts.poppins(
-              color: const Color(0xFF1E293B),
+              color: textColor,
               fontSize: 38,
               fontWeight: FontWeight.w900,
               letterSpacing: 1.0,
@@ -223,7 +221,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
             icon: FontAwesomeIcons.arrowDown,
             label: 'DEPOSITAR',
             backgroundColor: Color(0xFF3B82F6),
-            textColor: Color(0xFF1E293B),
+            textColor: textColor,
             onTap: () => _handleDeposit(user),
           ),
         ),
@@ -327,7 +325,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(24.0),
-                  child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+                  child: CircularProgressIndicator(color: primaryAmber),
                 ),
               );
             }
@@ -360,7 +358,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                     Text(
                       'Nenhuma transação ainda.',
                       style: GoogleFonts.poppins(
-                        color: const Color(0xFF1E293B),
+                        color: textColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -437,7 +435,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                                 : 'Depósito via PIX')
                           : 'Saque / Ferramenta',
                       style: GoogleFonts.poppins(
-                        color: const Color(0xFF1E293B),
+                        color: textColor,
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),

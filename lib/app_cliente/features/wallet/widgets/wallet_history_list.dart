@@ -1,3 +1,4 @@
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -60,10 +61,10 @@ class _HistoryItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: Color(0xFF1E1E1E), // Fundo painel escuro
+        color: Colors.white, // Fundo painel escuro
         borderRadius: BorderRadius.circular(32),
         border: Border.all(
-          color: Color(0xFF1E293B).withValues(alpha: 0.05),
+          color: textColor.withValues(alpha: 0.05),
           width: 1.0,
         ),
       ),
@@ -72,7 +73,7 @@ class _HistoryItem extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Color(0xFFF0F4F8).withValues(alpha: 0.3),
+              color: darkBackground.withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
             child: FaIcon(icon, color: highlightColor, size: 16),

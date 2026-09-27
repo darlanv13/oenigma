@@ -43,8 +43,8 @@ class EnigmaCityApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'O Enigma',
       theme: ThemeData.light().copyWith(
-        primaryColor: Color(0xFF8B5CF6),
-        scaffoldBackgroundColor: Color(0xFFF0F4F8),
+        primaryColor: primaryAmber,
+        scaffoldBackgroundColor: darkBackground,
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
@@ -53,11 +53,11 @@ class EnigmaCityApp extends StatelessWidget {
           titleTextStyle: GoogleFonts.poppins(
             fontSize: 22,
             fontWeight: FontWeight.w900,
-            color: Color(0xFF8B5CF6),
+            color: primaryAmber,
             letterSpacing: 2,
             shadows: [
               Shadow(
-                color: Color(0xFF8B5CF6).withValues(alpha: 0.5),
+                color: primaryAmber.withValues(alpha: 0.5),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),

@@ -44,15 +44,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Color(0xFF1E1E1E).withOpacity(0.95),
+                  color: Colors.white.withOpacity(0.95),
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                    color: Color(0xFF8B5CF6).withOpacity(0.3),
+                    color: primaryAmber.withOpacity(0.3),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFFF0F4F8).withOpacity(0.6),
+                      color: darkBackground.withOpacity(0.6),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -68,14 +68,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           children: [
                             const FaIcon(
                               FontAwesomeIcons.userPen,
-                              color: Color(0xFF8B5CF6),
+                              color: primaryAmber,
                               size: 18,
                             ),
                             const SizedBox(width: 10),
                             Text(
                               'EDITAR PERFIL',
                               style: GoogleFonts.poppins(
-                                color: const Color(0xFF1E293B),
+                                color: textColor,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.0,
@@ -123,23 +123,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         icon: const FaIcon(
                           FontAwesomeIcons.camera,
                           size: 14,
-                          color: const Color(0xFF1E293B),
+                          color: textColor,
                         ),
                         label: Text(
                           'ALTERAR FOTO',
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1E293B),
+                            color: textColor,
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF1E293B).withOpacity(0.1),
+                          backgroundColor: textColor.withOpacity(0.1),
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(32),
-                            side: BorderSide(
-                              color: Color(0xFF1E293B).withOpacity(0.2),
-                            ),
+                            side: BorderSide(color: textColor.withOpacity(0.2)),
                           ),
                         ),
                       ),
@@ -189,8 +187,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF8B5CF6),
-                          foregroundColor: Color(0xFFF0F4F8),
+                          backgroundColor: primaryAmber,
+                          foregroundColor: darkBackground,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(32),
@@ -201,7 +199,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
-                                  color: Color(0xFFF0F4F8),
+                                  color: darkBackground,
                                   strokeWidth: 2,
                                 ),
                               )
@@ -286,18 +284,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return TextFormField(
       controller: controller,
       enabled: enabled,
-      style: TextStyle(
-        color: const Color(0xFF1E293B),
-        fontWeight: FontWeight.bold,
-      ),
+      style: TextStyle(color: textColor, fontWeight: FontWeight.bold),
       decoration: InputDecoration(
         filled: true,
-        fillColor: Color(0xFFF0F4F8),
+        fillColor: darkBackground,
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey),
         prefixIcon: Padding(
           padding: const EdgeInsets.all(14.0),
-          child: FaIcon(icon, color: Color(0xFF8B5CF6), size: 18),
+          child: FaIcon(icon, color: primaryAmber, size: 18),
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 16),
         border: OutlineInputBorder(
@@ -307,7 +302,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(32),
           borderSide: BorderSide(
-            color: Color(0xFF8B5CF6).withOpacity(0.5),
+            color: primaryAmber.withOpacity(0.5),
             width: 1.5,
           ),
         ),
@@ -320,7 +315,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
-      backgroundColor: Color(0xFFF0F4F8),
+      backgroundColor: darkBackground,
       body: Stack(
         children: [
           SafeArea(
@@ -350,7 +345,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 child: const Center(
                                   child: FaIcon(
                                     FontAwesomeIcons.chevronLeft,
-                                    color: Color(0xFF8B5CF6),
+                                    color: primaryAmber,
                                     size: 14,
                                   ),
                                 ),
@@ -362,7 +357,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1E293B),
+                          color: textColor,
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -378,7 +373,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         return const Center(
                           child: Text(
                             'Sessão expirada. Faça login novamente.',
-                            style: TextStyle(color: Color(0xFF1E293B)),
+                            style: TextStyle(color: textColor),
                           ),
                         );
                       }
@@ -418,9 +413,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       );
                     },
                     loading: () => const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF8B5CF6),
-                      ),
+                      child: CircularProgressIndicator(color: primaryAmber),
                     ),
                     error: (err, stack) => Center(
                       child: Text(
@@ -451,13 +444,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: const LinearGradient(
-              colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
+              colors: [primaryAmber, Color(0xFFF57F17)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             boxShadow: [
               BoxShadow(
-                color: Color(0xFF8B5CF6).withOpacity(0.3),
+                color: primaryAmber.withOpacity(0.3),
                 blurRadius: 20,
                 spreadRadius: -5,
               ),
@@ -465,7 +458,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
           child: CircleAvatar(
             radius: 50,
-            backgroundColor: Color(0xFFF0F4F8),
+            backgroundColor: darkBackground,
             backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
             child: photoUrl == null
                 ? const FaIcon(
@@ -482,11 +475,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           style: GoogleFonts.poppins(
             fontSize: 22,
             fontWeight: FontWeight.w900,
-            color: const Color(0xFF1E293B),
+            color: textColor,
             letterSpacing: 1.5,
             shadows: [
               Shadow(
-                color: Color(0xFFF0F4F8).withOpacity(0.8),
+                color: darkBackground.withOpacity(0.8),
                 offset: const Offset(0, 10),
                 blurRadius: 20,
               ),
@@ -497,26 +490,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: Color(0xFF1E1E1E).withOpacity(0.8),
+            color: Colors.white.withOpacity(0.8),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(
-              color: Color(0xFF8B5CF6).withOpacity(0.3),
-              width: 1,
-            ),
+            border: Border.all(color: primaryAmber.withOpacity(0.3), width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               const FaIcon(
                 FontAwesomeIcons.medal,
-                color: Color(0xFF8B5CF6),
+                color: primaryAmber,
                 size: 14,
               ),
               const SizedBox(width: 8),
               Text(
                 'LIGA ${league.toUpperCase()}  •  $xp XP',
                 style: GoogleFonts.poppins(
-                  color: Color(0xFF8B5CF6),
+                  color: primaryAmber,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                   letterSpacing: 1.0,
@@ -557,7 +547,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Text(
                   jogados.toString(),
                   style: GoogleFonts.poppins(
-                    color: const Color(0xFF1E293B),
+                    color: textColor,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -600,7 +590,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Text(
                   vencidos.toString(),
                   style: GoogleFonts.poppins(
-                    color: const Color(0xFF1E293B),
+                    color: textColor,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -661,10 +651,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _buildInfoRow(FontAwesomeIcons.envelope, 'E-mail', email),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Divider(
-              color: Color(0xFF8B5CF6).withOpacity(0.1),
-              height: 1,
-            ),
+            child: Divider(color: primaryAmber.withOpacity(0.1), height: 1),
           ),
           _buildInfoRow(FontAwesomeIcons.phone, 'Telefone', phone),
         ],
@@ -678,11 +665,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Color(0xFFF0F4F8),
+            color: darkBackground,
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: Color(0xFF8B5CF6).withOpacity(0.1)),
+            border: Border.all(color: primaryAmber.withOpacity(0.1)),
           ),
-          child: FaIcon(icon, color: Color(0xFF8B5CF6), size: 16),
+          child: FaIcon(icon, color: primaryAmber, size: 16),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -700,7 +687,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Text(
                 value,
                 style: GoogleFonts.poppins(
-                  color: const Color(0xFF1E293B),
+                  color: textColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
@@ -751,9 +738,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
-          color: color == Color(0xFF475569)
-              ? Color(0xFF8B5CF6)
-              : Colors.transparent,
+          color: color == Color(0xFF475569) ? primaryAmber : Colors.transparent,
           borderRadius: BorderRadius.circular(32),
           border: color != Color(0xFF475569)
               ? Border.all(color: color, width: 1.5)
@@ -765,14 +750,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             FaIcon(
               icon,
               size: 14,
-              color: color == Color(0xFF475569) ? Color(0xFF1E293B) : color,
+              color: color == Color(0xFF475569) ? textColor : color,
             ),
             const SizedBox(width: 8),
             Text(
               label,
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w700,
-                color: color == Color(0xFF475569) ? Color(0xFF1E293B) : color,
+                color: color == Color(0xFF475569) ? textColor : color,
                 fontSize: 14,
                 letterSpacing: 1.0,
               ),

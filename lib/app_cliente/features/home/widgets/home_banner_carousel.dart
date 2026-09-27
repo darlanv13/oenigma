@@ -1,3 +1,4 @@
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -190,7 +191,7 @@ class _HomeBannerCarouselState extends State<HomeBannerCarousel> {
                                 Text(
                                   title,
                                   style: GoogleFonts.poppins(
-                                    color: const Color(0xFF1E293B),
+                                    color: textColor,
                                     fontSize: 20, // roughly 1.3rem
                                     fontWeight: FontWeight.w800,
                                     height: 1.2,

@@ -1,3 +1,4 @@
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,7 +17,7 @@ class CreditOptionsSheet extends StatelessWidget {
 
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFF1E1E1E),
+        color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
       ),
@@ -36,7 +37,7 @@ class CreditOptionsSheet extends StatelessWidget {
           const Text(
             "ADICIONAR SALDO",
             style: TextStyle(
-              color: Color(0xFF8B5CF6),
+              color: primaryAmber,
               fontSize: 18,
               fontWeight: FontWeight.w900,
               letterSpacing: 1.5,
@@ -62,13 +63,13 @@ class CreditOptionsSheet extends StatelessWidget {
             itemBuilder: (context, index) {
               return ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF8B5CF6).withValues(alpha: 0.1),
-                  foregroundColor: Color(0xFF8B5CF6),
+                  backgroundColor: primaryAmber.withValues(alpha: 0.1),
+                  foregroundColor: primaryAmber,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(32),
                     side: BorderSide(
-                      color: Color(0xFF8B5CF6).withValues(alpha: 0.5),
+                      color: primaryAmber.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -158,7 +159,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFF1E1E1E),
+        color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
       ),
@@ -190,7 +191,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   Widget _buildLoadingState() {
     return const Column(
       children: [
-        CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+        CircularProgressIndicator(color: primaryAmber),
         SizedBox(height: 16),
         Text(
           "Gerando Cobrança Pix...",
@@ -215,7 +216,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         const Text(
           "Erro ao gerar Pix",
           style: TextStyle(
-            color: const Color(0xFF1E293B),
+            color: textColor,
             fontSize: 18,
             fontWeight: FontWeight.w900,
           ),
@@ -240,10 +241,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             onPressed: () => Navigator.pop(context),
             child: const Text(
               "FECHAR",
-              style: TextStyle(
-                color: const Color(0xFF1E293B),
-                fontWeight: FontWeight.w900,
-              ),
+              style: TextStyle(color: textColor, fontWeight: FontWeight.w900),
             ),
           ),
         ),
@@ -277,7 +275,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             const Text(
               "PAGAMENTO PIX",
               style: TextStyle(
-                color: Color(0xFF8B5CF6),
+                color: primaryAmber,
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1.5,
@@ -287,7 +285,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             Text(
               "R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')}",
               style: TextStyle(
-                color: const Color(0xFF1E293B),
+                color: textColor,
                 fontSize: 32,
                 fontWeight: FontWeight.w900,
               ),
@@ -298,10 +296,10 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(32),
-                  border: Border.all(color: Color(0xFF8B5CF6), width: 3),
+                  border: Border.all(color: primaryAmber, width: 3),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                      color: primaryAmber.withValues(alpha: 0.3),
                       blurRadius: 20,
                     ),
                   ],
@@ -322,14 +320,14 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Color(0xFF8B5CF6),
+                    color: primaryAmber,
                   ),
                 ),
                 SizedBox(width: 12),
                 Text(
                   "Aguardando confirmação...",
                   style: TextStyle(
-                    color: Color(0xFF8B5CF6),
+                    color: primaryAmber,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -341,11 +339,11 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(32),
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF8B5CF6), Color(0xFFF57F17)],
+                  colors: [primaryAmber, Color(0xFFF57F17)],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                    color: primaryAmber.withValues(alpha: 0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -354,13 +352,13 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               child: ElevatedButton.icon(
                 icon: const FaIcon(
                   FontAwesomeIcons.copy,
-                  color: Color(0xFFF0F4F8),
+                  color: darkBackground,
                   size: 18,
                 ),
                 label: const Text(
                   "COPIAR CÓDIGO PIX",
                   style: TextStyle(
-                    color: Color(0xFFF0F4F8),
+                    color: darkBackground,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.0,
                   ),
@@ -410,7 +408,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         const Text(
           "PAGAMENTO CONFIRMADO!",
           style: TextStyle(
-            color: const Color(0xFF1E293B),
+            color: textColor,
             fontSize: 20,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.0,
@@ -437,7 +435,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             child: const Text(
               "CONCLUIR",
               style: TextStyle(
-                color: const Color(0xFF1E293B),
+                color: textColor,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 1.0,
               ),
