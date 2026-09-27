@@ -10,7 +10,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/app_cliente/features/auth/screens/auth_wrapper.dart';
 import 'package:oenigma/app_cliente/features/auth/screens/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:oenigma/core/widgets/app_background.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -66,8 +65,8 @@ class EnigmaCityApp extends StatelessWidget {
         ),
       ),
       builder: (context, child) {
-        return AppBackground(
-          opacity: 0.1, // Tom de opacidade desejado pelo usuário (10%)
+        return Container(
+          color: darkBackground,
           child: child ?? const SizedBox.shrink(),
         );
       },
