@@ -3,10 +3,11 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
-
+import 'package:oenigma/core/models/banner_model.dart';
+import 'package:oenigma/core/widgets/banner_card_widget.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
-import 'package:oenigma/core/widgets/admin_item_card.dart';
 import 'package:oenigma/core/widgets/admin_modal.dart';
+import '../utils/admin_upload_util.dart';
 
 class AdminBannersScreen extends StatefulWidget {
   const AdminBannersScreen({super.key});
@@ -16,7 +17,128 @@ class AdminBannersScreen extends StatefulWidget {
 }
 
 class _AdminBannersScreenState extends State<AdminBannersScreen> {
-  late Future<List<ParseObject>> _bannersFuture;
+  late Future<List<BannerModel>> _bannersFuture;
+
+  static const List<Map<String, dynamic>> _availableIcons = [
+    {'id': '', 'name': 'Nenhum'},
+    {'id': 'trophy', 'name': 'Troféu 🏆'},
+    {'id': 'fire', 'name': 'Fogo / Destaque 🔥'},
+    {'id': 'star', 'name': 'Estrela ⭐'},
+    {'id': 'crown', 'name': 'Coroa 👑'},
+    {'id': 'bolt', 'name': 'Raio / Energia ⚡'},
+    {'id': 'gem', 'name': 'Diamante 💎'},
+    {'id': 'gift', 'name': 'Presente 🎁'},
+    {'id': 'gamepad', 'name': 'Gamepad 🎮'},
+    {'id': 'playstation', 'name': 'Playstation 🕹️'},
+    {'id': 'compass', 'name': 'Bússola 🧭'},
+    {'id': 'rocket', 'name': 'Foguete 🚀'},
+    {'id': 'bell', 'name': 'Sino 🔔'},
+    {'id': 'wallet', 'name': 'Carteira 💰'},
+    {'id': 'tag', 'name': 'Etiqueta 🏷️'},
+    {'id': 'ticket', 'name': 'Ticket 🎟️'},
+    {'id': 'clock', 'name': 'Tempo ⏱️'},
+    {'id': 'shield', 'name': 'Escudo 🛡️'},
+    {'id': 'mobile', 'name': 'Celular 📱'},
+  ];
+
+  static const List<Map<String, dynamic>> _presetGradients = [
+    {
+      'name': 'Verde Vale (Oficial)',
+      'start': '#005861',
+      'end': '#007D8A',
+      'color1': Color(0xFF005861),
+      'color2': Color(0xFF007D8A),
+    },
+    {
+      'name': 'Ouro & Amarelo',
+      'start': '#B87304',
+      'end': '#F3A522',
+      'color1': Color(0xFFB87304),
+      'color2': Color(0xFFF3A522),
+    },
+    {
+      'name': 'Cyber Sapphire',
+      'start': '#0D324D',
+      'end': '#1B4965',
+      'color1': Color(0xFF0D324D),
+      'color2': Color(0xFF1B4965),
+    },
+    {
+      'name': 'Roxo Místico',
+      'start': '#3A1C71',
+      'end': '#6A0572',
+      'color1': Color(0xFF3A1C71),
+      'color2': Color(0xFF6A0572),
+    },
+    {
+      'name': 'Rubi Aventura',
+      'start': '#780206',
+      'end': '#B22222',
+      'color1': Color(0xFF780206),
+      'color2': Color(0xFFB22222),
+    },
+    {
+      'name': 'Dark Obsidian',
+      'start': '#181920',
+      'end': '#2C2D3A',
+      'color1': Color(0xFF181920),
+      'color2': Color(0xFF2C2D3A),
+    },
+    {
+      'name': 'Esmeralda',
+      'start': '#0A5C36',
+      'end': '#149A57',
+      'color1': Color(0xFF0A5C36),
+      'color2': Color(0xFF149A57),
+    },
+  ];
+
+  static const List<Map<String, dynamic>> _presetTemplates = [
+    {
+      'label': '🏆 Mega Prêmio',
+      'title': 'Mega Prêmio Semanal',
+      'desc': 'Dispute os prêmios acumulados da semana no app!',
+      'tag': 'MEGA PRÊMIO',
+      'tagIcon': 'trophy',
+      'btn': 'PARTICIPAR',
+      'bgIcon': 'trophy',
+      'start': '#B87304',
+      'end': '#F3A522',
+    },
+    {
+      'label': '🔥 Novo Desafio',
+      'title': 'Enigma de Fim de Semana',
+      'desc': 'Novas pistas liberadas na cidade para caçar!',
+      'tag': 'NOVIDADE',
+      'tagIcon': 'fire',
+      'btn': 'JOGAR AGORA',
+      'bgIcon': 'gamepad',
+      'start': '#005861',
+      'end': '#007D8A',
+    },
+    {
+      'label': '🎁 Bônus / Indique',
+      'title': 'Indique um Amigo',
+      'desc': 'Ganhe créditos na sua carteira a cada indicação.',
+      'tag': 'BÔNUS',
+      'tagIcon': 'gift',
+      'btn': 'RESGATAR',
+      'bgIcon': 'gift',
+      'start': '#3A1C71',
+      'end': '#6A0572',
+    },
+    {
+      'label': '👑 Ranking',
+      'title': 'Temporada de Mestres',
+      'desc': 'Veja os líderes e prepare-se para o prêmio final.',
+      'tag': 'DESTAQUE',
+      'tagIcon': 'crown',
+      'btn': 'VER RANKING',
+      'bgIcon': 'crown',
+      'start': '#0D324D',
+      'end': '#1B4965',
+    },
+  ];
 
   @override
   void initState() {
@@ -30,7 +152,8 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
         ..orderByAscending('order');
       _bannersFuture = query.query().then((response) {
         if (response.success && response.results != null) {
-          return response.results as List<ParseObject>;
+          final list = response.results as List<ParseObject>;
+          return list.map((doc) => BannerModel.fromParse(doc)).toList();
         }
         return [];
       });
@@ -42,16 +165,28 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Gerenciar Banners', FontAwesomeIcons.image),
+        _buildSectionHeader(
+          'Gerenciar Banners do App',
+          FontAwesomeIcons.image,
+          onAddNew: () => _showAddEditBannerModal(context),
+        ),
+        const SizedBox(height: 12),
         Expanded(
-          child: FutureBuilder<List<ParseObject>>(
+          child: FutureBuilder<List<BannerModel>>(
             future: _bannersFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator(color: primaryAmber));
+                return const Center(
+                  child: CircularProgressIndicator(color: AppColors.verdeVale),
+                );
               }
               if (snapshot.hasError) {
-                return Center(child: Text('Erro: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
+                return Center(
+                  child: Text(
+                    'Erro: ${snapshot.error}',
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
+                );
               }
 
               final banners = snapshot.data ?? [];
@@ -63,79 +198,302 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                 itemCount: banners.length,
                 itemBuilder: (context, index) {
                   final banner = banners[index];
-                  return _buildBannerCard(banner);
+                  return _buildBannerCardItem(banner);
                 },
               );
             },
           ),
         ),
         const SizedBox(height: 16),
-        _buildAddButton('Novo Banner', () => _showAddEditBannerModal(context)),
+        _buildAddButton(
+          'Criar Novo Banner Personalizado',
+          () => _showAddEditBannerModal(context),
+        ),
       ],
     );
   }
 
-  Widget _buildSectionTitle(String title, dynamic icon) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Row(
-        children: [
-          FaIcon(icon, color: primaryAmber, size: 14),
-          const SizedBox(width: 10),
-          Text(
-            title.toUpperCase(),
-            style: GoogleFonts.orbitron(
-              color: primaryAmber,
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
-            ),
+  Widget _buildSectionHeader(
+    String title,
+    dynamic icon, {
+    required VoidCallback onAddNew,
+  }) {
+    return Row(
+      children: [
+        FaIcon(icon, color: AppColors.verdeVale, size: 16),
+        const SizedBox(width: 10),
+        Text(
+          title.toUpperCase(),
+          style: GoogleFonts.orbitron(
+            color: AppColors.verdeVale,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1,
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Container(
-              height: 1,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [primaryAmber.withValues(alpha: 0.15), Colors.transparent],
-                ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.verdeVale.withValues(alpha: 0.2),
+                  Colors.transparent,
+                ],
               ),
             ),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 12),
+        ElevatedButton.icon(
+          onPressed: onAddNew,
+          icon: const FaIcon(FontAwesomeIcons.plus, size: 12),
+          label: const Text('NOVO BANNER'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.verdeVale,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            textStyle: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildEmptyState() {
-    return const AdminItemCard(
-      icon: FontAwesomeIcons.circleInfo,
-      title: 'Nenhum banner',
-      statusText: '',
-      statusColor: Colors.transparent,
-      subtitle: 'Crie banners promocionais para o app.',
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: AppColors.darkCardColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.15)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const FaIcon(
+              FontAwesomeIcons.images,
+              color: AppColors.cinzaMedio,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Nenhum banner cadastrado',
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Crie banners personalizados com gradientes, tags, imagens ou botões para destacar no app do cliente.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                color: AppColors.cinzaMedio,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () => _showAddEditBannerModal(context),
+              icon: const FaIcon(FontAwesomeIcons.plus, size: 13),
+              label: const Text('Criar Primeiro Banner'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.verdeVale,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildBannerCard(ParseObject banner) {
-    final ativo = banner.get<bool>('active') ?? true;
-    final statusColor = ativo ? successColor : secondaryTextColor;
-    final statusLabel = ativo ? 'Ativo' : 'Inativo';
-    final ordem = banner.get<int>('order') ?? 0;
+  Widget _buildBannerCardItem(BannerModel banner) {
+    final statusColor = banner.isActive ? AppColors.success : AppColors.cinzaMedio;
+    final statusLabel = banner.isActive ? 'Ativo' : 'Inativo';
+    final isImage = banner.isImageOnly;
 
-    return AdminItemCard(
-      icon: FontAwesomeIcons.image,
-      title: banner.get<String>('title') ?? 'Sem Título',
-      statusText: statusLabel,
-      statusColor: statusColor,
-      subtitle: '${banner.get<String>('description') ?? ''} · Ordem: $ordem',
-      actions: [
-        _buildButton('Editar', isPrimary: true, onTap: () => _showAddEditBannerModal(context, banner: banner)),
-        const SizedBox(width: 8),
-        _buildButton(ativo ? 'Desativar' : 'Ativar', isDanger: ativo, isSuccess: !ativo, onTap: () => _toggleBannerStatus(banner, !ativo)),
-        const SizedBox(width: 8),
-        _buildButton('Excluir', isDanger: true, onTap: () => _deleteBanner(banner)),
-      ],
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.darkCardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.12)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Visual Mini Preview Box
+          Container(
+            width: 80,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: isImage ? null : banner.gradient,
+              color: isImage ? AppColors.darkBackground : null,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: isImage && banner.imageUrl.isNotEmpty
+                  ? Image.network(
+                      banner.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Center(
+                        child: FaIcon(
+                          FontAwesomeIcons.image,
+                          color: Colors.white38,
+                          size: 18,
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: FaIcon(
+                        BannerModel.getIconData(
+                              banner.tagIcon.isNotEmpty
+                                  ? banner.tagIcon
+                                  : banner.bgIcon,
+                            ) ??
+                            FontAwesomeIcons.image,
+                        color: Colors.white.withValues(alpha: 0.7),
+                        size: 20,
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(width: 16),
+
+          // Content info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        banner.title.isNotEmpty
+                            ? banner.title
+                            : (banner.tagText.isNotEmpty
+                                ? banner.tagText
+                                : 'Banner de Imagem'),
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Type Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isImage
+                            ? Colors.purple.withValues(alpha: 0.25)
+                            : AppColors.verdeVale.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isImage
+                              ? Colors.purple.withValues(alpha: 0.5)
+                              : AppColors.verdeVale.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      child: Text(
+                        isImage ? 'ARTE GRÁFICA' : 'CARD',
+                        style: GoogleFonts.inter(
+                          color: isImage ? Colors.purpleAccent : AppColors.amareloVale,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    // Status Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: statusColor),
+                      ),
+                      child: Text(
+                        statusLabel,
+                        style: GoogleFonts.inter(
+                          color: statusColor,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${banner.description.isNotEmpty ? "${banner.description} · " : ""}'
+                  'Ordem: ${banner.order}'
+                  '${banner.actionUrl.isNotEmpty ? " · Ação: ${banner.actionUrl}" : ""}',
+                  style: GoogleFonts.inter(
+                    color: AppColors.cinzaMedio,
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+
+          // Actions
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildButton(
+                'Editar',
+                isPrimary: true,
+                onTap: () => _showAddEditBannerModal(context, banner: banner),
+              ),
+              const SizedBox(width: 8),
+              _buildButton(
+                banner.isActive ? 'Desativar' : 'Ativar',
+                isDanger: banner.isActive,
+                isSuccess: !banner.isActive,
+                onTap: () => _toggleBannerStatus(banner, !banner.isActive),
+              ),
+              const SizedBox(width: 8),
+              _buildButton(
+                'Excluir',
+                isDanger: true,
+                onTap: () => _confirmDeleteBanner(banner),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -145,407 +503,1168 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          border: Border.all(color: primaryAmber.withValues(alpha: 0.15), width: 1.5, style: BorderStyle.none),
+          color: AppColors.verdeVale.withValues(alpha: 0.06),
+          border: Border.all(
+            color: AppColors.verdeVale.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: CustomPaint(
-          painter: _DashedBorderPainter(),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const FaIcon(FontAwesomeIcons.circlePlus, color: primaryAmber, size: 14),
-              const SizedBox(width: 8),
-              Text(
-                text,
-                style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 13, fontWeight: FontWeight.w500),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const FaIcon(
+              FontAwesomeIcons.circlePlus,
+              color: AppColors.verdeVale,
+              size: 16,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              text,
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildButton(String text, {bool isPrimary = false, bool isDanger = false, bool isSuccess = false, required VoidCallback onTap}) {
+  Widget _buildButton(
+    String text, {
+    bool isPrimary = false,
+    bool isDanger = false,
+    bool isSuccess = false,
+    required VoidCallback onTap,
+  }) {
     Color bgColor = Colors.transparent;
-    Color textColorStr = primaryAmberHover;
-    Color borderColor = primaryAmber.withValues(alpha: 0.15);
+    Color textColorStr = AppColors.verdeVale;
+    Color borderColor = AppColors.verdeVale.withValues(alpha: 0.3);
 
     if (isPrimary) {
-      bgColor = primaryAmber;
-      textColorStr = darkBackground;
+      bgColor = AppColors.verdeVale;
+      textColorStr = Colors.white;
       borderColor = Colors.transparent;
     } else if (isDanger) {
-      textColorStr = dangerColor;
-      borderColor = dangerColor.withValues(alpha: 0.3);
+      textColorStr = AppColors.danger;
+      borderColor = AppColors.danger.withValues(alpha: 0.4);
     } else if (isSuccess) {
-      textColorStr = successColor;
-      borderColor = successColor.withValues(alpha: 0.3);
+      textColorStr = const Color(0xFF10B981);
+      borderColor = const Color(0xFF10B981).withValues(alpha: 0.4);
     }
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-        decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(30), border: Border.all(color: borderColor)),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor),
+        ),
         child: Text(
           text.toUpperCase(),
-          style: GoogleFonts.inter(color: textColorStr, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.3),
+          style: GoogleFonts.inter(
+            color: textColorStr,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
+          ),
         ),
       ),
     );
   }
 
-  void _showAddEditBannerModal(BuildContext context, {ParseObject? banner}) {
-    final titleController = TextEditingController(text: banner?.get<String>('title') ?? '');
-    final descController = TextEditingController(text: banner?.get<String>('description') ?? '');
-    final orderController = TextEditingController(text: (banner?.get<int>('order') ?? 1).toString());
+  void _showAddEditBannerModal(BuildContext context, {BannerModel? banner}) {
+    final titleController = TextEditingController(text: banner?.title ?? '');
+    final descController = TextEditingController(text: banner?.description ?? '');
+    final tagTextController = TextEditingController(text: banner?.tagText ?? '');
+    final buttonTextController = TextEditingController(text: banner?.buttonText ?? '');
+    final actionUrlController = TextEditingController(text: banner?.actionUrl ?? '');
+    final imageUrlController = TextEditingController(text: banner?.imageUrl ?? '');
+    final orderController = TextEditingController(text: (banner?.order ?? 1).toString());
 
-    String status = (banner?.get<bool>('active') ?? true) ? 'true' : 'false';
-    Color bgColor = _parseColor(banner?.get<String>('colorHex') ?? '#C0A060');
+    String bannerType = banner?.bannerType ?? 'card';
+    String selectedTagIcon = banner?.tagIcon ?? 'trophy';
+    String selectedBgIcon = banner?.bgIcon ?? 'trophy';
+    String startHex = banner?.gradientStartHex ?? '#005861';
+    String endHex = banner?.gradientEndHex ?? '#007D8A';
+    bool isActive = banner?.isActive ?? true;
+    bool isUploadingImage = false;
+    bool isSaving = false;
 
     showDialog(
       context: context,
-      builder: (context) {
+      barrierDismissible: false,
+      builder: (dialogCtx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final previewBanner = BannerModel(
+              id: banner?.id ?? 'preview',
+              title: titleController.text,
+              description: descController.text,
+              imageUrl: imageUrlController.text,
+              actionUrl: actionUrlController.text,
+              tagText: tagTextController.text,
+              tagIcon: selectedTagIcon,
+              buttonText: buttonTextController.text,
+              bgIcon: selectedBgIcon,
+              order: int.tryParse(orderController.text) ?? 1,
+              isActive: isActive,
+              bannerType: bannerType,
+              gradientStartHex: startHex,
+              gradientEndHex: endHex,
+            );
+
             return AdminModal(
               title: banner == null ? 'Criar Novo Banner' : 'Editar Banner',
-              maxWidth: 850,
+              maxWidth: 950,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Form Column
-                      Expanded(
-                        child: Column(
+                  // Row with Controls + Live Preview
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final bool isWide = constraints.maxWidth > 750;
+
+                      Widget formSection = _buildFormSection(
+                        setModalState: setModalState,
+                        titleController: titleController,
+                        descController: descController,
+                        tagTextController: tagTextController,
+                        buttonTextController: buttonTextController,
+                        actionUrlController: actionUrlController,
+                        imageUrlController: imageUrlController,
+                        orderController: orderController,
+                        bannerType: bannerType,
+                        onTypeChanged: (type) => setModalState(() => bannerType = type),
+                        selectedTagIcon: selectedTagIcon,
+                        onTagIconChanged: (icon) => setModalState(() => selectedTagIcon = icon),
+                        selectedBgIcon: selectedBgIcon,
+                        onBgIconChanged: (icon) => setModalState(() => selectedBgIcon = icon),
+                        startHex: startHex,
+                        endHex: endHex,
+                        onGradientChanged: (start, end) => setModalState(() {
+                          startHex = start;
+                          endHex = end;
+                        }),
+                        isActive: isActive,
+                        onActiveChanged: (val) => setModalState(() => isActive = val),
+                        isUploadingImage: isUploadingImage,
+                        onUploadImage: () async {
+                          setModalState(() => isUploadingImage = true);
+                          final url = await AdminUploadUtil.pickAndUploadImage(context);
+                          setModalState(() {
+                            isUploadingImage = false;
+                            if (url != null) imageUrlController.text = url;
+                          });
+                        },
+                      );
+
+                      Widget previewSection = _buildPreviewSection(
+                        previewBanner: previewBanner,
+                        setModalState: setModalState,
+                        onApplyTemplate: (tpl) {
+                          setModalState(() {
+                            titleController.text = tpl['title'] ?? '';
+                            descController.text = tpl['desc'] ?? '';
+                            tagTextController.text = tpl['tag'] ?? '';
+                            buttonTextController.text = tpl['btn'] ?? '';
+                            selectedTagIcon = tpl['tagIcon'] ?? 'trophy';
+                            selectedBgIcon = tpl['bgIcon'] ?? 'trophy';
+                            startHex = tpl['start'] ?? '#005861';
+                            endHex = tpl['end'] ?? '#007D8A';
+                            bannerType = 'card';
+                          });
+                        },
+                      );
+
+                      if (isWide) {
+                        return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionTitle('Dados', FontAwesomeIcons.penToSquare),
-                            _buildInputForm(
-                              controller: titleController,
-                              hint: 'Título',
-                              onChanged: (_) => setModalState((){})
-                            ),
-                            const SizedBox(height: 14),
-                            _buildInputForm(
-                              controller: descController,
-                              hint: 'Descrição',
-                              maxLines: 3,
-                              onChanged: (_) => setModalState((){})
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              children: [
-                                SizedBox(
-                                  width: 100,
-                                  child: _buildInputForm(controller: orderController, hint: 'Ordem', isNumeric: true)
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildSelectForm(
-                                    value: status,
-                                    items: const [
-                                      DropdownMenuItem(value: 'true', child: Text('Ativo')),
-                                      DropdownMenuItem(value: 'false', child: Text('Inativo')),
-                                    ],
-                                    onChanged: (val) { if (val != null) setModalState(() => status = val); },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              children: [
-                                InkWell(
-                                  onTap: () {
-                                    _showColorPicker(context, bgColor, (color) {
-                                      setModalState(() => bgColor = color);
-                                    });
-                                  },
-                                  child: Container(
-                                    width: 60,
-                                    height: 35,
-                                    decoration: BoxDecoration(
-                                      color: bgColor,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: primaryAmber.withValues(alpha: 0.15)),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Text('Cor de fundo', style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12)),
-                              ],
-                            )
+                            Expanded(flex: 5, child: formSection),
+                            const SizedBox(width: 24),
+                            Expanded(flex: 4, child: previewSection),
                           ],
-                        ),
-                      ),
-                      const SizedBox(width: 30),
-                      // Preview Column
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        );
+                      } else {
+                        return Column(
                           children: [
-                            _buildSectionTitle('Preview', FontAwesomeIcons.mobileScreenButton),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [bgColor, const Color(0xFF1A1C23)],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: primaryAmber.withValues(alpha: 0.2),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 4),
-                                  )
-                                ]
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    titleController.text.isEmpty ? 'Mega Prêmio' : titleController.text,
-                                    style: GoogleFonts.orbitron(
-                                      color: Colors.white,
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.w700,
-                                      shadows: [Shadow(color: Colors.black.withValues(alpha: 0.3), offset: const Offset(0,2), blurRadius: 10)]
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    descController.text.isEmpty ? 'R\$ 50.000,00 acumulado' : descController.text,
-                                    style: GoogleFonts.inter(
-                                      color: Colors.white.withValues(alpha: 0.9),
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text('Saiba Mais', style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-                                        const SizedBox(width: 4),
-                                        const FaIcon(FontAwesomeIcons.arrowRight, color: Colors.white, size: 12),
-                                      ],
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: primaryAmber.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: primaryAmber.withValues(alpha: 0.2), style: BorderStyle.none),
-                              ),
-                              child: CustomPaint(
-                                painter: _DashedBorderPainter(),
-                                child: Center(
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const FaIcon(FontAwesomeIcons.circleInfo, color: Color(0xFF8A7A5A), size: 12),
-                                      const SizedBox(width: 8),
-                                      Text('Visualização aproximada do card no app.', style: GoogleFonts.inter(color: const Color(0xFF8A7A5A), fontSize: 11)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            )
+                            previewSection,
+                            const SizedBox(height: 20),
+                            formSection,
                           ],
-                        ),
-                      )
-                    ],
+                        );
+                      }
+                    },
                   ),
+
                   const SizedBox(height: 24),
+
+                  // Modal Actions
                   Container(
                     padding: const EdgeInsets.only(top: 16),
-                    decoration: BoxDecoration(border: Border(top: BorderSide(color: primaryAmber.withValues(alpha: 0.1)))),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                          color: AppColors.verdeVale.withValues(alpha: 0.15),
+                        ),
+                      ),
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        _buildButton('Cancelar', onTap: () => Navigator.of(context).pop()),
+                        TextButton(
+                          onPressed: isSaving ? null : () => Navigator.of(context).pop(),
+                          child: Text(
+                            'Cancelar',
+                            style: GoogleFonts.inter(
+                              color: AppColors.cinzaMedio,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 12),
-                        _buildButton('Salvar Banner', isPrimary: true, onTap: () async {
-                          final title = titleController.text.trim();
-                          if (title.isEmpty) return;
+                        ElevatedButton.icon(
+                          onPressed: isSaving
+                              ? null
+                              : () async {
+                                  final title = titleController.text.trim();
+                                  final img = imageUrlController.text.trim();
 
-                          final hexColor = '#${bgColor.value.toRadixString(16).substring(2, 8).toUpperCase()}';
+                                  if (bannerType == 'card' && title.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Informe um título para o card.'),
+                                        backgroundColor: AppColors.danger,
+                                      ),
+                                    );
+                                    return;
+                                  }
 
-                          Map<String, dynamic> params = {
-                            'data': {
-                              'title': title,
-                              'description': descController.text.trim(),
-                              'order': int.tryParse(orderController.text) ?? 1,
-                              'active': status == 'true',
-                              'colorHex': hexColor,
-                            }
-                          };
+                                  if (bannerType == 'image' && img.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Faça upload ou informe a URL da imagem.'),
+                                        backgroundColor: AppColors.danger,
+                                      ),
+                                    );
+                                    return;
+                                  }
 
-                          if (banner != null) {
-                            params['bannerId'] = banner.objectId;
-                          }
+                                  setModalState(() => isSaving = true);
 
-                          await ParseCloudFunction('createOrUpdateBanner').execute(parameters: params);
+                                  final Map<String, dynamic> data = {
+                                    'title': title,
+                                    'description': descController.text.trim(),
+                                    'imageUrl': img,
+                                    'actionUrl': actionUrlController.text.trim(),
+                                    'tagText': tagTextController.text.trim(),
+                                    'tagIcon': selectedTagIcon,
+                                    'buttonText': buttonTextController.text.trim(),
+                                    'bgIcon': selectedBgIcon,
+                                    'order': int.tryParse(orderController.text.trim()) ?? 1,
+                                    'isActive': isActive,
+                                    'active': isActive, // Double write for dual compatibility
+                                    'bannerType': bannerType,
+                                    'gradientStartHex': startHex,
+                                    'gradientEndHex': endHex,
+                                    'colorHex': startHex,
+                                  };
 
-                          if (context.mounted) Navigator.of(context).pop();
-                          _loadBanners();
-                        }),
+                                  final Map<String, dynamic> params = {'data': data};
+                                  if (banner != null && banner.id.isNotEmpty) {
+                                    params['bannerId'] = banner.id;
+                                  }
+
+                                  try {
+                                    await ParseCloudFunction('createOrUpdateBanner')
+                                        .execute(parameters: params);
+
+                                    if (dialogCtx.mounted) {
+                                      Navigator.of(dialogCtx).pop();
+                                    }
+                                    _loadBanners();
+                                  } catch (e) {
+                                    setModalState(() => isSaving = false);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Erro ao salvar: $e'),
+                                          backgroundColor: AppColors.danger,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                          icon: isSaving
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const FaIcon(FontAwesomeIcons.floppyDisk, size: 14),
+                          label: Text(isSaving ? 'Salvando...' : 'Salvar Banner'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.verdeVale,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             );
-          }
+          },
         );
       },
     );
   }
 
-  void _showColorPicker(BuildContext context, Color currentColor, ValueChanged<Color> onColorChanged) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        Color tempColor = currentColor;
-        return AlertDialog(
-          backgroundColor: cardColor,
-          title: const Text('Selecione uma cor', style: TextStyle(color: textColor)),
-          content: SingleChildScrollView(
-            child: Text('Note: Color picker is not available right now. We will use the selected color.')
+  Widget _buildFormSection({
+    required void Function(VoidCallback) setModalState,
+    required TextEditingController titleController,
+    required TextEditingController descController,
+    required TextEditingController tagTextController,
+    required TextEditingController buttonTextController,
+    required TextEditingController actionUrlController,
+    required TextEditingController imageUrlController,
+    required TextEditingController orderController,
+    required String bannerType,
+    required ValueChanged<String> onTypeChanged,
+    required String selectedTagIcon,
+    required ValueChanged<String> onTagIconChanged,
+    required String selectedBgIcon,
+    required ValueChanged<String> onBgIconChanged,
+    required String startHex,
+    required String endHex,
+    required void Function(String, String) onGradientChanged,
+    required bool isActive,
+    required ValueChanged<bool> onActiveChanged,
+    required bool isUploadingImage,
+    required VoidCallback onUploadImage,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. Tipo de Banner
+        Text(
+          'TIPO DE BANNER',
+          style: GoogleFonts.inter(
+            color: AppColors.amareloVale,
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1,
           ),
-          actions: [
-            TextButton(
-              child: const Text('Cancelar', style: TextStyle(color: secondaryTextColor)),
-              onPressed: () => Navigator.of(context).pop(),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTypeSelectorButton(
+                icon: FontAwesomeIcons.paintbrush,
+                label: 'Card Estilizado',
+                isSelected: bannerType == 'card',
+                onTap: () => onTypeChanged('card'),
+              ),
             ),
-            TextButton(
-              child: const Text('Selecionar', style: TextStyle(color: primaryAmber)),
-              onPressed: () {
-                onColorChanged(tempColor);
-                Navigator.of(context).pop();
-              },
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildTypeSelectorButton(
+                icon: FontAwesomeIcons.image,
+                label: 'Arte Gráfica (Imagem)',
+                isSelected: bannerType == 'image',
+                onTap: () => onTypeChanged('image'),
+              ),
             ),
           ],
-        );
+        ),
+
+        const SizedBox(height: 18),
+
+        // 2. Form fields according to type
+        if (bannerType == 'card') ...[
+          // Title
+          _buildInputForm(
+            controller: titleController,
+            label: 'Título Principal',
+            hint: 'Ex: Mega Prêmio Semanal',
+            onChanged: (_) => setModalState(() {}),
+          ),
+          const SizedBox(height: 12),
+
+          // Description
+          _buildInputForm(
+            controller: descController,
+            label: 'Descrição',
+            hint: 'Ex: Dispute prêmios em dinheiro hoje mesmo!',
+            maxLines: 2,
+            onChanged: (_) => setModalState(() {}),
+          ),
+          const SizedBox(height: 12),
+
+          // Tag Row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 3,
+                child: _buildInputForm(
+                  controller: tagTextController,
+                  label: 'Texto da Tag',
+                  hint: 'Ex: MEGA PRÊMIO',
+                  onChanged: (_) => setModalState(() {}),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ícone da Tag',
+                      style: GoogleFonts.inter(
+                        color: AppColors.cinzaMedio,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _buildIconDropdown(
+                      value: selectedTagIcon,
+                      onChanged: (val) {
+                        if (val != null) onTagIconChanged(val);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+          // Quick Tag suggestions
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: ['MEGA PRÊMIO', 'DESTAQUE', 'NOVIDADE', 'EXCLUSIVO', 'EVENTO']
+                .map((tag) => InkWell(
+                      onTap: () {
+                        tagTextController.text = tag;
+                        setModalState(() {});
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.verdeVale.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.verdeVale.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Text(
+                          tag,
+                          style: GoogleFonts.inter(
+                            color: AppColors.amareloVale,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ))
+                .toList(),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Button & Watermark Icon Row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 3,
+                child: _buildInputForm(
+                  controller: buttonTextController,
+                  label: 'Texto do Botão',
+                  hint: 'Ex: PARTICIPAR',
+                  onChanged: (_) => setModalState(() {}),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Marca d\'Água Fundo',
+                      style: GoogleFonts.inter(
+                        color: AppColors.cinzaMedio,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _buildIconDropdown(
+                      value: selectedBgIcon,
+                      onChanged: (val) {
+                        if (val != null) onBgIconChanged(val);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Gradient Presets
+          Text(
+            'PALETAS DE CORES & GRADIENTE',
+            style: GoogleFonts.inter(
+              color: AppColors.cinzaMedio,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _presetGradients.map((g) {
+              final isCurrent = startHex == g['start'] && endHex == g['end'];
+              return InkWell(
+                onTap: () => onGradientChanged(g['start'], g['end']),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.darkBackground,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isCurrent
+                          ? AppColors.amareloVale
+                          : Colors.white.withValues(alpha: 0.1),
+                      width: isCurrent ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [g['color1'] as Color, g['color2'] as Color],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        g['name'] as String,
+                        style: GoogleFonts.inter(
+                          color: isCurrent ? Colors.white : AppColors.cinzaMedio,
+                          fontSize: 11,
+                          fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Optional Image Illustration in Card
+          Row(
+            children: [
+              Expanded(
+                child: _buildInputForm(
+                  controller: imageUrlController,
+                  label: 'Ilustração Opcional (URL ou Upload)',
+                  hint: 'https://... (PNG transparente ou imagem)',
+                  onChanged: (_) => setModalState(() {}),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 18),
+                child: ElevatedButton.icon(
+                  onPressed: isUploadingImage ? null : onUploadImage,
+                  icon: isUploadingImage
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const FaIcon(FontAwesomeIcons.upload, size: 12),
+                  label: const Text('UPLOAD'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.verdeVale,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ] else ...[
+          // Banner de Imagem Completa
+          Text(
+            'ARTE GRÁFICA COMPLETA',
+            style: GoogleFonts.inter(
+              color: AppColors.cinzaMedio,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.darkBackground,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.15)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInputForm(
+                        controller: imageUrlController,
+                        label: 'URL da Arte / Flyer',
+                        hint: 'https://...',
+                        onChanged: (_) => setModalState(() {}),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 18),
+                      child: ElevatedButton.icon(
+                        onPressed: isUploadingImage ? null : onUploadImage,
+                        icon: isUploadingImage
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const FaIcon(FontAwesomeIcons.upload, size: 12),
+                        label: const Text('ENVIAR IMAGEM'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.verdeVale,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '💡 Dica: Proporção recomendada de 16:7 ou 1200x520 px em JPG/PNG.',
+                  style: GoogleFonts.inter(
+                    color: AppColors.cinzaMedio,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildInputForm(
+            controller: titleController,
+            label: 'Legenda / Título Opcional',
+            hint: 'Ex: Grande Inauguração (opcional)',
+            onChanged: (_) => setModalState(() {}),
+          ),
+        ],
+
+        const SizedBox(height: 16),
+
+        // Action URL + Order + Active Row
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 4,
+              child: _buildInputForm(
+                controller: actionUrlController,
+                label: 'Link de Ação ao Clicar (actionUrl)',
+                hint: 'https://... ou screen:wallet ou screen:ranking',
+                onChanged: (_) => setModalState(() {}),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              flex: 2,
+              child: _buildInputForm(
+                controller: orderController,
+                label: 'Ordem',
+                hint: '1',
+                isNumeric: true,
+                onChanged: (_) => setModalState(() {}),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Status',
+                    style: GoogleFonts.inter(
+                      color: AppColors.cinzaMedio,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.darkCardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.verdeVale.withValues(alpha: 0.15),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          isActive ? 'Ativo' : 'Inativo',
+                          style: GoogleFonts.inter(
+                            color: isActive ? AppColors.success : AppColors.cinzaMedio,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Switch(
+                          value: isActive,
+                          activeThumbColor: AppColors.verdeVale,
+                          onChanged: onActiveChanged,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+        // Quick Action presets
+        Wrap(
+          spacing: 6,
+          runSpacing: 4,
+          children: [
+            _buildActionChip('Carteira', 'screen:wallet', actionUrlController, setModalState),
+            _buildActionChip('Ranking', 'screen:ranking', actionUrlController, setModalState),
+            _buildActionChip('Site Oficial', 'https://oenigma.com.br', actionUrlController, setModalState),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionChip(
+    String label,
+    String value,
+    TextEditingController controller,
+    void Function(VoidCallback) setModalState,
+  ) {
+    return InkWell(
+      onTap: () {
+        controller.text = value;
+        setModalState(() {});
       },
-    );
-  }
-
-  Future<void> _toggleBannerStatus(ParseObject banner, bool isActive) async {
-    await ParseCloudFunction('createOrUpdateBanner').execute(
-      parameters: {
-        'bannerId': banner.objectId,
-        'data': {
-          'active': isActive,
-        }
-      }
-    );
-    _loadBanners();
-  }
-
-  Future<void> _deleteBanner(ParseObject banner) async {
-    await ParseCloudFunction('deleteBanner').execute(
-      parameters: { 'bannerId': banner.objectId }
-    );
-    _loadBanners();
-  }
-
-  Widget _buildInputForm({required TextEditingController controller, required String hint, int maxLines = 1, bool isNumeric = false, ValueChanged<String>? onChanged}) {
-    return TextField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
-      onChanged: onChanged,
-      style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 15),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: secondaryTextColor.withValues(alpha: 0.5)),
-        filled: true,
-        fillColor: cardColor.withValues(alpha: 0.8),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: primaryAmber.withValues(alpha: 0.15))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryAmber)),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: Text(
+          '+ $label',
+          style: GoogleFonts.inter(
+            color: AppColors.cinzaMedio,
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildSelectForm({required String value, required List<DropdownMenuItem<String>> items, required ValueChanged<String?> onChanged}) {
+  Widget _buildPreviewSection({
+    required BannerModel previewBanner,
+    required void Function(VoidCallback) setModalState,
+    required ValueChanged<Map<String, dynamic>> onApplyTemplate,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const FaIcon(
+                  FontAwesomeIcons.mobileScreenButton,
+                  color: AppColors.amareloVale,
+                  size: 14,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'PRÉVIA NO APP DO CLIENTE (1:1)',
+                  style: GoogleFonts.inter(
+                    color: AppColors.amareloVale,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.verdeVale.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                'Tempo Real',
+                style: GoogleFonts.inter(
+                  color: AppColors.verdeVale,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Live Simulated Banner Card (Pixel for pixel identical to client app!)
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.scaffoldBackground,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.4),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: BannerCardWidget(
+            banner: previewBanner,
+            height: 155.0,
+            showShadow: true,
+            margin: EdgeInsets.zero,
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Quick Preset Templates
+        Text(
+          'MODELOS PRONTOS (1 CLIQUE)',
+          style: GoogleFonts.inter(
+            color: AppColors.cinzaMedio,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Column(
+          children: _presetTemplates.map((tpl) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              child: InkWell(
+                onTap: () => onApplyTemplate(tpl),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.darkBackground,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.verdeVale.withValues(alpha: 0.15),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        tpl['label'] as String,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        'Aplicar Modelo',
+                        style: GoogleFonts.inter(
+                          color: AppColors.verdeVale,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const FaIcon(
+                        FontAwesomeIcons.arrowRight,
+                        size: 9,
+                        color: AppColors.verdeVale,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTypeSelectorButton({
+    required dynamic icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.verdeVale.withValues(alpha: 0.2)
+              : AppColors.darkBackground,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.verdeVale
+                : Colors.white.withValues(alpha: 0.1),
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FaIcon(
+              icon,
+              size: 14,
+              color: isSelected ? AppColors.amareloVale : AppColors.cinzaMedio,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                color: isSelected ? Colors.white : AppColors.cinzaMedio,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconDropdown({
+    required String value,
+    required ValueChanged<String?> onChanged,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(color: cardColor.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(12), border: Border.all(color: primaryAmber.withValues(alpha: 0.15))),
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: AppColors.darkCardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.15)),
+      ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: value,
-          dropdownColor: sidebarBackground,
-          style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 15),
+          value: _availableIcons.any((i) => i['id'] == value) ? value : '',
+          dropdownColor: AppColors.darkCardColor,
+          style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
           isExpanded: true,
-          items: items,
+          items: _availableIcons.map((item) {
+            final iconId = item['id'] as String;
+            final iconData = BannerModel.getIconData(iconId);
+            return DropdownMenuItem<String>(
+              value: iconId,
+              child: Row(
+                children: [
+                  if (iconData != null) ...[
+                    FaIcon(iconData, size: 12, color: AppColors.amareloVale),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(item['name'] as String),
+                ],
+              ),
+            );
+          }).toList(),
           onChanged: onChanged,
         ),
       ),
     );
   }
 
-  Color _parseColor(String hexColor) {
-    hexColor = hexColor.replaceAll('#', '');
-    if (hexColor.length == 6) {
-      hexColor = 'FF$hexColor';
-    }
-    return Color(int.parse(hexColor, radix: 16));
+  Widget _buildInputForm({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    int maxLines = 1,
+    bool isNumeric = false,
+    ValueChanged<String>? onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            color: AppColors.cinzaMedio,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+          onChanged: onChanged,
+          style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              color: AppColors.cinzaMedio.withValues(alpha: 0.5),
+              fontSize: 13,
+            ),
+            filled: true,
+            fillColor: AppColors.darkCardColor,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: AppColors.verdeVale.withValues(alpha: 0.15),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.verdeVale),
+            ),
+          ),
+        ),
+      ],
+    );
   }
-}
 
-class _DashedBorderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = primaryAmber.withValues(alpha: 0.15)
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-
-    const dashWidth = 5.0;
-    const dashSpace = 5.0;
-
-    double startX = 0;
-    while (startX < size.width) {
-      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
-      startX += dashWidth + dashSpace;
-    }
-    double startY = 0;
-    while (startY < size.height) {
-      canvas.drawLine(Offset(size.width, startY), Offset(size.width, startY + dashWidth), paint);
-      startY += dashWidth + dashSpace;
-    }
-    startX = size.width;
-    while (startX > 0) {
-      canvas.drawLine(Offset(startX, size.height), Offset(startX - dashWidth, size.height), paint);
-      startX -= dashWidth + dashSpace;
-    }
-    startY = size.height;
-    while (startY > 0) {
-      canvas.drawLine(Offset(0, startY), Offset(0, startY - dashWidth), paint);
-      startY -= dashWidth + dashSpace;
-    }
+  Future<void> _toggleBannerStatus(BannerModel banner, bool isActive) async {
+    await ParseCloudFunction('createOrUpdateBanner').execute(
+      parameters: {
+        'bannerId': banner.id,
+        'data': {
+          'isActive': isActive,
+          'active': isActive,
+        },
+      },
+    );
+    _loadBanners();
   }
 
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  void _confirmDeleteBanner(BannerModel banner) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.darkCardColor,
+        title: Text(
+          'Confirmar Exclusão',
+          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Deseja realmente excluir o banner "${banner.title.isNotEmpty ? banner.title : 'selecionado'}"?',
+          style: GoogleFonts.inter(color: AppColors.cinzaMedio),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await ParseCloudFunction('deleteBanner').execute(
+                parameters: {'bannerId': banner.id},
+              );
+              _loadBanners();
+            },
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/app_cliente/features/event/widgets/event_card.dart';
 import 'package:oenigma/app_cliente/features/home/providers/home_events_provider.dart';
 import '../widgets/home_profile_card.dart';
@@ -49,11 +50,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final homeDataAsync = ref.watch(homeEventsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: homeDataAsync.when(
           loading: () => const Center(
-            child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+            child: CircularProgressIndicator(color: AppColors.verdeVale),
           ),
           error: (error, stack) => Center(
             child: Column(
@@ -62,13 +63,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const FaIcon(
                   FontAwesomeIcons.circleExclamation,
                   size: 48,
-                  color: Color(0xFFF87171),
+                  color: AppColors.danger,
                 ),
                 const SizedBox(height: 16),
                 const Text(
                   'Erro ao carregar dados.',
                   style: TextStyle(
-                    color: Color(0xFF1E293B),
+                    color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -78,7 +79,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 32.0),
                   child: Text(
                     '$error',
-                    style: const TextStyle(color: Color(0xFF64748B)),
+                    style: const TextStyle(color: AppColors.cinzaMedio),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -87,17 +88,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   onPressed: _reloadData,
                   icon: const FaIcon(
                     FontAwesomeIcons.rotateRight,
-                    color: Color(0xFF4C1D95),
+                    color: Colors.white,
+                    size: 16,
                   ),
                   label: const Text(
                     "TENTAR NOVAMENTE",
-                    style: TextStyle(fontWeight: FontWeight.w900),
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFC4B5FD),
-                    foregroundColor: const Color(0xFF4C1D95),
+                    backgroundColor: AppColors.verdeVale,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
                     ),
                   ),
                 ),
@@ -120,8 +126,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
             return RefreshIndicator(
               onRefresh: _reloadData,
-              color: const Color(0xFFFFD54F),
-
+              color: AppColors.verdeVale,
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
@@ -183,18 +188,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: AppColors.verdeVale.withValues(alpha: 0.15),
+                    border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.4)),
                   ),
                   child: const FaIcon(
                     FontAwesomeIcons.calendarXmark,
                     size: 40,
-                    color: Colors.grey,
+                    color: AppColors.cinzaMedio,
                   ),
                 ),
                 const SizedBox(height: 16),
                 const Text(
                   'Nenhum evento ativo no momento.',
-                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                  style: TextStyle(color: AppColors.cinzaMedio, fontSize: 16),
                 ),
               ],
             ),
@@ -210,7 +216,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             children: [
               CarouselSlider(
                 options: CarouselOptions(
-                  height: 250, // To match min-height: 240px + some padding
+                  height: 280,
                   viewportFraction: 1.0,
                   enlargeCenterPage: false,
                   enableInfiniteScroll: true,
@@ -242,20 +248,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: events.asMap().entries.map((entry) {
-                  return Container(
-                    width: 10.0,
-                    height: 10.0,
+                  final isSelected = _currentCarouselIndex == entry.key;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    width: isSelected ? 24.0 : 8.0,
+                    height: 8.0,
                     margin: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _currentCarouselIndex == entry.key
-                          ? const Color(0xFF8B5CF6)
-                          : const Color(0xFFE2E8F0),
-                      boxShadow: _currentCarouselIndex == entry.key
+                      borderRadius: BorderRadius.circular(4),
+                      color: isSelected
+                          ? AppColors.verdeVale
+                          : AppColors.cinzaBorda,
+                      boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-                                blurRadius: 8,
+                                color: AppColors.verdeVale.withValues(alpha: 0.3),
+                                blurRadius: 6,
                                 offset: const Offset(0, 2),
                               ),
                             ]

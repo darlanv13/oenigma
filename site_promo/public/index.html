@@ -6,30 +6,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enigma City | A Maior Caçada ao Tesouro Real</title>
 
-    <!-- Fontes do Google: Cinzel (Épica/Mistério) e Poppins (Leitura) -->
+    <!-- Fontes do Google: Cinzel (Épica/Mistério), Inter e Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Poppins:wght@300;400;500;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
 
     <!-- FontAwesome (Ícones) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* Variáveis de Cores Premium */
+        /* ========================================================
+           PALETA OFICIAL VALE & DESIGN SYSTEM MODERNO
+           - Verde-Vale:   #007D8A (#007E7A)
+           - Amarelo-Vale: #F3A522 (#EEA722)
+           - Cinza Escuro: #444444
+           - Cinza Médio:  #919191
+           ======================================================== */
         :root {
-            --bg-dark: #0a0a0a;
-            --bg-panel: rgba(30, 30, 30, 0.6);
-            --primary-gold: #FFD700;
-            /* Dourado vibrante alinhado à logo */
-            --secondary-gold: #B8860B;
-            --cta-green: #2ecc71;
-            --cta-green-hover: #27ae60;
-            --text-light: #F5F5F5;
-            --text-muted: #B0B0B0;
-            --border-light: rgba(255, 215, 0, 0.15);
-            /* Bordas com leve tom dourado */
+            --verde-vale: #007D8A;
+            --verde-vale-dark: #005F69;
+            --verde-vale-light: #009BB5;
+            --verde-vale-glow: rgba(0, 125, 138, 0.35);
+            --verde-vale-subtle: rgba(0, 125, 138, 0.12);
+
+            --amarelo-vale: #F3A522;
+            --amarelo-vale-hover: #EEA722;
+            --amarelo-vale-glow: rgba(243, 165, 34, 0.4);
+            --amarelo-vale-subtle: rgba(243, 165, 34, 0.12);
+
+            --cinza-escuro: #444444;
+            --cinza-medio: #919191;
+
+            --bg-deep: #091012;
+            --bg-surface: #0E181B;
+            --bg-panel: rgba(14, 24, 27, 0.75);
+
+            --text-light: #F8FAFC;
+            --text-muted: #94A3B8;
+            --border-subtle: rgba(0, 125, 138, 0.18);
+            --border-hover: rgba(243, 165, 34, 0.35);
         }
 
         /* Reset Básico */
@@ -40,28 +57,35 @@
             font-family: 'Poppins', sans-serif;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            background-color: var(--bg-dark);
+            background-color: var(--bg-deep);
             color: var(--text-light);
             overflow-x: hidden;
-            /* Fundo escuro com uma névoa dourada bem sutil */
             background-image:
-                radial-gradient(circle at 15% 50%, rgba(255, 215, 0, 0.05), transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(255, 215, 0, 0.03), transparent 50%);
+                radial-gradient(circle at 10% 20%, rgba(0, 125, 138, 0.12), transparent 45%),
+                radial-gradient(circle at 90% 40%, rgba(243, 165, 34, 0.08), transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(0, 125, 138, 0.09), transparent 60%);
+            background-attachment: fixed;
         }
 
         /* Tipografia Épica para Títulos */
-        h1,
-        h2,
-        h3,
-        .brand-font {
+        h1, h2, h3, .brand-font {
             font-family: 'Cinzel', serif;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
         .highlight-gold {
-            color: var(--primary-gold);
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+            color: var(--amarelo-vale);
+            text-shadow: 0 0 25px var(--amarelo-vale-glow);
+        }
+
+        .highlight-teal {
+            color: var(--verde-vale-light);
+            text-shadow: 0 0 25px var(--verde-vale-glow);
         }
 
         /* Navegação Glassmorphism */
@@ -69,44 +93,63 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 5%;
-            background: rgba(10, 10, 10, 0.75);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            padding: 16px 6%;
+            background: rgba(9, 16, 18, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             position: fixed;
             width: 100%;
             top: 0;
             z-index: 1000;
-            border-bottom: 1px solid var(--border-light);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            border-bottom: 1px solid var(--border-subtle);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
         .site-logo {
-            height: 55px;
-            /* Tamanho ajustado para a sua logo */
+            height: 52px;
             width: auto;
             object-fit: contain;
-            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.2));
-            transition: filter 0.3s ease;
+            filter: drop-shadow(0 0 12px var(--amarelo-vale-glow));
+            transition: filter 0.3s ease, transform 0.3s ease;
         }
 
         .site-logo:hover {
-            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.5));
+            transform: scale(1.02);
+            filter: drop-shadow(0 0 18px var(--amarelo-vale));
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 28px;
         }
 
         .nav-links a {
             color: var(--text-light);
             text-decoration: none;
-            margin-left: 35px;
             font-size: 0.95rem;
             font-weight: 500;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
             transition: all 0.3s ease;
         }
 
         .nav-links a:hover {
-            color: var(--primary-gold);
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            color: var(--amarelo-vale);
+        }
+
+        .nav-btn {
+            background: var(--verde-vale-subtle);
+            border: 1px solid var(--verde-vale) !important;
+            color: #fff !important;
+            padding: 9px 24px !important;
+            border-radius: 50px !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .nav-btn:hover {
+            background: var(--verde-vale) !important;
+            box-shadow: 0 0 20px var(--verde-vale-glow) !important;
+            transform: translateY(-1px);
         }
 
         /* Seção Hero (Principal) */
@@ -115,21 +158,36 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 140px 5% 50px;
+            padding: 150px 6% 60px;
             gap: 50px;
             position: relative;
         }
 
         .hero-content {
             flex: 1.2;
-            max-width: 650px;
+            max-width: 660px;
             z-index: 2;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: var(--verde-vale-subtle);
+            border: 1px solid rgba(0, 125, 138, 0.35);
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--amarelo-vale);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
         }
 
         .hero-title {
             font-size: 4rem;
             line-height: 1.1;
-            margin-bottom: 25px;
+            margin-bottom: 24px;
             font-weight: 900;
             text-transform: uppercase;
         }
@@ -137,44 +195,46 @@
         .hero-subtitle {
             font-size: 1.15rem;
             color: var(--text-muted);
-            margin-bottom: 45px;
+            margin-bottom: 40px;
             line-height: 1.7;
             font-weight: 300;
         }
 
-        /* Botão Neon Verde e Dourado */
+        /* Botões Modernos */
         .btn-primary {
             display: inline-flex;
             align-items: center;
             gap: 12px;
-            padding: 18px 45px;
+            padding: 18px 44px;
             border-radius: 50px;
-            background: linear-gradient(135deg, var(--primary-gold), var(--secondary-gold));
-            color: #000;
+            background: linear-gradient(135deg, var(--verde-vale), var(--verde-vale-dark));
+            color: #FFFFFF;
             text-decoration: none;
             font-weight: 700;
-            font-size: 1.1rem;
-            letter-spacing: 1.5px;
+            font-size: 1rem;
+            letter-spacing: 1.2px;
             border: none;
-            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
-            transition: all 0.4s ease;
+            box-shadow: 0 10px 30px var(--verde-vale-glow);
+            transition: all 0.35s ease;
             text-transform: uppercase;
         }
 
         .btn-primary:hover {
-            transform: translateY(-4px) scale(1.03);
-            box-shadow: 0 15px 40px rgba(255, 215, 0, 0.5);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 14px 40px rgba(0, 125, 138, 0.6);
+            background: linear-gradient(135deg, #008f9e, var(--verde-vale));
         }
 
-        .btn-green {
-            background: linear-gradient(135deg, var(--cta-green), var(--cta-green-hover));
-            box-shadow: 0 10px 30px rgba(46, 204, 113, 0.3);
-            color: #fff;
+        .btn-gold {
+            background: linear-gradient(135deg, var(--amarelo-vale), #d98811);
+            color: #12181b;
+            box-shadow: 0 10px 30px var(--amarelo-vale-glow);
         }
 
-        .btn-green:hover {
-            box-shadow: 0 15px 40px rgba(46, 204, 113, 0.5);
-            color: #fff;
+        .btn-gold:hover {
+            background: linear-gradient(135deg, #f5b03e, var(--amarelo-vale));
+            box-shadow: 0 14px 40px rgba(243, 165, 34, 0.6);
+            color: #0b1113;
         }
 
         /* Mockup do Celular */
@@ -190,26 +250,26 @@
         .hero-image::before {
             content: '';
             position: absolute;
-            width: 300px;
-            height: 500px;
-            background: var(--primary-gold);
-            filter: blur(100px);
-            opacity: 0.15;
+            width: 320px;
+            height: 520px;
+            background: radial-gradient(circle, var(--verde-vale) 0%, transparent 70%);
+            filter: blur(80px);
+            opacity: 0.25;
             border-radius: 50%;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            animation: pulse-glow 4s infinite alternate;
+            animation: pulse-glow 5s infinite alternate;
         }
 
         .phone-mockup {
-            width: 320px;
-            height: 650px;
-            border-radius: 45px;
-            border: 10px solid #1a1a1a;
+            width: 310px;
+            height: 630px;
+            border-radius: 44px;
+            border: 8px solid #1E292D;
             background-color: #000;
             overflow: hidden;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 40px var(--verde-vale-subtle);
             animation: float 6s ease-in-out infinite;
             position: relative;
         }
@@ -220,55 +280,56 @@
             object-fit: cover;
         }
 
-        /* Como Funciona - Cards Estilo RPG */
+        /* Como Funciona - Cards Modernos */
         .how-it-works {
-            padding: 100px 5%;
-            background: linear-gradient(to bottom, var(--bg-dark), #111);
+            padding: 110px 6%;
+            background: linear-gradient(to bottom, var(--bg-deep), var(--bg-surface));
             text-align: center;
             position: relative;
         }
 
         .section-title {
             font-size: 3rem;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .steps-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 35px;
+            gap: 30px;
             margin-top: 60px;
         }
 
         .step-card {
             background: var(--bg-panel);
-            backdrop-filter: blur(10px);
-            padding: 50px 30px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 45px 28px;
             border-radius: 20px;
-            border: 1px solid var(--border-light);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
-            transition: all 0.4s ease;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             overflow: hidden;
         }
 
-        /* Brilho interno no card */
         .step-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--verde-vale), var(--amarelo-vale), transparent);
             opacity: 0;
             transition: opacity 0.4s;
         }
 
         .step-card:hover {
-            transform: translateY(-12px);
-            border-color: rgba(255, 215, 0, 0.4);
-            background: rgba(40, 40, 40, 0.8);
+            transform: translateY(-8px);
+            border-color: var(--verde-vale);
+            box-shadow: 0 20px 45px rgba(0, 125, 138, 0.2);
+            background: rgba(18, 30, 34, 0.85);
         }
 
         .step-card:hover::before {
@@ -276,23 +337,29 @@
         }
 
         .step-icon {
-            width: 80px;
-            height: 80px;
-            background: radial-gradient(circle at top left, #333, #111);
-            border: 2px solid var(--primary-gold);
+            width: 76px;
+            height: 76px;
+            background: radial-gradient(circle at top left, #162428, #0D1618);
+            border: 2px solid var(--verde-vale);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 25px;
-            font-size: 30px;
-            color: var(--primary-gold);
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+            margin: 0 auto 24px;
+            font-size: 28px;
+            color: var(--amarelo-vale);
+            box-shadow: 0 0 20px var(--verde-vale-glow);
+            transition: transform 0.3s ease;
+        }
+
+        .step-card:hover .step-icon {
+            transform: scale(1.08) rotate(5deg);
+            border-color: var(--amarelo-vale);
         }
 
         .step-card h3 {
-            font-size: 1.4rem;
-            margin-bottom: 15px;
+            font-size: 1.35rem;
+            margin-bottom: 14px;
             color: var(--text-light);
         }
 
@@ -304,21 +371,37 @@
 
         /* Showcase "Ache & Ganhe" */
         .showcase {
-            padding: 120px 5%;
+            padding: 120px 6%;
             display: flex;
             align-items: center;
             gap: 60px;
-            background: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M50 50m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" fill="rgba(255,215,0,0.03)"/></svg>');
+            background: var(--bg-surface);
+            position: relative;
         }
 
         .showcase-text {
             flex: 1;
         }
 
+        .showcase-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: var(--amarelo-vale-subtle);
+            border: 1px solid rgba(243, 165, 34, 0.35);
+            border-radius: 20px;
+            margin-bottom: 22px;
+            color: var(--amarelo-vale);
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
         .showcase-text h2 {
             font-size: 3.2rem;
-            margin-bottom: 25px;
-            line-height: 1.1;
+            margin-bottom: 24px;
+            line-height: 1.15;
         }
 
         .showcase-image {
@@ -331,9 +414,15 @@
         .showcase-image img {
             width: 100%;
             max-width: 420px;
-            border-radius: 30px;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(255, 215, 0, 0.15);
-            border: 2px solid var(--border-light);
+            border-radius: 28px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 40px var(--verde-vale-subtle);
+            border: 2px solid var(--border-subtle);
+            transition: transform 0.4s ease;
+        }
+
+        .showcase-image img:hover {
+            transform: scale(1.02);
+            border-color: var(--verde-vale);
         }
 
         .feature-list {
@@ -342,61 +431,67 @@
         }
 
         .feature-list li {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             font-size: 1.05rem;
             display: flex;
             align-items: center;
-            color: #E0E0E0;
+            color: #E2E8F0;
         }
 
         .feature-list i {
-            color: var(--primary-gold);
-            font-size: 1.2rem;
+            color: var(--verde-vale-light);
+            font-size: 1.1rem;
             margin-right: 15px;
-            background: rgba(255, 215, 0, 0.1);
-            padding: 8px;
+            background: var(--verde-vale-subtle);
+            border: 1px solid rgba(0, 125, 138, 0.3);
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
 
         /* Footer CTA */
         .footer-cta {
-            padding: 120px 5%;
+            padding: 120px 6%;
             text-align: center;
-            background: radial-gradient(circle at center, #1a1a1a 0%, var(--bg-dark) 100%);
-            border-top: 1px solid var(--border-light);
+            background: radial-gradient(circle at center, #132226 0%, var(--bg-deep) 100%);
+            border-top: 1px solid var(--border-subtle);
             position: relative;
             overflow: hidden;
         }
 
         .footer-cta h2 {
-            font-size: 3.5rem;
-            margin-bottom: 25px;
+            font-size: 3.4rem;
+            margin-bottom: 22px;
             position: relative;
             z-index: 2;
         }
 
         /* Footer Clássico */
         footer {
-            background-color: #050505;
-            padding: 50px 5% 30px;
+            background-color: #060B0C;
+            padding: 50px 6% 35px;
             text-align: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(0, 125, 138, 0.12);
         }
 
         .social-icons {
-            margin: 25px 0;
+            margin: 24px 0;
         }
 
         .social-icons a {
             color: var(--text-muted);
-            font-size: 26px;
-            margin: 0 15px;
+            font-size: 24px;
+            margin: 0 14px;
             transition: all 0.3s ease;
             display: inline-block;
         }
 
         .social-icons a:hover {
-            color: var(--primary-gold);
+            color: var(--amarelo-vale);
             transform: translateY(-3px);
         }
 
@@ -405,11 +500,9 @@
             0% {
                 transform: translateY(0px);
             }
-
             50% {
-                transform: translateY(-25px);
+                transform: translateY(-20px);
             }
-
             100% {
                 transform: translateY(0px);
             }
@@ -417,28 +510,25 @@
 
         @keyframes pulse-glow {
             0% {
-                opacity: 0.1;
-                transform: translate(-50%, -50%) scale(0.9);
+                opacity: 0.15;
+                transform: translate(-50%, -50%) scale(0.95);
             }
-
             100% {
-                opacity: 0.25;
+                opacity: 0.35;
                 transform: translate(-50%, -50%) scale(1.1);
             }
         }
 
         /* Responsividade */
         @media (max-width: 992px) {
-
-            .hero,
-            .showcase {
+            .hero, .showcase {
                 flex-direction: column;
                 text-align: center;
                 padding-top: 140px;
             }
 
             .hero-title {
-                font-size: 2.8rem;
+                font-size: 2.6rem;
             }
 
             .nav-links {
@@ -469,34 +559,32 @@
     <!-- Navegação -->
     <nav>
         <a href="#" class="logo-container">
-            <!-- SUA LOGO AQUI -->
             <img src="Logo.png" alt="Enigma City Logo" class="site-logo">
         </a>
         <div class="nav-links">
             <a href="#como-funciona">O Jogo</a>
             <a href="#premios">Recompensas</a>
-            <a href="#download" class="highlight-gold"
-                style="border: 1px solid var(--primary-gold); padding: 8px 20px; border-radius: 20px;">Baixar App</a>
+            <a href="https://enigmacityapp.web.app" class="nav-btn">Baixar App</a>
         </div>
     </nav>
 
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fa-solid fa-compass"></i> A MAIOR CAÇADA AO TESOURO REAL
+            </div>
             <h1 class="hero-title">A Caçada ao Tesouro <span class="highlight-gold">Começou.</span></h1>
-            <p class="hero-subtitle">Enigma City transforma a vida real em uma aventura épica. Siga o mapa, desvende os
-                mistérios pela cidade, encontre os baús escondidos e receba prêmios direto no seu PIX.</p>
+            <p class="hero-subtitle">Enigma City transforma a vida real em uma aventura épica. Siga o mapa, desvende os mistérios pela cidade, encontre os baús escondidos e receba prêmios direto no seu PIX.</p>
 
-            <!-- Abre o Web App na mesma aba -->
             <a href="https://enigmacityapp.web.app" class="btn-primary">
-                INICIAR JORNADA <i class="fa-solid fa-khanda"></i>
+                INICIAR JORNADA <i class="fa-solid fa-arrow-right"></i>
             </a>
 
-            <div style="margin-top: 40px; display: flex; align-items: center; gap: 20px;">
-                <i class="fa-brands fa-apple" style="font-size: 32px; color: var(--text-muted);"></i>
-                <i class="fa-brands fa-google-play" style="font-size: 28px; color: var(--text-muted);"></i>
-                <span style="color: var(--text-muted); font-size: 0.95rem; font-weight: 300;">Disponível para iOS e
-                    Android</span>
+            <div style="margin-top: 36px; display: flex; align-items: center; gap: 20px;">
+                <i class="fa-brands fa-apple" style="font-size: 30px; color: var(--text-muted);"></i>
+                <i class="fa-brands fa-google-play" style="font-size: 26px; color: var(--text-muted);"></i>
+                <span style="color: var(--text-muted); font-size: 0.95rem; font-weight: 400;">Disponível para Web, iOS e Android</span>
             </div>
         </div>
 
@@ -511,33 +599,28 @@
     <!-- Como Funciona -->
     <section id="como-funciona" class="how-it-works">
         <h2 class="section-title brand-font">Forje sua <span class="highlight-gold">Lenda</span></h2>
-        <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Uma experiência
-            imersiva que une exploração física, inteligência e recompensas reais.</p>
+        <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 620px; margin: 0 auto;">Uma experiência imersiva que une exploração física, inteligência tática e recompensas reais.</p>
 
         <div class="steps-container">
             <div class="step-card">
-                <div class="step-icon"><i class="fa-solid fa-map"></i></div>
+                <div class="step-icon"><i class="fa-solid fa-map-location-dot"></i></div>
                 <h3 class="brand-font">Explore o Mapa</h3>
-                <p>Abra o Enigma City e encontre os eventos e tesouros espalhados pela sua região. A aventura está lá
-                    fora.</p>
+                <p>Abra o Enigma City e encontre os eventos e tesouros espalhados pela sua região. A aventura está lá fora.</p>
             </div>
             <div class="step-card">
                 <div class="step-icon"><i class="fa-solid fa-compass"></i></div>
                 <h3 class="brand-font">Rastreie o Alvo</h3>
-                <p>Utilize a bússola digital e o radar de aproximação do app para caminhar fisicamente até a coordenada
-                    secreta.</p>
+                <p>Utilize a bússola digital e o radar de aproximação do app para caminhar fisicamente até a coordenada secreta.</p>
             </div>
             <div class="step-card">
                 <div class="step-icon"><i class="fa-solid fa-key"></i></div>
                 <h3 class="brand-font">Desvende o Enigma</h3>
-                <p>Interaja com o ambiente real. Escaneie códigos ocultos ou resolva charadas complexas no local exato.
-                </p>
+                <p>Interaja com o ambiente real. Escaneie códigos ocultos ou resolva charadas complexas no local exato.</p>
             </div>
             <div class="step-card">
-                <div class="step-icon"><i class="fa-solid fa-gem"></i></div>
+                <div class="step-icon"><i class="fa-solid fa-coins"></i></div>
                 <h3 class="brand-font">Saque o Ouro</h3>
-                <p>O primeiro a solucionar o desafio abre o baú. O prêmio vai para a sua carteira e pode ser sacado via
-                    PIX.</p>
+                <p>O primeiro a solucionar o desafio abre o baú. O prêmio vai para a sua carteira e pode ser sacado via PIX.</p>
             </div>
         </div>
     </section>
@@ -549,22 +632,18 @@
             <img src="1000167469.jpg" alt="Inventário e Baús O Enigma">
         </div>
         <div class="showcase-text">
-            <div
-                style="display: inline-block; padding: 6px 16px; background: rgba(255, 215, 0, 0.1); border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 20px; margin-bottom: 20px; color: var(--primary-gold); font-weight: 600; font-size: 0.85rem; letter-spacing: 1px;">
+            <div class="showcase-badge">
                 <i class="fa-solid fa-fire-flame-curved"></i> CAÇADA INSTANTÂNEA
             </div>
             <h2 class="brand-font">Modo <span class="highlight-gold">Ache & Ganhe</span></h2>
-            <p style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.7; margin-bottom: 30px;">
-                O mapa está infestado de Baús com premiações independentes. Seja o explorador mais rápido a chegar nas
-                coordenadas e leve recompensas de <strong class="highlight-gold" style="font-size: 1.2rem;">R$ 300 a R$
-                    50.000!</strong>
+            <p style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.7; margin-bottom: 28px;">
+                O mapa está repleto de Baús com premiações independentes. Seja o explorador mais rápido a chegar nas coordenadas e leve recompensas de <strong class="highlight-gold" style="font-size: 1.25rem;">R$ 300 a R$ 50.000!</strong>
             </p>
 
             <ul class="feature-list">
-                <li><i class="fa-solid fa-money-bill-transfer"></i> Saques rápidos e garantidos direto para sua conta.
-                </li>
-                <li><i class="fa-solid fa-shield-halved"></i> Sistema Anti-Fraude com bloqueio de Fake GPS.</li>
-                <li><i class="fa-solid fa-store"></i> Loja de itens: Compre mapas e bússolas para ganhar vantagem.</li>
+                <li><i class="fa-solid fa-money-bill-transfer"></i> Saques rápidos e garantidos direto para sua conta via PIX.</li>
+                <li><i class="fa-solid fa-shield-halved"></i> Sistema Anti-Fraude com bloqueio ativo de Fake GPS.</li>
+                <li><i class="fa-solid fa-store"></i> Loja de itens: Adquira radares e bússolas para ganhar vantagem tática.</li>
             </ul>
         </div>
     </section>
@@ -572,25 +651,23 @@
     <!-- Footer CTA -->
     <section id="download" class="footer-cta">
         <h2 class="brand-font">A glória aguarda os <span class="highlight-gold">Audazes.</span></h2>
-        <p
-            style="color: var(--text-muted); margin-bottom: 45px; font-size: 1.2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
-            Junte-se a milhares de exploradores. Baixe o aplicativo, crie sua conta gratuitamente e comece a caçada.</p>
-        <a href="#" class="btn-primary btn-green" style="padding: 20px 55px; font-size: 1.2rem;">
-            BAIXAR O APP <i class="fa-brands fa-apple"></i> <i class="fa-brands fa-android"></i>
+        <p style="color: var(--text-muted); margin-bottom: 40px; font-size: 1.15rem; max-width: 620px; margin-left: auto; margin-right: auto;">
+            Junte-se a milhares de exploradores. Acesse o aplicativo, crie sua conta gratuitamente e comece a caçada agora mesmo.
+        </p>
+        <a href="https://enigmacityapp.web.app" class="btn-primary btn-gold" style="padding: 20px 52px; font-size: 1.1rem;">
+            ACESSAR AGORA <i class="fa-solid fa-arrow-right"></i>
         </a>
     </section>
 
     <!-- Footer Clássico -->
     <footer>
-        <img src="Logo.png" alt="Enigma City Logo" class="site-logo"
-            style="height: 40px; margin-bottom: 15px; opacity: 0.8;">
+        <img src="Logo.png" alt="Enigma City Logo" class="site-logo" style="height: 42px; margin-bottom: 16px; opacity: 0.9;">
         <div class="social-icons">
             <a href="#"><i class="fa-brands fa-instagram"></i></a>
             <a href="#"><i class="fa-brands fa-discord"></i></a>
             <a href="#"><i class="fa-brands fa-youtube"></i></a>
         </div>
-        <p style="color: var(--text-muted); font-size: 0.9rem; font-weight: 300;">&copy; 2026 Enigma City. Todos os
-            direitos reservados. Aventuras no mundo real requerem atenção ao seu entorno.</p>
+        <p style="color: var(--text-muted); font-size: 0.88rem; font-weight: 300;">&copy; 2026 Enigma City. Todos os direitos reservados. Aventuras no mundo real requerem atenção ao seu entorno.</p>
     </footer>
 
 </body>

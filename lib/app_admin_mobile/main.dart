@@ -1,19 +1,17 @@
-// lib/main_admin.dart
-
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'package:oenigma/app_admin_mobile/features/auth/screens/login_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Parse().initialize(
-    'ThUDHY1ayK6ah9JFm9YLHTDF9FKMHTU096eqkDKK', // Replace with valid App ID
-    'https://parseapi.back4app.com', // Replace with valid Server URL
-    clientKey:
-        'ZyTU944E8jmtJuDu4lL2mh5tcQR7AErvhL0xNY5d', // Replace with valid Client Key
+    'ThUDHY1ayK6ah9JFm9YLHTDF9FKMHTU096eqkDKK',
+    'https://parseapi.back4app.com',
+    clientKey: 'ZyTU944E8jmtJuDu4lL2mh5tcQR7AErvhL0xNY5d',
     autoSendSessionId: true,
   );
   runApp(const ProviderScope(child: AdminApp()));
@@ -28,25 +26,43 @@ class AdminApp extends StatelessWidget {
       title: 'Painel de Gerenciamento - OEnigma',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        useMaterial3: true,
         brightness: Brightness.dark,
-        primaryColor: primaryAmber,
-        scaffoldBackgroundColor: darkBackground,
-        fontFamily: 'Poppins',
-        cardColor: cardColor,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: cardColor,
-          elevation: 1,
+        primaryColor: AppColors.verdeVale,
+        scaffoldBackgroundColor: AppColors.darkBackground,
+        textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
+        cardColor: AppColors.darkCardColor,
+        colorScheme: const ColorScheme.dark(
+          primary: AppColors.verdeVale,
+          secondary: AppColors.amareloVale,
+          surface: AppColors.darkCardColor,
+          onPrimary: Colors.white,
+          onSecondary: Colors.white,
+        ),
+        appBarTheme: AppBarTheme(
+          backgroundColor: AppColors.sidebarBackground,
+          elevation: 0,
+          titleTextStyle: GoogleFonts.poppins(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: Colors.white,
+          ),
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: primaryAmber,
+          backgroundColor: AppColors.verdeVale,
+          foregroundColor: Colors.white,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: primaryAmber,
-            foregroundColor: darkBackground,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            backgroundColor: AppColors.verdeVale,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            textStyle: GoogleFonts.poppins(
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
             ),
           ),
         ),

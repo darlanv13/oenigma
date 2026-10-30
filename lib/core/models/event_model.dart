@@ -17,8 +17,11 @@ class EventModel {
   final String? winnerPhotoURL;
   final int playerCount;
   final List<PhaseModel> phases;
-  final String eventType; // <-- NOVO CAMPO: 'classic' ou 'find_and_win'
+  final String eventType; // 'classic' ou 'find_and_win'
   final List<EnigmaModel> enigmas; // Para o modo Find & Win
+  final String prizeType; // 'dinheiro' ou 'objeto'
+  final String? prizeImageUrl; // URL da imagem PNG do prêmio
+  final String difficulty; // ex: 'Média'
 
   EventModel({
     required this.id,
@@ -34,9 +37,13 @@ class EventModel {
     this.winnerPhotoURL,
     this.phases = const [],
     this.playerCount = 0,
-    this.eventType = 'classic', // <-- NOVO CAMPO
-    this.enigmas = const [], // Valor padrão
+    this.eventType = 'classic',
+    this.enigmas = const [],
+    this.prizeType = 'dinheiro',
+    this.prizeImageUrl,
+    this.difficulty = 'Média',
   });
+
   factory EventModel.fromMap(Map<String, dynamic> map) {
     var phasesList = <PhaseModel>[];
     if (map['phases'] is List) {
@@ -58,13 +65,41 @@ class EventModel {
           .toList();
     }
 
+    final rawPrize = map['prize']?.toString() ??
+        (map['prizePool'] != null ? map['prizePool'].toString() : '');
+
+    final prizeType = (map['prizeType']?.toString().toLowerCase() == 'objeto' ||
+            (map['prizeImageUrl'] != null &&
+                map['prizeImageUrl'].toString().trim().isNotEmpty))
+        ? 'objeto'
+        : 'dinheiro';
+
+    final String? prizeImageUrl =
+        map['prizeImageUrl']?.toString() ?? map['imageUrl']?.toString();
+    final String difficulty = map['difficulty']?.toString() ?? 'Média';
+
+    String formattedPrize;
+    if (prizeType == 'objeto') {
+      formattedPrize = rawPrize.isNotEmpty
+          ? rawPrize
+          : (map['prizeName']?.toString() ?? 'Prêmio Especial');
+    } else {
+      if (rawPrize.isEmpty || rawPrize == '0' || rawPrize == 'R\$ 0') {
+        formattedPrize = 'R\$ 0,00';
+      } else if (!rawPrize.startsWith('R\$')) {
+        formattedPrize = 'R\$ $rawPrize';
+      } else {
+        formattedPrize = rawPrize;
+      }
+    }
+
     return EventModel(
-      id: map['id'] ?? '',
+      id: map['id'] ?? map['objectId'] ?? '',
       name: map['name'] ?? map['title'] ?? 'Evento Desconhecido',
-      prize:
-          map['prize'] ??
-          (map['prizePool'] != null ? 'R\$ ${map['prizePool']}' : 'R\$ 0'),
-      price: map['price'] != null ? double.tryParse(map['price'].toString()) ?? 0.0 : 0.0,
+      prize: formattedPrize,
+      price: map['price'] != null
+          ? double.tryParse(map['price'].toString()) ?? 0.0
+          : 0.0,
       icon: map['icon'] ?? '',
       startDate: map['startDate'] ?? 'Data não definida',
       location: map['location'] ?? 'Local não definido',
@@ -72,15 +107,17 @@ class EventModel {
           map['fullDescription'] ?? map['description'] ?? 'Nenhuma descrição.',
       status: map['status'] ?? 'open',
       winnerName: map['winnerName'],
-      winnerPhotoURL: map['winnerPhotoURL'], // <-- 3. LEIA O DADO DO MAPA
+      winnerPhotoURL: map['winnerPhotoURL'],
       phases: phasesList,
       playerCount: map['playerCount'] ?? 0,
-      eventType: map['eventType'] ?? 'classic', // <-- Lendo o novo campo
+      eventType: map['eventType'] ?? 'classic',
       enigmas: enigmasList,
+      prizeType: prizeType,
+      prizeImageUrl: prizeImageUrl,
+      difficulty: difficulty,
     );
   }
 
-  // Adicione este método dentro da classe EventModel
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -96,7 +133,9 @@ class EventModel {
       'winnerPhotoURL': winnerPhotoURL,
       'playerCount': playerCount,
       'eventType': eventType,
-      // Precisamos converter as listas de objetos para listas de Maps
+      'prizeType': prizeType,
+      'prizeImageUrl': prizeImageUrl,
+      'difficulty': difficulty,
       'phases': phases.map((x) => x.toMap()).toList(),
       'enigmas': enigmas.map((x) => x.toMap()).toList(),
     };

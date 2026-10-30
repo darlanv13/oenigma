@@ -1,12 +1,8 @@
-// lib/screens/certificate_screen.dart
-
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-// Importe o plugin de compartilhamento (você precisará adicioná-lo ao pubspec.yaml)
-// import 'package:share_plus/share_plus.dart';
 
 class CertificateScreen extends StatelessWidget {
   final String eventName;
@@ -28,118 +24,139 @@ class CertificateScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: const Text('Certificado'),
-        automaticallyImplyLeading: false, // Oculta o botão de voltar padrão
+        title: Text(
+          'Certificado',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            fontSize: 18,
+          ),
+        ),
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32.0),
-          child: Card(
-            elevation: 8.0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.0),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  const FaIcon(
-                    FontAwesomeIcons.circleCheck,
-                    size: 72.0,
-                    color: Colors.green,
-                  ),
-                  const SizedBox(height: 24.0),
-                  const Text(
-                    'Parabéns!',
-                    style: TextStyle(
-                      fontSize: 32.0,
-                      fontWeight: FontWeight.bold,
-                      color: primaryAmber,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16.0),
-                  Text(
-                    'Você desvendou um enigma no evento:',
-                    style: const TextStyle(
-                      fontSize: 18.0,
-                      color: secondaryTextColor,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8.0),
-                  Text(
-                    eventName,
-                    style: const TextStyle(
-                      fontSize: 24.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16.0),
-                  Text(
-                    'E ganhou:',
-                    style: const TextStyle(
-                      fontSize: 18.0,
-                      color: secondaryTextColor,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8.0),
-                  Text(
-                    currencyFormat.format(prize),
-                    style: const TextStyle(
-                      fontSize: 28.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32.0),
-                  // Adicione o botão de compartilhamento aqui
-                  ElevatedButton.icon(
-                    icon: const FaIcon(FontAwesomeIcons.shareNodes),
-                    label: const Text('Compartilhar'),
-                    onPressed: () {
-                      // Implementar a lógica de compartilhamento aqui usando um plugin como share_plus
-                      // Exemplo (comente este bloco se você ainda não adicionou o plugin):
-                      /*
-                      Share.share('Eu desvendei um enigma no evento "$eventName" e ganhei ${currencyFormat.format(prize)}! #OEnigma');
-                      */
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Funcionalidade de compartilhamento ainda não implementada neste exemplo.',
-                          ),
-                          backgroundColor: Colors.grey,
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryAmber,
-                      foregroundColor: darkBackground,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24.0,
-                        vertical: 12.0,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(
-                        context,
-                      ).pop(); // Volta para a tela de progresso
-                    },
-                    child: const Text('Continuar Jogando'),
-                  ),
-                ],
+          padding: const EdgeInsets.all(28.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.darkCardColor,
+              borderRadius: BorderRadius.circular(24.0),
+              border: Border.all(
+                color: AppColors.verdeVale.withValues(alpha: 0.4),
+                width: 1.5,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.verdeVale.withValues(alpha: 0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(28.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.verdeVale.withValues(alpha: 0.15),
+                    border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.3)),
+                  ),
+                  child: const FaIcon(
+                    FontAwesomeIcons.circleCheck,
+                    size: 54.0,
+                    color: AppColors.verdeVale,
+                  ),
+                ),
+                const SizedBox(height: 20.0),
+                Text(
+                  'Parabéns!',
+                  style: GoogleFonts.poppins(
+                    fontSize: 28.0,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.amareloVale,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12.0),
+                Text(
+                  'Você desvendou um enigma no evento:',
+                  style: GoogleFonts.inter(
+                    fontSize: 14.0,
+                    color: AppColors.cinzaMedio,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6.0),
+                Text(
+                  eventName,
+                  style: GoogleFonts.poppins(
+                    fontSize: 20.0,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16.0),
+                Text(
+                  'E conquistou:',
+                  style: GoogleFonts.inter(
+                    fontSize: 14.0,
+                    color: AppColors.cinzaMedio,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 6.0),
+                Text(
+                  currencyFormat.format(prize),
+                  style: GoogleFonts.poppins(
+                    fontSize: 28.0,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.amareloVale,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 28.0),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: AppColors.gradienteVerdeVale,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.verdeVale.withValues(alpha: 0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      'CONTINUAR JOGANDO',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

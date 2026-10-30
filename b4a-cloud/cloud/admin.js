@@ -8,7 +8,6 @@ Parse.Cloud.define("getAdminDashboardData", async (request) => {
     const usersCount = await usersQuery.count({ useMasterKey: true });
 
     const eventsQuery = new Parse.Query("Event");
-    // CORREÇÃO: Alterado de "published" para "open" para bater com a lógica do app
     eventsQuery.equalTo("status", "open");
     const activeEventsCount = await eventsQuery.count({ useMasterKey: true });
 
@@ -36,12 +35,12 @@ Parse.Cloud.define("listAllUsers", async (request) => {
   if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   try {
     const query = new Parse.Query(Parse.User);
-    query.limit(1000); // Set appropriate limit
+    query.limit(1000);
     const users = await query.find({ useMasterKey: true });
 
     return users.map(user => {
       return {
-        objectId: user.id, // using objectId, frontend should expect this or we return it as objectId
+        objectId: user.id,
         email: user.get("email") || "",
         name: user.get("name") || "",
         isAdmin: user.get("isAdmin") || false,
@@ -150,8 +149,26 @@ Parse.Cloud.define("deleteEvent", async (request) => {
     const Event = Parse.Object.extend("Event");
     const query = new Parse.Query(Event);
     const event = await query.get(eventId, { useMasterKey: true });
+
+    // Excluir fases e enigmas vinculados
+    const Phase = Parse.Object.extend("Phase");
+    const phaseQuery = new Parse.Query(Phase);
+    phaseQuery.equalTo("event", event);
+    const phases = await phaseQuery.find({ useMasterKey: true });
+    for (const p of phases) {
+      await p.destroy({ useMasterKey: true });
+    }
+
+    const Enigma = Parse.Object.extend("Enigma");
+    const enigmaQuery = new Parse.Query(Enigma);
+    enigmaQuery.equalTo("event", event);
+    const enigmas = await enigmaQuery.find({ useMasterKey: true });
+    for (const e of enigmas) {
+      await e.destroy({ useMasterKey: true });
+    }
+
     await event.destroy({ useMasterKey: true });
-    return { success: true, message: "Event deleted." };
+    return { success: true, message: "Event and associated records deleted." };
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error deleting event: " + error.message);
   }
@@ -171,26 +188,44 @@ Parse.Cloud.define("createOrUpdateEnigma", async (request) => {
       enigma = await query.get(enigmaId, { useMasterKey: true });
     } else {
       enigma = new Enigma();
-      if (eventId) {
-        const Event = Parse.Object.extend("Event");
-        const eventPointer = new Event();
-        eventPointer.id = eventId;
-        enigma.set("event", eventPointer);
-        // also store id string to match frontend logic
-        enigma.set("eventId", eventId);
-      }
-      if (phaseId) {
-        const Phase = Parse.Object.extend("Phase");
-        const phasePointer = new Phase();
-        phasePointer.id = phaseId;
-        enigma.set("phase", phasePointer);
-        enigma.set("phaseId", phaseId);
-      }
+    }
+
+    if (eventId) {
+      const Event = Parse.Object.extend("Event");
+      const eventPointer = new Event();
+      eventPointer.id = eventId;
+      enigma.set("event", eventPointer);
+      enigma.set("eventId", eventId);
+    }
+
+    if (phaseId) {
+      const Phase = Parse.Object.extend("Phase");
+      const phasePointer = new Phase();
+      phasePointer.id = phaseId;
+      enigma.set("phase", phasePointer);
+      enigma.set("phaseId", phaseId);
+    } else if (phaseId === null || phaseId === '') {
+      enigma.unset("phase");
+      enigma.unset("phaseId");
     }
 
     if (data) {
       for (const key in data) {
-        enigma.set(key, data[key]);
+        if (key === "prize") {
+          enigma.set("prize", String(data[key] !== undefined && data[key] !== null ? data[key] : "0"));
+        } else {
+          enigma.set(key, data[key]);
+        }
+      }
+    }
+
+    // Se o evento for Classic, enigmas não possuem prêmio individual
+    if (eventId) {
+      const Event = Parse.Object.extend("Event");
+      const evQuery = new Parse.Query(Event);
+      const evObj = await evQuery.get(eventId, { useMasterKey: true });
+      if (evObj && (evObj.get("eventType") === "classic" || evObj.get("eventType") === "Classic")) {
+        enigma.set("prize", "0");
       }
     }
 
@@ -313,7 +348,7 @@ Parse.Cloud.define("deleteBanner", async (request) => {
 Parse.Cloud.define("processWithdrawal", async (request) => {
   const user = request.user;
   if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
-  const { withdrawalId, objectId, action } = request.params;
+  const { withdrawalId, objectId, action, receipt, rejectionReason } = request.params;
   if (!withdrawalId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "withdrawalId is required.");
 
   try {
@@ -323,24 +358,87 @@ Parse.Cloud.define("processWithdrawal", async (request) => {
 
     if (action === 'reject') {
       withdrawal.set("status", "rejected");
+      withdrawal.set("rejectionReason", rejectionReason || "Solicitação rejeitada pelo administrador.");
+      withdrawal.set("processedAt", new Date());
+      withdrawal.set("processedByAdmin", user.id);
       await withdrawal.save(null, { useMasterKey: true });
 
-      if (objectId) {
+      const targetUserId = objectId || (withdrawal.get("user") ? withdrawal.get("user").id : null);
+      if (targetUserId) {
         const userQuery = new Parse.Query(Parse.User);
-        const targetUser = await userQuery.get(objectId, { useMasterKey: true });
+        const targetUser = await userQuery.get(targetUserId, { useMasterKey: true });
         const currentBalance = targetUser.get("balance") || 0.0;
         const amount = withdrawal.get("amount") || 0.0;
         targetUser.set("balance", currentBalance + amount);
         await targetUser.save(null, { useMasterKey: true });
       }
+
+      // Atualiza transação correspondente se existir
+      const qTx = new Parse.Query("Transaction");
+      qTx.equalTo("withdrawalId", withdrawalId);
+      const tx = await qTx.first({ useMasterKey: true });
+      if (tx) {
+        tx.set("status", "rejected");
+        await tx.save(null, { useMasterKey: true });
+      }
+
       return { success: true, message: "Withdrawal rejected and refunded." };
     } else {
       withdrawal.set("status", "completed");
+      if (receipt) withdrawal.set("receipt", receipt);
+      withdrawal.set("processedAt", new Date());
+      withdrawal.set("processedByAdmin", user.id);
       await withdrawal.save(null, { useMasterKey: true });
+
+      // Atualiza transação correspondente se existir
+      const qTx = new Parse.Query("Transaction");
+      qTx.equalTo("withdrawalId", withdrawalId);
+      const tx = await qTx.first({ useMasterKey: true });
+      if (tx) {
+        tx.set("status", "completed");
+        if (receipt) tx.set("receipt", receipt);
+        await tx.save(null, { useMasterKey: true });
+      }
+
       return { success: true, message: "Withdrawal approved and processed." };
     }
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error processing withdrawal: " + error.message);
+  }
+});
+
+Parse.Cloud.define("approveDepositManual", async (request) => {
+  const user = request.user;
+  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  const { transactionId } = request.params;
+  if (!transactionId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "transactionId is required.");
+
+  try {
+    const Transaction = Parse.Object.extend("Transaction");
+    const query = new Parse.Query(Transaction);
+    const tx = await query.get(transactionId, { useMasterKey: true });
+
+    if (tx.get("status") === "approved") {
+      return { success: true, message: "Transação já estava aprovada." };
+    }
+
+    tx.set("status", "approved");
+    tx.set("approvedAt", new Date());
+    tx.set("manualApprovalBy", user.id);
+    await tx.save(null, { useMasterKey: true });
+
+    const targetUser = tx.get("user");
+    if (targetUser) {
+      await targetUser.fetch({ useMasterKey: true });
+      const currentBalance = targetUser.get("balance") || 0.0;
+      const amount = tx.get("amount") || 0.0;
+      targetUser.set("balance", currentBalance + amount);
+      await targetUser.save(null, { useMasterKey: true });
+    }
+
+    return { success: true, message: "Depósito aprovado com sucesso e saldo creditado." };
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao aprovar depósito: " + error.message);
   }
 });
 
@@ -422,8 +520,18 @@ Parse.Cloud.define("deletePhase", async (request) => {
     const Phase = Parse.Object.extend("Phase");
     const query = new Parse.Query(Phase);
     const phase = await query.get(phaseId, { useMasterKey: true });
+
+    // Excluir enigmas pertencentes a esta fase
+    const Enigma = Parse.Object.extend("Enigma");
+    const enigmaQuery = new Parse.Query(Enigma);
+    enigmaQuery.equalTo("phase", phase);
+    const phaseEnigmas = await enigmaQuery.find({ useMasterKey: true });
+    for (const e of phaseEnigmas) {
+      await e.destroy({ useMasterKey: true });
+    }
+
     await phase.destroy({ useMasterKey: true });
-    return { success: true };
+    return { success: true, message: "Fase e enigmas excluídos." };
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error deleting phase: " + error.message);
   }
@@ -443,7 +551,6 @@ Parse.Cloud.define("assignHintToEnigma", async (request) => {
 
   const Enigma = Parse.Object.extend("Enigma");
 
-  // Unassign logic
   if (!enigmaId) {
     const currentEnigmaId = hint.get("linkedEnigmaId");
     if (currentEnigmaId) {
@@ -463,7 +570,6 @@ Parse.Cloud.define("assignHintToEnigma", async (request) => {
     return { success: true };
   }
 
-  // Assign logic
   if (hint.get("linkedEnigmaId")) {
     throw new Parse.Error(400, "Dica já está vinculada a outro enigma. Desvincule primeiro.");
   }

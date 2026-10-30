@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'package:oenigma/core/models/user_wallet_model.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CreditOptionsSheet extends StatelessWidget {
   final UserWalletModel wallet;
@@ -15,38 +17,40 @@ class CreditOptionsSheet extends StatelessWidget {
     final amounts = [5.0, 10.0, 15.0, 20.0, 50.0, 100.0];
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        border: Border(top: BorderSide(color: Colors.white10)),
+      decoration: BoxDecoration(
+        color: AppColors.darkCardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
+        ),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 40,
+            width: 44,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[700],
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 24),
-          const Text(
+          const SizedBox(height: 20),
+          Text(
             "ADICIONAR SALDO",
-            style: TextStyle(
-              color: Color(0xFFFFD54F),
+            style: GoogleFonts.poppins(
+              color: Colors.white,
               fontSize: 18,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(height: 12),
-          const Text(
+          const SizedBox(height: 6),
+          Text(
             "Escolha o valor que deseja adicionar à sua carteira.",
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white70),
+            style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 13),
           ),
           const SizedBox(height: 24),
           GridView.builder(
@@ -54,7 +58,7 @@ class CreditOptionsSheet extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
-              childAspectRatio: 2,
+              childAspectRatio: 2.1,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
@@ -62,15 +66,14 @@ class CreditOptionsSheet extends StatelessWidget {
             itemBuilder: (context, index) {
               return ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(
-                    0xFFFFD54F,
-                  ).withValues(alpha: 0.1),
-                  foregroundColor: const Color(0xFFFFD54F),
+                  backgroundColor: AppColors.verdeVale.withValues(alpha: 0.12),
+                  foregroundColor: AppColors.verdeVale,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     side: BorderSide(
-                      color: const Color(0xFFFFD54F).withValues(alpha: 0.5),
+                      color: AppColors.verdeVale.withValues(alpha: 0.4),
+                      width: 1.2,
                     ),
                   ),
                 ),
@@ -90,9 +93,9 @@ class CreditOptionsSheet extends StatelessWidget {
                 },
                 child: Text(
                   "R\$ ${amounts[index].toStringAsFixed(0)}",
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
                   ),
                 ),
               );
@@ -162,24 +165,26 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        border: Border(top: BorderSide(color: Colors.white10)),
+      decoration: BoxDecoration(
+        color: AppColors.darkCardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
+        ),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 40,
+            width: 44,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[700],
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           if (_isLoading)
             _buildLoadingState()
           else if (_error != null)
@@ -193,13 +198,13 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
   }
 
   Widget _buildLoadingState() {
-    return const Column(
+    return Column(
       children: [
-        CircularProgressIndicator(color: Color(0xFFFFD54F)),
-        SizedBox(height: 16),
+        const CircularProgressIndicator(color: AppColors.verdeVale),
+        const SizedBox(height: 16),
         Text(
           "Gerando Cobrança Pix...",
-          style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -210,22 +215,22 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
       children: [
         const FaIcon(
           FontAwesomeIcons.circleExclamation,
-          color: Colors.redAccent,
-          size: 50,
+          color: AppColors.danger,
+          size: 48,
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           "Erro ao gerar Pix",
-          style: TextStyle(
+          style: GoogleFonts.poppins(
             color: Colors.white,
             fontSize: 18,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           _error ?? "Erro desconhecido",
-          style: const TextStyle(color: Colors.grey),
+          style: GoogleFonts.inter(color: AppColors.cinzaMedio),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -233,8 +238,9 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
           width: double.infinity,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white10,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: Colors.white.withValues(alpha: 0.08),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -242,10 +248,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             onPressed: () => Navigator.pop(context),
             child: const Text(
               "FECHAR",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -259,8 +262,9 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
         final q = QueryBuilder<ParseObject>(ParseObject('Transaction'))
           ..whereEqualTo('objectId', _txid);
         final res = await q.query();
-        if (res.success && res.results != null)
+        if (res.success && res.results != null) {
           return res.results!.first as ParseObject;
+        }
         return null;
       }),
       builder: (context, snapshot) {
@@ -276,101 +280,99 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
 
         return Column(
           children: [
-            const Text(
+            Text(
               "PAGAMENTO PIX",
-              style: TextStyle(
-                color: Color(0xFFFFD54F),
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
+              style: GoogleFonts.inter(
+                color: AppColors.cinzaMedio,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               "R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')}",
-              style: const TextStyle(
-                color: Colors.white,
+              style: GoogleFonts.poppins(
+                color: AppColors.amareloVale,
                 fontSize: 32,
                 fontWeight: FontWeight.w900,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             if (_qrCodeBase64 != null)
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFFFD54F), width: 3),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.verdeVale, width: 2),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
-                      blurRadius: 15,
+                      color: AppColors.verdeVale.withValues(alpha: 0.3),
+                      blurRadius: 16,
                     ),
                   ],
                 ),
                 padding: const EdgeInsets.all(16),
                 child: Image.memory(
                   base64Decode(_qrCodeBase64!.split(',').last),
-                  height: 200,
-                  width: 200,
+                  height: 180,
+                  width: 180,
                 ),
               ),
-            const SizedBox(height: 24),
-            const Row(
+            const SizedBox(height: 20),
+            Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: 16,
-                  height: 16,
+                const SizedBox(
+                  width: 14,
+                  height: 14,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Color(0xFFFFD54F),
+                    color: AppColors.verdeVale,
                   ),
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Text(
                   "Aguardando confirmação...",
-                  style: TextStyle(
-                    color: Color(0xFFFFD54F),
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
-                ),
+                gradient: AppColors.gradienteVerdeVale,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFFFD54F).withValues(alpha: 0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
+                    color: AppColors.verdeVale.withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: ElevatedButton.icon(
                 icon: const FaIcon(
                   FontAwesomeIcons.copy,
-                  color: Colors.black,
-                  size: 18,
+                  color: Colors.white,
+                  size: 16,
                 ),
                 label: const Text(
                   "COPIAR CÓDIGO PIX",
                   style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.0,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -381,12 +383,14 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
                     await Clipboard.setData(ClipboardData(text: _copiaCola!));
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
+                        SnackBar(
+                          content: const Text(
                             "Código Pix copiado!",
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          backgroundColor: Colors.green,
+                          backgroundColor: AppColors.verdeVale,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       );
                     }
@@ -405,32 +409,32 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
       children: [
         const FaIcon(
           FontAwesomeIcons.circleCheck,
-          color: Colors.greenAccent,
-          size: 80,
+          color: AppColors.verdeVale,
+          size: 70,
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           "PAGAMENTO CONFIRMADO!",
-          style: TextStyle(
+          style: GoogleFonts.poppins(
             color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.0,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           "O valor de R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')} já está na sua carteira.",
-          style: const TextStyle(color: Colors.white70),
+          style: GoogleFonts.inter(color: AppColors.cinzaMedio),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 28),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: AppColors.verdeVale,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -439,8 +443,7 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             child: const Text(
               "CONCLUIR",
               style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.bold,
                 letterSpacing: 1.0,
               ),
             ),

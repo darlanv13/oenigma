@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/core/models/ranking_player_model.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,37 +22,44 @@ class RankingList extends ConsumerWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: players.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      separatorBuilder: (context, index) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final player = players[index];
         final isCurrentUser = player.objectId == currentUserId;
 
         return Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(32),
-            border: isCurrentUser
-                ? Border.all(color: const Color(0xFF8B5CF6), width: 1.5)
-                : null,
+            color: isCurrentUser
+                ? AppColors.verdeVale.withValues(alpha: 0.15)
+                : AppColors.darkCardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isCurrentUser
+                  ? AppColors.verdeVale
+                  : Colors.white.withValues(alpha: 0.08),
+              width: isCurrentUser ? 1.5 : 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
-                blurRadius: 10,
-                offset: const Offset(4, 4),
+                color: isCurrentUser
+                    ? AppColors.verdeVale.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
           child: Row(
             children: [
               SizedBox(
-                width: 30,
+                width: 32,
                 child: Text(
-                  player.position.toString(),
+                  "${player.position}º",
                   style: GoogleFonts.poppins(
-                    color: const Color(0xFF64748B),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    color: isCurrentUser ? AppColors.verdeVale : AppColors.cinzaMedio,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
                   ),
                 ),
               ),
@@ -60,26 +68,26 @@ class RankingList extends ConsumerWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isCurrentUser ? const Color(0xFF8B5CF6) : Colors.transparent,
+                    color: isCurrentUser ? AppColors.verdeVale : Colors.white.withValues(alpha: 0.15),
                     width: 2,
                   ),
                 ),
                 child: CircleAvatar(
                   radius: 20,
-                  backgroundColor: const Color(0xFFF1F5F9),
+                  backgroundColor: Colors.white.withValues(alpha: 0.06),
                   backgroundImage: player.photoURL != null
                       ? NetworkImage(player.photoURL!)
                       : null,
                   child: player.photoURL == null
                       ? const FaIcon(
                           FontAwesomeIcons.solidUser,
-                          size: 20,
-                          color: Color(0xFF94A3B8),
+                          size: 16,
+                          color: AppColors.verdeVale,
                         )
                       : null,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,9 +95,9 @@ class RankingList extends ConsumerWidget {
                     Text(
                       player.name,
                       style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: const Color(0xFF1E293B),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: Colors.white,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -102,14 +110,18 @@ class RankingList extends ConsumerWidget {
                   Text(
                     '${player.phasesCompleted}',
                     style: GoogleFonts.poppins(
-                      color: const Color(0xFF8B5CF6),
-                      fontWeight: FontWeight.bold,
+                      color: AppColors.verdeVale,
+                      fontWeight: FontWeight.w800,
                       fontSize: 16,
                     ),
                   ),
                   Text(
                     'Fases',
-                    style: GoogleFonts.inter(color: const Color(0xFF64748B), fontSize: 10),
+                    style: GoogleFonts.inter(
+                      color: AppColors.cinzaMedio,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),

@@ -85,10 +85,8 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
       }
     }
 
-    // Sort by phases completed (descending)
     ranking.sort((a, b) => b.phasesCompleted.compareTo(a.phasesCompleted));
 
-    // Assign positions with tie-breaking logic based on simple equal phases
     int currentPosition = 1;
     for (int i = 0; i < ranking.length; i++) {
       if (i > 0 &&
@@ -111,14 +109,21 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
       return Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: const Text('Ranking Global'),
+          title: Text(
+            'Ranking',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              fontSize: 20,
+            ),
+          ),
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
-        body: const Center(
+        body: Center(
           child: Text(
             'Nenhum evento disponível.',
-            style: TextStyle(color: secondaryTextColor),
+            style: GoogleFonts.inter(color: AppColors.cinzaMedio),
           ),
         ),
       );
@@ -135,42 +140,45 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Text(
           'Ranking',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1E293B),
+            color: Colors.white,
             fontSize: 20,
+            letterSpacing: 0.5,
           ),
         ),
         centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        titleSpacing: 16,
+        titleSpacing: 20,
       ),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Time Filter Segmented Control
                   Container(
                     width: double.infinity,
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.darkCardColor,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
+                          color: Colors.black.withValues(alpha: 0.25),
                           blurRadius: 10,
-                          offset: const Offset(4, 4),
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
@@ -184,22 +192,27 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                                 _calculateRankingForSelectedEvent();
                               });
                             },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
+                                gradient: _selectedTimeFilter == 'all_time'
+                                    ? AppColors.gradienteVerdeVale
+                                    : null,
                                 color: _selectedTimeFilter == 'all_time'
-                                    ? const Color(0xFFC4B5FD)
+                                    ? null
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 'Global',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w700,
                                   color: _selectedTimeFilter == 'all_time'
-                                      ? const Color(0xFF4C1D95)
-                                      : const Color(0xFF64748B),
+                                      ? Colors.white
+                                      : AppColors.cinzaMedio,
+                                  fontSize: 13,
                                 ),
                               ),
                             ),
@@ -213,22 +226,27 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                                 _calculateRankingForSelectedEvent();
                               });
                             },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
+                                gradient: _selectedTimeFilter == 'monthly'
+                                    ? AppColors.gradienteVerdeVale
+                                    : null,
                                 color: _selectedTimeFilter == 'monthly'
-                                    ? const Color(0xFFC4B5FD)
+                                    ? null
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 'Mensal',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w700,
                                   color: _selectedTimeFilter == 'monthly'
-                                      ? const Color(0xFF4C1D95)
-                                      : const Color(0xFF64748B),
+                                      ? Colors.white
+                                      : AppColors.cinzaMedio,
+                                  fontSize: 13,
                                 ),
                               ),
                             ),
@@ -237,15 +255,15 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  const Text(
-                    'Selecione o Evento',
-                    style: TextStyle(
-                      color: secondaryTextColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
+                  Text(
+                    'SELECIONE O EVENTO',
+                    style: GoogleFonts.inter(
+                      color: AppColors.cinzaMedio,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -261,7 +279,7 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                       }
                     },
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 28),
 
                   if (_currentRanking.isEmpty)
                     Center(
@@ -269,15 +287,23 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 40.0),
                         child: Column(
                           children: [
-                            FaIcon(
-                              FontAwesomeIcons.trophy,
-                              size: 64,
-                              color: secondaryTextColor.withValues(alpha: 0.5),
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.verdeVale.withValues(alpha: 0.12),
+                                border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.25)),
+                              ),
+                              child: const FaIcon(
+                                FontAwesomeIcons.trophy,
+                                size: 40,
+                                color: AppColors.verdeVale,
+                              ),
                             ),
                             const SizedBox(height: 16),
-                            const Text(
+                            Text(
                               'Nenhum jogador pontuou neste período.',
-                              style: TextStyle(color: secondaryTextColor),
+                              style: GoogleFonts.inter(color: AppColors.cinzaMedio),
                             ),
                           ],
                         ),
@@ -285,21 +311,22 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                     )
                   else ...[
                     RankingPodium(top3: top3),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 36),
                     if (others.isNotEmpty) ...[
-                      const Text(
+                      Text(
                         'DEMAIS COLOCAÇÕES',
-                        style: TextStyle(
-                          color: secondaryTextColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
+                        style: GoogleFonts.inter(
+                          color: AppColors.cinzaMedio,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.0,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       RankingList(players: others),
                     ],
                   ],
+                  const SizedBox(height: 40),
                 ],
               ),
             ),

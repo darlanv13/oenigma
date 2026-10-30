@@ -42,32 +42,58 @@ class EnigmaCityApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'O Enigma',
-      theme: ThemeData.dark().copyWith(
-        primaryColor: primaryAmber,
-        scaffoldBackgroundColor: Colors.transparent,
-        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        primaryColor: AppColors.verdeVale,
+        scaffoldBackgroundColor: AppColors.darkBackground,
+        cardColor: AppColors.darkCardColor,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.verdeVale,
+          brightness: Brightness.dark,
+          primary: AppColors.verdeVale,
+          secondary: AppColors.amareloVale,
+          surface: AppColors.darkCardColor,
+          onPrimary: Colors.white,
+          onSecondary: Colors.black,
+          onSurface: Colors.white,
+        ),
+        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).apply(
+          bodyColor: Colors.white,
+          displayColor: Colors.white,
+        ),
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
-          titleTextStyle: GoogleFonts.orbitron(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-            color: primaryAmber,
-            letterSpacing: 2,
-            shadows: [
-              Shadow(
-                color: primaryAmber.withValues(alpha: 0.5),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
+          iconTheme: const IconThemeData(color: Colors.white),
+          titleTextStyle: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            letterSpacing: 0.5,
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.verdeVale,
+            foregroundColor: Colors.white,
+            elevation: 2,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            textStyle: GoogleFonts.poppins(
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+              letterSpacing: 0.5,
+            ),
           ),
         ),
       ),
       builder: (context, child) {
         return AppBackground(
-          opacity: 0.1, // Tom de opacidade desejado pelo usuário (10%)
+          opacity: 0.05,
           child: child ?? const SizedBox.shrink(),
         );
       },

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/app_cliente/features/event/providers/event_repository_provider.dart';
 import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/models/event_model.dart';
@@ -56,66 +58,121 @@ class _EventProgressScreenState extends ConsumerState<EventProgressScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.event.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
       backgroundColor: Colors.transparent,
-      body: FutureBuilder<void>(
-        future: _dataFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: primaryAmber),
-            );
-          }
-
-          if (snapshot.hasError) {
-            return Center(child: Text('Erro: ${snapshot.error}'));
-          }
-
-          return RefreshIndicator(
-            onRefresh: _loadEventData,
-            color: primaryAmber,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20.0,
-                vertical: 16.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ProgressHeader(
-                    totalPhases: _phases.length,
-                    completedPhases: _currentPhase - 1,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header Bar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    width: 1,
                   ),
-                  const SizedBox(height: 32),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 4.0),
-                    child: Text(
-                      'FASES DO EVENTO',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: secondaryTextColor,
-                        letterSpacing: 1.5,
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                      ),
+                      child: const Center(
+                        child: FaIcon(
+                          FontAwesomeIcons.chevronLeft,
+                          color: Colors.white,
+                          size: 14,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  _buildPhasesList(),
-                  const SizedBox(height: 40),
+                  Expanded(
+                    child: Text(
+                      widget.event.name,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 40),
                 ],
               ),
             ),
-          );
-        },
+            Expanded(
+              child: FutureBuilder<void>(
+                future: _dataFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: AppColors.verdeVale),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Erro ao carregar fases: ${snapshot.error}',
+                        style: GoogleFonts.inter(color: AppColors.cinzaMedio),
+                      ),
+                    );
+                  }
+
+                  return RefreshIndicator(
+                    onRefresh: _loadEventData,
+                    color: AppColors.verdeVale,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 16.0,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ProgressHeader(
+                            totalPhases: _phases.length,
+                            completedPhases: _currentPhase - 1,
+                          ),
+                          const SizedBox(height: 28),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4.0),
+                            child: Text(
+                              'FASES DO EVENTO',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.cinzaMedio,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          _buildPhasesList(),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

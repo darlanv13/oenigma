@@ -22,6 +22,7 @@ class EnigmaModel {
   final int compassDuration;
   final String icon;
   final String difficulty;
+  final String? phaseId;
 
   final bool hasCompass;
   final bool hasMap;
@@ -53,6 +54,7 @@ class EnigmaModel {
     this.compassDuration = 0,
     this.icon = 'skull',
     this.difficulty = 'MÉDIA',
+    this.phaseId,
     this.hasCompass = false,
     this.hasMap = false,
     this.hasRadar = false,
@@ -83,6 +85,7 @@ class EnigmaModel {
     int? compassDuration,
     String? icon,
     String? difficulty,
+    String? phaseId,
     bool? hasCompass,
     bool? hasMap,
     bool? hasRadar,
@@ -112,6 +115,7 @@ class EnigmaModel {
       compassDuration: compassDuration ?? this.compassDuration,
       icon: icon ?? this.icon,
       difficulty: difficulty ?? this.difficulty,
+      phaseId: phaseId ?? this.phaseId,
       hasCompass: hasCompass ?? this.hasCompass,
       hasMap: hasMap ?? this.hasMap,
       hasRadar: hasRadar ?? this.hasRadar,
@@ -148,8 +152,13 @@ class EnigmaModel {
       }
     }
 
+    String? parsedPhaseId = map['phaseId']?.toString();
+    if (parsedPhaseId == null && map['phase'] is Map) {
+      parsedPhaseId = map['phase']['objectId']?.toString();
+    }
+
     return EnigmaModel(
-      id: map['id'] ?? '',
+      id: map['id'] ?? map['objectId'] ?? '',
       type: map['type'] ?? 'text',
       instruction: map['instruction'] ?? '',
       title: map['title'] ?? '',
@@ -176,6 +185,7 @@ class EnigmaModel {
       compassDuration: map['compassDuration'] != null ? int.tryParse(map['compassDuration'].toString()) ?? 0 : 0,
       icon: map['icon'] ?? 'skull',
       difficulty: map['difficulty'] ?? 'MÉDIA',
+      phaseId: parsedPhaseId,
 
       hasCompass: map['hasCompass'] ?? false,
       hasMap: map['hasMap'] ?? false,
@@ -210,6 +220,7 @@ class EnigmaModel {
       'compassDuration': compassDuration,
       'icon': icon,
       'difficulty': difficulty,
+      'phaseId': phaseId,
 
       'hasCompass': hasCompass,
       'hasMap': hasMap,

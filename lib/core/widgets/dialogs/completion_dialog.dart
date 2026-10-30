@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 void showCompletionDialog(
@@ -17,52 +18,70 @@ void showCompletionDialog(
         scale: CurvedAnimation(parent: anim1, curve: Curves.elasticOut),
         child: Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: AppColors.verdeVale.withValues(alpha: 0.4), width: 1.5),
           ),
-          backgroundColor: cardColor,
+          backgroundColor: AppColors.darkCardColor,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Lottie.asset(
                   'assets/animations/check.json',
-                  height: 130,
+                  height: 120,
                   repeat: false,
                 ),
-                const SizedBox(height: 20),
-                const Text(
+                const SizedBox(height: 16),
+                Text(
                   'Fase Concluída!',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: primaryAmber,
+                  style: GoogleFonts.poppins(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.verdeVale,
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Text(
+                const SizedBox(height: 8),
+                Text(
                   'Você desvendou o enigma. Prepare-se para o próximo desafio!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: textColor),
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    height: 1.4,
+                  ),
                 ),
-                const SizedBox(height: 32),
-                SizedBox(
+                const SizedBox(height: 24),
+                Container(
                   width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: AppColors.gradienteVerdeVale,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.verdeVale.withValues(alpha: 0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryAmber,
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.white,
+                      shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: onOkPressed,
-                    child: const Text(
+                    child: Text(
                       'CONTINUAR',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: darkBackground,
-                        fontWeight: FontWeight.bold,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),

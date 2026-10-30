@@ -1,8 +1,7 @@
-// lib/widgets/cooldown_dialog.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 class CooldownDialog extends StatefulWidget {
@@ -30,10 +29,8 @@ class _CooldownDialogState extends State<CooldownDialog> {
   }
 
   void _startTimer() {
-    // Calcula a duração restante inicial
     _remaining = widget.cooldownUntil.difference(DateTime.now());
 
-    // Inicia um timer que atualiza a cada segundo
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _remaining = widget.cooldownUntil.difference(DateTime.now());
 
@@ -44,7 +41,6 @@ class _CooldownDialogState extends State<CooldownDialog> {
           Navigator.of(context).pop();
         }
       } else {
-        // Força a reconstrução do widget para mostrar o tempo atualizado
         setState(() {});
       }
     });
@@ -58,7 +54,6 @@ class _CooldownDialogState extends State<CooldownDialog> {
 
   String _formatDuration(Duration duration) {
     if (duration.isNegative) return "00:00";
-    // Formata a duração para o formato MM:SS
     final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
     return "$minutes:$seconds";
@@ -67,40 +62,51 @@ class _CooldownDialogState extends State<CooldownDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: cardColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: AppColors.amareloVale.withValues(alpha: 0.35), width: 1.5),
+      ),
+      backgroundColor: AppColors.darkCardColor,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Lottie.asset(
-              'assets/animations/ampulheta.json', // Use uma animação de relógio/ampulheta se tiver
-              height: 120,
+              'assets/animations/ampulheta.json',
+              height: 110,
             ),
-            const SizedBox(height: 20),
-            const Text(
+            const SizedBox(height: 16),
+            Text(
               'Muitas Tentativas',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: primaryAmber,
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppColors.amareloVale,
               ),
             ),
-            const SizedBox(height: 12),
-            const Text(
+            const SizedBox(height: 8),
+            Text(
               'Por favor, aguarde para tentar novamente.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: textColor),
+              style: GoogleFonts.inter(fontSize: 14, color: Colors.white.withValues(alpha: 0.85)),
             ),
-            const SizedBox(height: 24),
-            Text(
-              _formatDuration(_remaining),
-              style: const TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontFamily: 'monospace',
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.3)),
+              ),
+              child: Text(
+                _formatDuration(_remaining),
+                style: GoogleFonts.orbitron(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.amareloVale,
+                  letterSpacing: 2,
+                ),
               ),
             ),
           ],

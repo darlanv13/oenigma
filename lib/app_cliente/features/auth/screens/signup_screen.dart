@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,9 +56,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(error, style: const TextStyle(fontWeight: FontWeight.bold)),
-              backgroundColor: dangerColor,
+              backgroundColor: AppColors.danger,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           );
         } else {
@@ -79,25 +78,27 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   }
 
   bool _isValidCpf(String cpf) {
-    if (RegExp(r'^(\d)\1*$').hasMatch(cpf)) return false;
+    if (RegExp(r'^(\d)\1{10}$').hasMatch(cpf)) return false;
+
     List<int> digits = cpf.split('').map(int.parse).toList();
 
-    int sum1 = 0;
+    int sum = 0;
     for (int i = 0; i < 9; i++) {
-      sum1 += digits[i] * (10 - i);
+      sum += digits[i] * (10 - i);
     }
-    int remainder1 = sum1 % 11;
-    int digit1 = remainder1 < 2 ? 0 : 11 - remainder1;
+    int firstVerifier = (sum * 10) % 11;
+    if (firstVerifier == 10) firstVerifier = 0;
+    if (firstVerifier != digits[9]) return false;
 
-    int sum2 = 0;
-    for (int i = 0; i < 9; i++) {
-      sum2 += digits[i] * (11 - i);
+    sum = 0;
+    for (int i = 0; i < 10; i++) {
+      sum += digits[i] * (11 - i);
     }
-    sum2 += digit1 * 2;
-    int remainder2 = sum2 % 11;
-    int digit2 = remainder2 < 2 ? 0 : 11 - remainder2;
+    int secondVerifier = (sum * 10) % 11;
+    if (secondVerifier == 10) secondVerifier = 0;
+    if (secondVerifier != digits[10]) return false;
 
-    return digits[9] == digit1 && digits[10] == digit2;
+    return true;
   }
 
   @override
@@ -106,18 +107,32 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(
-          'Alistamento',
-          style: GoogleFonts.orbitron(
+          'Criar Conta',
+          style: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
             color: Colors.white,
+            fontSize: 18,
           ),
         ),
         centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: primaryAmber, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: Center(
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.06),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+              ),
+              child: const Center(
+                child: FaIcon(FontAwesomeIcons.chevronLeft, color: Colors.white, size: 14),
+              ),
+            ),
+          ),
         ),
       ),
       body: Center(
@@ -128,7 +143,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildHeader(),
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
               _buildSignUpForm(),
               const SizedBox(height: 32),
             ],
@@ -142,29 +157,22 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: primaryAmber.withOpacity(0.1),
-            border: Border.all(color: primaryAmber.withOpacity(0.3)),
+            color: AppColors.verdeVale.withValues(alpha: 0.15),
+            border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.3)),
           ),
-          child: const FaIcon(FontAwesomeIcons.userSecret, color: primaryAmber, size: 32),
+          child: const FaIcon(FontAwesomeIcons.userPlus, color: AppColors.verdeVale, size: 28),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Text(
           'NOVO EXPLORADOR',
-          style: GoogleFonts.orbitron(
+          style: GoogleFonts.poppins(
             fontSize: 22,
             fontWeight: FontWeight.w900,
-            letterSpacing: 2,
-            color: primaryAmberLight,
-            shadows: [
-              Shadow(
-                color: Colors.black.withOpacity(0.5),
-                offset: const Offset(0, 2),
-                blurRadius: 4,
-              ),
-            ],
+            letterSpacing: 1.5,
+            color: Colors.white,
           ),
         ),
         const SizedBox(height: 4),
@@ -172,9 +180,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           'PREPARE-SE PARA A CAÇADA',
           style: GoogleFonts.inter(
             fontSize: 10,
-            letterSpacing: 3,
-            color: primaryAmber.withOpacity(0.8),
-            fontWeight: FontWeight.w600,
+            letterSpacing: 2,
+            color: AppColors.amareloVale,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
@@ -183,260 +191,249 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   Widget _buildSignUpForm() {
     final defaultPinTheme = PinTheme(
-      width: 45,
-      height: 55,
-      textStyle: GoogleFonts.orbitron(
+      width: 46,
+      height: 54,
+      textStyle: GoogleFonts.poppins(
         fontSize: 20,
-        color: primaryAmberLight,
+        color: Colors.white,
         fontWeight: FontWeight.w700,
       ),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.4),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: Colors.white.withValues(alpha: 0.05),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(14),
       ),
     );
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            color: cardColor.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withOpacity(0.08), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20,
-                spreadRadius: 1,
-                offset: const Offset(0, 10),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.all(26),
+      decoration: BoxDecoration(
+        color: AppColors.darkCardColor,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-          child: Form(
-            key: _formKey,
-            child: Column(
+        ],
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle('DADOS PESSOAIS'),
+            const SizedBox(height: 14),
+            _buildFieldLabel('NOME COMPLETO', FontAwesomeIcons.solidUser),
+            const SizedBox(height: 6),
+            _buildTextFormField(
+              controller: _fullNameController,
+              hintText: "Seu nome",
+              icon: FontAwesomeIcons.idCard,
+              textCapitalization: TextCapitalization.words,
+              validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
+            ),
+            const SizedBox(height: 18),
+            
+            _buildFieldLabel('CPF', FontAwesomeIcons.fingerprint),
+            const SizedBox(height: 6),
+            _buildTextFormField(
+              controller: _cpfController,
+              hintText: "000.000.000-00",
+              icon: FontAwesomeIcons.barcode,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                _CpfInputFormatter(),
+              ],
+              validator: _validateCpf,
+            ),
+            const SizedBox(height: 18),
+            
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionTitle('DADOS PESSOAIS'),
-                const SizedBox(height: 16),
-                _buildFieldLabel('NOME COMPLETO', FontAwesomeIcons.solidUser),
-                const SizedBox(height: 8),
-                _buildTextFormField(
-                  controller: _fullNameController,
-                  hintText: "Seu nome",
-                  icon: FontAwesomeIcons.idCard,
-                  textCapitalization: TextCapitalization.words,
-                  validator: (v) => v!.isEmpty ? 'Campo obrigatório' : null,
-                ),
-                const SizedBox(height: 20),
-                
-                _buildFieldLabel('CPF', FontAwesomeIcons.fingerprint),
-                const SizedBox(height: 8),
-                _buildTextFormField(
-                  controller: _cpfController,
-                  hintText: "000.000.000-00",
-                  icon: FontAwesomeIcons.barcode,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    _CpfInputFormatter(),
-                  ],
-                  validator: _validateCpf,
-                ),
-                const SizedBox(height: 20),
-                
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildFieldLabel('DATA NASC.', FontAwesomeIcons.calendarDay),
-                          const SizedBox(height: 8),
-                          _buildTextFormField(
-                            controller: _birthDateController,
-                            hintText: "DD/MM/AAAA",
-                            icon: FontAwesomeIcons.cakeCandles,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              _DateInputFormatter(),
-                            ],
-                            validator: (v) => v!.length < 10 ? 'Data inválida' : null,
-                          ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFieldLabel('DATA NASC.', FontAwesomeIcons.calendarDay),
+                      const SizedBox(height: 6),
+                      _buildTextFormField(
+                        controller: _birthDateController,
+                        hintText: "DD/MM/AAAA",
+                        icon: FontAwesomeIcons.cakeCandles,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          _DateInputFormatter(),
                         ],
+                        validator: (v) => v!.length < 10 ? 'Data inválida' : null,
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildFieldLabel('TELEFONE', FontAwesomeIcons.phone),
-                          const SizedBox(height: 8),
-                          _buildTextFormField(
-                            controller: _phoneController,
-                            hintText: "(11) 99999-9999",
-                            icon: FontAwesomeIcons.mobileScreen,
-                            keyboardType: TextInputType.phone,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              _PhoneInputFormatter(),
-                            ],
-                            validator: (v) => v!.length < 14 ? 'Telefone inválido' : null,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 32),
-                _buildSectionTitle('SEGURANÇA'),
-                const SizedBox(height: 16),
-
-                _buildFieldLabel('CRIAR SENHA (6 DÍGITOS)', FontAwesomeIcons.key),
-                const SizedBox(height: 12),
-                Center(
-                  child: Pinput(
-                    controller: _passwordController,
-                    length: 6,
-                    obscureText: true,
-                    obscuringWidget: const FaIcon(FontAwesomeIcons.asterisk, size: 14, color: primaryAmber),
-                    defaultPinTheme: defaultPinTheme,
-                    focusedPinTheme: defaultPinTheme.copyWith(
-                      decoration: defaultPinTheme.decoration!.copyWith(
-                        border: Border.all(color: primaryAmber, width: 1.5),
-                        boxShadow: [
-                          BoxShadow(color: primaryAmber.withOpacity(0.2), blurRadius: 8),
-                        ],
-                      ),
-                    ),
-                    validator: (s) => s!.length == 6 ? null : 'Mín. 6 dígitos',
-                    keyboardType: TextInputType.number,
+                    ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                
-                _buildFieldLabel('CONFIRMAR SENHA', FontAwesomeIcons.lock),
-                const SizedBox(height: 12),
-                Center(
-                  child: Pinput(
-                    controller: _confirmPasswordController,
-                    length: 6,
-                    obscureText: true,
-                    obscuringWidget: const FaIcon(FontAwesomeIcons.asterisk, size: 14, color: primaryAmber),
-                    defaultPinTheme: defaultPinTheme,
-                    focusedPinTheme: defaultPinTheme.copyWith(
-                      decoration: defaultPinTheme.decoration!.copyWith(
-                        border: Border.all(color: primaryAmber, width: 1.5),
-                        boxShadow: [
-                          BoxShadow(color: primaryAmber.withOpacity(0.2), blurRadius: 8),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFieldLabel('TELEFONE', FontAwesomeIcons.phone),
+                      const SizedBox(height: 6),
+                      _buildTextFormField(
+                        controller: _phoneController,
+                        hintText: "(11) 99999-9999",
+                        icon: FontAwesomeIcons.mobileScreen,
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          _PhoneInputFormatter(),
                         ],
+                        validator: (v) => v!.length < 14 ? 'Telefone inválido' : null,
                       ),
-                    ),
-                    validator: (s) {
-                      if (s != _passwordController.text) return 'Senhas não coincidem';
-                      return s!.length == 6 ? null : 'Mín. 6 dígitos';
-                    },
-                    keyboardType: TextInputType.number,
+                    ],
                   ),
-                ),
-                
-                const SizedBox(height: 40),
-                
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: double.infinity,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: _isLoading
-                        ? []
-                        : [
-                            BoxShadow(
-                              color: primaryAmber.withOpacity(0.4),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                  ),
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _submitForm,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryAmber,
-                      foregroundColor: Colors.black,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.black,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "FINALIZAR CADASTRO",
-                                style: GoogleFonts.orbitron(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              const FaIcon(FontAwesomeIcons.check, size: 16),
-                            ],
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Já é um explorador? ",
-                      style: GoogleFonts.inter(color: Colors.grey, fontSize: 13),
-                    ),
-                    GestureDetector(
-                      onTap: _isLoading
-                          ? null
-                          : () {
-                              Navigator.of(context).pop(); // Volta para o login
-                            },
-                      child: Text(
-                        "Fazer Login",
-                        style: GoogleFonts.inter(
-                          color: primaryAmber,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
-          ),
+            
+            const SizedBox(height: 28),
+            _buildSectionTitle('SEGURANÇA'),
+            const SizedBox(height: 14),
+
+            _buildFieldLabel('CRIAR SENHA (6 DÍGITOS)', FontAwesomeIcons.key),
+            const SizedBox(height: 8),
+            Center(
+              child: Pinput(
+                controller: _passwordController,
+                length: 6,
+                obscureText: true,
+                obscuringWidget: const FaIcon(FontAwesomeIcons.asterisk, size: 12, color: AppColors.amareloVale),
+                defaultPinTheme: defaultPinTheme,
+                focusedPinTheme: defaultPinTheme.copyWith(
+                  decoration: defaultPinTheme.decoration!.copyWith(
+                    border: Border.all(color: AppColors.verdeVale, width: 1.5),
+                    color: AppColors.verdeVale.withValues(alpha: 0.15),
+                    boxShadow: [
+                      BoxShadow(color: AppColors.verdeVale.withValues(alpha: 0.25), blurRadius: 8),
+                    ],
+                  ),
+                ),
+                validator: (s) => s!.length == 6 ? null : 'Mín. 6 dígitos',
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            _buildFieldLabel('CONFIRMAR SENHA', FontAwesomeIcons.lock),
+            const SizedBox(height: 8),
+            Center(
+              child: Pinput(
+                controller: _confirmPasswordController,
+                length: 6,
+                obscureText: true,
+                obscuringWidget: const FaIcon(FontAwesomeIcons.asterisk, size: 12, color: AppColors.amareloVale),
+                defaultPinTheme: defaultPinTheme,
+                focusedPinTheme: defaultPinTheme.copyWith(
+                  decoration: defaultPinTheme.decoration!.copyWith(
+                    border: Border.all(color: AppColors.verdeVale, width: 1.5),
+                    color: AppColors.verdeVale.withValues(alpha: 0.15),
+                    boxShadow: [
+                      BoxShadow(color: AppColors.verdeVale.withValues(alpha: 0.25), blurRadius: 8),
+                    ],
+                  ),
+                ),
+                validator: (s) {
+                  if (s != _passwordController.text) return 'Senhas não coincidem';
+                  return s!.length == 6 ? null : 'Mín. 6 dígitos';
+                },
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            
+            const SizedBox(height: 32),
+            
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: double.infinity,
+              height: 52,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(26),
+                gradient: AppColors.gradienteVerdeVale,
+                boxShadow: _isLoading
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: AppColors.verdeVale.withValues(alpha: 0.35),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+              ),
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _submitForm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(26),
+                  ),
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "FINALIZAR CADASTRO",
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const FaIcon(FontAwesomeIcons.check, size: 14),
+                        ],
+                      ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Já tem uma conta? ",
+                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 13),
+                ),
+                GestureDetector(
+                  onTap: _isLoading
+                      ? null
+                      : () {
+                          Navigator.of(context).pop();
+                        },
+                  child: Text(
+                    "Fazer Login",
+                    style: GoogleFonts.inter(
+                      color: AppColors.verdeVale,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -448,27 +445,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       children: [
         Text(
           title,
-          style: GoogleFonts.orbitron(
-            fontSize: 14,
+          style: GoogleFonts.poppins(
+            fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: Colors.white54,
-            letterSpacing: 1.5,
+            color: AppColors.cinzaMedio,
+            letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 6),
         Container(
           height: 1,
           width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                primaryAmber.withOpacity(0.5),
-                Colors.transparent,
-              ],
-            ),
-          ),
+          color: Colors.white.withValues(alpha: 0.08),
         ),
-        const SizedBox(height: 8),
       ],
     );
   }
@@ -476,15 +465,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Widget _buildFieldLabel(String label, FaIconData icon) {
     return Row(
       children: [
-        FaIcon(icon, size: 12, color: primaryAmber),
+        FaIcon(icon, size: 12, color: AppColors.verdeVale),
         const SizedBox(width: 8),
         Text(
           label,
           style: GoogleFonts.inter(
-            color: primaryAmber,
+            color: Colors.white,
             fontSize: 10,
             fontWeight: FontWeight.w800,
-            letterSpacing: 1.2,
+            letterSpacing: 0.8,
           ),
         ),
       ],
@@ -513,41 +502,38 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: Colors.black.withOpacity(0.3),
+        fillColor: Colors.white.withValues(alpha: 0.05),
         hintText: hintText,
         hintStyle: GoogleFonts.inter(
-          color: Colors.white.withOpacity(0.2),
-          fontWeight: FontWeight.w500,
-          fontSize: 14,
+          color: AppColors.cinzaMedio,
+          fontSize: 13,
         ),
         prefixIcon: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14.0),
-          child: FaIcon(icon, color: Colors.white54, size: 14),
+          child: FaIcon(icon, color: AppColors.cinzaMedio, size: 14),
         ),
         prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.05)),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryAmber, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.verdeVale, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: dangerColor, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
         ),
       ),
     );
   }
 }
-
-// --- CLASSES AUXILIARES DE FORMATAÇÃO ---
 
 class _CpfInputFormatter extends TextInputFormatter {
   @override

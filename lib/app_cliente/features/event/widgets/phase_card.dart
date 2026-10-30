@@ -1,10 +1,10 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
 import 'package:oenigma/app_cliente/features/enigma/screens/enigma_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class PhaseCard extends StatelessWidget {
   final EventModel event;
@@ -35,121 +35,155 @@ class PhaseCard extends StatelessWidget {
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOutBack,
       transform: Matrix4.diagonal3Values(scale, scale, 1.0),
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
+        color: AppColors.darkCardColor,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isActive
+              ? AppColors.verdeVale
+              : (isCompleted
+                  ? AppColors.verdeVale.withValues(alpha: 0.35)
+                  : Colors.white.withValues(alpha: 0.08)),
+          width: isActive ? 1.5 : 1,
+        ),
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: primaryAmber.withValues(alpha: 0.2),
-                  blurRadius: 20,
-                  spreadRadius: 2,
+                  color: AppColors.verdeVale.withValues(alpha: 0.22),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
                 ),
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isLocked
-                  ? darkBackground.withValues(alpha: 0.6)
-                  : cardColor.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isActive
-                    ? primaryAmber.withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: isLocked ? 0.05 : 0.1),
-                width: isActive ? 1.5 : 1,
-              ),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(20),
-                splashColor: primaryAmber.withValues(alpha: 0.2),
-                onTap: isPlayable
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            splashColor: AppColors.verdeVale.withValues(alpha: 0.1),
+            onTap: isPlayable
+                ? () {
+                    if (phase.enigmas.isNotEmpty) {
+                      int enigmaIndex = currentEnigma - 1;
+                      if (enigmaIndex < 0 ||
+                          enigmaIndex >= phase.enigmas.length) {
+                        enigmaIndex = 0;
+                      }
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EnigmaScreen(
+                            event: event,
+                            phase: phase,
+                            initialEnigma: phase.enigmas[enigmaIndex],
+                            onEnigmaSolved: onPhaseCompleted,
+                          ),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Esta fase não possui enigmas cadastrados.',
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                : (isLocked
                     ? () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const FaIcon(
+                                  FontAwesomeIcons.lock,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 10),
+                                const Expanded(
+                                  child: Text(
+                                    'Fase Bloqueada! Resolva todos os enigmas da etapa anterior para avançar.',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: AppColors.darkCardColor,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                            ),
+                          ),
+                        );
+                      }
+                    : () {
                         if (phase.enigmas.isNotEmpty) {
-                          int enigmaIndex = currentEnigma - 1;
-                          if (enigmaIndex < 0 ||
-                              enigmaIndex >= phase.enigmas.length) {
-                            enigmaIndex = 0;
-                          }
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => EnigmaScreen(
                                 event: event,
                                 phase: phase,
-                                initialEnigma: phase.enigmas[enigmaIndex],
+                                initialEnigma: phase.enigmas.first,
                                 onEnigmaSolved: onPhaseCompleted,
                               ),
                             ),
                           );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Esta fase não possui enigmas cadastrados.',
+                        }
+                      }),
+            child: Padding(
+              padding: const EdgeInsets.all(18.0),
+              child: Row(
+                children: [
+                  _buildLeftIcon(),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'NÍVEL ${phase.order}',
+                              style: GoogleFonts.poppins(
+                                color: isLocked
+                                    ? AppColors.cinzaMedio
+                                    : (isActive
+                                          ? AppColors.verdeVale
+                                          : Colors.white),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
                               ),
                             ),
-                          );
-                        }
-                      }
-                    : null,
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Row(
-                    children: [
-                      _buildLeftIcon(),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'NÍVEL ${phase.order}',
-                                  style: TextStyle(
-                                    color: isLocked
-                                        ? secondaryTextColor
-                                        : (isActive
-                                              ? primaryAmber
-                                              : Colors.white),
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 1.5,
-                                  ),
-                                ),
-                                if (isPlayable)
-                                  const FaIcon(
-                                    FontAwesomeIcons.chevronRight,
-                                    color: primaryAmber,
-                                    size: 16,
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            _buildStars(),
-                            const SizedBox(height: 12),
-                            _buildProgressBar(),
+                            if (isPlayable)
+                              const FaIcon(
+                                FontAwesomeIcons.chevronRight,
+                                color: AppColors.verdeVale,
+                                size: 14,
+                              ),
                           ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 6),
+                        _buildStars(),
+                        const SizedBox(height: 10),
+                        _buildProgressBar(),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -163,25 +197,13 @@ class PhaseCard extends StatelessWidget {
     int completed = isCompleted ? total : (isActive ? currentEnigma - 1 : 0);
     double progress = total == 0 ? 0 : completed / total;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: darkBackground.withValues(alpha: 0.8),
-            blurRadius: 4,
-            blurStyle: BlurStyle.inner,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: LinearProgressIndicator(
-          value: progress,
-          backgroundColor: Colors.black.withValues(alpha: 0.5),
-          color: isCompleted ? Colors.greenAccent : primaryAmber,
-          minHeight: 6,
-        ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: LinearProgressIndicator(
+        value: progress,
+        backgroundColor: Colors.white.withValues(alpha: 0.08),
+        color: isCompleted ? AppColors.verdeVale : AppColors.amareloVale,
+        minHeight: 6,
       ),
     );
   }
@@ -189,33 +211,37 @@ class PhaseCard extends StatelessWidget {
   Widget _buildLeftIcon() {
     dynamic iconData;
     Color backgroundColor;
-    Color iconColor = Colors.white;
+    Color iconColor;
 
     if (isCompleted) {
       iconData = FontAwesomeIcons.check;
-      backgroundColor = Colors.green.withValues(alpha: 0.15);
-      iconColor = Colors.greenAccent;
+      backgroundColor = AppColors.verdeVale.withValues(alpha: 0.15);
+      iconColor = AppColors.verdeVale;
     } else if (isActive) {
       iconData = FontAwesomeIcons.compass;
-      backgroundColor = primaryAmber.withValues(alpha: 0.15);
-      iconColor = primaryAmber;
+      backgroundColor = AppColors.verdeVale.withValues(alpha: 0.2);
+      iconColor = AppColors.verdeVale;
     } else {
       iconData = FontAwesomeIcons.lock;
       backgroundColor = Colors.white.withValues(alpha: 0.05);
-      iconColor = secondaryTextColor.withValues(alpha: 0.5);
+      iconColor = AppColors.cinzaMedio;
     }
 
     return Container(
-      width: 52,
-      height: 52,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
         color: backgroundColor,
         shape: BoxShape.circle,
-        border: isActive
-            ? Border.all(color: primaryAmber.withValues(alpha: 0.3))
-            : null,
+        border: Border.all(
+          color: isActive
+              ? AppColors.verdeVale.withValues(alpha: 0.5)
+              : (isCompleted
+                  ? AppColors.verdeVale.withValues(alpha: 0.3)
+                  : Colors.white.withValues(alpha: 0.08)),
+        ),
       ),
-      child: Center(child: FaIcon(iconData, color: iconColor, size: 22)),
+      child: Center(child: FaIcon(iconData, color: iconColor, size: 18)),
     );
   }
 
@@ -230,9 +256,9 @@ class PhaseCard extends StatelessWidget {
     }
 
     if (totalEnigmas == 0) {
-      return const Text(
+      return Text(
         'Nenhum enigma nesta fase',
-        style: TextStyle(color: secondaryTextColor, fontSize: 12),
+        style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 12),
       );
     }
 
@@ -244,9 +270,9 @@ class PhaseCard extends StatelessWidget {
           child: FaIcon(
             isSolved ? FontAwesomeIcons.solidStar : FontAwesomeIcons.star,
             color: isSolved
-                ? primaryAmber
-                : secondaryTextColor.withValues(alpha: 0.5),
-            size: 14,
+                ? AppColors.amareloVale
+                : Colors.white.withValues(alpha: 0.15),
+            size: 13,
           ),
         );
       }),

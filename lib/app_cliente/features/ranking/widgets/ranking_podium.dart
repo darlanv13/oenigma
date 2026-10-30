@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oenigma/core/models/ranking_player_model.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -11,11 +12,10 @@ class RankingPodium extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Definindo cores e estilos para os lugares (cores pastéis ou suaves)
     final podiumConfig = {
-      1: {'color': const Color(0xFFFDE047), 'height': 160.0}, // Amarelo suave
-      2: {'color': const Color(0xFFE2E8F0), 'height': 120.0}, // Cinza azulado claro
-      3: {'color': const Color(0xFFFED7AA), 'height': 90.0}, // Laranja pastel
+      1: {'color': AppColors.amareloVale, 'height': 150.0},
+      2: {'color': AppColors.verdeVale, 'height': 115.0},
+      3: {'color': const Color(0xFFE09F67), 'height': 90.0},
     };
 
     final List<Widget> podiumPlaces = [];
@@ -77,7 +77,6 @@ class _PodiumPlace extends StatelessWidget {
   });
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Column(
@@ -90,54 +89,54 @@ class _PodiumPlace extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: color, width: isFirstPlace ? 4 : 3),
+                  border: Border.all(color: color, width: isFirstPlace ? 3.5 : 2.5),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withValues(alpha: isFirstPlace ? 0.6 : 0.3),
-                      blurRadius: isFirstPlace ? 25 : 15,
-                      spreadRadius: isFirstPlace ? 4 : 2,
+                      color: color.withValues(alpha: isFirstPlace ? 0.4 : 0.25),
+                      blurRadius: isFirstPlace ? 18 : 10,
+                      spreadRadius: isFirstPlace ? 2 : 1,
                     ),
                   ],
                 ),
                 child: CircleAvatar(
-                  radius: isFirstPlace ? 40 : 30,
-                  backgroundColor: const Color(0xFFF1F5F9),
+                  radius: isFirstPlace ? 38 : 28,
+                  backgroundColor: AppColors.darkCardColor,
                   backgroundImage: player.photoURL != null
                       ? NetworkImage(player.photoURL!)
                       : null,
                   child: player.photoURL == null
                       ? FaIcon(
                           FontAwesomeIcons.solidUser,
-                          size: isFirstPlace ? 30 : 20,
-                          color: const Color(0xFF94A3B8),
+                          size: isFirstPlace ? 26 : 18,
+                          color: color,
                         )
                       : null,
                 ),
               ),
               if (isFirstPlace)
                 Positioned(
-                  top: -55,
+                  top: -50,
                   child: Lottie.asset(
                     'assets/animations/trofel.json',
-                    width: 70,
-                    height: 70,
+                    width: 65,
+                    height: 65,
                     fit: BoxFit.contain,
                   ),
                 ),
               Positioned(
-                bottom: -12,
+                bottom: -10,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
-                    vertical: 4,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
                     color: color,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: color.withValues(alpha: 0.5),
-                        blurRadius: 4,
+                        color: color.withValues(alpha: 0.4),
+                        blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
                     ],
@@ -145,21 +144,21 @@ class _PodiumPlace extends StatelessWidget {
                   child: Text(
                     "$placeº",
                     style: GoogleFonts.poppins(
-                      color: const Color(0xFF1E293B),
-                      fontWeight: FontWeight.w900,
-                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
                     ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
           Text(
             player.name.split(' ').first,
             style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF1E293B),
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
               fontSize: 14,
             ),
             overflow: TextOverflow.ellipsis,
@@ -171,15 +170,16 @@ class _PodiumPlace extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 4),
             height: height,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.darkCardColor,
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(32), // Mais arredondado para combinar com Home
+                top: Radius.circular(24),
               ),
+              border: Border.all(color: color.withValues(alpha: 0.35), width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFCBD5E1).withValues(alpha: 0.5),
-                  blurRadius: 15,
-                  offset: const Offset(0, -5), // Sombra Neumórfica superior
+                  color: color.withValues(alpha: 0.12),
+                  blurRadius: 12,
+                  offset: const Offset(0, -3),
                 ),
               ],
             ),
@@ -189,14 +189,18 @@ class _PodiumPlace extends StatelessWidget {
                 Text(
                   '${player.phasesCompleted}',
                   style: GoogleFonts.poppins(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: color, // Número usa a cor do troféu
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: color,
                   ),
                 ),
                 Text(
                   'Fases',
-                  style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B)),
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: AppColors.cinzaMedio,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),

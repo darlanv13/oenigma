@@ -21,16 +21,16 @@ class AdminModal extends StatelessWidget {
       insetPadding: const EdgeInsets.all(20),
       child: Container(
         constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: MediaQuery.of(context).size.height * 0.9),
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
         decoration: BoxDecoration(
-          color: sidebarBackground,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: primaryAmber.withValues(alpha: 0.08)),
+          color: AppColors.sidebarBackground,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.15)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.9),
-              blurRadius: 80,
-              offset: const Offset(0, 40),
+              color: Colors.black.withValues(alpha: 0.8),
+              blurRadius: 60,
+              offset: const Offset(0, 30),
             )
           ],
         ),
@@ -57,7 +57,7 @@ class AdminModal extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: primaryAmber.withValues(alpha: 0.06),
+            color: AppColors.verdeVale.withValues(alpha: 0.1),
           ),
         ),
       ),
@@ -66,9 +66,9 @@ class AdminModal extends StatelessWidget {
         children: [
           Text(
             title,
-            style: GoogleFonts.orbitron(
-              color: primaryAmberLight,
-              fontSize: 19,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -76,8 +76,8 @@ class AdminModal extends StatelessWidget {
             onTap: () => Navigator.of(context).pop(),
             child: const Icon(
               Icons.close,
-              color: secondaryTextColor,
-              size: 24,
+              color: AppColors.cinzaMedio,
+              size: 22,
             ),
           ),
         ],

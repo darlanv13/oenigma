@@ -29,6 +29,46 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     });
   }
 
+
+  Widget _buildModalityTag(String eventType) {
+    final bool isClassic = eventType == 'classic';
+    final Color tagColor = isClassic ? AppColors.verdeVale : AppColors.amareloVale;
+    final icon = isClassic ? FontAwesomeIcons.trophy : FontAwesomeIcons.boxOpen;
+    final String label = isClassic ? 'CLASSIC' : 'FIND & WIN';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: tagColor.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: tagColor.withValues(alpha: 0.7),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FaIcon(
+            icon,
+            size: 10,
+            color: tagColor,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              color: tagColor,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -117,13 +157,22 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
-                                child: Text(
-                                  title,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                child: Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        title,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    _buildModalityTag(eventType),
+                                  ],
                                 ),
                               ),
                               Container(
@@ -251,23 +300,37 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     String? docId,
     Map<String, dynamic>? data,
   }) {
-    final titleCtrl = TextEditingController(text: data?['title']);
-    final descCtrl = TextEditingController(text: data?['description']);
+    final bool hasPrizeImage = data != null &&
+        data['prizeImageUrl'] != null &&
+        data['prizeImageUrl'].toString().trim().isNotEmpty;
+    String prizeType = (data?['prizeType']?.toString().toLowerCase() == 'objeto' || hasPrizeImage)
+        ? 'objeto'
+        : 'dinheiro';
+    String? prizeImageUrl = data?['prizeImageUrl']?.toString();
+    String difficulty = data?['difficulty']?.toString() ?? 'Média';
     String selectedEventType = data?['eventType'] ?? 'classic';
+
+    final titleCtrl = TextEditingController(
+      text: prizeType == 'objeto'
+          ? (selectedEventType == 'classic' ? 'Modo Clássico' : 'Ache & Ganhe')
+          : (data?['title'] ?? ''),
+    );
+    final descCtrl = TextEditingController(text: data?['description']);
     final prizeCtrl = TextEditingController(
-      text: data?['prizePool']?.toString(),
+      text: data?['prizePool']?.toString() ?? data?['prize']?.toString() ?? '',
     );
     final orderCtrl = TextEditingController(
       text: data?['order']?.toString() ?? '1',
     );
     final locationCtrl = TextEditingController(text: data?['location']);
-    final iconCtrl = TextEditingController(text: data?['icon']);
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
+            final isObjeto = prizeType == 'objeto';
+
             return Dialog(
               backgroundColor: darkBackground,
               insetPadding: const EdgeInsets.all(16),
@@ -279,94 +342,341 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      docId == null ? 'Novo Evento' : 'Editar Evento',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          docId == null ? 'Novo Evento' : 'Editar Evento',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        _buildModalityTag(selectedEventType),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     Flexible(
                       fit: FlexFit.loose,
                       child: SingleChildScrollView(
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Seletor de Tipo de Prêmio
+                            const Text(
+                              'Tipo de Premiação *',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        prizeType = 'objeto';
+                                        titleCtrl.text = selectedEventType == 'classic'
+                                            ? 'Modo Clássico'
+                                            : 'Ache & Ganhe';
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: isObjeto
+                                            ? AppColors.verdeVale.withValues(alpha: 0.2)
+                                            : Colors.white.withValues(alpha: 0.05),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: isObjeto ? AppColors.verdeVale : Colors.white24,
+                                          width: isObjeto ? 1.8 : 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          FaIcon(
+                                            FontAwesomeIcons.mobileScreen,
+                                            size: 14,
+                                            color: isObjeto ? AppColors.verdeVale : Colors.white60,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Objeto / Produto',
+                                            style: TextStyle(
+                                              color: isObjeto ? Colors.white : Colors.white60,
+                                              fontWeight: isObjeto ? FontWeight.bold : FontWeight.normal,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () {
+                                      setState(() {
+                                        prizeType = 'dinheiro';
+                                        if (titleCtrl.text == 'Modo Clássico' || titleCtrl.text == 'Ache & Ganhe') {
+                                          titleCtrl.text = data?['title'] ?? '';
+                                        }
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: !isObjeto
+                                            ? AppColors.amareloVale.withValues(alpha: 0.2)
+                                            : Colors.white.withValues(alpha: 0.05),
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: !isObjeto ? AppColors.amareloVale : Colors.white24,
+                                          width: !isObjeto ? 1.8 : 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          FaIcon(
+                                            FontAwesomeIcons.sackDollar,
+                                            size: 14,
+                                            color: !isObjeto ? AppColors.amareloVale : Colors.white60,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Dinheiro (R\$)',
+                                            style: TextStyle(
+                                              color: !isObjeto ? Colors.white : Colors.white60,
+                                              fontWeight: !isObjeto ? FontWeight.bold : FontWeight.normal,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+
+                            // Campo de Valor / Nome do Prêmio
                             TextField(
-                              controller: titleCtrl,
+                              controller: prizeCtrl,
                               style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Título',
+                              decoration: InputDecoration(
+                                labelText: isObjeto
+                                    ? 'Nome do Prêmio (Ex: iPhone 17 Pro) *'
+                                    : 'Valor do Prêmio em Dinheiro (Ex: 5.000,00) *',
                               ),
                             ),
                             const SizedBox(height: 12),
+
+                            // Título (Desabilitado se for Objeto)
+                            TextField(
+                              controller: titleCtrl,
+                              enabled: !isObjeto,
+                              style: TextStyle(
+                                color: isObjeto ? Colors.white54 : Colors.white,
+                              ),
+                              decoration: InputDecoration(
+                                labelText: isObjeto
+                                    ? 'Título (Automático pela modalidade)'
+                                    : 'Título do Evento *',
+                                filled: isObjeto,
+                                fillColor: isObjeto ? Colors.white.withValues(alpha: 0.05) : null,
+                              ),
+                            ),
+                            if (isObjeto) ...[
+                              const SizedBox(height: 4),
+                              const Text(
+                                '💡 Quando o prêmio é Objeto, o título assume o modo do jogo.',
+                                style: TextStyle(color: Colors.white38, fontSize: 11),
+                              ),
+                            ],
+                            const SizedBox(height: 12),
+
+                            // Seção Foto PNG ou Dinheiro Automático
+                            if (isObjeto) ...[
+                              const Text(
+                                'Foto do Prêmio (.PNG com fundo transparente) *',
+                                style: TextStyle(
+                                  color: AppColors.amareloVale,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              if (prizeImageUrl == null || prizeImageUrl!.isEmpty)
+                                InkWell(
+                                  onTap: () async {
+                                    final url = await AdminUploadUtil.pickAndUploadPng(context);
+                                    if (url != null) {
+                                      setState(() => prizeImageUrl = url);
+                                    }
+                                  },
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.05),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: AppColors.amareloVale.withValues(alpha: 0.4),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: const Column(
+                                      children: [
+                                        FaIcon(
+                                          FontAwesomeIcons.cloudArrowUp,
+                                          color: AppColors.amareloVale,
+                                          size: 24,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Subir Imagem PNG Transparente',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        SizedBox(height: 2),
+                                        Text(
+                                          'Obrigatório formato .PNG',
+                                          style: TextStyle(color: Colors.white54, fontSize: 10),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              else
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.05),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: AppColors.verdeVale),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 60,
+                                        height: 60,
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black45,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Image.network(
+                                          prizeImageUrl!,
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      const Expanded(
+                                        child: Text(
+                                          'Foto PNG Carregada!',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const FaIcon(FontAwesomeIcons.trashCan, size: 14, color: Colors.redAccent),
+                                        onPressed: () => setState(() => prizeImageUrl = null),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              const SizedBox(height: 12),
+                            ] else ...[
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.amareloVale.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.3)),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    FaIcon(FontAwesomeIcons.sackDollar, color: AppColors.amareloVale, size: 20),
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        'Prêmio em Dinheiro: O ícone de saco de moedas será gerado automaticamente no App.',
+                                        style: TextStyle(color: Colors.white, fontSize: 11),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+
+                            // Descrição
                             TextField(
                               controller: descCtrl,
                               style: const TextStyle(color: Colors.white),
                               decoration: const InputDecoration(
                                 labelText: 'Descrição',
                               ),
-                              maxLines: 3,
+                              maxLines: 2,
                             ),
                             const SizedBox(height: 12),
+
+                            // Local e Dificuldade
                             Row(
                               children: [
                                 Expanded(
+                                  flex: 3,
                                   child: TextField(
-                                    controller: prizeCtrl,
+                                    controller: locationCtrl,
                                     style: const TextStyle(color: Colors.white),
                                     decoration: const InputDecoration(
-                                      labelText: 'Prêmio (R\$)',
+                                      labelText: 'Local do Evento (Cidade) *',
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 10),
                                 Expanded(
-                                  child: TextField(
-                                    controller: orderCtrl,
-                                    style: const TextStyle(color: Colors.white),
+                                  flex: 2,
+                                  child: DropdownButtonFormField<String>(
+                                    value: difficulty,
+                                    dropdownColor: cardColor,
+                                    style: const TextStyle(color: Colors.white, fontSize: 13),
                                     decoration: const InputDecoration(
-                                      labelText: 'Ordem',
+                                      labelText: 'Dificuldade',
                                     ),
+                                    items: const [
+                                      DropdownMenuItem(value: 'Fácil', child: Text('Fácil')),
+                                      DropdownMenuItem(value: 'Média', child: Text('Média')),
+                                      DropdownMenuItem(value: 'Difícil', child: Text('Difícil')),
+                                    ],
+                                    onChanged: (val) {
+                                      if (val != null) setState(() => difficulty = val);
+                                    },
                                   ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 12),
-                            TextField(
-                              controller: locationCtrl,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Local do Evento (Cidade) *',
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            TextField(
-                              controller: iconCtrl,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
-                                labelText: 'URL da Imagem de Fundo',
-                                suffixIcon: IconButton(
-                                  icon: const FaIcon(
-                                    FontAwesomeIcons.upload,
-                                    size: 18,
-                                  ),
-                                  onPressed: () async {
-                                    final url =
-                                        await AdminUploadUtil.pickAndUploadImage(
-                                          context,
-                                        );
-                                    if (url != null) {
-                                      setState(() {
-                                        iconCtrl.text = url;
-                                      });
-                                    }
-                                  },
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
+
+                            // Modalidade
                             DropdownButtonFormField<String>(
                               value: selectedEventType,
                               dropdownColor: cardColor,
@@ -377,77 +687,23 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               items: const [
                                 DropdownMenuItem(
                                   value: 'classic',
-                                  child: Text(
-                                    'Classic (A Jornada Estratégica)',
-                                  ),
+                                  child: Text('Classic (A Jornada Estratégica)'),
                                 ),
                                 DropdownMenuItem(
                                   value: 'find_and_win',
-                                  child: Text(
-                                    'Find & Win (Recompensa Instantânea)',
-                                  ),
+                                  child: Text('Find & Win (Recompensa Instantânea)'),
                                 ),
                               ],
                               onChanged: (val) {
                                 if (val != null) {
                                   setState(() {
                                     selectedEventType = val;
+                                    if (isObjeto) {
+                                      titleCtrl.text = val == 'classic' ? 'Modo Clássico' : 'Ache & Ganhe';
+                                    }
                                   });
                                 }
                               },
-                            ),
-                            const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: selectedEventType == 'classic'
-                                    ? Colors.blue.withValues(alpha: 0.1)
-                                    : Colors.orange.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: selectedEventType == 'classic'
-                                      ? Colors.blue
-                                      : Colors.orange,
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      FaIcon(
-                                        FontAwesomeIcons.circleInfo,
-                                        color: selectedEventType == 'classic'
-                                            ? Colors.blue
-                                            : Colors.orange,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        selectedEventType == 'classic'
-                                            ? 'Modo Clássico'
-                                            : 'Modo Find & Win',
-                                        style: TextStyle(
-                                          color: selectedEventType == 'classic'
-                                              ? Colors.blue
-                                              : Colors.orange,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    selectedEventType == 'classic'
-                                        ? 'O jogador precisa concluir todas as fases e enigmas (jornada estruturada). O prêmio configurado neste formulário será entregue apenas no final de toda a jornada.'
-                                        : 'Fases são ignoradas pelo jogador (recompensa instantânea). O prêmio é entregue na hora ao resolver cada enigma. O valor do "Prêmio (R\$)" acima funciona apenas como informativo do total estimado da campanha.',
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ),
                           ],
                         ),
@@ -472,34 +728,73 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             ),
                           ),
                           onPressed: () async {
+                            if (isObjeto) {
+                              if (prizeCtrl.text.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Por favor, informe o nome do prêmio.'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                return;
+                              }
+                              if (prizeImageUrl == null || prizeImageUrl!.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Para prêmios Objeto, é OBRIGATÓRIO subir a foto em formato PNG!'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                return;
+                              }
+                            } else {
+                              if (titleCtrl.text.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('O título do evento é obrigatório.'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                return;
+                              }
+                            }
+
                             if (locationCtrl.text.trim().isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text(
-                                    'O local do evento é obrigatório.',
-                                  ),
+                                  content: Text('O local do evento é obrigatório.'),
                                   backgroundColor: Colors.red,
                                 ),
                               );
                               return;
                             }
+
+                            final finalTitle = isObjeto
+                                ? (selectedEventType == 'classic' ? 'Modo Clássico' : 'Ache & Ganhe')
+                                : titleCtrl.text.trim();
+
                             final newData = {
-                              'title': titleCtrl.text,
-                              'description': descCtrl.text,
-                              'prizePool': num.tryParse(prizeCtrl.text) ?? 0,
+                              'title': finalTitle,
+                              'description': descCtrl.text.trim(),
+                              'prizePool': prizeCtrl.text.trim(),
+                              'prize': prizeCtrl.text.trim(),
+                              'prizeType': prizeType,
+                              'prizeImageUrl': isObjeto ? prizeImageUrl : null,
+                              'difficulty': difficulty,
                               'order': int.tryParse(orderCtrl.text) ?? 1,
-                              'icon': iconCtrl.text,
                               'location': locationCtrl.text.trim(),
                               'eventType': selectedEventType,
-                              'status': data?['status'] ?? 'draft',
+                              'status': data?['status'] ?? 'open',
                             };
+
                             try {
                               if (docId == null) {
                                 final response = await ParseCloudFunction(
                                   'createOrUpdateEvent',
                                 ).execute(parameters: {'data': newData});
-                                if (!response.success)
+                                if (!response.success) {
                                   throw response.error ?? ParseError(message: 'Erro desconhecido');
+                                }
                               } else {
                                 final response = await ParseCloudFunction(
                                   'createOrUpdateEvent',
@@ -509,8 +804,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                     'data': newData,
                                   },
                                 );
-                                if (!response.success)
+                                if (!response.success) {
                                   throw response.error ?? ParseError(message: 'Erro desconhecido');
+                                }
                               }
                               if (context.mounted) {
                                 Navigator.pop(context);
@@ -845,11 +1141,27 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Enigmas:',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Enigmas:',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              if (phaseId != null)
+                TextButton.icon(
+                  onPressed: () => _showLinkExistingEnigmaDialogMobile(
+                    context,
+                    eventId,
+                    phaseId,
+                    onRefresh,
+                  ),
+                  icon: const FaIcon(FontAwesomeIcons.link, size: 12),
+                  label: const Text('Vincular Existente', style: TextStyle(fontSize: 12)),
+                ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           FutureBuilder<ParseResponse>(
             future: () {
               var query = QueryBuilder<ParseObject>(ParseObject('Enigma'));
@@ -882,22 +1194,44 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
               }
 
               final enigmas = snapshot.data!.results as List<ParseObject>;
+              if (enigmas.isEmpty) {
+                return const Text(
+                  'Nenhum enigma nesta fase. Clique em Novo Enigma ou Vincular Existente.',
+                  style: TextStyle(color: secondaryTextColor, fontSize: 12),
+                );
+              }
 
               return Column(
                 children: enigmas.map((doc) {
                   final enigmaId = doc.objectId!;
                   final code = doc.get<String>('code') ?? '';
                   final type = doc.get<String>('type') ?? '';
+                  final order = doc.get<num>('order') ?? 1;
+                  final instruction = doc.get<String>('instruction') ?? doc.get<String>('title') ?? 'Código: $code';
 
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(
+                      radius: 13,
+                      backgroundColor: primaryAmber.withValues(alpha: 0.15),
+                      child: Text(
+                        '$order',
+                        style: const TextStyle(
+                          color: primaryAmber,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
                     title: Text(
-                      'Código: $code',
-                      style: const TextStyle(color: Colors.white),
+                      instruction,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: Text(
-                      'Tipo: $type',
-                      style: const TextStyle(color: secondaryTextColor),
+                      'Tipo: $type · Cód: $code',
+                      style: const TextStyle(color: secondaryTextColor, fontSize: 11),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -905,9 +1239,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         IconButton(
                           icon: const FaIcon(
                             FontAwesomeIcons.penToSquare,
-                            size: 16,
+                            size: 15,
                             color: Colors.blue,
                           ),
+                          tooltip: 'Editar',
                           onPressed: () => _showEnigmaEditDialog(
                             context,
                             eventId,
@@ -917,24 +1252,60 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             onSaved: onRefresh,
                           ),
                         ),
+                        if (phaseId != null)
+                          IconButton(
+                            icon: const FaIcon(
+                              FontAwesomeIcons.arrowRightArrowLeft,
+                              size: 13,
+                              color: primaryAmber,
+                            ),
+                            tooltip: 'Mover Fase',
+                            onPressed: () => _showMoveEnigmaPhaseDialogMobile(
+                              context,
+                              eventId,
+                              phaseId,
+                              doc,
+                              onRefresh,
+                            ),
+                          ),
                         IconButton(
                           icon: const FaIcon(
                             FontAwesomeIcons.trash,
-                            size: 16,
+                            size: 15,
                             color: Colors.redAccent,
                           ),
+                          tooltip: 'Excluir',
                           onPressed: () async {
-                            final response =
-                                await ParseCloudFunction(
-                                  'deleteEnigma',
-                                ).execute(
-                                  parameters: {
-                                    'eventId': eventId,
-                                    'enigmaId': enigmaId,
-                                  },
-                                );
-                            if (response.success) {
-                              onRefresh();
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                backgroundColor: darkBackground,
+                                title: const Text('Excluir Enigma?', style: TextStyle(color: Colors.white)),
+                                content: const Text('Tem certeza que deseja excluir este enigma?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text('Cancelar'),
+                                  ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: const Text('Excluir'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true) {
+                              final response = await ParseCloudFunction('deleteEnigma').execute(
+                                parameters: {
+                                  'eventId': eventId,
+                                  'enigmaId': enigmaId,
+                                },
+                              );
+                              if (response.success) {
+                                onRefresh();
+                              }
                             }
                           },
                         ),
@@ -947,6 +1318,264 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showLinkExistingEnigmaDialogMobile(
+    BuildContext context,
+    String eventId,
+    String phaseId,
+    VoidCallback onRefresh,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final query = QueryBuilder<ParseObject>(ParseObject('Enigma'))
+          ..whereEqualTo('eventId', eventId)
+          ..includeObject(['phase'])
+          ..orderByAscending('order');
+
+        return Dialog(
+          backgroundColor: darkBackground,
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            constraints: const BoxConstraints(maxHeight: 500, maxWidth: 400),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Vincular Enigma à Fase',
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      icon: const FaIcon(FontAwesomeIcons.xmark, color: Colors.white, size: 16),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: FutureBuilder<ParseResponse>(
+                    future: query.query(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final all = (snapshot.data?.results as List<ParseObject>?) ?? [];
+                      final available = all.where((e) {
+                        final currentPid = e.get<String>('phaseId') ?? e.get<ParseObject>('phase')?.objectId;
+                        return currentPid != phaseId;
+                      }).toList();
+
+                      if (available.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            'Nenhum outro enigma disponível para vincular.',
+                            style: TextStyle(color: secondaryTextColor),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        itemCount: available.length,
+                        itemBuilder: (context, idx) {
+                          final enigma = available[idx];
+                          final instruction = enigma.get<String>('instruction') ?? enigma.get<String>('title') ?? 'Sem instrução';
+                          final currentP = enigma.get<ParseObject>('phase');
+                          final pName = currentP?.get<String>('title') ?? 'Sem Fase';
+
+                          return Card(
+                            color: cardColor,
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: ListTile(
+                              title: Text(
+                                instruction,
+                                style: const TextStyle(color: Colors.white, fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                'Origem: $pName',
+                                style: const TextStyle(color: secondaryTextColor, fontSize: 11),
+                              ),
+                              trailing: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryAmber,
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                ),
+                                onPressed: () async {
+                                  final countQ = QueryBuilder<ParseObject>(ParseObject('Enigma'))
+                                    ..whereEqualTo('phase', (ParseObject('Phase')..objectId = phaseId).toPointer());
+                                  final countRes = await countQ.count();
+                                  final nextOrder = (countRes.success ? countRes.count : 0) + 1;
+
+                                  final res = await ParseCloudFunction('createOrUpdateEnigma').execute(
+                                    parameters: {
+                                      'enigmaId': enigma.objectId,
+                                      'eventId': eventId,
+                                      'phaseId': phaseId,
+                                      'data': {'order': nextOrder, 'prize': 0.0},
+                                    },
+                                  );
+
+                                  if (res.success) {
+                                    if (ctx.mounted) Navigator.pop(ctx);
+                                    onRefresh();
+                                  }
+                                },
+                                child: const Text('Vincular', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showMoveEnigmaPhaseDialogMobile(
+    BuildContext context,
+    String eventId,
+    String currentPhaseId,
+    ParseObject enigma,
+    VoidCallback onRefresh,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final query = QueryBuilder<ParseObject>(ParseObject('Phase'))
+          ..whereEqualTo('event', (ParseObject('Event')..objectId = eventId).toPointer())
+          ..orderByAscending('order');
+
+        return Dialog(
+          backgroundColor: darkBackground,
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            constraints: const BoxConstraints(maxHeight: 450, maxWidth: 400),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Mover Enigma de Fase',
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      icon: const FaIcon(FontAwesomeIcons.xmark, color: Colors.white, size: 16),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  enigma.get<String>('instruction') ?? enigma.get<String>('title') ?? 'Enigma',
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: FutureBuilder<ParseResponse>(
+                    future: query.query(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final phases = (snapshot.data?.results as List<ParseObject>?) ?? [];
+                      final otherPhases = phases.where((p) => p.objectId != currentPhaseId).toList();
+
+                      return ListView(
+                        children: [
+                          ...otherPhases.map((targetP) {
+                            final pOrder = targetP.get<num>('order') ?? 1;
+                            final pTitle = targetP.get<String>('title') ?? 'Fase $pOrder';
+
+                            return Card(
+                              color: cardColor,
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
+                                title: Text(pTitle, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                                trailing: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primaryAmber,
+                                    foregroundColor: Colors.black,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  ),
+                                  onPressed: () async {
+                                    final countQ = QueryBuilder<ParseObject>(ParseObject('Enigma'))
+                                      ..whereEqualTo('phase', targetP.toPointer());
+                                    final countRes = await countQ.count();
+                                    final nextOrder = (countRes.success ? countRes.count : 0) + 1;
+
+                                    final res = await ParseCloudFunction('createOrUpdateEnigma').execute(
+                                      parameters: {
+                                        'enigmaId': enigma.objectId,
+                                        'eventId': eventId,
+                                        'phaseId': targetP.objectId,
+                                        'data': {'order': nextOrder, 'prize': 0.0},
+                                      },
+                                    );
+
+                                    if (res.success) {
+                                      if (ctx.mounted) Navigator.pop(ctx);
+                                      onRefresh();
+                                    }
+                                  },
+                                  child: const Text('Mover para cá', style: TextStyle(fontSize: 11)),
+                                ),
+                              ),
+                            );
+                          }),
+                          const Divider(color: Colors.white24),
+                          ListTile(
+                            tileColor: Colors.red.withValues(alpha: 0.1),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            title: const Text('Desvincular da Fase', style: TextStyle(color: Colors.white, fontSize: 13)),
+                            subtitle: const Text('Deixa o enigma avulso no evento.', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                            trailing: TextButton(
+                              onPressed: () async {
+                                final res = await ParseCloudFunction('createOrUpdateEnigma').execute(
+                                  parameters: {
+                                    'enigmaId': enigma.objectId,
+                                    'eventId': eventId,
+                                    'phaseId': '',
+                                    'data': {'prize': 0.0},
+                                  },
+                                );
+                                if (res.success) {
+                                  if (ctx.mounted) Navigator.pop(ctx);
+                                  onRefresh();
+                                }
+                              },
+                              child: const Text('Desvincular', style: TextStyle(color: Colors.redAccent)),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1529,13 +2158,35 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               maxLines: 2,
                             ),
                             const SizedBox(height: 12),
-                            TextField(
-                              controller: prizeCtrl,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: const InputDecoration(
-                                labelText: 'Prêmio (R\$)',
+                            if (phaseId != null)
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: primaryAmber.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: primaryAmber.withValues(alpha: 0.3)),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    FaIcon(FontAwesomeIcons.circleInfo, color: primaryAmber, size: 16),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Evento Classic: Enigmas de fases não possuem prêmio individual. A premiação total do evento é concedida ao 1º colocado que finalizar todas as etapas.',
+                                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              TextField(
+                                controller: prizeCtrl,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: const InputDecoration(
+                                  labelText: 'Prêmio (R\$)',
+                                ),
                               ),
-                            ),
 
                             const SizedBox(height: 16),
                             const Divider(color: Colors.white24),
@@ -1823,8 +2474,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                           : codeCtrl.text,
                                       'instruction': instructionCtrl.text,
                                       'type': selectedType,
-                                      'prize':
-                                          num.tryParse(prizeCtrl.text) ?? 0,
+                                      'prize': phaseId != null
+                                          ? 0
+                                          : (num.tryParse(prizeCtrl.text) ?? 0),
                                       'linkedHints': linkedHints,
                                       'characteristics':
                                           selectedCharacteristics,

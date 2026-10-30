@@ -6,8 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_dashboard_screen.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_events_screen.dart';
-import 'package:oenigma/painel_admin_web/features/admin/screens/admin_enigmas_screen.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_banners_screen.dart';
+import 'package:oenigma/painel_admin_web/features/admin/screens/admin_gateways_screen.dart';
+import 'package:oenigma/painel_admin_web/features/admin/screens/admin_finance_screen.dart';
 import 'package:oenigma/painel_admin_web/features/auth/providers/auth_provider.dart';
 
 class MainAdminScreen extends StatefulWidget {
@@ -23,15 +24,17 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
   final List<Widget> _screens = const [
     AdminDashboardScreen(),
     AdminEventsScreen(),
-    AdminEnigmasScreen(),
     AdminBannersScreen(),
+    AdminGatewaysScreen(),
+    AdminFinanceScreen(),
   ];
 
   final List<String> _titles = [
     'Dashboard',
     'Eventos',
-    'Enigmas',
     'Banners',
+    'Gateways de Pagamento',
+    'Saques & Depósitos',
   ];
 
   @override
@@ -61,23 +64,25 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
 
   Widget _buildSidebar() {
     return Container(
-      width: 220,
+      width: 240,
       color: sidebarBackground,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Column(
         children: [
           _buildLogo(),
-          const SizedBox(height: 30),
+          const SizedBox(height: 32),
           _buildMenuItem(0, FontAwesomeIcons.chartPie, 'Dashboard'),
-          const SizedBox(height: 4),
-          _buildMenuItem(1, FontAwesomeIcons.calendar, 'Eventos'),
-          const SizedBox(height: 4),
-          _buildMenuItem(2, FontAwesomeIcons.puzzlePiece, 'Enigmas'),
-          const SizedBox(height: 4),
-          _buildMenuItem(3, FontAwesomeIcons.image, 'Banners'),
+          const SizedBox(height: 6),
+          _buildMenuItem(1, FontAwesomeIcons.calendarCheck, 'Eventos'),
+          const SizedBox(height: 6),
+          _buildMenuItem(2, FontAwesomeIcons.image, 'Banners'),
+          const SizedBox(height: 6),
+          _buildMenuItem(3, FontAwesomeIcons.creditCard, 'Gateways'),
+          const SizedBox(height: 6),
+          _buildMenuItem(4, FontAwesomeIcons.moneyBillTransfer, 'Saques & Depósitos'),
           const Spacer(),
           _buildLogoutButton(),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           _buildFooter(),
         ],
       ),
@@ -85,21 +90,50 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
   }
 
   Widget _buildLogo() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const FaIcon(FontAwesomeIcons.mapPin, color: primaryAmber, size: 18),
-        const SizedBox(width: 8),
-        Text(
-          'ADM',
-          style: GoogleFonts.orbitron(
-            color: primaryAmber,
-            fontSize: 19,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: AppColors.amareloVale.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const FaIcon(
+              FontAwesomeIcons.compass,
+              color: AppColors.amareloVale,
+              size: 16,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: 10),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: 'ENIGMA ',
+                  style: GoogleFonts.poppins(
+                    color: AppColors.verdeVale,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
+                  ),
+                ),
+                TextSpan(
+                  text: 'ADM',
+                  style: GoogleFonts.poppins(
+                    color: AppColors.amareloVale,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -112,12 +146,17 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
         });
       },
       borderRadius: BorderRadius.circular(12),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
-          color: isActive ? primaryAmber.withValues(alpha: 0.1) : Colors.transparent,
+          color: isActive ? AppColors.verdeVale.withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isActive ? AppColors.verdeVale.withValues(alpha: 0.3) : Colors.transparent,
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
@@ -125,19 +164,29 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
               width: 20,
               child: FaIcon(
                 icon,
-                color: isActive ? primaryAmber : secondaryTextColor,
+                color: isActive ? AppColors.amareloVale : AppColors.cinzaMedio,
                 size: 16,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Text(
               label,
-              style: GoogleFonts.inter(
-                color: isActive ? primaryAmber : secondaryTextColor,
+              style: GoogleFonts.poppins(
+                color: isActive ? Colors.white : AppColors.cinzaMedio,
                 fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
+            const Spacer(),
+            if (isActive)
+              Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: AppColors.verdeVale,
+                  shape: BoxShape.circle,
+                ),
+              ),
           ],
         ),
       ),
@@ -164,16 +213,16 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                   width: 20,
                   child: FaIcon(
                     FontAwesomeIcons.rightFromBracket,
-                    color: secondaryTextColor,
-                    size: 16,
+                    color: AppColors.cinzaMedio,
+                    size: 15,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Text(
                   'Sair',
-                  style: GoogleFonts.inter(
-                    color: secondaryTextColor,
-                    fontSize: 14,
+                  style: GoogleFonts.poppins(
+                    color: AppColors.cinzaMedio,
+                    fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -192,16 +241,16 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
-            color: primaryAmber.withValues(alpha: 0.06),
+            color: AppColors.verdeVale.withValues(alpha: 0.1),
           ),
         ),
       ),
       child: Text(
-        'v2.0 • Ache & Ganhe',
+        'v2.0 • Enigma City',
         textAlign: TextAlign.center,
-        style: GoogleFonts.inter(
-          color: mutedTextColor,
-          fontSize: 10,
+        style: GoogleFonts.poppins(
+          color: AppColors.cinzaMedio.withValues(alpha: 0.6),
+          fontSize: 11,
         ),
       ),
     );
@@ -209,11 +258,11 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 22),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: primaryAmber.withValues(alpha: 0.08),
+            color: AppColors.verdeVale.withValues(alpha: 0.12),
           ),
         ),
       ),
@@ -222,19 +271,20 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
         children: [
           Text(
             _titles[_selectedIndex],
-            style: GoogleFonts.orbitron(
-              color: primaryAmberLight,
-              fontSize: 26,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 24,
               fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
-              color: primaryAmber.withValues(alpha: 0.12),
+              color: AppColors.verdeVale.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: primaryAmber.withValues(alpha: 0.10),
+                color: AppColors.verdeVale.withValues(alpha: 0.25),
               ),
             ),
             child: Row(
@@ -247,12 +297,13 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                     shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Text(
-                  'Online',
-                  style: GoogleFonts.orbitron(
-                    color: primaryAmber,
-                    fontSize: 11,
+                  'Painel Conectado',
+                  style: GoogleFonts.poppins(
+                    color: AppColors.verdeVale,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],

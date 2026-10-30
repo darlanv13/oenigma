@@ -19,7 +19,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   
-  // Função para abrir o Modal de Edição salvando no Parse
   void _showEditProfileModal(ParseUser user) {
     final nameController = TextEditingController(text: user.get<String>('name') ?? '');
     final phoneController = TextEditingController(text: user.get<String>('phone') ?? '');
@@ -33,15 +32,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           builder: (context, setModalState) {
             return Dialog(
               backgroundColor: Colors.transparent,
-              insetPadding: const EdgeInsets.all(16),
+              insetPadding: const EdgeInsets.all(20),
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E).withOpacity(0.95),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: primaryAmber.withOpacity(0.3), width: 1.5),
+                  color: AppColors.darkCardColor,
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.6), blurRadius: 20, offset: const Offset(0, 10)),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
                   ],
                 ),
                 child: Column(
@@ -52,27 +55,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       children: [
                         Row(
                           children: [
-                            const FaIcon(FontAwesomeIcons.userPen, color: primaryAmber, size: 18),
+                            const FaIcon(FontAwesomeIcons.userPen, color: AppColors.verdeVale, size: 18),
                             const SizedBox(width: 10),
                             Text(
                               'EDITAR PERFIL',
-                              style: GoogleFonts.orbitron(
+                              style: GoogleFonts.poppins(
                                 color: Colors.white,
                                 fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.0,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ],
                         ),
                         if (!isSaving)
                           IconButton(
-                            icon: const Icon(Icons.close, color: Colors.grey),
+                            icon: const Icon(Icons.close, color: AppColors.cinzaMedio),
                             onPressed: () => Navigator.of(context).pop(),
                           ),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     
                     // Campo: Nome
                     _buildInputField(
@@ -81,7 +84,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       icon: FontAwesomeIcons.user,
                       enabled: !isSaving,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     
                     // Campo: Telefone
                     _buildInputField(
@@ -90,38 +93,49 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       icon: FontAwesomeIcons.phone,
                       enabled: !isSaving,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
                     // Botão: Alterar Foto de Perfil
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        // Correção: Passando um callback para alterar o estado do modal
                         onPressed: isSaving 
                             ? null 
                             : () => _updateProfilePhoto(user, (savingState) {
                                 setModalState(() => isSaving = savingState);
                               }),
-                        icon: const FaIcon(FontAwesomeIcons.camera, size: 14, color: Colors.white),
+                        icon: const FaIcon(FontAwesomeIcons.camera, size: 14, color: AppColors.verdeVale),
                         label: Text(
                           'ALTERAR FOTO',
-                          style: GoogleFonts.orbitron(fontWeight: FontWeight.w700, color: Colors.white),
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: AppColors.verdeVale),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white.withOpacity(0.1),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: AppColors.verdeVale.withValues(alpha: 0.12),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(color: Colors.white.withOpacity(0.2)),
+                            side: BorderSide(color: AppColors.verdeVale.withValues(alpha: 0.4), width: 1.2),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // Botão: Salvar Dados
-                    SizedBox(
+                    Container(
                       width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        gradient: AppColors.gradienteVerdeVale,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.verdeVale.withValues(alpha: 0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
                       child: ElevatedButton(
                         onPressed: isSaving
                             ? null
@@ -139,31 +153,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   if (context.mounted) {
                                     Navigator.of(context).pop();
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Perfil atualizado!'), backgroundColor: successColor),
+                                      SnackBar(
+                                        content: const Text('Perfil atualizado com sucesso!'),
+                                        backgroundColor: AppColors.verdeVale,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
                                     );
-                                    setState(() {}); // Força a tela a recarregar os novos dados
+                                    setState(() {});
                                   }
                                 } else {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Erro: ${response.error?.message}'), backgroundColor: dangerColor),
+                                      SnackBar(
+                                        content: Text('Erro: ${response.error?.message}'),
+                                        backgroundColor: AppColors.danger,
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
                                     );
                                   }
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryAmber,
-                          foregroundColor: darkBackground,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
                         child: isSaving
-                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: darkBackground, strokeWidth: 2))
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                             : Text(
                                 'SALVAR ALTERAÇÕES',
-                                style: GoogleFonts.orbitron(fontWeight: FontWeight.w900, fontSize: 14),
+                                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13),
                               ),
                       ),
                     ),
@@ -177,7 +202,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  // Lógica de Upload da Foto do Parse (Corrigida a assinatura)
   Future<void> _updateProfilePhoto(ParseUser user, Function(bool) setSavingState) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
@@ -201,15 +225,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           await user.save();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Foto atualizada com sucesso!'), backgroundColor: successColor),
+              SnackBar(
+                content: const Text('Foto atualizada com sucesso!'),
+                backgroundColor: AppColors.verdeVale,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
             );
-            setState(() {}); // Recarrega a tela de perfil
+            setState(() {});
           }
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erro ao enviar foto: $e'), backgroundColor: dangerColor),
+            SnackBar(
+              content: Text('Erro ao enviar foto: $e'),
+              backgroundColor: AppColors.danger,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
           );
         }
       } finally {
@@ -222,21 +256,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return TextFormField(
       controller: controller,
       enabled: enabled,
-      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
         filled: true,
-        fillColor: darkBackground,
+        fillColor: Colors.white.withValues(alpha: 0.05),
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.grey),
+        hintStyle: GoogleFonts.inter(color: AppColors.cinzaMedio),
         prefixIcon: Padding(
           padding: const EdgeInsets.all(14.0),
-          child: FaIcon(icon, color: primaryAmber, size: 18),
+          child: FaIcon(icon, color: AppColors.verdeVale, size: 16),
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 16),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: primaryAmber.withOpacity(0.5), width: 1.5),
+          borderSide: const BorderSide(color: AppColors.verdeVale, width: 1.5),
         ),
       ),
     );
@@ -247,92 +288,92 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Column(
-              children: [
-                // AppBar Customizada
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Navigator.canPop(context)
-                          ? GestureDetector(
-                              onTap: () => Navigator.of(context).pop(),
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Center(
-                                  child: FaIcon(FontAwesomeIcons.chevronLeft, color: Color(0xFF8B5CF6), size: 14),
-                                ),
-                              ),
-                            )
-                          : const SizedBox(width: 36),
-                      Text(
-                        'MEU PERFIL',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1E293B),
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(width: 36),
-                    ],
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // AppBar Customizada
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Navigator.canPop(context)
+                      ? GestureDetector(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.06),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                            ),
+                            child: const Center(
+                              child: FaIcon(FontAwesomeIcons.chevronLeft, color: Colors.white, size: 14),
+                            ),
+                          ),
+                        )
+                      : const SizedBox(width: 40),
+                  Text(
+                    'MEU PERFIL',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 1.2,
+                    ),
                   ),
-                ),
-
-                Expanded(
-                  child: authState.when(
-                    data: (user) {
-                      if (user == null) {
-                        return const Center(
-                          child: Text('Sessão expirada. Faça login novamente.', style: TextStyle(color: Color(0xFF1E293B))),
-                        );
-                      }
-
-                      final name = user.get<String>('name') ?? 'Explorador';
-                      final email = user.get<String>('email') ?? 'Sem email';
-                      final phone = user.get<String>('phone') ?? 'Não informado';
-                      final xp = user.get<num>('xp')?.toInt() ?? 0;
-                      final league = user.get<String>('league') ?? 'Bronze';
-                      final photoUrl = user.get<String>('photoURL');
-
-                      final eventosJogados = user.get<Map<String, dynamic>>('events')?.keys.length ?? 0;
-                      final eventosVencidos = user.get<List<dynamic>>('winnerEvents')?.length ?? 0;
-
-                      return SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          children: [
-                            _buildAvatarSection(name, league, xp, photoUrl),
-                            const SizedBox(height: 32),
-                            _buildGamerStats(eventosJogados, eventosVencidos),
-                            const SizedBox(height: 24),
-                            _buildInfoCard(email, phone),
-                            const SizedBox(height: 32),
-                            _buildActionButtons(context, ref, user),
-                            const SizedBox(height: 40),
-                          ],
-                        ),
-                      );
-                    },
-                    loading: () => const Center(child: CircularProgressIndicator(color: primaryAmber)),
-                    error: (err, stack) => Center(child: Text('Erro: $err', style: const TextStyle(color: dangerColor))),
-                  ),
-                ),
-              ],
+                  const SizedBox(width: 40),
+                ],
+              ),
             ),
-          ),
-        ],
+
+            Expanded(
+              child: authState.when(
+                data: (user) {
+                  if (user == null) {
+                    return Center(
+                      child: Text(
+                        'Sessão expirada. Faça login novamente.',
+                        style: GoogleFonts.inter(color: AppColors.cinzaMedio),
+                      ),
+                    );
+                  }
+
+                  final name = user.get<String>('name') ?? 'Explorador';
+                  final email = user.get<String>('email') ?? 'Sem email';
+                  final phone = user.get<String>('phone') ?? 'Não informado';
+                  final xp = user.get<num>('xp')?.toInt() ?? 0;
+                  final league = user.get<String>('league') ?? 'Bronze';
+                  final photoUrl = user.get<String>('photoURL');
+
+                  final eventosJogados = user.get<Map<String, dynamic>>('events')?.keys.length ?? 0;
+                  final eventosVencidos = user.get<List<dynamic>>('winnerEvents')?.length ?? 0;
+
+                  return SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                    child: Column(
+                      children: [
+                        _buildAvatarSection(name, league, xp, photoUrl),
+                        const SizedBox(height: 24),
+                        _buildGamerStats(eventosJogados, eventosVencidos),
+                        const SizedBox(height: 20),
+                        _buildInfoCard(email, phone),
+                        const SizedBox(height: 28),
+                        _buildActionButtons(context, ref, user),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator(color: AppColors.verdeVale)),
+                error: (err, stack) => Center(child: Text('Erro: $err', style: const TextStyle(color: AppColors.danger))),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -345,56 +386,57 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: const LinearGradient(
-              colors: [Color(0xFFFFD54F), Color(0xFFF57F17)],
+              colors: [AppColors.amareloVale, AppColors.verdeVale],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             boxShadow: [
-              BoxShadow(color: primaryAmber.withOpacity(0.3), blurRadius: 20, spreadRadius: 2),
+              BoxShadow(
+                color: AppColors.verdeVale.withValues(alpha: 0.3),
+                blurRadius: 18,
+                spreadRadius: 2,
+              ),
             ],
           ),
           child: CircleAvatar(
-            radius: 50,
-            backgroundColor: darkBackground,
+            radius: 46,
+            backgroundColor: AppColors.darkCardColor,
             backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
             child: photoUrl == null
-                ? const FaIcon(FontAwesomeIcons.userNinja, size: 40, color: secondaryTextColor)
+                ? const FaIcon(FontAwesomeIcons.solidUser, size: 36, color: AppColors.verdeVale)
                 : null,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Text(
-          name.toUpperCase(),
-          style: GoogleFonts.orbitron(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
+          name,
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
             color: Colors.white,
-            letterSpacing: 1.5,
-            shadows: [
-              Shadow(color: Colors.black.withOpacity(0.8), offset: const Offset(0, 2), blurRadius: 4),
-            ],
           ),
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E).withOpacity(0.8),
+            color: AppColors.amareloVale.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: primaryAmber.withOpacity(0.3), width: 1),
+            border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.35), width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const FaIcon(FontAwesomeIcons.medal, color: primaryAmber, size: 14),
-              const SizedBox(width: 8),
+              const FaIcon(FontAwesomeIcons.medal, color: AppColors.amareloVale, size: 12),
+              const SizedBox(width: 6),
               Text(
                 'LIGA ${league.toUpperCase()}  •  $xp XP',
                 style: GoogleFonts.inter(
-                  color: primaryAmber,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  letterSpacing: 1.0,
+                  color: AppColors.amareloVale,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  letterSpacing: 0.8,
                 ),
               ),
             ],
@@ -409,47 +451,79 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       children: [
         Expanded(
           child: Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(32),
+              color: AppColors.darkCardColor,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               boxShadow: [
-                BoxShadow(color: const Color(0xFFCBD5E1).withValues(alpha: 0.5), blurRadius: 15, offset: const Offset(0, 8)),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
               ],
             ),
             child: Column(
               children: [
-                const FaIcon(FontAwesomeIcons.mapLocationDot, color: Color(0xFF3B82F6), size: 24),
-                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.verdeVale.withValues(alpha: 0.15),
+                    border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.3)),
+                  ),
+                  child: const FaIcon(FontAwesomeIcons.mapLocationDot, color: AppColors.verdeVale, size: 18),
+                ),
+                const SizedBox(height: 10),
                 Text(
                   jogados.toString(),
-                  style: GoogleFonts.poppins(color: const Color(0xFF1E293B), fontSize: 24, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800),
                 ),
-                Text('EXPLORADOS', style: GoogleFonts.inter(color: const Color(0xFF64748B), fontSize: 10, fontWeight: FontWeight.bold)),
+                Text(
+                  'EXPLORADOS',
+                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                ),
               ],
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 14),
         Expanded(
           child: Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(32),
+              color: AppColors.darkCardColor,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               boxShadow: [
-                BoxShadow(color: const Color(0xFFCBD5E1).withValues(alpha: 0.5), blurRadius: 15, offset: const Offset(0, 8)),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
               ],
             ),
             child: Column(
               children: [
-                const FaIcon(FontAwesomeIcons.trophy, color: Color(0xFFF59E0B), size: 24),
-                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.amareloVale.withValues(alpha: 0.15),
+                    border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.3)),
+                  ),
+                  child: const FaIcon(FontAwesomeIcons.trophy, color: AppColors.amareloVale, size: 18),
+                ),
+                const SizedBox(height: 10),
                 Text(
                   vencidos.toString(),
-                  style: GoogleFonts.poppins(color: const Color(0xFF1E293B), fontSize: 24, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.poppins(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800),
                 ),
-                Text('VITÓRIAS', style: GoogleFonts.inter(color: const Color(0xFF64748B), fontSize: 10, fontWeight: FontWeight.bold)),
+                Text(
+                  'VITÓRIAS',
+                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                ),
               ],
             ),
           ),
@@ -460,12 +534,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildInfoCard(String email, String phone) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
+        color: AppColors.darkCardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         boxShadow: [
-          BoxShadow(color: const Color(0xFFCBD5E1).withValues(alpha: 0.5), blurRadius: 15, offset: const Offset(0, 8)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Column(
@@ -473,24 +552,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         children: [
           Row(
             children: [
-              const FaIcon(FontAwesomeIcons.idCard, color: Color(0xFF64748B), size: 16),
-              const SizedBox(width: 12),
+              const FaIcon(FontAwesomeIcons.idCard, color: AppColors.cinzaMedio, size: 14),
+              const SizedBox(width: 10),
               Text(
                 'DADOS DA CONTA',
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF64748B),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.5,
+                  color: AppColors.cinzaMedio,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
           _buildInfoRow(FontAwesomeIcons.envelope, 'E-mail', email),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Divider(color: primaryAmber.withOpacity(0.1), height: 1),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Divider(color: Colors.white.withValues(alpha: 0.06), height: 1),
           ),
           _buildInfoRow(FontAwesomeIcons.phone, 'Telefone', phone),
         ],
@@ -504,22 +583,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: darkBackground,
+            color: Colors.white.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: primaryAmber.withOpacity(0.1)),
           ),
-          child: FaIcon(icon, color: primaryAmber, size: 16),
+          child: FaIcon(icon, color: AppColors.verdeVale, size: 14),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12),
+                style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 11, fontWeight: FontWeight.w500),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 value,
                 style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
@@ -537,14 +615,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         _buildProfileButton(
           icon: FontAwesomeIcons.penToSquare,
           label: 'EDITAR PERFIL',
-          color: Colors.white70,
+          isPrimary: true,
+          color: AppColors.verdeVale,
+          useGradient: true,
           onTap: () => _showEditProfileModal(user),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         _buildProfileButton(
           icon: FontAwesomeIcons.arrowRightFromBracket,
           label: 'SAIR DA CONTA',
-          color: dangerColor,
+          isPrimary: false,
+          color: AppColors.danger,
           onTap: () async {
             await ref.read(authRepositoryProvider).signOut();
           },
@@ -556,32 +637,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget _buildProfileButton({
     required dynamic icon,
     required String label,
+    required bool isPrimary,
     required Color color,
+    bool useGradient = false,
     required VoidCallback onTap,
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 18),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: color == Colors.white70 ? const Color(0xFF8B5CF6) : Colors.transparent,
-          borderRadius: BorderRadius.circular(30),
-          border: color != Colors.white70 ? Border.all(color: color, width: 1.5) : null,
+          color: isPrimary ? (useGradient ? null : color) : Colors.white.withValues(alpha: 0.06),
+          gradient: isPrimary && useGradient ? AppColors.gradienteVerdeVale : null,
+          borderRadius: BorderRadius.circular(20),
+          border: isPrimary ? null : Border.all(color: color.withValues(alpha: 0.5), width: 1.2),
+          boxShadow: isPrimary
+              ? [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            FaIcon(icon, size: 14, color: color == Colors.white70 ? Colors.white : color),
+            FaIcon(icon, size: 13, color: isPrimary ? Colors.white : color),
             const SizedBox(width: 8),
             Text(
               label,
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w700,
-                color: color == Colors.white70 ? Colors.white : color,
-                fontSize: 14,
-                letterSpacing: 1.0,
+                color: isPrimary ? Colors.white : color,
+                fontSize: 13,
+                letterSpacing: 0.8,
               ),
             ),
           ],

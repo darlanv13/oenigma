@@ -9,7 +9,9 @@ class AdminItemCard extends StatelessWidget {
   final String statusText;
   final Color statusColor;
   final String subtitle;
+  final Widget? tagWidget;
   final List<Widget> actions;
+  final VoidCallback? onTap;
 
   const AdminItemCard({
     super.key,
@@ -18,38 +20,47 @@ class AdminItemCard extends StatelessWidget {
     required this.statusText,
     required this.statusColor,
     required this.subtitle,
+    this.tagWidget,
     this.actions = const [],
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+    Widget card = Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: BoxDecoration(
-        color: cardColor.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.darkCardColor,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: primaryAmber.withValues(alpha: 0.04),
+          color: AppColors.verdeVale.withValues(alpha: 0.12),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
-              color: primaryAmber.withValues(alpha: 0.08),
+              color: AppColors.verdeVale.withValues(alpha: 0.12),
               shape: BoxShape.circle,
               border: Border.all(
-                color: primaryAmber.withValues(alpha: 0.06),
+                color: AppColors.verdeVale.withValues(alpha: 0.2),
               ),
             ),
             child: Center(
               child: FaIcon(
                 icon,
-                color: primaryAmber,
-                size: 20,
+                color: AppColors.verdeVale,
+                size: 18,
               ),
             ),
           ),
@@ -60,40 +71,45 @@ class AdminItemCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.inter(
-                        color: primaryAmberLight,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: Text(
+                        title,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    if (tagWidget != null) ...[
+                      const SizedBox(width: 8),
+                      tagWidget!,
+                    ],
                     const SizedBox(width: 8),
                     if (statusText.isNotEmpty)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                         decoration: BoxDecoration(
                           color: statusColor,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: primaryAmber.withValues(alpha: 0.06),
-                          ),
                         ),
                         child: Text(
                           statusText,
                           style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 9,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   subtitle,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF8A7A5A),
+                    color: AppColors.cinzaMedio,
                     fontSize: 12,
                   ),
                 ),
@@ -106,5 +122,15 @@ class AdminItemCard extends StatelessWidget {
         ],
       ),
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: card,
+      );
+    }
+
+    return card;
   }
 }

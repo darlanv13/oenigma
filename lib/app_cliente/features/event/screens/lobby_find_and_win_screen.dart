@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 
 import '../widgets/card_enigma.dart';
 
@@ -99,128 +100,133 @@ class _FindAndWinProgressScreenState
             physics: const BouncingScrollPhysics(),
             slivers: [
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 48.0, 16.0, 16.0),
-                  child: Column(
-                    children: [
-                      // Header
-                      Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFFC0A060,
-                              ).withValues(alpha: 0.06),
-                              shape: BoxShape.circle,
-                            ),
-                            child: IconButton(
-                              icon: const FaIcon(
-                                FontAwesomeIcons.chevronLeft,
-                                color: Color(0xFFC0A060),
-                                size: 16,
-                              ),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              'Enigmas',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.orbitron(
-                                color: const Color(0xFFF0E6C5),
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 48,
-                            child: Align(
-                              alignment: Alignment.centerRight,
-                              child: FaIcon(
-                                FontAwesomeIcons.ellipsisVertical,
-                                color: const Color(0xFFC0A060),
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      const Divider(color: Colors.white12, height: 1),
-                      const SizedBox(height: 16),
-                      // Hunt Info
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF16181C).withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 16.0),
+                    child: Column(
+                      children: [
+                        // Header
+                        Row(
                           children: [
-                            Row(
-                              children: [
-                                const FaIcon(
-                                  FontAwesomeIcons.mapPin,
-                                  color: Color(0xFFC0A060),
-                                  size: 14,
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.06),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
                                 ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Ache & Ganhe',
-                                  style: GoogleFonts.inter(
-                                    color: const Color(0xFFF0E6C5),
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
+                                child: const Center(
+                                  child: FaIcon(
+                                    FontAwesomeIcons.chevronLeft,
+                                    color: Colors.white,
+                                    size: 14,
                                   ),
-                                ),
-                              ],
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(
-                                  0xFFC0A060,
-                                ).withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: const Color(
-                                    0xFFC0A060,
-                                  ).withValues(alpha: 0.1),
-                                ),
-                              ),
-                              child: RichText(
-                                text: TextSpan(
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    color: const Color(0xFFB0A07A),
-                                  ),
-                                  children: [
-                                    TextSpan(
-                                      text:
-                                          '${enigmas.where((e) => e.status == 'closed').length}',
-                                      style: const TextStyle(
-                                        color: Color(0xFFC0A060),
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    TextSpan(text: ' / ${enigmas.length}'),
-                                  ],
                                 ),
                               ),
                             ),
+                            Expanded(
+                              child: Text(
+                                'Enigmas',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 40),
                           ],
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        Divider(color: Colors.white.withValues(alpha: 0.08), height: 1),
+                        const SizedBox(height: 16),
+                        // Hunt Info
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.darkCardColor,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const FaIcon(
+                                    FontAwesomeIcons.mapPin,
+                                    color: AppColors.verdeVale,
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Ache & Ganhe',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.amareloVale.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: AppColors.amareloVale.withValues(alpha: 0.35),
+                                  ),
+                                ),
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      color: AppColors.cinzaMedio,
+                                    ),
+                                    children: [
+                                      TextSpan(
+                                        text:
+                                            '${enigmas.where((e) => e.status == 'closed').length}',
+                                        style: const TextStyle(
+                                          color: AppColors.amareloVale,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: ' / ${enigmas.length}',
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(alpha: 0.7),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -230,7 +236,7 @@ class _FindAndWinProgressScreenState
                   !snapshot.hasData)
                 const SliverFillRemaining(
                   child: Center(
-                    child: CircularProgressIndicator(color: Color(0xFFFFD54F)),
+                    child: CircularProgressIndicator(color: AppColors.verdeVale),
                   ),
                 )
               // Estado Vazio (Finalizado)
@@ -245,34 +251,32 @@ class _FindAndWinProgressScreenState
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.05),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.1),
-                            ),
+                            color: AppColors.verdeVale.withValues(alpha: 0.12),
+                            border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.25)),
                           ),
                           child: const FaIcon(
                             FontAwesomeIcons.flagCheckered,
-                            size: 50,
-                            color: Color(0xFFFFD54F),
+                            size: 48,
+                            color: AppColors.verdeVale,
                           ),
                         ),
                         const SizedBox(height: 24),
-                        const Text(
+                        Text(
                           "CAÇADA ENCERRADA!",
-                          style: TextStyle(
-                            fontSize: 22,
+                          style: GoogleFonts.poppins(
+                            fontSize: 20,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
-                            letterSpacing: 2,
+                            letterSpacing: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        const Text(
+                        const SizedBox(height: 10),
+                        Text(
                           "Todos os tesouros e enigmas deste evento já foram encontrados.",
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
+                          style: GoogleFonts.inter(
+                            color: AppColors.cinzaMedio,
+                            fontSize: 15,
                             height: 1.5,
                           ),
                         ),
@@ -283,7 +287,7 @@ class _FindAndWinProgressScreenState
               // Lista de Enigmas
               else
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       return Padding(
@@ -297,44 +301,6 @@ class _FindAndWinProgressScreenState
                     }, childCount: visibleEnigmas.length),
                   ),
                 ),
-
-              // Rodapé Simples
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 24.0, top: 12.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        top: BorderSide(
-                          color: const Color(
-                            0xFFC0A060,
-                          ).withValues(alpha: 0.06),
-                        ),
-                      ),
-                    ),
-                    padding: const EdgeInsets.only(top: 12.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const FaIcon(
-                          FontAwesomeIcons.shieldHalved,
-                          color: Color(0xFFC0A060),
-                          size: 10,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Caçada segura',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            color: const Color(0xFF4A4A4A),
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
             ],
           );
         },
