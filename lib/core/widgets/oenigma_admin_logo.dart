@@ -44,6 +44,18 @@ class OEnigmaAdminLogo extends StatelessWidget {
       LogoSize.hero => 12.0,
     };
 
+    final String defaultSubtitle = switch (size) {
+      LogoSize.compact => 'PAINEL DE GESTÃO',
+      LogoSize.medium => 'CENTRAL DE COMANDO',
+      _ => 'CENTRAL DE COMANDO & GESTÃO',
+    };
+
+    final double subtitleLetterSpacing = switch (size) {
+      LogoSize.compact => 0.8,
+      LogoSize.medium => 1.2,
+      _ => 1.8,
+    };
+
     final emblemWidget = _OEnigmaEmblem(size: emblemSize);
 
     final typographyWidget = Column(
@@ -51,49 +63,59 @@ class OEnigmaAdminLogo extends StatelessWidget {
           isVertical ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'O ENIGMA',
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontSize: titleFontSize,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.5,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.amareloVale.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: AppColors.amareloVale.withValues(alpha: 0.4),
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                'ADM',
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: isVertical ? Alignment.center : Alignment.centerLeft,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'O ENIGMA',
                 style: GoogleFonts.poppins(
-                  color: AppColors.amareloVale,
-                  fontSize: subtitleFontSize + 1,
+                  color: Colors.white,
+                  fontSize: titleFontSize,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 1.0,
+                  letterSpacing: size == LogoSize.compact ? 1.0 : 1.5,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.amareloVale.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: AppColors.amareloVale.withValues(alpha: 0.4),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  'ADM',
+                  style: GoogleFonts.poppins(
+                    color: AppColors.amareloVale,
+                    fontSize: subtitleFontSize + 1,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 2),
-        Text(
-          customSubtitle ?? 'CENTRAL DE COMANDO & GESTÃO',
-          style: GoogleFonts.inter(
-            color: AppColors.cinzaMedio,
-            fontSize: subtitleFontSize,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1.8,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: isVertical ? Alignment.center : Alignment.centerLeft,
+          child: Text(
+            customSubtitle ?? defaultSubtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: AppColors.cinzaMedio,
+              fontSize: subtitleFontSize,
+              fontWeight: FontWeight.w600,
+              letterSpacing: subtitleLetterSpacing,
+            ),
           ),
         ),
         if (showBadge && size == LogoSize.hero) ...[
@@ -151,8 +173,8 @@ class OEnigmaAdminLogo extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         emblemWidget,
-        const SizedBox(width: 14),
-        typographyWidget,
+        const SizedBox(width: 10),
+        Flexible(child: typographyWidget),
       ],
     );
   }

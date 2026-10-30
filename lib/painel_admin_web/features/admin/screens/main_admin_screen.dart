@@ -51,7 +51,7 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                 _buildHeader(),
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 30),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
                     child: _screens[_selectedIndex],
                   ),
                 ),
@@ -65,9 +65,9 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
 
   Widget _buildSidebar() {
     return Container(
-      width: 240,
+      width: 260,
       color: sidebarBackground,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
       child: Column(
         children: [
           _buildLogo(),
@@ -133,16 +133,20 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                color: isActive ? Colors.white : AppColors.cinzaMedio,
-                fontSize: 14,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(
+                  color: isActive ? Colors.white : AppColors.cinzaMedio,
+                  fontSize: 14,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                ),
               ),
             ),
-            const Spacer(),
-            if (isActive)
+            if (isActive) ...[
+              const SizedBox(width: 8),
               Container(
                 width: 6,
                 height: 6,
@@ -151,6 +155,7 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                   shape: BoxShape.circle,
                 ),
               ),
+            ],
           ],
         ),
       ),

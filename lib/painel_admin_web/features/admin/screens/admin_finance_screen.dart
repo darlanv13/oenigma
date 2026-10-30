@@ -605,16 +605,19 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
     return Column(
       children: [
         // Pílulas de filtro
-        Row(
-          children: [
-            _buildFilterPill('Todos (${_withdrawals.length})', 'all', _withdrawalFilter, (v) => setState(() => _withdrawalFilter = v)),
-            const SizedBox(width: 8),
-            _buildFilterPill('Pendentes ($_pendingWithdrawalsCount)', 'pending', _withdrawalFilter, (v) => setState(() => _withdrawalFilter = v), highlightColor: AppColors.amareloVale),
-            const SizedBox(width: 8),
-            _buildFilterPill('Pagos / Aprovados', 'completed', _withdrawalFilter, (v) => setState(() => _withdrawalFilter = v), highlightColor: AppColors.verdeVale),
-            const SizedBox(width: 8),
-            _buildFilterPill('Rejeitados', 'rejected', _withdrawalFilter, (v) => setState(() => _withdrawalFilter = v), highlightColor: Colors.redAccent),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildFilterPill('Todos (${_withdrawals.length})', 'all', _withdrawalFilter, (v) => setState(() => _withdrawalFilter = v)),
+              const SizedBox(width: 8),
+              _buildFilterPill('Pendentes ($_pendingWithdrawalsCount)', 'pending', _withdrawalFilter, (v) => setState(() => _withdrawalFilter = v), highlightColor: AppColors.amareloVale),
+              const SizedBox(width: 8),
+              _buildFilterPill('Pagos / Aprovados', 'completed', _withdrawalFilter, (v) => setState(() => _withdrawalFilter = v), highlightColor: AppColors.verdeVale),
+              const SizedBox(width: 8),
+              _buildFilterPill('Rejeitados', 'rejected', _withdrawalFilter, (v) => setState(() => _withdrawalFilter = v), highlightColor: Colors.redAccent),
+            ],
+          ),
         ),
         const SizedBox(height: 14),
         Expanded(
@@ -884,16 +887,19 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
     return Column(
       children: [
         // Pílulas de filtro
-        Row(
-          children: [
-            _buildFilterPill('Todos (${_deposits.length})', 'all', _depositFilter, (v) => setState(() => _depositFilter = v)),
-            const SizedBox(width: 8),
-            _buildFilterPill('Aprovados', 'approved', _depositFilter, (v) => setState(() => _depositFilter = v), highlightColor: AppColors.verdeVale),
-            const SizedBox(width: 8),
-            _buildFilterPill('Pendentes', 'pending', _depositFilter, (v) => setState(() => _depositFilter = v), highlightColor: AppColors.amareloVale),
-            const SizedBox(width: 8),
-            _buildFilterPill('Falhas / Cancelados', 'failed', _depositFilter, (v) => setState(() => _depositFilter = v), highlightColor: Colors.redAccent),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildFilterPill('Todos (${_deposits.length})', 'all', _depositFilter, (v) => setState(() => _depositFilter = v)),
+              const SizedBox(width: 8),
+              _buildFilterPill('Aprovados', 'approved', _depositFilter, (v) => setState(() => _depositFilter = v), highlightColor: AppColors.verdeVale),
+              const SizedBox(width: 8),
+              _buildFilterPill('Pendentes', 'pending', _depositFilter, (v) => setState(() => _depositFilter = v), highlightColor: AppColors.amareloVale),
+              const SizedBox(width: 8),
+              _buildFilterPill('Falhas / Cancelados', 'failed', _depositFilter, (v) => setState(() => _depositFilter = v), highlightColor: Colors.redAccent),
+            ],
+          ),
         ),
         const SizedBox(height: 14),
         Expanded(
@@ -1090,16 +1096,19 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
 
     return Column(
       children: [
-        Row(
-          children: [
-            _buildFilterPill('Todas as Movimentações (${_allTransactions.length})', 'all', _statementFilter, (v) => setState(() => _statementFilter = v)),
-            const SizedBox(width: 8),
-            _buildFilterPill('Depósitos', 'deposit', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: AppColors.verdeVale),
-            const SizedBox(width: 8),
-            _buildFilterPill('Saques', 'withdrawal', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: const Color(0xFF3B82F6)),
-            const SizedBox(width: 8),
-            _buildFilterPill('Prêmios Concedidos', 'reward', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: AppColors.amareloVale),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildFilterPill('Todas as Movimentações (${_allTransactions.length})', 'all', _statementFilter, (v) => setState(() => _statementFilter = v)),
+              const SizedBox(width: 8),
+              _buildFilterPill('Depósitos', 'deposit', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: AppColors.verdeVale),
+              const SizedBox(width: 8),
+              _buildFilterPill('Saques', 'withdrawal', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: const Color(0xFF3B82F6)),
+              const SizedBox(width: 8),
+              _buildFilterPill('Prêmios Concedidos', 'reward', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: AppColors.amareloVale),
+            ],
+          ),
         ),
         const SizedBox(height: 14),
         Expanded(
@@ -1731,15 +1740,17 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
 
   Widget _buildEmptyState(String message) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            FaIcon(FontAwesomeIcons.receipt, size: 40, color: Colors.white.withValues(alpha: 0.15)),
-            const SizedBox(height: 14),
+            FaIcon(FontAwesomeIcons.receipt, size: 36, color: Colors.white.withValues(alpha: 0.15)),
+            const SizedBox(height: 12),
             Text(
               message,
+              textAlign: TextAlign.center,
               style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 14),
             ),
           ],

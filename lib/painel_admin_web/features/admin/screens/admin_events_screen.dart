@@ -3261,10 +3261,12 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     ),
                   ],
                   const SizedBox(height: 14),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       _buildModalityTag(eventType, isLarge: true),
-                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
@@ -3537,10 +3539,12 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     ),
                   ],
                   const SizedBox(height: 14),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       _buildModalityTag(eventType, isLarge: true),
-                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
