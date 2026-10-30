@@ -372,7 +372,9 @@ class _EventCardState extends State<EventCard> {
             right: 8,
             child: isObjeto && event.prizeImageUrl != null && event.prizeImageUrl!.isNotEmpty
                 ? CachedNetworkImage(
-                    imageUrl: event.prizeImageUrl!,
+                    imageUrl: (event.prizeImageUrl!.contains('iphone17_PNG39') && event.prizeImageUrl!.contains('back4app.com'))
+                        ? 'https://pngimg.com/uploads/iphone17/iphone17_PNG39.png'
+                        : event.prizeImageUrl!,
                     fit: BoxFit.contain,
                     placeholder: (context, url) => const Center(
                       child: SizedBox(

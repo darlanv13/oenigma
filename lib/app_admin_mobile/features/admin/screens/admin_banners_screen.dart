@@ -704,9 +704,10 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                                   : () async {
                                       setModalState(() => isUploadingImage = true);
                                       final url =
-                                          await AdminUploadUtil.pickAndUploadImage(
-                                        context,
-                                      );
+                                          await AdminUploadUtil.pickAndUploadPng(context) ??
+                                          (context.mounted
+                                              ? await AdminUploadUtil.pickAndUploadImage(context)
+                                              : null);
                                       setModalState(() {
                                         isUploadingImage = false;
                                         if (url != null) {

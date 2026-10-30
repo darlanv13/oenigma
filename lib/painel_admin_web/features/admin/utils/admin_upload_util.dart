@@ -51,26 +51,39 @@ class AdminUploadUtil {
 
       final originalBytes = await pickedFile.readAsBytes();
 
-      // Compress the image before uploading to save server space and improve load times
-      Uint8List compressedBytes;
-      try {
-        final result = await FlutterImageCompress.compressWithList(
-          originalBytes,
-          minHeight: 1080,
-          minWidth: 1080,
-          quality: 70, // Compressa para 70% da qualidade original
-        );
-        compressedBytes = result;
-      } catch (_) {
-        // Fallback case compress fails
-        compressedBytes = originalBytes;
+      final String rawName = pickedFile.name.isNotEmpty ? pickedFile.name : 'upload';
+      final bool isPng = rawName.toLowerCase().endsWith('.png') ||
+          (originalBytes.length > 8 &&
+              originalBytes[0] == 0x89 &&
+              originalBytes[1] == 0x50 &&
+              originalBytes[2] == 0x4E &&
+              originalBytes[3] == 0x47);
+
+      Uint8List fileBytes;
+      String fileName;
+
+      if (isPng) {
+        // Arquivos PNG mantêm a transparência (canal alfa) sem compressão destrutiva JPEG
+        fileBytes = originalBytes;
+        fileName = rawName.toLowerCase().endsWith('.png') ? rawName : '$rawName.png';
+      } else {
+        // Imagens JPEG/JPG são comprimidas para otimizar tamanho
+        try {
+          final result = await FlutterImageCompress.compressWithList(
+            originalBytes,
+            minHeight: 1080,
+            minWidth: 1080,
+            quality: 75,
+            format: CompressFormat.jpeg,
+          );
+          fileBytes = result;
+        } catch (_) {
+          fileBytes = originalBytes;
+        }
+        fileName = rawName.isNotEmpty ? rawName : 'upload.jpg';
       }
 
-      final fileName = pickedFile.name.isNotEmpty
-          ? pickedFile.name
-          : 'upload_compressed.jpg';
-
-      final parseFile = ParseWebFile(compressedBytes, name: fileName);
+      final parseFile = ParseWebFile(fileBytes, name: fileName);
       final response = await parseFile.save();
 
       if (isShowingDialog && context.mounted) {

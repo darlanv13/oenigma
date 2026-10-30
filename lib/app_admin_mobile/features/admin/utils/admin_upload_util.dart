@@ -47,9 +47,17 @@ class AdminUploadUtil {
       }
 
       final bytes = await pickedFile.readAsBytes();
-      final fileName = pickedFile.name.isNotEmpty
-          ? pickedFile.name
-          : 'upload.jpg';
+      final String rawName = pickedFile.name.isNotEmpty ? pickedFile.name : 'upload';
+      final bool isPng = rawName.toLowerCase().endsWith('.png') ||
+          (bytes.length > 8 &&
+              bytes[0] == 0x89 &&
+              bytes[1] == 0x50 &&
+              bytes[2] == 0x4E &&
+              bytes[3] == 0x47);
+
+      final String fileName = isPng
+          ? (rawName.toLowerCase().endsWith('.png') ? rawName : '$rawName.png')
+          : (rawName.isNotEmpty ? rawName : 'upload.jpg');
 
       final parseFile = ParseWebFile(bytes, name: fileName);
       final response = await parseFile.save();

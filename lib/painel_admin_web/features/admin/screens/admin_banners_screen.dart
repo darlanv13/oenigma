@@ -21,6 +21,7 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
 
   static const List<Map<String, dynamic>> _availableIcons = [
     {'id': '', 'name': 'Nenhum'},
+    {'id': 'money', 'name': 'Dinheiro'},
     {'id': 'trophy', 'name': 'Troféu 🏆'},
     {'id': 'fire', 'name': 'Fogo / Destaque 🔥'},
     {'id': 'star', 'name': 'Estrela ⭐'},
@@ -274,7 +275,9 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
         decoration: BoxDecoration(
           color: AppColors.darkCardColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.15)),
+          border: Border.all(
+            color: AppColors.verdeVale.withValues(alpha: 0.15),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -319,7 +322,9 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
   }
 
   Widget _buildBannerCardItem(BannerModel banner) {
-    final statusColor = banner.isActive ? AppColors.success : AppColors.cinzaMedio;
+    final statusColor = banner.isActive
+        ? AppColors.success
+        : AppColors.cinzaMedio;
     final statusLabel = banner.isActive ? 'Ativo' : 'Inativo';
     final isImage = banner.isImageOnly;
 
@@ -356,13 +361,14 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                   ? Image.network(
                       banner.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => const Center(
-                        child: FaIcon(
-                          FontAwesomeIcons.image,
-                          color: Colors.white38,
-                          size: 18,
-                        ),
-                      ),
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Center(
+                            child: FaIcon(
+                              FontAwesomeIcons.image,
+                              color: Colors.white38,
+                              size: 18,
+                            ),
+                          ),
                     )
                   : Center(
                       child: FaIcon(
@@ -392,8 +398,8 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                         banner.title.isNotEmpty
                             ? banner.title
                             : (banner.tagText.isNotEmpty
-                                ? banner.tagText
-                                : 'Banner de Imagem'),
+                                  ? banner.tagText
+                                  : 'Banner de Imagem'),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
                           fontSize: 15,
@@ -423,7 +429,9 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                       child: Text(
                         isImage ? 'ARTE GRÁFICA' : 'CARD',
                         style: GoogleFonts.inter(
-                          color: isImage ? Colors.purpleAccent : AppColors.amareloVale,
+                          color: isImage
+                              ? Colors.purpleAccent
+                              : AppColors.amareloVale,
                           fontSize: 9,
                           fontWeight: FontWeight.w800,
                         ),
@@ -583,12 +591,24 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
 
   void _showAddEditBannerModal(BuildContext context, {BannerModel? banner}) {
     final titleController = TextEditingController(text: banner?.title ?? '');
-    final descController = TextEditingController(text: banner?.description ?? '');
-    final tagTextController = TextEditingController(text: banner?.tagText ?? '');
-    final buttonTextController = TextEditingController(text: banner?.buttonText ?? '');
-    final actionUrlController = TextEditingController(text: banner?.actionUrl ?? '');
-    final imageUrlController = TextEditingController(text: banner?.imageUrl ?? '');
-    final orderController = TextEditingController(text: (banner?.order ?? 1).toString());
+    final descController = TextEditingController(
+      text: banner?.description ?? '',
+    );
+    final tagTextController = TextEditingController(
+      text: banner?.tagText ?? '',
+    );
+    final buttonTextController = TextEditingController(
+      text: banner?.buttonText ?? '',
+    );
+    final actionUrlController = TextEditingController(
+      text: banner?.actionUrl ?? '',
+    );
+    final imageUrlController = TextEditingController(
+      text: banner?.imageUrl ?? '',
+    );
+    final orderController = TextEditingController(
+      text: (banner?.order ?? 1).toString(),
+    );
 
     String bannerType = banner?.bannerType ?? 'card';
     String selectedTagIcon = banner?.tagIcon ?? 'trophy';
@@ -643,11 +663,14 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                         imageUrlController: imageUrlController,
                         orderController: orderController,
                         bannerType: bannerType,
-                        onTypeChanged: (type) => setModalState(() => bannerType = type),
+                        onTypeChanged: (type) =>
+                            setModalState(() => bannerType = type),
                         selectedTagIcon: selectedTagIcon,
-                        onTagIconChanged: (icon) => setModalState(() => selectedTagIcon = icon),
+                        onTagIconChanged: (icon) =>
+                            setModalState(() => selectedTagIcon = icon),
                         selectedBgIcon: selectedBgIcon,
-                        onBgIconChanged: (icon) => setModalState(() => selectedBgIcon = icon),
+                        onBgIconChanged: (icon) =>
+                            setModalState(() => selectedBgIcon = icon),
                         startHex: startHex,
                         endHex: endHex,
                         onGradientChanged: (start, end) => setModalState(() {
@@ -655,11 +678,18 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                           endHex = end;
                         }),
                         isActive: isActive,
-                        onActiveChanged: (val) => setModalState(() => isActive = val),
+                        onActiveChanged: (val) =>
+                            setModalState(() => isActive = val),
                         isUploadingImage: isUploadingImage,
                         onUploadImage: () async {
                           setModalState(() => isUploadingImage = true);
-                          final url = await AdminUploadUtil.pickAndUploadImage(context);
+                          final url =
+                              await AdminUploadUtil.pickAndUploadPng(context) ??
+                              (context.mounted
+                                  ? await AdminUploadUtil.pickAndUploadImage(
+                                      context,
+                                    )
+                                  : null);
                           setModalState(() {
                             isUploadingImage = false;
                             if (url != null) imageUrlController.text = url;
@@ -722,7 +752,9 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         TextButton(
-                          onPressed: isSaving ? null : () => Navigator.of(context).pop(),
+                          onPressed: isSaving
+                              ? null
+                              : () => Navigator.of(context).pop(),
                           child: Text(
                             'Cancelar',
                             style: GoogleFonts.inter(
@@ -743,7 +775,9 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                                   if (bannerType == 'card' && title.isEmpty) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Informe um título para o card.'),
+                                        content: Text(
+                                          'Informe um título para o card.',
+                                        ),
                                         backgroundColor: AppColors.danger,
                                       ),
                                     );
@@ -753,7 +787,9 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                                   if (bannerType == 'image' && img.isEmpty) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Faça upload ou informe a URL da imagem.'),
+                                        content: Text(
+                                          'Faça upload ou informe a URL da imagem.',
+                                        ),
                                         backgroundColor: AppColors.danger,
                                       ),
                                     );
@@ -766,28 +802,38 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                                     'title': title,
                                     'description': descController.text.trim(),
                                     'imageUrl': img,
-                                    'actionUrl': actionUrlController.text.trim(),
+                                    'actionUrl': actionUrlController.text
+                                        .trim(),
                                     'tagText': tagTextController.text.trim(),
                                     'tagIcon': selectedTagIcon,
-                                    'buttonText': buttonTextController.text.trim(),
+                                    'buttonText': buttonTextController.text
+                                        .trim(),
                                     'bgIcon': selectedBgIcon,
-                                    'order': int.tryParse(orderController.text.trim()) ?? 1,
+                                    'order':
+                                        int.tryParse(
+                                          orderController.text.trim(),
+                                        ) ??
+                                        1,
                                     'isActive': isActive,
-                                    'active': isActive, // Double write for dual compatibility
+                                    'active':
+                                        isActive, // Double write for dual compatibility
                                     'bannerType': bannerType,
                                     'gradientStartHex': startHex,
                                     'gradientEndHex': endHex,
                                     'colorHex': startHex,
                                   };
 
-                                  final Map<String, dynamic> params = {'data': data};
+                                  final Map<String, dynamic> params = {
+                                    'data': data,
+                                  };
                                   if (banner != null && banner.id.isNotEmpty) {
                                     params['bannerId'] = banner.id;
                                   }
 
                                   try {
-                                    await ParseCloudFunction('createOrUpdateBanner')
-                                        .execute(parameters: params);
+                                    await ParseCloudFunction(
+                                      'createOrUpdateBanner',
+                                    ).execute(parameters: params);
 
                                     if (dialogCtx.mounted) {
                                       Navigator.of(dialogCtx).pop();
@@ -796,7 +842,9 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                                   } catch (e) {
                                     setModalState(() => isSaving = false);
                                     if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
                                           content: Text('Erro ao salvar: $e'),
                                           backgroundColor: AppColors.danger,
@@ -814,8 +862,13 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const FaIcon(FontAwesomeIcons.floppyDisk, size: 14),
-                          label: Text(isSaving ? 'Salvando...' : 'Salvar Banner'),
+                              : const FaIcon(
+                                  FontAwesomeIcons.floppyDisk,
+                                  size: 14,
+                                ),
+                          label: Text(
+                            isSaving ? 'Salvando...' : 'Salvar Banner',
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.verdeVale,
                             foregroundColor: Colors.white,
@@ -964,36 +1017,39 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
           Wrap(
             spacing: 6,
             runSpacing: 4,
-            children: ['MEGA PRÊMIO', 'DESTAQUE', 'NOVIDADE', 'EXCLUSIVO', 'EVENTO']
-                .map((tag) => InkWell(
-                      onTap: () {
-                        tagTextController.text = tag;
-                        setModalState(() {});
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.verdeVale.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.verdeVale.withValues(alpha: 0.2),
+            children:
+                ['MEGA PRÊMIO', 'DESTAQUE', 'NOVIDADE', 'EXCLUSIVO', 'EVENTO']
+                    .map(
+                      (tag) => InkWell(
+                        onTap: () {
+                          tagTextController.text = tag;
+                          setModalState(() {});
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
                           ),
-                        ),
-                        child: Text(
-                          tag,
-                          style: GoogleFonts.inter(
-                            color: AppColors.amareloVale,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
+                          decoration: BoxDecoration(
+                            color: AppColors.verdeVale.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.verdeVale.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: Text(
+                            tag,
+                            style: GoogleFonts.inter(
+                              color: AppColors.amareloVale,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
-                    ))
-                .toList(),
+                    )
+                    .toList(),
           ),
 
           const SizedBox(height: 12),
@@ -1059,7 +1115,10 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                 onTap: () => onGradientChanged(g['start'], g['end']),
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.darkBackground,
                     borderRadius: BorderRadius.circular(20),
@@ -1079,7 +1138,10 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
-                            colors: [g['color1'] as Color, g['color2'] as Color],
+                            colors: [
+                              g['color1'] as Color,
+                              g['color2'] as Color,
+                            ],
                           ),
                         ),
                       ),
@@ -1087,9 +1149,13 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                       Text(
                         g['name'] as String,
                         style: GoogleFonts.inter(
-                          color: isCurrent ? Colors.white : AppColors.cinzaMedio,
+                          color: isCurrent
+                              ? Colors.white
+                              : AppColors.cinzaMedio,
                           fontSize: 11,
-                          fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: isCurrent
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                         ),
                       ),
                     ],
@@ -1107,8 +1173,8 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
               Expanded(
                 child: _buildInputForm(
                   controller: imageUrlController,
-                  label: 'Ilustração Opcional (URL ou Upload)',
-                  hint: 'https://... (PNG transparente ou imagem)',
+                  label: 'Ilustração do Prêmio / Objeto (PNG transparente)',
+                  hint: 'https://... (PNG transparente do objeto)',
                   onChanged: (_) => setModalState(() {}),
                 ),
               ),
@@ -1127,7 +1193,7 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                           ),
                         )
                       : const FaIcon(FontAwesomeIcons.upload, size: 12),
-                  label: const Text('UPLOAD'),
+                  label: const Text('ENVIAR PNG'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.verdeVale,
                     foregroundColor: Colors.white,
@@ -1156,7 +1222,9 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
             decoration: BoxDecoration(
               color: AppColors.darkBackground,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.15)),
+              border: Border.all(
+                color: AppColors.verdeVale.withValues(alpha: 0.15),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1276,7 +1344,9 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                         Text(
                           isActive ? 'Ativo' : 'Inativo',
                           style: GoogleFonts.inter(
-                            color: isActive ? AppColors.success : AppColors.cinzaMedio,
+                            color: isActive
+                                ? AppColors.success
+                                : AppColors.cinzaMedio,
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                           ),
@@ -1301,9 +1371,24 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
           spacing: 6,
           runSpacing: 4,
           children: [
-            _buildActionChip('Carteira', 'screen:wallet', actionUrlController, setModalState),
-            _buildActionChip('Ranking', 'screen:ranking', actionUrlController, setModalState),
-            _buildActionChip('Site Oficial', 'https://oenigma.com.br', actionUrlController, setModalState),
+            _buildActionChip(
+              'Carteira',
+              'screen:wallet',
+              actionUrlController,
+              setModalState,
+            ),
+            _buildActionChip(
+              'Ranking',
+              'screen:ranking',
+              actionUrlController,
+              setModalState,
+            ),
+            _buildActionChip(
+              'Site Oficial',
+              'https://oenigma.com.br',
+              actionUrlController,
+              setModalState,
+            ),
           ],
         ),
       ],
@@ -1434,7 +1519,10 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                 onTap: () => onApplyTemplate(tpl),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.darkBackground,
                     borderRadius: BorderRadius.circular(12),
@@ -1622,10 +1710,7 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
     await ParseCloudFunction('createOrUpdateBanner').execute(
       parameters: {
         'bannerId': banner.id,
-        'data': {
-          'isActive': isActive,
-          'active': isActive,
-        },
+        'data': {'isActive': isActive, 'active': isActive},
       },
     );
     _loadBanners();
@@ -1638,7 +1723,10 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
         backgroundColor: AppColors.darkCardColor,
         title: Text(
           'Confirmar Exclusão',
-          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w700),
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: Text(
           'Deseja realmente excluir o banner "${banner.title.isNotEmpty ? banner.title : 'selecionado'}"?',
@@ -1656,9 +1744,9 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
             ),
             onPressed: () async {
               Navigator.of(ctx).pop();
-              await ParseCloudFunction('deleteBanner').execute(
-                parameters: {'bannerId': banner.id},
-              );
+              await ParseCloudFunction(
+                'deleteBanner',
+              ).execute(parameters: {'bannerId': banner.id});
               _loadBanners();
             },
             child: const Text('Excluir'),

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:oenigma/core/widgets/oenigma_admin_logo.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_dashboard_screen.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_events_screen.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_banners_screen.dart';
@@ -90,49 +91,12 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
   }
 
   Widget _buildLogo() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: AppColors.amareloVale.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const FaIcon(
-              FontAwesomeIcons.compass,
-              color: AppColors.amareloVale,
-              size: 16,
-            ),
-          ),
-          const SizedBox(width: 10),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'ENIGMA ',
-                  style: GoogleFonts.poppins(
-                    color: AppColors.verdeVale,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1,
-                  ),
-                ),
-                TextSpan(
-                  text: 'ADM',
-                  style: GoogleFonts.poppins(
-                    color: AppColors.amareloVale,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      child: OEnigmaAdminLogo(
+        size: LogoSize.compact,
+        isVertical: false,
+        showBadge: false,
       ),
     );
   }

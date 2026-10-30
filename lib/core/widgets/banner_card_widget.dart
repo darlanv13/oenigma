@@ -23,6 +23,15 @@ class BannerCardWidget extends StatelessWidget {
     this.margin = const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
   });
 
+  static String resolveImageUrl(String url) {
+    if (url.trim().isEmpty) return '';
+    // Tratamento para a foto do iPhone que foi enviada anteriormente com compressão JPEG indevida
+    if (url.contains('iphone17_PNG39') && url.contains('back4app.com')) {
+      return 'https://pngimg.com/uploads/iphone17/iphone17_PNG39.png';
+    }
+    return url;
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -61,7 +70,7 @@ class BannerCardWidget extends StatelessWidget {
       children: [
         if (banner.imageUrl.isNotEmpty)
           CachedNetworkImage(
-            imageUrl: banner.imageUrl,
+            imageUrl: resolveImageUrl(banner.imageUrl),
             fit: BoxFit.cover,
             placeholder: (context, url) => Container(
               color: AppColors.darkCardColor,
@@ -212,24 +221,16 @@ class BannerCardWidget extends StatelessWidget {
               ),
             ),
 
-          // Side illustration if imageUrl is provided in card mode
+          // Side illustration if imageUrl is provided in card mode (Showcase com sombra de piso e estrelinhas)
           if (banner.imageUrl.isNotEmpty)
             Positioned(
-              right: 4,
-              top: 4,
-              bottom: 4,
+              right: 6,
+              top: 0,
+              bottom: 0,
+              width: 125,
               child: Align(
                 alignment: Alignment.centerRight,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: CachedNetworkImage(
-                    imageUrl: banner.imageUrl,
-                    height: 95,
-                    width: 95,
-                    fit: BoxFit.cover,
-                    errorWidget: (context, url, error) => const SizedBox.shrink(),
-                  ),
-                ),
+                child: _buildProductShowcase(),
               ),
             ),
 
@@ -278,7 +279,7 @@ class BannerCardWidget extends StatelessWidget {
               if (banner.title.isNotEmpty)
                 Padding(
                   padding: EdgeInsets.only(
-                    right: banner.imageUrl.isNotEmpty ? 100.0 : 40.0,
+                    right: banner.imageUrl.isNotEmpty ? 125.0 : 40.0,
                   ),
                   child: Text(
                     banner.title,
@@ -299,7 +300,7 @@ class BannerCardWidget extends StatelessWidget {
               if (banner.description.isNotEmpty)
                 Padding(
                   padding: EdgeInsets.only(
-                    right: banner.imageUrl.isNotEmpty ? 100.0 : 30.0,
+                    right: banner.imageUrl.isNotEmpty ? 125.0 : 30.0,
                   ),
                   child: Text(
                     banner.description,
@@ -359,4 +360,140 @@ class BannerCardWidget extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildProductShowcase() {
+    return SizedBox(
+      width: 125,
+      height: 125,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          // 1. Estrela de 4 pontas decorativa dourada/amarela (canto superior direito)
+          const Positioned(
+            top: 4,
+            right: 8,
+            child: _SparkleWidget(
+              color: Color(0xFFF3A522),
+              size: 14,
+            ),
+          ),
+
+          // 2. Estrela de 4 pontas decorativa ciano (canto inferior esquerdo)
+          const Positioned(
+            bottom: 22,
+            left: 6,
+            child: _SparkleWidget(
+              color: Color(0xFF00A4B4),
+              size: 10,
+            ),
+          ),
+
+          // 3. Mini estrela brilhante branca (topo esquerdo suave)
+          Positioned(
+            top: 24,
+            left: 10,
+            child: _SparkleWidget(
+              color: Colors.white.withValues(alpha: 0.85),
+              size: 7,
+            ),
+          ),
+
+          // 4. Sombra de piso suave elíptica abaixo do produto
+          Positioned(
+            bottom: 12,
+            child: Container(
+              width: 70,
+              height: 8,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.65),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // 5. Imagem do Objeto (PNG transparente recortado)
+          Positioned(
+            top: 2,
+            bottom: 16,
+            left: 6,
+            right: 6,
+            child: CachedNetworkImage(
+              imageUrl: resolveImageUrl(banner.imageUrl),
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.medium,
+              placeholder: (context, url) => const SizedBox(
+                width: 20,
+                height: 20,
+                child: Center(
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white24,
+                  ),
+                ),
+              ),
+              errorWidget: (context, url, error) => const SizedBox.shrink(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// SPARKLE WIDGET & PAINTER (Estrelas de 4 pontas decorativas com brilho)
+// =============================================================================
+class _SparkleWidget extends StatelessWidget {
+  final Color color;
+  final double size;
+
+  const _SparkleWidget({required this.color, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _SparklePainter(color: color),
+    );
+  }
+}
+
+class _SparklePainter extends CustomPainter {
+  final Color color;
+  _SparklePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final path = Path();
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final w = size.width;
+    final h = size.height;
+    const waist = 0.16;
+
+    path.moveTo(cx, 0);
+    path.quadraticBezierTo(cx, cy * (1 - waist), cx + (w / 2) * waist, cy);
+    path.quadraticBezierTo(cx + (w / 2) * (1 - waist), cy, w, cy);
+    path.quadraticBezierTo(cx + (w / 2) * waist, cy, cx, cy + (h / 2) * waist);
+    path.quadraticBezierTo(cx, cy + (h / 2) * (1 - waist), cx, h);
+    path.quadraticBezierTo(cx, cy + (h / 2) * waist, cx - (w / 2) * waist, cy);
+    path.quadraticBezierTo(cx - (w / 2) * (1 - waist), cy, 0, cy);
+    path.quadraticBezierTo(cx - (w / 2) * waist, cy, cx, cy * (1 - waist));
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
