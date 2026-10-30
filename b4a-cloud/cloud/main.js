@@ -764,21 +764,16 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
 });
 
 Parse.Cloud.afterFind("Enigma", (request) => {
-  if (!request.master) {
+  const user = request.user;
+  const isAdmin = user && (user.get("isAdmin") === true || user.get("role") === "admin" || user.get("role") === "creator");
+
+  if (!request.master && !isAdmin && request.objects) {
     request.objects.forEach((enigma) => {
       enigma.unset("code");
       enigma.unset("compassCoords");
     });
   }
   return request.objects;
-});
-
-Parse.Cloud.afterGet("Enigma", (request) => {
-  if (!request.master && request.object) {
-    request.object.unset("code");
-    request.object.unset("compassCoords");
-  }
-  return request.object;
 });
 
 // -----------------------------------------------------------------------------

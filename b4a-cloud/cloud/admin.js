@@ -1,8 +1,15 @@
 // Parse Cloud Code for Back4App - Admin Functions
 
+function isAdminUser(user, request) {
+  if (request && request.master) return true;
+  if (!user) return false;
+  return user.get("isAdmin") === true || user.get("role") === "admin" || user.get("role") === "creator";
+}
+
+
 Parse.Cloud.define("getAdminDashboardData", async (request) => {
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   try {
     const usersQuery = new Parse.Query(Parse.User);
     const usersCount = await usersQuery.count({ useMasterKey: true });
@@ -32,7 +39,7 @@ Parse.Cloud.define("getAdminDashboardData", async (request) => {
 
 Parse.Cloud.define("listAllUsers", async (request) => {
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   try {
     const query = new Parse.Query(Parse.User);
     query.limit(1000);
@@ -59,7 +66,7 @@ Parse.Cloud.define("listAllUsers", async (request) => {
 
 Parse.Cloud.define("grantAdminRole", async (request) => {
   const admin = request.user;
-  if (!admin || !admin.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(admin, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   const { objectId } = request.params;
   if (!objectId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "objectId is required.");
 
@@ -76,7 +83,7 @@ Parse.Cloud.define("grantAdminRole", async (request) => {
 
 Parse.Cloud.define("revokeAdminRole", async (request) => {
   const admin = request.user;
-  if (!admin || !admin.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(admin, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   const { objectId } = request.params;
   if (!objectId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "objectId is required.");
 
@@ -93,7 +100,7 @@ Parse.Cloud.define("revokeAdminRole", async (request) => {
 
 Parse.Cloud.define("toggleUserBan", async (request) => {
   const admin = request.user;
-  if (!admin || !admin.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(admin, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   const { objectId } = request.params;
   if (!objectId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "objectId is required.");
 
@@ -111,7 +118,7 @@ Parse.Cloud.define("toggleUserBan", async (request) => {
 
 Parse.Cloud.define("createOrUpdateEvent", async (request) => {
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   const { eventId, data } = request.params;
 
   try {
@@ -141,7 +148,7 @@ Parse.Cloud.define("createOrUpdateEvent", async (request) => {
 
 Parse.Cloud.define("deleteEvent", async (request) => {
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   const { eventId } = request.params;
   if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
 
@@ -176,7 +183,7 @@ Parse.Cloud.define("deleteEvent", async (request) => {
 
 Parse.Cloud.define("createOrUpdateEnigma", async (request) => {
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   const { enigmaId, eventId, phaseId, data } = request.params;
 
   try {
@@ -240,7 +247,7 @@ Parse.Cloud.define("createOrUpdateEnigma", async (request) => {
 
 Parse.Cloud.define("deleteEnigma", async (request) => {
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   const { enigmaId } = request.params;
   if (!enigmaId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "enigmaId is required.");
 
@@ -257,7 +264,7 @@ Parse.Cloud.define("deleteEnigma", async (request) => {
 
 Parse.Cloud.define("createOrUpdateHint", async (request) => {
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   const { hintId, data } = request.params;
 
   try {
@@ -286,7 +293,7 @@ Parse.Cloud.define("createOrUpdateHint", async (request) => {
 
 Parse.Cloud.define("deleteHint", async (request) => {
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   const { hintId } = request.params;
   if (!hintId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "hintId is required.");
 
@@ -303,7 +310,7 @@ Parse.Cloud.define("deleteHint", async (request) => {
 
 Parse.Cloud.define("createOrUpdateBanner", async (request) => {
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   const { bannerId, data } = request.params;
 
   try {
@@ -332,7 +339,7 @@ Parse.Cloud.define("createOrUpdateBanner", async (request) => {
 
 Parse.Cloud.define("deleteBanner", async (request) => {
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   const { bannerId } = request.params;
   if (!bannerId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "bannerId is required.");
 
@@ -349,7 +356,7 @@ Parse.Cloud.define("deleteBanner", async (request) => {
 
 Parse.Cloud.define("processWithdrawal", async (request) => {
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   const { withdrawalId, objectId, action, receipt, rejectionReason } = request.params;
   if (!withdrawalId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "withdrawalId is required.");
 
@@ -411,7 +418,7 @@ Parse.Cloud.define("processWithdrawal", async (request) => {
 
 Parse.Cloud.define("approveDepositManual", async (request) => {
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   const { transactionId } = request.params;
   if (!transactionId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "transactionId is required.");
 
@@ -447,7 +454,7 @@ Parse.Cloud.define("approveDepositManual", async (request) => {
 Parse.Cloud.define("toggleEventStatus", async (request) => {
   const { eventId, newStatus } = request.params;
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   if (!eventId || !newStatus) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId and newStatus are required.");
 
   try {
@@ -465,7 +472,7 @@ Parse.Cloud.define("toggleEventStatus", async (request) => {
 Parse.Cloud.define("getFindAndWinStats", async (request) => {
   const { eventId } = request.params;
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
 
   try {
@@ -480,7 +487,7 @@ Parse.Cloud.define("getFindAndWinStats", async (request) => {
 Parse.Cloud.define("createOrUpdatePhase", async (request) => {
   const { eventId, phaseId, data } = request.params;
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
 
   try {
@@ -515,7 +522,7 @@ Parse.Cloud.define("createOrUpdatePhase", async (request) => {
 Parse.Cloud.define("deletePhase", async (request) => {
   const { eventId, phaseId } = request.params;
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
   if (!phaseId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "phaseId is required.");
 
   try {
@@ -541,7 +548,7 @@ Parse.Cloud.define("deletePhase", async (request) => {
 
 Parse.Cloud.define("assignHintToEnigma", async (request) => {
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
 
   const { hintId, enigmaId, eventId, eventName } = request.params;
 
@@ -592,7 +599,7 @@ Parse.Cloud.define("assignHintToEnigma", async (request) => {
 
 Parse.Cloud.define("updateUserRole", async (request) => {
   const admin = request.user;
-  if (!admin || !admin.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  if (!isAdminUser(admin, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
 
   const { objectId, role } = request.params;
   if (!objectId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "objectId is required.");

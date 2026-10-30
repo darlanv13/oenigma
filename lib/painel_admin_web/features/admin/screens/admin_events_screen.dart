@@ -195,13 +195,29 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         return <ParseObject>[];
       }();
 
-      final results = await Future.wait([phasesFuture, enigmasFuture])
-          .timeout(const Duration(seconds: 10), onTimeout: () => [<ParseObject>[], <ParseObject>[]]);
+      // 3. Recarrega os dados mais recentes do próprio Evento
+      final eventFuture = () async {
+        try {
+          final qEv = QueryBuilder<ParseObject>(ParseObject('Event'))
+            ..whereEqualTo('objectId', eventId);
+          final resEv = await qEv.query().timeout(const Duration(seconds: 7));
+          if (resEv.success && resEv.results != null && resEv.results!.isNotEmpty) {
+            return resEv.results!.first as ParseObject;
+          }
+        } catch (e) {
+          debugPrint('Aviso ao atualizar evento no cockpit: $e');
+        }
+        return null;
+      }();
 
-      final phases = results[0];
-      final enigmas = results[1];
+      final results = await Future.wait([phasesFuture, enigmasFuture, eventFuture])
+          .timeout(const Duration(seconds: 10), onTimeout: () => [<ParseObject>[], <ParseObject>[], null]);
 
-      // 3. Carrega Dicas vinculadas aos enigmas deste evento
+      final phases = results[0] as List<ParseObject>;
+      final enigmas = results[1] as List<ParseObject>;
+      final updatedEvent = results[2] as ParseObject?;
+
+      // 4. Carrega Dicas vinculadas aos enigmas deste evento
       List<ParseObject> hints = [];
       final enigmaIds = enigmas.map((e) => e.objectId).whereType<String>().toList();
       if (enigmaIds.isNotEmpty) {
@@ -220,6 +236,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
       if (mounted) {
         setState(() {
+          if (updatedEvent != null) {
+            _selectedEvent = updatedEvent;
+          }
           _cockpitPhases = phases;
           _cockpitEnigmas = enigmas;
           _cockpitHints = hints;
@@ -2665,6 +2684,15 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       if (res.success) {
                         if (ctx.mounted) Navigator.pop(ctx);
                         onRefresh();
+                      } else {
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text('Erro ao criar fase: ${res.error?.message ?? "Falha na operação"}'),
+                              backgroundColor: dangerColor,
+                            ),
+                          );
+                        }
                       }
                     },
                   ),
@@ -2749,6 +2777,15 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                           if (res.success) {
                             if (dialogCtx.mounted) Navigator.pop(dialogCtx);
                             onRefresh();
+                          } else {
+                            if (dialogCtx.mounted) {
+                              ScaffoldMessenger.of(dialogCtx).showSnackBar(
+                                SnackBar(
+                                  content: Text('Erro ao salvar fase: ${res.error?.message ?? "Falha na operação"}'),
+                                  backgroundColor: dangerColor,
+                                ),
+                              );
+                            }
                           }
                         },
                       ),
@@ -3097,10 +3134,12 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   void _showAddEventModal(BuildContext context) {
     final nomeController = TextEditingController();
     final premioController = TextEditingController();
+    final prizeImageUrlController = TextEditingController();
     final descricaoController = TextEditingController();
     final localController = TextEditingController();
     String status = 'open';
     String eventType = 'classic';
+    String prizeType = 'dinheiro'; // 'dinheiro' ou 'objeto'
 
     showDialog(
       context: context,
@@ -3109,9 +3148,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
           builder: (context, setModalState) {
             return AdminModal(
               title: 'Criar Novo Evento',
-              maxWidth: 520,
+              maxWidth: 580,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildInputForm(
                     controller: nomeController,
@@ -3124,34 +3163,12 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     maxLines: 3,
                   ),
                   const SizedBox(height: 12),
-                  _buildInputForm(
-                    controller: localController,
-                    hint: 'Local do evento (Cidade / Região)',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildInputForm(
-                    controller: premioController,
-                    hint: 'Prêmio Total Estimado (Ex: R\$ 5.000,00)',
-                  ),
-                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
-                        child: _buildSelectForm(
-                          value: eventType,
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'classic',
-                              child: Text('Classic (Fases Sequenciais)'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'find_and_win',
-                              child: Text('Find & Win (Baús Instantâneos)'),
-                            ),
-                          ],
-                          onChanged: (val) {
-                            if (val != null) setModalState(() => eventType = val);
-                          },
+                        child: _buildInputForm(
+                          controller: localController,
+                          hint: 'Local / Cidade (Ex: Canaã dos Carajás)',
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -3170,10 +3187,103 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildSelectForm(
+                          value: eventType,
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'classic',
+                              child: Text('Modalidade Classic (Fases)'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'find_and_win',
+                              child: Text('Modalidade Find & Win (Baús)'),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) setModalState(() => eventType = val);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSelectForm(
+                          value: prizeType,
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'dinheiro',
+                              child: Text('Prêmio em Dinheiro (R\$)'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'objeto',
+                              child: Text('Objeto Físico (Produto)'),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) setModalState(() => prizeType = val);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _buildInputForm(
+                    controller: premioController,
+                    hint: prizeType == 'objeto'
+                        ? 'Nome do Produto (Ex: IPHONE 17, PLAYSTATION 5)'
+                        : 'Valor do Prêmio Total (Ex: 5.000,00 ou R\$ 5.000,00)',
+                  ),
+                  if (prizeType == 'objeto') ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInputForm(
+                            controller: prizeImageUrlController,
+                            hint: 'URL da Imagem do Prêmio (PNG transparente)',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 18),
+                          tooltip: 'Upload de Foto do Prêmio',
+                          onPressed: () async {
+                            final url = await AdminUploadUtil.pickAndUploadImage(context);
+                            if (url != null) {
+                              setModalState(() => prizeImageUrlController.text = url);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 14),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: _buildModalityTag(eventType, isLarge: true),
+                  Row(
+                    children: [
+                      _buildModalityTag(eventType, isLarge: true),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: Text(
+                          prizeType == 'objeto' ? '📦 OBJETO FÍSICO' : '💰 EM DINHEIRO',
+                          style: TextStyle(
+                            color: prizeType == 'objeto' ? primaryAmber : successColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -3190,13 +3300,31 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         onTap: () async {
                           if (nomeController.text.trim().isEmpty) return;
 
+                          final prizeInput = premioController.text.trim();
+                          String prizePoolVal;
+                          String prizeVal;
+
+                          if (prizeType == 'objeto') {
+                            prizePoolVal = '0';
+                            prizeVal = prizeInput.isNotEmpty ? prizeInput : 'Prêmio Especial';
+                          } else {
+                            final numVal = _parseMoney(prizeInput);
+                            prizePoolVal = numVal.toString();
+                            prizeVal = prizeInput.startsWith('R\$') ? prizeInput : (prizeInput.isNotEmpty ? 'R\$ $prizeInput' : 'R\$ 0,00');
+                          }
+
                           final resEvent = await ParseCloudFunction('createOrUpdateEvent').execute(
                             parameters: {
                               'data': {
                                 'title': nomeController.text.trim(),
+                                'name': nomeController.text.trim(),
                                 'description': descricaoController.text.trim(),
                                 'location': localController.text.trim(),
-                                'prizePool': _parseMoney(premioController.text.trim()).toString(),
+                                'prize': prizeVal,
+                                'prizePool': prizePoolVal,
+                                'prizeType': prizeType,
+                                if (prizeImageUrlController.text.trim().isNotEmpty)
+                                  'prizeImageUrl': prizeImageUrlController.text.trim(),
                                 'status': status,
                                 'eventType': eventType,
                               },
@@ -3250,10 +3378,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
   void _showEditEventModal(BuildContext context, ParseObject event) {
     final nomeController = TextEditingController(
-      text: event.get<String>('title') ?? event.get<String>('name'),
-    );
-    final premioController = TextEditingController(
-      text: event.get<dynamic>('prizePool')?.toString() ?? event.get<dynamic>('prize')?.toString(),
+      text: event.get<String>('title') ?? event.get<String>('name') ?? '',
     );
     final descricaoController = TextEditingController(
       text: event.get<String>('description') ?? '',
@@ -3261,8 +3386,38 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final localController = TextEditingController(
       text: event.get<String>('location') ?? '',
     );
+    final prizeImageUrlController = TextEditingController(
+      text: event.get<String>('prizeImageUrl') ?? '',
+    );
     String status = event.get<String>('status') ?? 'encerrado';
     String eventType = event.get<String>('eventType') ?? 'classic';
+
+    final rawPrize = event.get<dynamic>('prize')?.toString();
+    final rawPrizePool = event.get<dynamic>('prizePool')?.toString();
+
+    // Detecta se é objeto físico ou prêmio em dinheiro
+    String prizeType = event.get<String>('prizeType') ??
+        ((prizeImageUrlController.text.trim().isNotEmpty || (rawPrize != null && rawPrize.isNotEmpty && !RegExp(r'^[0-9.,R$ ]+$').hasMatch(rawPrize)))
+            ? 'objeto'
+            : 'dinheiro');
+
+    // Carrega o texto correto inicial do prêmio sem converter texto em 0
+    String initialPrizeText = '';
+    if (prizeType == 'objeto') {
+      if (rawPrize != null && rawPrize.trim().isNotEmpty && rawPrize != '0') {
+        initialPrizeText = rawPrize.trim();
+      } else if (rawPrizePool != null && rawPrizePool.trim().isNotEmpty && rawPrizePool != '0') {
+        initialPrizeText = rawPrizePool.trim();
+      }
+    } else {
+      if (rawPrizePool != null && rawPrizePool.trim().isNotEmpty && rawPrizePool != '0') {
+        initialPrizeText = rawPrizePool.trim();
+      } else if (rawPrize != null && rawPrize.trim().isNotEmpty) {
+        initialPrizeText = rawPrize.trim();
+      }
+    }
+
+    final premioController = TextEditingController(text: initialPrizeText);
 
     showDialog(
       context: context,
@@ -3271,7 +3426,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
           builder: (context, setModalState) {
             return AdminModal(
               title: 'Editar Evento',
-              maxWidth: 550,
+              maxWidth: 580,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -3282,13 +3437,6 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         child: _buildInputForm(
                           controller: nomeController,
                           hint: 'Nome do evento',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildInputForm(
-                          controller: premioController,
-                          hint: 'Prêmio Total',
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -3322,26 +3470,97 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       Expanded(
                         child: _buildInputForm(
                           controller: localController,
-                          hint: 'Local do evento',
+                          hint: 'Local / Cidade',
                         ),
                       ),
-                      const SizedBox(width: 12),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
                       Expanded(
                         child: _buildSelectForm(
                           value: eventType,
                           items: const [
-                            DropdownMenuItem(value: 'classic', child: Text('Classic')),
-                            DropdownMenuItem(value: 'find_and_win', child: Text('Find & Win')),
+                            DropdownMenuItem(value: 'classic', child: Text('Modalidade Classic')),
+                            DropdownMenuItem(value: 'find_and_win', child: Text('Modalidade Find & Win')),
                           ],
                           onChanged: (val) {
                             if (val != null) setModalState(() => eventType = val);
                           },
                         ),
                       ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildSelectForm(
+                          value: prizeType,
+                          items: const [
+                            DropdownMenuItem(value: 'dinheiro', child: Text('Prêmio em Dinheiro (R\$)')),
+                            DropdownMenuItem(value: 'objeto', child: Text('Objeto Físico (Produto)')),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) setModalState(() => prizeType = val);
+                          },
+                        ),
+                      ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  _buildInputForm(
+                    controller: premioController,
+                    hint: prizeType == 'objeto'
+                        ? 'Nome do Produto (Ex: IPHONE 17, PLAYSTATION 5)'
+                        : 'Valor do Prêmio Total (Ex: 5.000,00 ou R\$ 5.000,00)',
+                  ),
+                  if (prizeType == 'objeto') ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInputForm(
+                            controller: prizeImageUrlController,
+                            hint: 'URL da Imagem do Prêmio (PNG transparente)',
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 18),
+                          tooltip: 'Upload de Imagem do Prêmio',
+                          onPressed: () async {
+                            final url = await AdminUploadUtil.pickAndUploadImage(context);
+                            if (url != null) {
+                              setModalState(() => prizeImageUrlController.text = url);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 14),
-                  _buildModalityTag(eventType, isLarge: true),
+                  Row(
+                    children: [
+                      _buildModalityTag(eventType, isLarge: true),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: Text(
+                          prizeType == 'objeto' ? '📦 OBJETO FÍSICO' : '💰 EM DINHEIRO',
+                          style: TextStyle(
+                            color: prizeType == 'objeto' ? primaryAmber : successColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -3355,14 +3574,31 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         'Salvar Evento',
                         isPrimary: true,
                         onTap: () async {
+                          final prizeInput = premioController.text.trim();
+                          String prizePoolVal;
+                          String prizeVal;
+
+                          if (prizeType == 'objeto') {
+                            prizePoolVal = '0';
+                            prizeVal = prizeInput.isNotEmpty ? prizeInput : 'Prêmio Especial';
+                          } else {
+                            final numVal = _parseMoney(prizeInput);
+                            prizePoolVal = numVal.toString();
+                            prizeVal = prizeInput.startsWith('R\$') ? prizeInput : (prizeInput.isNotEmpty ? 'R\$ $prizeInput' : 'R\$ 0,00');
+                          }
+
                           final resEvent = await ParseCloudFunction('createOrUpdateEvent').execute(
                             parameters: {
                               'eventId': event.objectId,
                               'data': {
                                 'title': nomeController.text.trim(),
+                                'name': nomeController.text.trim(),
                                 'description': descricaoController.text.trim(),
                                 'location': localController.text.trim(),
-                                'prizePool': _parseMoney(premioController.text.trim()).toString(),
+                                'prize': prizeVal,
+                                'prizePool': prizePoolVal,
+                                'prizeType': prizeType,
+                                'prizeImageUrl': prizeImageUrlController.text.trim(),
                                 'status': status,
                                 'eventType': eventType,
                               },
