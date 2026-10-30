@@ -965,15 +965,30 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     }
   }
 
-  void _handleCooldown(String cooldownUntilStr) {
-    final cooldownUntil = DateTime.parse(cooldownUntilStr);
-    if (cooldownUntil.isAfter(DateTime.now())) {
+  void _handleCooldown(dynamic rawCooldown) {
+    if (rawCooldown == null) return;
+    DateTime? cooldownUntil;
+    if (rawCooldown is num) {
+      cooldownUntil = DateTime.fromMillisecondsSinceEpoch(rawCooldown.toInt());
+    } else if (rawCooldown is String) {
+      final asNum = num.tryParse(rawCooldown);
+      if (asNum != null) {
+        cooldownUntil = DateTime.fromMillisecondsSinceEpoch(asNum.toInt());
+      } else {
+        cooldownUntil = DateTime.tryParse(rawCooldown);
+      }
+    } else if (rawCooldown is DateTime) {
+      cooldownUntil = rawCooldown;
+    }
+
+    if (cooldownUntil != null && cooldownUntil.isAfter(DateTime.now())) {
+      final targetCooldown = cooldownUntil;
       setState(() => _isBlocked = true);
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (_) => CooldownDialog(
-          cooldownUntil: cooldownUntil,
+          cooldownUntil: targetCooldown,
           onCooldownFinished: () {
             if (mounted) setState(() => _isBlocked = false);
           },

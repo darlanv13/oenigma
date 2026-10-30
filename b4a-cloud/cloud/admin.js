@@ -213,6 +213,8 @@ Parse.Cloud.define("createOrUpdateEnigma", async (request) => {
       for (const key in data) {
         if (key === "prize") {
           enigma.set("prize", String(data[key] !== undefined && data[key] !== null ? data[key] : "0"));
+        } else if (key === "code") {
+          enigma.set("code", String(data[key] !== undefined && data[key] !== null ? data[key] : "").trim());
         } else {
           enigma.set(key, data[key]);
         }

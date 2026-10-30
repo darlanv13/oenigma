@@ -158,16 +158,16 @@ class EnigmaModel {
     }
 
     return EnigmaModel(
-      id: map['id'] ?? map['objectId'] ?? '',
-      type: map['type'] ?? 'text',
-      instruction: map['instruction'] ?? '',
-      title: map['title'] ?? '',
-      code: map['code'] ?? '',
-      imageUrl: map['imageUrl'],
-      audioUrl: map['audioUrl'],
+      id: map['id']?.toString() ?? map['objectId']?.toString() ?? '',
+      type: map['type']?.toString() ?? 'text',
+      instruction: map['instruction']?.toString() ?? '',
+      title: map['title']?.toString() ?? '',
+      code: map['code']?.toString() ?? '',
+      imageUrl: map['imageUrl']?.toString(),
+      audioUrl: map['audioUrl']?.toString(),
       location: parsedLocation,
-      hintType: map['hintType'],
-      hintData: map['hintData'],
+      hintType: map['hintType']?.toString(),
+      hintData: map['hintData']?.toString(),
       prize: map['prize'] != null ? double.tryParse(map['prize'].toString()) ?? 0.0 : 0.0,
       order: map['order'] != null ? int.tryParse(map['order'].toString()) ?? 1 : 1,
       characteristics:
@@ -175,7 +175,7 @@ class EnigmaModel {
               ?.map((e) => e.toString())
               .toList() ??
           [],
-      status: map['status'],
+      status: map['status']?.toString(),
       closedAt: map['closedAt'] != null
           ? (map['closedAt'] is DateTime
                 ? map['closedAt']
@@ -183,18 +183,18 @@ class EnigmaModel {
           : null,
       compassPrice: map['compassPrice'] != null ? double.tryParse(map['compassPrice'].toString()) ?? 15.0 : 15.0,
       compassDuration: map['compassDuration'] != null ? int.tryParse(map['compassDuration'].toString()) ?? 0 : 0,
-      icon: map['icon'] ?? 'skull',
-      difficulty: map['difficulty'] ?? 'MÉDIA',
+      icon: map['icon']?.toString() ?? 'skull',
+      difficulty: map['difficulty']?.toString() ?? 'MÉDIA',
       phaseId: parsedPhaseId,
 
-      hasCompass: map['hasCompass'] ?? false,
-      hasMap: map['hasMap'] ?? false,
-      hasRadar: map['hasRadar'] ?? false,
+      hasCompass: map['hasCompass'] == true,
+      hasMap: map['hasMap'] == true,
+      hasRadar: map['hasRadar'] == true,
       mapPrice: map['mapPrice'] != null ? double.tryParse(map['mapPrice'].toString()) ?? 4.99 : 4.99,
       radarPrice: map['radarPrice'] != null ? double.tryParse(map['radarPrice'].toString()) ?? 2.99 : 2.99,
-      compassCoords: map['compassCoords'] ?? '',
-      mapCoords: map['mapCoords'] ?? '',
-      radarCoords: map['radarCoords'] ?? '',
+      compassCoords: map['compassCoords']?.toString() ?? '',
+      mapCoords: map['mapCoords']?.toString() ?? '',
+      radarCoords: map['radarCoords']?.toString() ?? '',
     );
   }
 

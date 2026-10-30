@@ -515,7 +515,15 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         await user.save(null, { useMasterKey: true });
       }
 
-      if (enigma.get("code") === guess) {
+      const rawEnigmaCode = enigma.get("code");
+      const enigmaCode = String(rawEnigmaCode !== undefined && rawEnigmaCode !== null ? rawEnigmaCode : "").trim().toUpperCase();
+      const userGuess = String(guess !== undefined && guess !== null ? guess : "").trim().toUpperCase();
+
+      if (enigmaCode.length > 0 && enigmaCode === userGuess) {
+        if (typeof rawEnigmaCode !== 'string') {
+          enigma.set("code", enigmaCode);
+          await enigma.save(null, { useMasterKey: true });
+        }
         const Event = Parse.Object.extend("Event");
         const eventQuery = new Parse.Query(Event);
         const eventObj = await eventQuery.get(eventId, { useMasterKey: true });
@@ -744,7 +752,8 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         return {
           success: false,
           message: "Código Incorreto. Você recebeu uma penalidade.",
-          cooldownUntil: cooldownTime
+          cooldownUntil: cooldownTime,
+          cooldownUntilIso: new Date(cooldownTime).toISOString()
         };
       }
     }

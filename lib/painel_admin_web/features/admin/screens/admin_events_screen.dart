@@ -1863,7 +1863,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }) {
     final isEdit = enigma != null;
     final instructionCtrl = TextEditingController(text: isEdit ? (enigma.get<String>('instruction') ?? '') : '');
-    final codeCtrl = TextEditingController(text: isEdit ? (enigma.get<String>('code') ?? '') : '');
+    final codeCtrl = TextEditingController(text: isEdit ? _safeString(enigma, 'code') : '');
     final prizeCtrl = TextEditingController(text: isEdit ? (enigma.get<dynamic>('prize')?.toString() ?? '0') : '0');
     final orderCtrl = TextEditingController(text: isEdit ? (enigma.get<num>('order')?.toString() ?? '1') : '');
     final photoUrlCtrl = TextEditingController(text: isEdit ? (enigma.get<String>('imageUrl') ?? '') : '');
@@ -2142,7 +2142,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                   String code = codeCtrl.text.trim();
                                   if (code.isEmpty) {
                                     code = isEdit
-                                        ? (enigma.get<String>('code') ?? '')
+                                        ? _safeString(enigma, 'code')
                                         : '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond.toString().padLeft(3, '0')}';
                                   }
 
@@ -2402,7 +2402,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   //  8.2. MODAL DE QR CODE INDIVIDUAL DO ENIGMA
   // =========================================================================
   void _showEnigmaQrDialog(BuildContext context, ParseObject enigma) {
-    final code = enigma.get<String>('code') ?? '';
+    final code = _safeString(enigma, 'code');
     final order = enigma.get<num>('order') ?? 1;
 
     showDialog(
