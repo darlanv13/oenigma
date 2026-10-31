@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:confetti/confetti.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -41,6 +42,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
       duration: const Duration(seconds: 5),
     );
     _confettiController.play();
+    SoundService.playVictory();
   }
 
   @override
@@ -50,6 +52,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
   }
 
   Future<void> _shareCertificate() async {
+    SoundService.playCopy();
     final Uint8List? image = await _screenshotController.capture();
     if (image == null) return;
 

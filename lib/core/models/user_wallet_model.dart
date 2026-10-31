@@ -4,9 +4,10 @@ class UserWalletModel {
   final String email;
   final String? photoURL;
   final double balance;
-  final String? lastWonEventName; // Campo alterado
+  final String? lastWonEventName;
   final int? lastEventRank;
   final String? lastEventName;
+  final List<dynamic> transactions;
 
   UserWalletModel({
     required this.objectId,
@@ -14,9 +15,10 @@ class UserWalletModel {
     required this.email,
     this.photoURL,
     required this.balance,
-    this.lastWonEventName, // Campo alterado
+    this.lastWonEventName,
     this.lastEventRank,
-    this.lastEventName, required List<dynamic> transactions,
+    this.lastEventName,
+    this.transactions = const [],
   });
 
   factory UserWalletModel.fromMap(Map<String, dynamic> map) {
@@ -26,10 +28,10 @@ class UserWalletModel {
       email: map['email'] ?? 'email@indisponivel.com',
       photoURL: map['photoURL'],
       balance: (map['balance'] as num?)?.toDouble() ?? 0.0,
-      lastWonEventName:
-          map['lastWonEventName'] as String?, // Mapeia o novo campo
+      lastWonEventName: map['lastWonEventName'] as String?,
       lastEventRank: map['lastEventRank'] as int?,
-      lastEventName: map['lastEventName'] as String?, transactions: [],
+      lastEventName: map['lastEventName'] as String?,
+      transactions: map['transactions'] as List<dynamic>? ?? const [],
     );
   }
 }

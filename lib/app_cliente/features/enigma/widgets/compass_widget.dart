@@ -1,12 +1,16 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:async';
-import 'package:geolocator/geolocator.dart';
 import 'package:flutter_compass/flutter_compass.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import 'package:oenigma/core/services/sound_service.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
+
+/// Bússola Dourada do Explorador: Estilo Indiana Jones / Tomb Raider com cores Vale.
 class CompassWidget extends StatefulWidget {
   final double targetLatitude;
   final double targetLongitude;
@@ -48,10 +52,10 @@ class _CompassWidgetState extends State<CompassWidget>
     super.initState();
     _remainingSeconds = widget.durationSeconds;
 
-    // Controlador da animação de varredura do radar
+    // Controlador da rotação da agulha e pulso místico
     _scannerController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2200),
+      duration: const Duration(milliseconds: 2400),
     )..repeat();
 
     _initSensors();
@@ -129,28 +133,28 @@ class _CompassWidgetState extends State<CompassWidget>
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.redAccent.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+          color: AppColors.danger.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const FaIcon(FontAwesomeIcons.triangleExclamation, color: Colors.redAccent, size: 28),
+            const FaIcon(FontAwesomeIcons.triangleExclamation, color: AppColors.danger, size: 28),
             const SizedBox(height: 10),
             Text(
               'Permissão de Localização Necessária',
-              style: GoogleFonts.orbitron(
-                color: Colors.redAccent,
+              style: GoogleFonts.cinzel(
+                color: AppColors.danger,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Ative o GPS para sincronizar o sonar e a bússola com o alvo.',
-              style: TextStyle(color: Colors.white70, fontSize: 12),
+            Text(
+              'Ative o GPS para sincronizar a bússola dourada com a relíquia.',
+              style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
               textAlign: TextAlign.center,
             ),
           ],
@@ -164,13 +168,13 @@ class _CompassWidgetState extends State<CompassWidget>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(color: Color(0xFF00E5FF)),
+            const CircularProgressIndicator(color: AppColors.amareloVale),
             const SizedBox(height: 16),
             Text(
-              'SINCRONIZANDO SONAR...',
-              style: GoogleFonts.orbitron(
-                color: const Color(0xFF00E5FF),
-                fontSize: 13,
+              'SINTONIZANDO A BÚSSOLA DOURADA...',
+              style: GoogleFonts.cinzel(
+                color: AppColors.amareloVale,
+                fontSize: 12.5,
                 letterSpacing: 1.5,
                 fontWeight: FontWeight.bold,
               ),
@@ -196,26 +200,27 @@ class _CompassWidgetState extends State<CompassWidget>
 
     final double targetAngle = (bearing - _currentHeading) * (math.pi / 180);
 
-    // Diferença angular (-180 a +180) para o cálculo de Lock-on
+    // Diferença angular (-180 a +180) para detecção de alinhamento
     double diffDegrees = (bearing - _currentHeading) % 360;
     if (diffDegrees > 180) diffDegrees -= 360;
     if (diffDegrees < -180) diffDegrees += 360;
-    final bool isLockedOn = diffDegrees.abs() <= 14.0;
+    final bool isLockedOn = diffDegrees.abs() <= 15.0;
 
-    // Haptic feedback quando trava a mira no alvo
+    // Efeito tátil e sonoro quando o explorador aponta exatamente para a relíquia
     if (isLockedOn && !_wasLockedOn) {
       _wasLockedOn = true;
       HapticFeedback.selectionClick();
+      SoundService.playScan();
     } else if (!isLockedOn && _wasLockedOn) {
       _wasLockedOn = false;
     }
 
-    final double radarSize = widget.isCompact ? 200.0 : 255.0;
+    final double compassSize = widget.isCompact ? 200.0 : 255.0;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Top HUD: Timer & Azimute
+        // Top HUD da Bússola: Ampulheta de Tempo & Azimute
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -224,20 +229,20 @@ class _CompassWidgetState extends State<CompassWidget>
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 margin: const EdgeInsets.only(right: 8, bottom: 12),
                 decoration: BoxDecoration(
-                  color: Colors.redAccent.withValues(alpha: 0.15),
+                  color: AppColors.amareloVale.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5), width: 1.2),
+                  border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.6), width: 1.2),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.timer_outlined, color: Colors.redAccent, size: 14),
+                    const FaIcon(FontAwesomeIcons.hourglassHalf, color: AppColors.amareloVale, size: 12),
                     const SizedBox(width: 6),
                     Text(
                       _formatTime(_remainingSeconds),
-                      style: GoogleFonts.orbitron(
-                        color: Colors.redAccent,
-                        fontSize: 13,
+                      style: GoogleFonts.cinzel(
+                        color: AppColors.amareloVale,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1,
                       ),
@@ -251,19 +256,19 @@ class _CompassWidgetState extends State<CompassWidget>
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.3)),
+                border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.4)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const FaIcon(FontAwesomeIcons.compass, color: Color(0xFF00E5FF), size: 12),
+                  const FaIcon(FontAwesomeIcons.compass, color: AppColors.verdeVale, size: 12),
                   const SizedBox(width: 6),
                   Text(
                     '${_currentHeading.toInt()}° ${_getCardinalDirection(_currentHeading)}',
-                    style: GoogleFonts.orbitron(
+                    style: GoogleFonts.cinzel(
                       color: Colors.white,
                       fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
@@ -272,32 +277,32 @@ class _CompassWidgetState extends State<CompassWidget>
           ],
         ),
 
-        // Radar 360° com efeito metálico e display holográfico
+        // Mostrador da Bússola Dourada em Latão e Obsidiana
         Center(
           child: Container(
-            width: radarSize,
-            height: radarSize,
+            width: compassSize,
+            height: compassSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: const Color(0xFF1E282A),
+              color: AppColors.darkCardColor,
               boxShadow: [
                 BoxShadow(
                   color: isLockedOn
-                      ? const Color(0xFF00E5FF).withValues(alpha: 0.5)
+                      ? AppColors.amareloVale.withValues(alpha: 0.45)
                       : Colors.black.withValues(alpha: 0.7),
                   blurRadius: isLockedOn ? 24 : 14,
                   spreadRadius: isLockedOn ? 2 : 0,
                   offset: const Offset(0, 4),
                 ),
                 BoxShadow(
-                  color: (isLockedOn ? const Color(0xFF00E5FF) : Colors.white).withValues(alpha: 0.2),
+                  color: (isLockedOn ? AppColors.amareloVale : AppColors.verdeVale).withValues(alpha: 0.2),
                   blurRadius: 4,
                   offset: const Offset(-2, -2),
                 ),
               ],
               border: Border.all(
-                color: isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFF4A5B60),
-                width: isLockedOn ? 6 : 5,
+                color: isLockedOn ? AppColors.amareloVale : AppColors.verdeValeDark,
+                width: isLockedOn ? 5 : 4,
               ),
             ),
             child: Padding(
@@ -307,7 +312,7 @@ class _CompassWidgetState extends State<CompassWidget>
                   animation: _scannerController,
                   builder: (context, child) {
                     return CustomPaint(
-                      painter: DragonRadarPainter(
+                      painter: ExpeditionCompassPainter(
                         scannerAngle: _scannerController.value * 2 * math.pi,
                         targetAngle: targetAngle,
                         distance: distance,
@@ -323,17 +328,17 @@ class _CompassWidgetState extends State<CompassWidget>
 
         const SizedBox(height: 14),
 
-        // Barra de Orientação Direcional (Lock-On / Vire à Direita / Vire à Esquerda)
+        // Barra de Orientação do Explorador
         AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: isLockedOn
-                ? const Color(0xFF00E5FF).withValues(alpha: 0.15)
+                ? AppColors.amareloVale.withValues(alpha: 0.18)
                 : Colors.black.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isLockedOn ? const Color(0xFF00E5FF) : Colors.white24,
+              color: isLockedOn ? AppColors.amareloVale : Colors.white24,
               width: isLockedOn ? 1.5 : 1,
             ),
           ),
@@ -342,23 +347,23 @@ class _CompassWidgetState extends State<CompassWidget>
             children: [
               FaIcon(
                 isLockedOn
-                    ? FontAwesomeIcons.crosshairs
+                    ? FontAwesomeIcons.bullseye
                     : (diffDegrees > 0 ? FontAwesomeIcons.arrowRight : FontAwesomeIcons.arrowLeft),
-                color: isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFFF3A522),
+                color: isLockedOn ? AppColors.amareloVale : AppColors.verdeVale,
                 size: 14,
               ),
               const SizedBox(width: 8),
               Text(
                 isLockedOn
-                    ? '🎯 ALVO NA MIRA (LOCK-ON) • AVANCE NESTA DIREÇÃO'
+                    ? '🧭 ALINHADO COM A RELÍQUIA • AVANCE NESTA DIREÇÃO!'
                     : (diffDegrees > 0
                         ? 'GIRE PARA A DIREITA (${diffDegrees.toInt()}°)'
                         : 'GIRE PARA A ESQUERDA (${(-diffDegrees).toInt()}°)'),
-                style: GoogleFonts.orbitron(
-                  color: isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFFF3A522),
-                  fontSize: 11,
+                style: GoogleFonts.cinzel(
+                  color: isLockedOn ? AppColors.amareloVale : Colors.white,
+                  fontSize: 10.5,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 0.8,
+                  letterSpacing: 0.6,
                 ),
               ),
             ],
@@ -367,19 +372,19 @@ class _CompassWidgetState extends State<CompassWidget>
 
         const SizedBox(height: 12),
 
-        // Visor Digital de Distância com Estilo Cyberpunk
+        // Medidor Rúnico de Distância
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF0A0F11),
+            color: Colors.black.withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFF88C928),
+              color: isLockedOn ? AppColors.amareloVale : AppColors.verdeVale,
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: (isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFF88C928))
+                color: (isLockedOn ? AppColors.amareloVale : AppColors.verdeVale)
                     .withValues(alpha: 0.3),
                 blurRadius: 10,
               ),
@@ -390,17 +395,17 @@ class _CompassWidgetState extends State<CompassWidget>
             children: [
               FaIcon(
                 FontAwesomeIcons.locationArrow,
-                color: isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFF88C928),
+                color: isLockedOn ? AppColors.amareloVale : AppColors.verdeVale,
                 size: 14,
               ),
               const SizedBox(width: 10),
               Text(
                 '${distance.toStringAsFixed(0)} METROS',
-                style: GoogleFonts.orbitron(
-                  color: isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFF88C928),
-                  fontSize: 16,
+                style: GoogleFonts.cinzel(
+                  color: isLockedOn ? AppColors.amareloVale : AppColors.verdeVale,
+                  fontSize: 15,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 2,
+                  letterSpacing: 1.5,
                 ),
               ),
             ],
@@ -412,15 +417,15 @@ class _CompassWidgetState extends State<CompassWidget>
 }
 
 // ---------------------------------------------------------
-// CUSTOM PAINTER - Radar Holográfico Tático 360°
+// CUSTOM PAINTER - Rosa dos Ventos da Expedição Antiga
 // ---------------------------------------------------------
-class DragonRadarPainter extends CustomPainter {
+class ExpeditionCompassPainter extends CustomPainter {
   final double scannerAngle;
   final double targetAngle;
   final double distance;
   final bool isLockedOn;
 
-  DragonRadarPainter({
+  ExpeditionCompassPainter({
     required this.scannerAngle,
     required this.targetAngle,
     required this.distance,
@@ -432,95 +437,91 @@ class DragonRadarPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    // 1. Fundo do Radar com Gradiente Tático
+    // 1. Fundo de Obsidiana e Latão
     final bgPaint = Paint()
       ..shader = RadialGradient(
         colors: isLockedOn
-            ? const [Color(0xFF0B3338), Color(0xFF04171A)]
-            : const [Color(0xFF1B381C), Color(0xFF0D1D0F)],
+            ? const [Color(0xFF28200E), Color(0xFF100C05)]
+            : const [Color(0xFF0F2023), Color(0xFF071012)],
         stops: const [0.2, 1.0],
       ).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, bgPaint);
 
-    // 2. Grade Cibernética (Grid Lines & Círculos Concéntricos)
-    final gridPaint = Paint()
-      ..color = (isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFFB5E655)).withValues(alpha: 0.25)
+    // 2. Círculos da Rosa dos Ventos & Marcações Antigas
+    final dialPaint = Paint()
+      ..color = (isLockedOn ? AppColors.amareloVale : AppColors.verdeVale).withValues(alpha: 0.28)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
-    const int lines = 6;
-    final double step = size.width / lines;
-    for (int i = 1; i < lines; i++) {
-      canvas.drawLine(
-        Offset(step * i, 0),
-        Offset(step * i, size.height),
-        gridPaint,
-      );
-      canvas.drawLine(
-        Offset(0, step * i),
-        Offset(size.width, step * i),
-        gridPaint,
-      );
-    }
+    canvas.drawCircle(center, radius * 0.35, dialPaint);
+    canvas.drawCircle(center, radius * 0.70, dialPaint);
+    canvas.drawCircle(center, radius * 0.94, dialPaint);
 
-    // Círculos de Distância Concéntricos
-    canvas.drawCircle(center, radius * 0.33, gridPaint);
-    canvas.drawCircle(center, radius * 0.66, gridPaint);
-    canvas.drawCircle(center, radius * 0.95, gridPaint);
-
-    // Linhas Cardinais (Cruzeta)
+    // Linhas Cardinais (Cruzeta da Rosa dos Ventos)
     final crossPaint = Paint()
-      ..color = (isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFFB5E655)).withValues(alpha: 0.4)
-      ..strokeWidth = 1.5;
-    canvas.drawLine(Offset(center.dx, 0), Offset(center.dx, size.height), crossPaint);
-    canvas.drawLine(Offset(0, center.dy), Offset(size.width, center.dy), crossPaint);
+      ..color = (isLockedOn ? AppColors.amareloVale : AppColors.verdeVale).withValues(alpha: 0.35)
+      ..strokeWidth = 1.4;
+    canvas.drawLine(Offset(center.dx, radius * 0.1), Offset(center.dx, size.height - radius * 0.1), crossPaint);
+    canvas.drawLine(Offset(radius * 0.1, center.dy), Offset(size.width - radius * 0.1, center.dy), crossPaint);
 
-    // 3. Alvo (Target)
+    // Letra N (Norte) no topo
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: 'N',
+        style: GoogleFonts.cinzel(
+          color: AppColors.amareloVale,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    textPainter.paint(canvas, Offset(center.dx - textPainter.width / 2, 6));
+
+    // 3. Posição da Relíquia Sagrada (Target Gem)
     const double maxRadarRange = 400.0;
     final double displayRadius = distance > maxRadarRange
-        ? radius * 0.88
-        : (distance / maxRadarRange) * (radius * 0.85);
+        ? radius * 0.85
+        : (distance / maxRadarRange) * (radius * 0.82);
 
     final double targetX = center.dx + displayRadius * math.cos(targetAngle - math.pi / 2);
     final double targetY = center.dy + displayRadius * math.sin(targetAngle - math.pi / 2);
     final targetOffset = Offset(targetX, targetY);
 
-    // Feixe Direcional se estiver em Lock-On
+    // Feixe Místico se estiver Alinhado (Lock-On)
     if (isLockedOn) {
       final lockBeamPaint = Paint()
-        ..color = const Color(0xFF00E5FF).withValues(alpha: 0.35)
+        ..color = AppColors.amareloVale.withValues(alpha: 0.4)
         ..strokeWidth = 2.0
         ..style = PaintingStyle.stroke;
       canvas.drawLine(center, targetOffset, lockBeamPaint);
 
-      // Círculo de mira sobre o alvo
       final lockRingPaint = Paint()
-        ..color = const Color(0xFF00E5FF)
+        ..color = AppColors.amareloVale
         ..strokeWidth = 1.8
         ..style = PaintingStyle.stroke;
       canvas.drawCircle(targetOffset, 16, lockRingPaint);
     }
 
-    // Glow e Ponto do Alvo
+    // Glow e Gema Sagrada da Relíquia
     final glowPaint = Paint()
-      ..color = (isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFFF3A522)).withValues(alpha: 0.6)
+      ..color = AppColors.amareloVale.withValues(alpha: 0.6)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
     canvas.drawCircle(targetOffset, 12, glowPaint);
 
-    final dotPaint = Paint()
-      ..color = isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFFFFD700);
+    final dotPaint = Paint()..color = isLockedOn ? AppColors.amareloVale : const Color(0xFFFFD700);
     canvas.drawCircle(targetOffset, 7, dotPaint);
 
     final centerDotPaint = Paint()..color = Colors.white;
     canvas.drawCircle(targetOffset, 2.5, centerDotPaint);
 
-    // 4. Scanner de Varredura (Sweep Holográfico)
+    // 4. Pulso da Tocha / Varredura da Bússola
     final sweepPaint = Paint()
       ..shader = SweepGradient(
         colors: [
           Colors.transparent,
-          (isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFF88C928)).withValues(alpha: 0.05),
-          (isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFFE8FFB7)).withValues(alpha: 0.45),
+          (isLockedOn ? AppColors.amareloVale : AppColors.verdeVale).withValues(alpha: 0.04),
+          (isLockedOn ? AppColors.amareloVale : AppColors.verdeVale).withValues(alpha: 0.35),
         ],
         stops: const [0.0, 0.75, 1.0],
         transform: GradientRotation(scannerAngle - math.pi / 2),
@@ -535,33 +536,24 @@ class DragonRadarPainter extends CustomPainter {
       sweepPaint,
     );
 
-    // Linha frontal do scanner
-    final scannerLinePaint = Paint()
-      ..color = (isLockedOn ? const Color(0xFF00E5FF) : const Color(0xFFE8FFB7)).withValues(alpha: 0.9)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-    final lineEndX = center.dx + radius * math.cos(scannerAngle - math.pi / 2);
-    final lineEndY = center.dy + radius * math.sin(scannerAngle - math.pi / 2);
-    canvas.drawLine(center, Offset(lineEndX, lineEndY), scannerLinePaint);
-
-    // 5. Jogador / Navegador (Triângulo Central)
-    final playerPaint = Paint()
-      ..color = const Color(0xFFE53935)
+    // 5. Agulha Central do Explorador
+    final needlePaint = Paint()
+      ..color = AppColors.amareloVale
       ..style = PaintingStyle.fill;
 
-    final path = Path();
-    path.moveTo(center.dx, center.dy - 12);
-    path.lineTo(center.dx - 8, center.dy + 8);
-    path.lineTo(center.dx, center.dy + 4);
-    path.lineTo(center.dx + 8, center.dy + 8);
-    path.close();
+    final needlePath = Path();
+    needlePath.moveTo(center.dx, center.dy - 14);
+    needlePath.lineTo(center.dx - 7, center.dy + 8);
+    needlePath.lineTo(center.dx, center.dy + 4);
+    needlePath.lineTo(center.dx + 7, center.dy + 8);
+    needlePath.close();
 
-    canvas.drawShadow(path, Colors.black, 4, true);
-    canvas.drawPath(path, playerPaint);
+    canvas.drawShadow(needlePath, Colors.black, 4, true);
+    canvas.drawPath(needlePath, needlePaint);
   }
 
   @override
-  bool shouldRepaint(covariant DragonRadarPainter oldDelegate) {
+  bool shouldRepaint(covariant ExpeditionCompassPainter oldDelegate) {
     return oldDelegate.scannerAngle != scannerAngle ||
         oldDelegate.targetAngle != targetAngle ||
         oldDelegate.distance != distance ||

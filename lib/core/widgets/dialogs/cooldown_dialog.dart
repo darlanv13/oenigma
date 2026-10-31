@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 class CooldownDialog extends StatefulWidget {
@@ -25,6 +26,7 @@ class _CooldownDialogState extends State<CooldownDialog> {
   @override
   void initState() {
     super.initState();
+    SoundService.playError();
     _startTimer();
   }
 

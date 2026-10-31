@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pinput/pinput.dart';
 import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -53,6 +54,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
       if (mounted) {
         if (error != null) {
+          SoundService.playError();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(error, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -62,6 +64,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             ),
           );
         } else {
+          SoundService.playSuccess();
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
         setState(() => _isLoading = false);

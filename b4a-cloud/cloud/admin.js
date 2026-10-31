@@ -1,9 +1,70 @@
 // Parse Cloud Code for Back4App - Admin Functions
+const financialService = require('./financial_service.js');
+
+function parseMoney(value) {
+  if (value === undefined || value === null) return 0.0;
+  if (typeof value === 'number') return isNaN(value) ? 0.0 : value;
+  let clean = String(value).replace('R$', '').replace(/\s/g, '').trim();
+  if (clean.includes(',') && clean.includes('.')) {
+    clean = clean.replace(/\./g, '').replace(',', '.');
+  } else if (clean.includes(',')) {
+    clean = clean.replace(',', '.');
+  }
+  const parsed = parseFloat(clean);
+  return isNaN(parsed) ? 0.0 : parsed;
+}
 
 function isAdminUser(user, request) {
   if (request && request.master) return true;
+  if (!user && request && request.user) user = request.user;
   if (!user) return false;
-  return user.get("isAdmin") === true || user.get("role") === "admin" || user.get("role") === "creator";
+  const isAdmin = user.get("isAdmin");
+  const role = (user.get("role") || "").toLowerCase();
+  return isAdmin === true || role === "admin" || role === "creator" || role === "administrador";
+}
+
+async function resolveAdminUser(request) {
+  if (request && request.master) return request.user || true;
+
+  let user = request.user;
+  const sessionToken = (request.params && request.params.sessionToken) ||
+                       (request.headers && (request.headers['x-parse-session-token'] || request.headers['X-Parse-Session-Token']));
+
+  if (!user && sessionToken) {
+    try {
+      const q = new Parse.Query(Parse.User);
+      q.equalTo("sessionToken", sessionToken);
+      user = await q.first({ useMasterKey: true });
+    } catch (_) {}
+  }
+
+  if (!user) return null;
+
+  try {
+    await user.fetch({ useMasterKey: true });
+  } catch (_) {}
+
+  // 1. Verifica atributos diretos
+  const isAdmin = user.get("isAdmin");
+  const role = (user.get("role") || "").toLowerCase();
+  if (isAdmin === true || role === "admin" || role === "creator" || role === "administrador") {
+    return user;
+  }
+
+  // 2. Verifica vínculo com Parse Roles no Back4App
+  try {
+    const roleQuery = new Parse.Query(Parse.Role);
+    roleQuery.equalTo("users", user);
+    const roles = await roleQuery.find({ useMasterKey: true });
+    for (const r of roles) {
+      const name = (r.get("name") || "").toLowerCase();
+      if (name === "admin" || name === "creator" || name === "administrador") {
+        return user;
+      }
+    }
+  } catch (_) {}
+
+  return null;
 }
 
 
@@ -355,15 +416,24 @@ Parse.Cloud.define("deleteBanner", async (request) => {
 });
 
 Parse.Cloud.define("processWithdrawal", async (request) => {
-  const user = request.user;
-  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  const adminUser = await resolveAdminUser(request);
+  if (!adminUser) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Acesso restrito a administradores.");
+  const user = adminUser instanceof Parse.User ? adminUser : (request.user || adminUser);
   const { withdrawalId, objectId, action, receipt, rejectionReason } = request.params;
   if (!withdrawalId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "withdrawalId is required.");
 
   try {
     const Withdrawal = Parse.Object.extend("Withdrawal");
     const query = new Parse.Query(Withdrawal);
+    query.include("user");
     const withdrawal = await query.get(withdrawalId, { useMasterKey: true });
+
+    const targetUserId = objectId || (withdrawal.get("user") ? withdrawal.get("user").id : null);
+    let targetUser = null;
+    if (targetUserId) {
+      const userQuery = new Parse.Query(Parse.User);
+      targetUser = await userQuery.get(targetUserId, { useMasterKey: true });
+    }
 
     if (action === 'reject') {
       withdrawal.set("status", "rejected");
@@ -372,13 +442,12 @@ Parse.Cloud.define("processWithdrawal", async (request) => {
       withdrawal.set("processedByAdmin", user.id);
       await withdrawal.save(null, { useMasterKey: true });
 
-      const targetUserId = objectId || (withdrawal.get("user") ? withdrawal.get("user").id : null);
-      if (targetUserId) {
-        const userQuery = new Parse.Query(Parse.User);
-        const targetUser = await userQuery.get(targetUserId, { useMasterKey: true });
-        const currentBalance = targetUser.get("balance") || 0.0;
-        const amount = withdrawal.get("amount") || 0.0;
-        targetUser.set("balance", currentBalance + amount);
+      // Estorna o valor do saque imediatamente de volta para a carteira do usuário
+      if (targetUser) {
+        const currentBalance = parseMoney(targetUser.get("balance"));
+        const amount = parseMoney(withdrawal.get("amount"));
+        const newBalance = Number((currentBalance + amount).toFixed(2));
+        targetUser.set("balance", newBalance);
         await targetUser.save(null, { useMasterKey: true });
       }
 
@@ -388,13 +457,57 @@ Parse.Cloud.define("processWithdrawal", async (request) => {
       const tx = await qTx.first({ useMasterKey: true });
       if (tx) {
         tx.set("status", "rejected");
+        tx.set("rejectionReason", rejectionReason || "Rejeitado e estornado");
         await tx.save(null, { useMasterKey: true });
       }
 
-      return { success: true, message: "Withdrawal rejected and refunded." };
-    } else {
+      return {
+        success: true,
+        message: "Saque rejeitado e valor estornado para a carteira com sucesso!",
+        status: "rejected"
+      };
+    } else if (action === 'auto_payout') {
+      // PAGAMENTO AUTOMÁTICO VIA API (Asaas, Mercado Pago, Efi Bank)
+      const payoutResult = await financialService.executeAutomaticPayout({
+        withdrawal,
+        targetUser,
+        adminUser: user
+      });
+
+      const finalReceipt = payoutResult.receipt || `AUTOPAYOUT-${Date.now()}`;
       withdrawal.set("status", "completed");
-      if (receipt) withdrawal.set("receipt", receipt);
+      withdrawal.set("receipt", finalReceipt);
+      withdrawal.set("payoutGateway", payoutResult.gateway || "api");
+      withdrawal.set("payoutMethod", "auto_api");
+      withdrawal.set("processedAt", new Date());
+      withdrawal.set("processedByAdmin", user.id);
+      await withdrawal.save(null, { useMasterKey: true });
+
+      // Atualiza transação correspondente para 'completed'
+      const qTx = new Parse.Query("Transaction");
+      qTx.equalTo("withdrawalId", withdrawalId);
+      const tx = await qTx.first({ useMasterKey: true });
+      if (tx) {
+        tx.set("status", "completed");
+        tx.set("receipt", finalReceipt);
+        tx.set("gateway", payoutResult.gateway || "api");
+        await tx.save(null, { useMasterKey: true });
+      }
+
+      return {
+        success: true,
+        message: payoutResult.message || "Pagamento automático Pix realizado com sucesso!",
+        receipt: finalReceipt,
+        gateway: payoutResult.gateway,
+        isSimulated: !!payoutResult.isSimulated,
+        status: "completed"
+      };
+    } else {
+      // APROVAÇÃO MANUAL (Comprovante informado ou padrão)
+      const manualReceipt = receipt && receipt.trim().length > 0 ? receipt.trim() : "Transferência Pix manual confirmada pelo administrador";
+      withdrawal.set("status", "completed");
+      withdrawal.set("receipt", manualReceipt);
+      withdrawal.set("payoutMethod", "manual");
       withdrawal.set("processedAt", new Date());
       withdrawal.set("processedByAdmin", user.id);
       await withdrawal.save(null, { useMasterKey: true });
@@ -405,20 +518,27 @@ Parse.Cloud.define("processWithdrawal", async (request) => {
       const tx = await qTx.first({ useMasterKey: true });
       if (tx) {
         tx.set("status", "completed");
-        if (receipt) tx.set("receipt", receipt);
+        tx.set("receipt", manualReceipt);
         await tx.save(null, { useMasterKey: true });
       }
 
-      return { success: true, message: "Withdrawal approved and processed." };
+      return {
+        success: true,
+        message: "Saque aprovado manualmente com sucesso!",
+        receipt: manualReceipt,
+        status: "completed"
+      };
     }
   } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error processing withdrawal: " + error.message);
+    console.error("[processWithdrawal Error]", error);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao processar saque: " + error.message);
   }
 });
 
 Parse.Cloud.define("approveDepositManual", async (request) => {
-  const user = request.user;
-  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  const adminUser = await resolveAdminUser(request);
+  if (!adminUser) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Acesso restrito a administradores.");
+  const user = adminUser instanceof Parse.User ? adminUser : (request.user || adminUser);
   const { transactionId } = request.params;
   if (!transactionId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "transactionId is required.");
 
@@ -439,15 +559,129 @@ Parse.Cloud.define("approveDepositManual", async (request) => {
     const targetUser = tx.get("user");
     if (targetUser) {
       await targetUser.fetch({ useMasterKey: true });
-      const currentBalance = targetUser.get("balance") || 0.0;
-      const amount = tx.get("amount") || 0.0;
-      targetUser.set("balance", currentBalance + amount);
+      const currentBalance = parseMoney(targetUser.get("balance"));
+      const amount = parseMoney(tx.get("amount"));
+      targetUser.set("balance", Number((currentBalance + amount).toFixed(2)));
       await targetUser.save(null, { useMasterKey: true });
     }
 
     return { success: true, message: "Depósito aprovado com sucesso e saldo creditado." };
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao aprovar depósito: " + error.message);
+  }
+});
+
+Parse.Cloud.define("cancelDeposit", async (request) => {
+  const adminUser = await resolveAdminUser(request);
+  if (!adminUser) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Acesso restrito a administradores.");
+  const user = adminUser instanceof Parse.User ? adminUser : (request.user || adminUser);
+  const { transactionId, reason } = request.params;
+  if (!transactionId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "transactionId is required.");
+
+  try {
+    const Transaction = Parse.Object.extend("Transaction");
+    const query = new Parse.Query(Transaction);
+    const tx = await query.get(transactionId, { useMasterKey: true });
+
+    if (tx.get("status") === "approved" || tx.get("status") === "completed") {
+      throw new Error("Não é possível cancelar uma transação já aprovada e creditada.");
+    }
+
+    tx.set("status", "cancelled");
+    tx.set("cancellationReason", reason || "Cancelado pelo administrador.");
+    tx.set("cancelledAt", new Date());
+    tx.set("cancelledByAdmin", user.id);
+    await tx.save(null, { useMasterKey: true });
+
+    return { success: true, message: "Depósito pendente cancelado com sucesso." };
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao cancelar depósito: " + error.message);
+  }
+});
+
+Parse.Cloud.define("getAdminFinancialData", async (request) => {
+  const adminUser = await resolveAdminUser(request);
+  if (!adminUser) {
+    throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Acesso restrito a administradores.");
+  }
+
+  try {
+    const wQuery = new Parse.Query("Withdrawal");
+    wQuery.include("user");
+    wQuery.descending("createdAt");
+    wQuery.limit(500);
+    const withdrawals = await wQuery.find({ useMasterKey: true });
+
+    const tQuery = new Parse.Query("Transaction");
+    tQuery.include("user");
+    tQuery.descending("createdAt");
+    tQuery.limit(1000);
+    const transactions = await tQuery.find({ useMasterKey: true });
+
+    const serializedWithdrawals = withdrawals.map(w => {
+      const json = w.toJSON();
+      const u = w.get("user");
+      const userName = w.get("userName") || (u ? (u.get("name") || u.get("username")) : "") || "Jogador";
+      const userEmail = w.get("userEmail") || (u ? u.get("email") : "") || "";
+      const userId = u ? u.id : (w.get("userId") || "");
+
+      return {
+        ...json,
+        objectId: w.id,
+        amount: parseMoney(w.get("amount")),
+        status: w.get("status") || "pending",
+        pixKey: w.get("pixKey") || "",
+        pixKeyType: w.get("pixKeyType") || "CHAVE_ALEATORIA",
+        userName: userName,
+        userEmail: userEmail,
+        userId: userId,
+        approvedBy: w.get("approvedBy") || "",
+        rejectionReason: w.get("rejectionReason") || "",
+        receipt: w.get("receipt") || null,
+        payoutGateway: w.get("payoutGateway") || w.get("gateway") || "",
+        payoutMethod: w.get("payoutMethod") || "",
+        processedAt: w.get("processedAt") ? w.get("processedAt").toISOString() : null,
+        createdAt: w.createdAt ? w.createdAt.toISOString() : (json.createdAt || null),
+        updatedAt: w.updatedAt ? w.updatedAt.toISOString() : (json.updatedAt || null),
+      };
+    });
+
+    const serializedTransactions = transactions.map(t => {
+      const json = t.toJSON();
+      const u = t.get("user");
+      const userName = (u ? (u.get("name") || u.get("username")) : "") || "Jogador";
+      const userEmail = (u ? u.get("email") : "") || "";
+      const userId = u ? u.id : "";
+
+      return {
+        ...json,
+        objectId: t.id,
+        amount: parseMoney(t.get("amount")),
+        type: t.get("type") || "other",
+        status: t.get("status") || "pending",
+        description: t.get("description") || "",
+        gateway: t.get("gateway") || "",
+        pixKey: t.get("pixKey") || "",
+        pixKeyType: t.get("pixKeyType") || "",
+        withdrawalId: t.get("withdrawalId") || "",
+        receipt: t.get("receipt") || null,
+        rejectionReason: t.get("rejectionReason") || "",
+        userName: userName,
+        userEmail: userEmail,
+        userId: userId,
+        createdAt: t.createdAt ? t.createdAt.toISOString() : (json.createdAt || null),
+        updatedAt: t.updatedAt ? t.updatedAt.toISOString() : (json.updatedAt || null),
+      };
+    });
+
+    return {
+      success: true,
+      withdrawals: serializedWithdrawals,
+      transactions: serializedTransactions,
+    };
+  } catch (error) {
+    console.error("[getAdminFinancialData Error]", error);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao processar dados financeiros: " + error.message);
   }
 });
 

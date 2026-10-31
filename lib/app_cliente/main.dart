@@ -58,10 +58,9 @@ class EnigmaCityApp extends StatelessWidget {
           onSecondary: Colors.black,
           onSurface: Colors.white,
         ),
-        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).apply(
-          bodyColor: Colors.white,
-          displayColor: Colors.white,
-        ),
+        textTheme: GoogleFonts.interTextTheme(
+          ThemeData.dark().textTheme,
+        ).apply(bodyColor: Colors.white, displayColor: Colors.white),
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,

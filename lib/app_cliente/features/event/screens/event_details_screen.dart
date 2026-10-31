@@ -6,6 +6,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:oenigma/core/models/event_model.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/app_cliente/features/event/providers/event_repository_provider.dart';
 import 'package:oenigma/app_cliente/features/wallet/screens/wallet_screen.dart';
@@ -30,19 +31,39 @@ class EventDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
+  late EventModel _currentEvent;
   Future<Map<String, int>>? _statsFuture;
   bool _isSubscribed = false;
   bool _isLoading = false;
+  bool _isDescriptionExpanded = false;
 
   @override
   void initState() {
     super.initState();
+    _currentEvent = widget.event;
     _isSubscribed = widget.playerData['events']?[widget.event.id] != null;
 
     if (widget.event.eventType == 'find_and_win') {
       _statsFuture = _getFindAndWinStats();
     } else {
       _statsFuture = _getClassicEventStats();
+    }
+
+    _fetchFreshEventDetails();
+  }
+
+  Future<void> _fetchFreshEventDetails() async {
+    try {
+      final fresh = await ref
+          .read(eventRepositoryProvider)
+          .getFullEventDetails(widget.event.id);
+      if (mounted) {
+        setState(() {
+          _currentEvent = fresh;
+        });
+      }
+    } catch (_) {
+      // Falha silenciosa no refresh de fundo (mantém dados de widget.event)
     }
   }
 
@@ -76,6 +97,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     try {
       await ref.read(eventRepositoryProvider).subscribeToEvent(widget.event.id);
       if (mounted) {
+        SoundService.playSuccess();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text("Inscrição realizada com sucesso!"),
@@ -88,6 +110,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       }
     } on ParseError catch (e) {
       if (mounted) {
+        SoundService.playError();
         if (e.message.contains('saldo')) {
           _showInsufficientFundsDialog();
         } else {
@@ -125,7 +148,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           ),
         ),
         content: Text(
-          'Confirma a sua inscrição no evento "${widget.event.name}"?',
+          'Confirma a sua inscrição no evento "${_currentEvent.name}"?',
           style: GoogleFonts.inter(color: AppColors.cinzaMedio),
         ),
         actions: [
@@ -275,18 +298,18 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   void _onCtaPressed() {
     if (_isLoading) return;
     if (_isSubscribed) {
-      if (widget.event.eventType == 'find_and_win') {
+      if (_currentEvent.eventType == 'find_and_win') {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => LobbyFindEndWinScreen(event: widget.event),
+            builder: (context) => LobbyFindEndWinScreen(event: _currentEvent),
           ),
         );
       } else {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => EventProgressScreen(event: widget.event),
+            builder: (context) => EventProgressScreen(event: _currentEvent),
           ),
         );
       }
@@ -297,7 +320,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isObjeto = widget.event.prizeType.toLowerCase() == 'objeto';
+    final isObjeto = _currentEvent.prizeType.toLowerCase() == 'objeto';
 
     return Scaffold(
       backgroundColor: const Color(0xFF0B1115),
@@ -338,57 +361,50 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
-                  physics: const ClampingScrollPhysics(),
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // 1. Barra Superior Compacta
-                          _buildTopBar(isObjeto),
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight - 20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 1. Barra Superior Compacta
+                            _buildTopBar(isObjeto),
 
-                          const SizedBox(height: 8),
+                            const SizedBox(height: 14),
 
-                          // 2. Showcase Vitrine do Prêmio (Objeto ou Dinheiro)
-                          isObjeto
-                              ? _buildCompactObjectHero()
-                              : _buildCompactCashHero(),
+                            // 2. Showcase Vitrine do Prêmio (Objeto ou Dinheiro)
+                            isObjeto
+                                ? _buildCompactObjectHero()
+                                : _buildCompactCashHero(),
 
-                          const SizedBox(height: 8),
+                            const SizedBox(height: 16),
 
-                          // 3. Título do Evento & Localização
-                          _buildTitleAndLocationRow(isObjeto),
+                            // 3. Título do Evento & Localização
+                            _buildTitleAndLocationRow(isObjeto),
 
-                          const SizedBox(height: 8),
+                            const SizedBox(height: 14),
 
-                          // 4. Faixa de Garantias / Vantagens
-                          isObjeto
-                              ? _buildObjectGuaranteePills()
-                              : _buildCashGuaranteePills(),
+                            // 4. Barra de Estatísticas Compacta (4 métricas lado a lado)
+                            _buildCompactStatsBar(isObjeto),
 
-                          const SizedBox(height: 8),
+                            const SizedBox(height: 14),
 
-                          // 5. Barra de Estatísticas Compacta (4 métricas lado a lado)
-                          _buildCompactStatsBar(isObjeto),
+                            // 5. Descrição do Evento / Vencedor
+                            _buildCompactDescriptionBox(isObjeto),
+                          ],
+                        ),
 
-                          const SizedBox(height: 8),
-
-                          // 6. Resumo "Sobre a Caçada" / Vencedor
-                          _buildCompactDescriptionBox(isObjeto),
-
-                          const SizedBox(height: 10),
-
-                          // 7. Botão CTA Principal de Inscrição / Entrada
-                          _buildCtaButton(isObjeto),
-
-                          const SizedBox(height: 6),
-
-                          // 8. Selo de Segurança do Rodapé
-                          _buildSecurityFooter(),
-                        ],
-                      ),
+                        // 6. Botão CTA Principal de Inscrição / Entrada
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16, bottom: 4),
+                          child: _buildCtaButton(isObjeto),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -404,7 +420,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   // 1. BARRA SUPERIOR COMPACTA
   // ===========================================================================
   Widget _buildTopBar(bool isObjeto) {
-    final isClassic = widget.event.eventType == 'classic';
+    final isClassic = _currentEvent.eventType == 'classic';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -486,7 +502,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   // 2. HERO SHOWCASE COMPACTO (OBJETO)
   // ===========================================================================
   Widget _buildCompactObjectHero() {
-    final event = widget.event;
+    final event = _currentEvent;
 
     return Container(
       height: 132,
@@ -686,7 +702,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   // 3. HERO SHOWCASE COMPACTO (DINHEIRO)
   // ===========================================================================
   Widget _buildCompactCashHero() {
-    final event = widget.event;
+    final event = _currentEvent;
 
     return Container(
       height: 132,
@@ -847,7 +863,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   // 4. TÍTULO E LOCALIZAÇÃO (LINHA ÚNICA)
   // ===========================================================================
   Widget _buildTitleAndLocationRow(bool isObjeto) {
-    final event = widget.event;
+    final event = _currentEvent;
     final isClassic = event.eventType == 'classic';
     final String displayTitle = event.name.isNotEmpty
         ? event.name
@@ -865,7 +881,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.poppins(
-              fontSize: 16.5,
+              fontSize: 17,
               fontWeight: FontWeight.w800,
               color: Colors.white,
               letterSpacing: -0.2,
@@ -873,85 +889,41 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        FaIcon(FontAwesomeIcons.locationDot, color: accentColor, size: 11),
-        const SizedBox(width: 4),
-        Text(
-          displayLocation,
-          style: GoogleFonts.inter(
-            color: AppColors.cinzaMedio,
-            fontSize: 11.5,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ===========================================================================
-  // 5. PILLS DE GARANTIAS (OBJETO OU DINHEIRO)
-  // ===========================================================================
-  Widget _buildObjectGuaranteePills() {
-    return Row(
-      children: [
-        Expanded(child: _buildMiniPill(FontAwesomeIcons.box, 'Lacrado na Caixa', const Color(0xFF00A4B4))),
-        const SizedBox(width: 6),
-        Expanded(child: _buildMiniPill(FontAwesomeIcons.truckFast, 'Entrega Rápida', const Color(0xFF00A4B4))),
-        const SizedBox(width: 6),
-        Expanded(child: _buildMiniPill(FontAwesomeIcons.shieldHalved, 'Garantia Oficial', const Color(0xFF00A4B4))),
-      ],
-    );
-  }
-
-  Widget _buildCashGuaranteePills() {
-    return Row(
-      children: [
-        Expanded(child: _buildMiniPill(FontAwesomeIcons.pix, 'PIX Imediato', const Color(0xFF32BCAD))),
-        const SizedBox(width: 6),
-        Expanded(child: _buildMiniPill(FontAwesomeIcons.shieldHalved, '100% Protegido', const Color(0xFF68D391))),
-        const SizedBox(width: 6),
-        Expanded(child: _buildMiniPill(FontAwesomeIcons.coins, 'Zero Taxas', const Color(0xFFF3A522))),
-      ],
-    );
-  }
-
-  Widget _buildMiniPill(dynamic icon, String label, Color accentColor) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFF131D24),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: accentColor.withValues(alpha: 0.35),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          FaIcon(icon, color: accentColor, size: 9.5),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                color: Colors.white.withValues(alpha: 0.9),
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFF131D24),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.1),
+              width: 1,
             ),
           ),
-        ],
-      ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FaIcon(FontAwesomeIcons.locationDot, color: accentColor, size: 10),
+              const SizedBox(width: 5),
+              Text(
+                displayLocation,
+                style: GoogleFonts.inter(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
   // ===========================================================================
-  // 6. BARRA COMPACTA DE ESTATÍSTICAS (4 COLUNAS EM UMA ÚNICA LINHA)
+  // 5. BARRA COMPACTA DE ESTATÍSTICAS (4 COLUNAS EM UMA ÚNICA LINHA)
   // ===========================================================================
   Widget _buildCompactStatsBar(bool isObjeto) {
-    final event = widget.event;
+    final event = _currentEvent;
     final displayDifficulty = event.difficulty.isNotEmpty ? event.difficulty : 'Média';
     final Color accentColor = isObjeto ? const Color(0xFF00A4B4) : const Color(0xFFF3A522);
 
@@ -1085,86 +1057,136 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 
   // ===========================================================================
-  // 7. SOBRE A CAÇADA COMPACTO / VENCEDOR
+  // 7. DESCRIÇÃO DO EVENTO COMPACTO / VENCEDOR
   // ===========================================================================
   Widget _buildCompactDescriptionBox(bool isObjeto) {
-    final event = widget.event;
+    final event = _currentEvent;
     final bool isClosed = event.status == 'closed';
     final hasWinner = event.winnerName != null && event.winnerName!.isNotEmpty;
     final Color accentColor = isObjeto ? const Color(0xFF00A4B4) : const Color(0xFFF3A522);
 
-    if (isClosed && hasWinner) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1708),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: const Color(0xFFF3A522).withValues(alpha: 0.4),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            const FaIcon(FontAwesomeIcons.trophy, color: Color(0xFFF3A522), size: 14),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Prêmio já conquistado por: ${event.winnerName}!',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFFF3A522),
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                ),
+    final String displayDescription = event.fullDescription.trim().isNotEmpty
+        ? event.fullDescription.trim()
+        : 'Encontre as pistas espalhadas pela cidade, escaneie os QR codes e desvende os mistérios para conquistar o grande prêmio!';
+
+    final bool isLongText = displayDescription.length > 90;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (isClosed && hasWinner) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1708),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFFF3A522).withValues(alpha: 0.4),
+                width: 1,
               ),
             ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF131D24),
-        borderRadius: BorderRadius.circular(12),
-        border: Border(
-          left: BorderSide(color: accentColor, width: 3),
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
-          right: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Regra da Caçada',
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
+            child: Row(
+              children: [
+                const FaIcon(FontAwesomeIcons.trophy, color: Color(0xFFF3A522), size: 14),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Prêmio já conquistado por: ${event.winnerName}!',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFFF3A522),
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            event.fullDescription.isNotEmpty
-                ? event.fullDescription
-                : 'Encontre as pistas, escaneie os QR codes e desvende os mistérios. O primeiro a concluir leva o prêmio total.',
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.75),
-              fontSize: 10.5,
-              height: 1.3,
-            ),
-          ),
+          const SizedBox(height: 8),
         ],
-      ),
+
+        // Card da Descrição do Evento
+        GestureDetector(
+          onTap: isLongText
+              ? () => setState(() => _isDescriptionExpanded = !_isDescriptionExpanded)
+              : null,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF131D24),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isObjeto
+                    ? const Color(0xFF1E3A45)
+                    : const Color(0xFFF3A522).withValues(alpha: 0.25),
+                width: 1.2,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 3.5,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: accentColor,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        FaIcon(
+                          FontAwesomeIcons.circleInfo,
+                          size: 12,
+                          color: accentColor,
+                        ),
+                        const SizedBox(width: 7),
+                        Text(
+                          'Descrição do Evento',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (isLongText)
+                      Text(
+                        _isDescriptionExpanded ? 'Ver menos' : 'Ver mais',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: accentColor,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  displayDescription,
+                  maxLines: _isDescriptionExpanded ? null : 4,
+                  overflow: _isDescriptionExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 12,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1172,20 +1194,20 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   // 8. BOTÃO CTA PRINCIPAL
   // ===========================================================================
   Widget _buildCtaButton(bool isObjeto) {
-    if (widget.event.status == 'closed') {
+    if (_currentEvent.status == 'closed') {
       return _buildDisabledButton(
         icon: FontAwesomeIcons.flag,
         label: 'Evento Finalizado',
       );
     }
-    if (widget.event.status == 'dev') {
+    if (_currentEvent.status == 'dev') {
       return _buildDisabledButton(
         icon: FontAwesomeIcons.hourglassHalf,
         label: 'Em Breve',
       );
     }
 
-    final bool isFree = widget.event.price == 0;
+    final bool isFree = _currentEvent.price == 0;
     final LinearGradient gradient = isObjeto
         ? AppColors.gradienteVerdeVale
         : const LinearGradient(
@@ -1199,14 +1221,14 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       onTap: _onCtaPressed,
       child: Container(
         width: double.infinity,
-        height: 48,
+        height: 52,
         decoration: BoxDecoration(
           gradient: gradient,
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: 12,
+              color: (isObjeto ? const Color(0xFF00A4B4) : const Color(0xFFF3A522)).withValues(alpha: 0.35),
+              blurRadius: 16,
               offset: const Offset(0, 4),
             ),
           ],
@@ -1216,17 +1238,17 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           children: [
             if (_isLoading)
               SizedBox(
-                width: 20,
-                height: 20,
+                width: 22,
+                height: 22,
                 child: CircularProgressIndicator(
                   color: textColor,
-                  strokeWidth: 2,
+                  strokeWidth: 2.2,
                 ),
               )
             else ...[
               FaIcon(
                 _isSubscribed ? FontAwesomeIcons.play : (isObjeto ? FontAwesomeIcons.ticket : FontAwesomeIcons.coins),
-                size: 13,
+                size: 14,
                 color: textColor,
               ),
               const SizedBox(width: 8),
@@ -1235,10 +1257,10 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                     ? 'ENTRAR NA CAÇADA'
                     : (isFree
                         ? 'INICIAR CAÇADA (GRÁTIS)'
-                        : 'INSCRIÇÃO: R\$ ${widget.event.price.toStringAsFixed(2).replaceAll('.', ',')}'),
+                        : 'INSCRIÇÃO: R\$ ${_currentEvent.price.toStringAsFixed(2).replaceAll('.', ',')}'),
                 style: GoogleFonts.poppins(
                   color: textColor,
-                  fontSize: 13.5,
+                  fontSize: 14,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.5,
                 ),
@@ -1253,7 +1275,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   Widget _buildDisabledButton({required dynamic icon, required String label}) {
     return Container(
       width: double.infinity,
-      height: 48,
+      height: 52,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(30),
@@ -1278,28 +1300,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           FaIcon(icon, size: 12, color: AppColors.cinzaMedio),
         ],
       ),
-    );
-  }
-
-  Widget _buildSecurityFooter() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const FaIcon(
-          FontAwesomeIcons.shieldHalved,
-          color: AppColors.verdeVale,
-          size: 11,
-        ),
-        const SizedBox(width: 6),
-        Text(
-          'Caçada segura e prêmio auditado',
-          style: GoogleFonts.inter(
-            color: AppColors.cinzaMedio,
-            fontSize: 10.5,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
     );
   }
 }

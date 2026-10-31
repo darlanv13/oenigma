@@ -1,51 +1,56 @@
 // Parse Cloud Code for Back4App
 // Write your cloud functions here.
+const financialService = require('./financial_service.js');
+
+function parseMoney(value) {
+  if (value === undefined || value === null) return 0.0;
+  if (typeof value === 'number') return isNaN(value) ? 0.0 : value;
+  let clean = String(value).replace('R$', '').replace(/\s/g, '').trim();
+  if (clean.includes(',') && clean.includes('.')) {
+    clean = clean.replace(/\./g, '').replace(',', '.');
+  } else if (clean.includes(',')) {
+    clean = clean.replace(',', '.');
+  }
+  const parsed = parseFloat(clean);
+  return isNaN(parsed) ? 0.0 : parsed;
+}
+
+require('./admin.js');
 
 // -----------------------------------------------------------------------------
 // App / Home Functions
 // -----------------------------------------------------------------------------
 Parse.Cloud.define("getHomeScreenData", async (request) => {
   try {
-    // 1. Pegar o usuário logado que fez a requisição
     const user = request.user;
 
-    // 2. Buscar Banners
     const Banner = Parse.Object.extend("Banner");
     const bannerQuery = new Parse.Query(Banner);
     const banners = await bannerQuery.find({ useMasterKey: true });
 
-    // 3. Buscar Eventos abertos
     const Event = Parse.Object.extend("Event");
     const eventQuery = new Parse.Query(Event);
     eventQuery.equalTo("status", "open");
     const events = await eventQuery.find({ useMasterKey: true });
 
-    // FORMATAR OS EVENTOS PARA O FLUTTER NÃO DAR ERRO DE TIPO
     const formattedEvents = events.map(e => {
       const json = e.toJSON();
-
-      // Corrige o campo ID (O Flutter espera 'id', mas o Parse envia 'objectId' por padrão)
       json.id = e.id;
-
-      // Corrige a Data (Converte o Objeto/Map de data do Parse numa String simples)
       if (json.startDate && json.startDate.iso) {
         json.startDate = json.startDate.iso;
       }
-
       return json;
     });
 
-    // 4. Montar a Carteira (Wallet) e Dados do Jogador
     let walletData = {};
     let playerData = {};
 
     if (user) {
-      // Se houver usuário logado, envia os dados reais
       walletData = {
         objectId: user.id,
         name: user.get("name") || user.get("username") || "Jogador",
         email: user.get("email") || "",
-        balance: user.get("balance") || 0.0,
+        balance: parseMoney(user.get("balance")),
         photoURL: user.get("photoURL") || null,
         lastWonEventName: user.get("lastWonEventName"),
         lastEventRank: user.get("lastEventRank"),
@@ -62,7 +67,6 @@ Parse.Cloud.define("getHomeScreenData", async (request) => {
         photoURL: user.get("photoURL") || null
       };
     } else {
-      // Valores padrão de segurança (Caso seja um Visitante)
       walletData = {
         objectId: "visitante",
         name: "Visitante",
@@ -72,19 +76,17 @@ Parse.Cloud.define("getHomeScreenData", async (request) => {
       };
     }
 
-    // 5. Buscar o Ranking para a tela inicial (allPlayers)
     const userQuery = new Parse.Query(Parse.User);
-    userQuery.descending("balance"); // Ordena pelos mais ricos, por exemplo
-    userQuery.limit(5); // Pega apenas os 5 primeiros
+    userQuery.descending("balance");
+    userQuery.limit(5);
     const topPlayers = await userQuery.find({ useMasterKey: true });
 
     const allPlayers = topPlayers.map(p => ({
       objectId: p.id,
       name: p.get("name") || p.get("username") || "Jogador",
-      balance: p.get("balance") || 0.0
+      balance: parseMoney(p.get("balance"))
     }));
 
-    // 6. Retornar TUDO que o ficheiro home_screen.dart do Flutter pede
     return {
       banners: banners.map(b => b.toJSON()),
       events: formattedEvents,
@@ -98,316 +100,169 @@ Parse.Cloud.define("getHomeScreenData", async (request) => {
   }
 });
 
-
-// -----------------------------------------------------------------------------
-// Admin / Dashboard Functions
-// -----------------------------------------------------------------------------
-Parse.Cloud.define("getAdminDashboardData", async (request) => {
-  try {
-    const usersQuery = new Parse.Query(Parse.User);
-    const usersCount = await usersQuery.count({ useMasterKey: true });
-
-    const eventsQuery = new Parse.Query("Event");
-    eventsQuery.equalTo("status", "published");
-    const activeEventsCount = await eventsQuery.count({ useMasterKey: true });
-
-    const depositsQuery = new Parse.Query("Transaction");
-    depositsQuery.equalTo("type", "deposit");
-    const totalDepositsCount = await depositsQuery.count({ useMasterKey: true });
-
-    const withdrawalsQuery = new Parse.Query("Withdrawal");
-    withdrawalsQuery.equalTo("status", "pending");
-    const pendingWithdrawalsCount = await withdrawalsQuery.count({ useMasterKey: true });
-
-    return {
-      users: usersCount,
-      activeEvents: activeEventsCount,
-      totalDeposits: totalDepositsCount,
-      pendingWithdrawals: pendingWithdrawalsCount
-    };
-  } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error fetching dashboard data: " + error.message);
-  }
-});
-
-Parse.Cloud.define("listAllUsers", async (request) => {
-  try {
-    const query = new Parse.Query(Parse.User);
-    query.limit(1000); // Set appropriate limit
-    const users = await query.find({ useMasterKey: true });
-
-    return users.map(user => {
-      return {
-        objectId: user.id, // using objectId, frontend should expect this or we return it as objectId
-        email: user.get("email") || "",
-        name: user.get("name") || "",
-        isAdmin: user.get("isAdmin") || false,
-        walletBalance: user.get("walletBalance") || 0,
-        createdAt: user.createdAt
-      };
-    });
-  } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error fetching users: " + error.message);
-  }
-});
-
-Parse.Cloud.define("grantAdminRole", async (request) => {
-  const { objectId } = request.params;
-  if (!objectId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "objectId is required.");
-
-  try {
-    const query = new Parse.Query(Parse.User);
-    const user = await query.get(objectId, { useMasterKey: true });
-    user.set("isAdmin", true);
-    await user.save(null, { useMasterKey: true });
-    return { success: true, message: "Admin role granted." };
-  } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error granting admin role: " + error.message);
-  }
-});
-
-Parse.Cloud.define("revokeAdminRole", async (request) => {
-  const { objectId } = request.params;
-  if (!objectId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "objectId is required.");
-
-  try {
-    const query = new Parse.Query(Parse.User);
-    const user = await query.get(objectId, { useMasterKey: true });
-    user.set("isAdmin", false);
-    await user.save(null, { useMasterKey: true });
-    return { success: true, message: "Admin role revoked." };
-  } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error revoking admin role: " + error.message);
-  }
-});
-
-// -----------------------------------------------------------------------------
-// Event & Enigma Functions
-// -----------------------------------------------------------------------------
-Parse.Cloud.define("createOrUpdateEvent", async (request) => {
-  const { eventId, data } = request.params;
-
-  try {
-    const Event = Parse.Object.extend("Event");
-    let event;
-
-    if (eventId) {
-      const query = new Parse.Query(Event);
-      event = await query.get(eventId, { useMasterKey: true });
-    } else {
-      event = new Event();
-    }
-
-    if (data) {
-      for (const key in data) {
-        event.set(key, data[key]);
-      }
-    }
-
-    await event.save(null, { useMasterKey: true });
-    return { success: true, eventId: event.id };
-  } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error saving event: " + error.message);
-  }
-});
-
-Parse.Cloud.define("deleteEvent", async (request) => {
-  const { eventId } = request.params;
-  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
-
-  try {
-    const Event = Parse.Object.extend("Event");
-    const query = new Parse.Query(Event);
-    const event = await query.get(eventId, { useMasterKey: true });
-    await event.destroy({ useMasterKey: true });
-    return { success: true, message: "Event deleted." };
-  } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error deleting event: " + error.message);
-  }
-});
-
-Parse.Cloud.define("createOrUpdateEnigma", async (request) => {
-  const { eventId, enigmaId, data } = request.params;
-  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
-
-  try {
-    const Enigma = Parse.Object.extend("Enigma");
-    let enigma;
-
-    if (enigmaId) {
-      const query = new Parse.Query(Enigma);
-      enigma = await query.get(enigmaId, { useMasterKey: true });
-    } else {
-      enigma = new Enigma();
-      const Event = Parse.Object.extend("Event");
-      const eventPointer = new Event();
-      eventPointer.id = eventId;
-      enigma.set("event", eventPointer);
-      enigma.set("eventId", eventId);
-    }
-
-    if (data) {
-      for (const key in data) {
-        enigma.set(key, data[key]);
-      }
-    }
-
-    await enigma.save(null, { useMasterKey: true });
-    return { success: true, enigmaId: enigma.id };
-  } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error saving enigma: " + error.message);
-  }
-});
-
-Parse.Cloud.define("deleteEnigma", async (request) => {
-  const { eventId, enigmaId } = request.params;
-  if (!enigmaId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "enigmaId is required.");
-
-  try {
-    const Enigma = Parse.Object.extend("Enigma");
-    const query = new Parse.Query(Enigma);
-    const enigma = await query.get(enigmaId, { useMasterKey: true });
-    await enigma.destroy({ useMasterKey: true });
-    return { success: true, message: "Enigma deleted." };
-  } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error deleting enigma: " + error.message);
-  }
-});
-
-Parse.Cloud.define("createOrUpdateHint", async (request) => {
-  const { hintId, data } = request.params;
-
-  try {
-    const Hint = Parse.Object.extend("Hint");
-    let hint;
-
-    if (hintId) {
-      const query = new Parse.Query(Hint);
-      hint = await query.get(hintId, { useMasterKey: true });
-    } else {
-      hint = new Hint();
-    }
-
-    if (data) {
-      for (const key in data) {
-        hint.set(key, data[key]);
-      }
-    }
-
-    await hint.save(null, { useMasterKey: true });
-    return { success: true, hintId: hint.id };
-  } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error saving hint: " + error.message);
-  }
-});
-
-Parse.Cloud.define("deleteHint", async (request) => {
-  const { hintId } = request.params;
-  if (!hintId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "hintId is required.");
-
-  try {
-    const Hint = Parse.Object.extend("Hint");
-    const query = new Parse.Query(Hint);
-    const hint = await query.get(hintId, { useMasterKey: true });
-    await hint.destroy({ useMasterKey: true });
-    return { success: true, message: "Hint deleted." };
-  } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error deleting hint: " + error.message);
-  }
-});
-
-
-// -----------------------------------------------------------------------------
-// Banner & Finance Functions
-// -----------------------------------------------------------------------------
-Parse.Cloud.define("createOrUpdateBanner", async (request) => {
-  const { bannerId, data } = request.params;
-
-  try {
-    const Banner = Parse.Object.extend("Banner");
-    let banner;
-
-    if (bannerId) {
-      const query = new Parse.Query(Banner);
-      banner = await query.get(bannerId, { useMasterKey: true });
-    } else {
-      banner = new Banner();
-    }
-
-    if (data) {
-      for (const key in data) {
-        banner.set(key, data[key]);
-      }
-    }
-
-    await banner.save(null, { useMasterKey: true });
-    return { success: true, bannerId: banner.id };
-  } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error saving banner: " + error.message);
-  }
-});
-
-Parse.Cloud.define("deleteBanner", async (request) => {
-  const { bannerId } = request.params;
-  if (!bannerId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "bannerId is required.");
-
-  try {
-    const Banner = Parse.Object.extend("Banner");
-    const query = new Parse.Query(Banner);
-    const banner = await query.get(bannerId, { useMasterKey: true });
-    await banner.destroy({ useMasterKey: true });
-    return { success: true, message: "Banner deleted." };
-  } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error deleting banner: " + error.message);
-  }
-});
-
 Parse.Cloud.define("createPixCharge", async (request) => {
   const { amount } = request.params;
-  if (!amount || typeof amount !== 'number') {
-    throw new Parse.Error(Parse.Error.INVALID_QUERY, "amount is required and must be a number.");
+  const user = request.user;
+
+  const numAmount = parseMoney(amount);
+  if (!numAmount || numAmount <= 0) {
+    throw new Parse.Error(Parse.Error.INVALID_QUERY, "Valor de depósito inválido.");
+  }
+  
+  if (!user) {
+    throw new Parse.Error(209, "Acesso negado. Usuário não autenticado.");
   }
 
   try {
-    // In a real implementation, you would call Mercado Pago API here.
-    // For now, we mock a successful Pix charge.
-
     const Transaction = Parse.Object.extend("Transaction");
     const transaction = new Transaction();
     transaction.set("type", "deposit");
-    transaction.set("amount", amount);
+    transaction.set("amount", numAmount);
     transaction.set("status", "pending");
-    if (request.user) {
-      transaction.set("user", request.user);
+    transaction.set("user", user);
+    transaction.set("description", `Depósito Pix R$ ${numAmount.toFixed(2)}`);
+
+    const acl = new Parse.ACL();
+    acl.setReadAccess(user.id, true);
+    acl.setWriteAccess(user.id, false);
+    acl.setPublicReadAccess(false);
+    acl.setPublicWriteAccess(false);
+    transaction.setACL(acl);
+
+    await transaction.save(null, { useMasterKey: true });
+
+    // Gera cobrança no Gateway Ativo ou Pix BRCode Oficial Bacen
+    const chargeData = await financialService.createPixChargeService({
+      amount: numAmount,
+      user: user,
+      transactionId: transaction.id
+    });
+
+    transaction.set("gateway", chargeData.gateway || "mercadopago");
+    if (chargeData.gatewayPaymentId) {
+      transaction.set("gatewayPaymentId", chargeData.gatewayPaymentId);
+    }
+    if (chargeData.copiaCola) {
+      transaction.set("copiaCola", chargeData.copiaCola);
+    }
+    if (chargeData.qrCodeBase64) {
+      transaction.set("qrCodeBase64", chargeData.qrCodeBase64);
     }
     await transaction.save(null, { useMasterKey: true });
 
     return {
       success: true,
-      qrCode: "00020101021243650016COM.MERCADOLIBRE0114...",
-      qrCodeBase64: "iVBORw0KGgoAAAANSUhEUgAAA...",
+      gateway: chargeData.gateway,
+      qrCode: chargeData.copiaCola,
+      copiaCola: chargeData.copiaCola,
+      qrCodeBase64: chargeData.qrCodeBase64,
       transactionId: transaction.id
     };
   } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error creating Pix charge: " + error.message);
+    console.error("[createPixCharge Error]", error);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao gerar cobrança Pix: " + error.message);
   }
 });
 
-Parse.Cloud.define("processWithdrawal", async (request) => {
-  const { withdrawalId } = request.params;
-  if (!withdrawalId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "withdrawalId is required.");
+Parse.Cloud.define("checkPixPaymentStatus", async (request) => {
+  const { transactionId } = request.params;
+  const user = request.user;
+  if (!transactionId) {
+    throw new Parse.Error(Parse.Error.INVALID_QUERY, "transactionId is required.");
+  }
 
   try {
-    const Withdrawal = Parse.Object.extend("Withdrawal");
-    const query = new Parse.Query(Withdrawal);
-    const withdrawal = await query.get(withdrawalId, { useMasterKey: true });
+    const qTx = new Parse.Query("Transaction");
+    qTx.include("user");
+    const tx = await qTx.get(transactionId, { useMasterKey: true });
 
-    withdrawal.set("status", "completed");
-    await withdrawal.save(null, { useMasterKey: true });
+    if (!tx) {
+      throw new Error("Transação não encontrada.");
+    }
 
-    return { success: true, message: "Withdrawal processed." };
+    const currentStatus = tx.get("status") || "pending";
+    if (currentStatus === "approved" || currentStatus === "completed") {
+      const txUser = tx.get("user") || user;
+      let balance = 0;
+      if (txUser) {
+        await txUser.fetch({ useMasterKey: true });
+        balance = parseMoney(txUser.get("balance"));
+      }
+      return {
+        success: true,
+        status: "approved",
+        balance: balance,
+        message: "Depósito já aprovado e creditado!"
+      };
+    }
+
+    // Se estiver pendente e possuir gatewayPaymentId, consulta o status no gateway
+    const gateway = tx.get("gateway");
+    const gatewayPaymentId = tx.get("gatewayPaymentId");
+    const gatewayConfig = await financialService.getActiveGateway();
+    const keys = gatewayConfig ? (gatewayConfig.get("keys") || {}) : {};
+    const environment = gatewayConfig ? (gatewayConfig.get("environment") || "production") : "production";
+
+    let approvedNow = false;
+
+    if (gateway === "mercadopago" && gatewayPaymentId && keys.access_token) {
+      try {
+        const mpRes = await financialService.httpRequest(`https://api.mercadopago.com/v1/payments/${gatewayPaymentId}`, {
+          method: "GET",
+          headers: { "Authorization": `Bearer ${keys.access_token.trim()}` }
+        });
+        if (mpRes.ok && mpRes.data && mpRes.data.status === "approved") {
+          approvedNow = true;
+        }
+      } catch (e) {
+        console.warn("[checkPixPaymentStatus] MP check error:", e.message);
+      }
+    } else if (gateway === "asaas" && gatewayPaymentId && keys.api_key) {
+      try {
+        const baseUrl = environment === "sandbox" ? "https://sandbox.asaas.com/api/v3" : "https://api.asaas.com/api/v3";
+        const asaasRes = await financialService.httpRequest(`${baseUrl}/payments/${gatewayPaymentId}`, {
+          method: "GET",
+          headers: { "access_token": keys.api_key.trim() }
+        });
+        if (asaasRes.ok && asaasRes.data && (asaasRes.data.status === "RECEIVED" || asaasRes.data.status === "CONFIRMED")) {
+          approvedNow = true;
+        }
+      } catch (e) {
+        console.warn("[checkPixPaymentStatus] Asaas check error:", e.message);
+      }
+    }
+
+    if (approvedNow) {
+      tx.set("status", "approved");
+      tx.set("approvedAt", new Date());
+      await tx.save(null, { useMasterKey: true });
+
+      const targetUser = tx.get("user");
+      let newBalance = 0;
+      if (targetUser) {
+        await targetUser.fetch({ useMasterKey: true });
+        const curBal = parseMoney(targetUser.get("balance"));
+        const amt = parseMoney(tx.get("amount"));
+        newBalance = Number((curBal + amt).toFixed(2));
+        targetUser.set("balance", newBalance);
+        await targetUser.save(null, { useMasterKey: true });
+      }
+
+      return {
+        success: true,
+        status: "approved",
+        balance: newBalance,
+        message: "Pagamento confirmado com sucesso e creditado na carteira!"
+      };
+    }
+
+    return {
+      success: true,
+      status: currentStatus,
+      message: "Aguardando confirmação do pagamento..."
+    };
   } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error processing withdrawal: " + error.message);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao checar status do pagamento: " + error.message);
   }
 });
 
@@ -424,7 +279,7 @@ Parse.Cloud.define("getUserWalletData", async (request) => {
     objectId: user.id,
     name: user.get("name") || user.get("username") || "Jogador",
     email: user.get("email") || "",
-    balance: user.get("balance") || 0.0,
+    balance: parseMoney(user.get("balance")),
     photoURL: user.get("photoURL") || null,
     lastWonEventName: user.get("lastWonEventName"),
     lastEventRank: user.get("lastEventRank"),
@@ -442,28 +297,16 @@ Parse.Cloud.define("subscribeToEvent", async (request) => {
     const Event = Parse.Object.extend("Event");
     const query = new Parse.Query(Event);
     const event = await query.get(eventId, { useMasterKey: true });
-    
-    const price = event.get("price") || 0.0;
-    const balance = user.get("balance") || 0.0;
-    
-    if (balance < price) {
-      throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "saldo insuficiente");
-    }
-    
-    // Deduct price
-    user.set("balance", balance - price);
-    
-    // Update events map
+
     let userEvents = user.get("events") || {};
     userEvents[eventId] = { currentPhase: 1, currentEnigma: 1, hintsPurchased: [] };
     user.set("events", userEvents);
-    
+
     await user.save(null, { useMasterKey: true });
-    
-    // Increment player count on Event
+
     event.increment("playerCount");
     await event.save(null, { useMasterKey: true });
-    
+
     return { success: true };
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
@@ -473,18 +316,20 @@ Parse.Cloud.define("subscribeToEvent", async (request) => {
 Parse.Cloud.define("getEventData", async (request) => {
   const { eventId } = request.params;
   if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
-  
+
   try {
     const Event = Parse.Object.extend("Event");
     const query = new Parse.Query(Event);
     const event = await query.get(eventId, { useMasterKey: true });
-    
+
     const eventJson = event.toJSON();
     eventJson.id = event.id;
     if (eventJson.startDate && eventJson.startDate.iso) {
       eventJson.startDate = eventJson.startDate.iso;
     }
-    
+
+    const eventType = event.get("eventType") || 'classic';
+
     // Fetch phases for event
     const Phase = Parse.Object.extend("Phase");
     const phaseQuery = new Parse.Query(Phase);
@@ -493,154 +338,756 @@ Parse.Cloud.define("getEventData", async (request) => {
     phaseQuery.equalTo("event", eventPointer);
     phaseQuery.ascending("order");
     const phases = await phaseQuery.find({ useMasterKey: true });
-    
+
     // Fetch enigmas for event
     const Enigma = Parse.Object.extend("Enigma");
     const enigmaQuery = new Parse.Query(Enigma);
     enigmaQuery.equalTo("event", eventPointer);
     enigmaQuery.ascending("order");
     const enigmas = await enigmaQuery.find({ useMasterKey: true });
-    
+
     // Map enigmas to phases (if any) or to event level list
     let enigmasJson = enigmas.map(e => {
-        const json = e.toJSON();
-        json.id = e.id;
-        // SECURITY: Remove the code so it's not exposed to the client!
-        delete json.code;
-        return json;
+      const json = e.toJSON();
+      json.id = e.id;
+      
+      // Blindagem de Payload
+      delete json.code; 
+      delete json.compassCoords; 
+      delete json.createdAt;
+      delete json.updatedAt;
+
+      if (eventType === 'classic') {
+        json.prize = 0.0;
+      }
+
+      return json;
     });
-    
+
     let phasesJson = phases.map(p => {
-        const json = p.toJSON();
-        json.id = p.id;
-        json.enigmas = enigmasJson.filter(e => e.phaseId === p.id || (e.phase && e.phase.objectId === p.id));
-        return json;
+      const json = p.toJSON();
+      json.id = p.id;
+      json.enigmas = enigmasJson.filter(e => {
+        return e.phaseId === p.id || (e.phase && (e.phase.objectId === p.id || e.phase.id === p.id));
+      });
+      return json;
     });
-    
+
     eventJson.phases = phasesJson;
     eventJson.enigmas = enigmasJson;
-    
+
     return eventJson;
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
   }
 });
 
-Parse.Cloud.define("toggleEventStatus", async (request) => {
-  const { eventId, newStatus } = request.params;
+Parse.Cloud.define("getSafeEnigmaData", async (request) => {
+  const { enigmaId } = request.params;
   const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
-  if (!eventId || !newStatus) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId and newStatus are required.");
-  
-  try {
-    const Event = Parse.Object.extend("Event");
-    const query = new Parse.Query(Event);
-    const event = await query.get(eventId, { useMasterKey: true });
-    event.set("status", newStatus);
-    await event.save(null, { useMasterKey: true });
-    return { success: true };
-  } catch(error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
-  }
-});
 
-Parse.Cloud.define("getFindAndWinStats", async (request) => {
-  const { eventId } = request.params;
-  const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
-  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
-  
-  try {
-      const userQuery = new Parse.Query(Parse.User);
-      const totalSubscribed = await userQuery.count({useMasterKey: true});
-      return { totalPlayers: totalSubscribed, completionRate: 0 };
-  } catch(error) {
-      throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
-  }
-});
+  if (!user) throw new Parse.Error(209, "Acesso negado.");
+  if (!enigmaId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "enigmaId is required.");
 
-Parse.Cloud.define("createOrUpdatePhase", async (request) => {
-  const { eventId, phaseId, data } = request.params;
-  const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
-  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
-  
   try {
-    const Phase = Parse.Object.extend("Phase");
-    let phase;
-    
-    if (phaseId) {
-      const query = new Parse.Query(Phase);
-      phase = await query.get(phaseId, { useMasterKey: true });
-    } else {
-      phase = new Phase();
-      const Event = Parse.Object.extend("Event");
-      const eventPointer = new Event();
-      eventPointer.id = eventId;
-      phase.set("event", eventPointer);
-      phase.set("eventId", eventId);
-    }
-    
-    if (data) {
-      for (const key in data) {
-        phase.set(key, data[key]);
-      }
-    }
-    
-    await phase.save(null, { useMasterKey: true });
-    return { success: true, phaseId: phase.id };
+    const query = new Parse.Query("Enigma");
+    const enigma = await query.get(enigmaId, { useMasterKey: true });
+
+    const safePayload = enigma.toJSON();
+    safePayload.id = enigma.id;
+
+    delete safePayload.code; 
+    delete safePayload.compassCoords; 
+    delete safePayload.createdAt;
+    delete safePayload.updatedAt;
+
+    return safePayload;
   } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao buscar enigma seguro: " + error.message);
   }
 });
 
-Parse.Cloud.define("deletePhase", async (request) => {
-  const { eventId, phaseId } = request.params;
-  const user = request.user;
-  if (!user || !user.get("isAdmin")) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
-  if (!phaseId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "phaseId is required.");
-  
-  try {
-    const Phase = Parse.Object.extend("Phase");
-    const query = new Parse.Query(Phase);
-    const phase = await query.get(phaseId, { useMasterKey: true });
-    await phase.destroy({ useMasterKey: true });
-    return { success: true };
-  } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
-  }
-});
+function getLeagueByXP(xp) {
+  if (xp >= 6001) return 'Lenda';
+  if (xp >= 3001) return 'Diamante';
+  if (xp >= 1501) return 'Ouro';
+  if (xp >= 501) return 'Prata';
+  return 'Bronze';
+}
 
 Parse.Cloud.define("handleEnigmaAction", async (request) => {
-  const { action, eventId, enigmaId, answer } = request.params;
+  const { action, eventId, phaseOrder, enigmaId, answer, code, toolType } = request.params;
   const user = request.user;
   if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "User not authenticated.");
   if (!action) throw new Parse.Error(Parse.Error.INVALID_QUERY, "action is required.");
-  
+
   try {
-      if (action === 'getStatus') {
-          // get user progress
-          const userEvents = user.get("events") || {};
-          const eventProgress = userEvents[eventId] || {};
-          return {
-              currentPhase: eventProgress.currentPhase || 1,
-              currentEnigma: eventProgress.currentEnigma || 1,
-              hintsPurchased: eventProgress.hintsPurchased || []
-          };
-      } else if (action === 'verify_code' || action === 'scan_enigma') {
-          // Assuming basic code verification
-          const Enigma = Parse.Object.extend("Enigma");
-          const query = new Parse.Query(Enigma);
-          const enigma = await query.get(enigmaId, { useMasterKey: true });
-          
-          if (enigma.get("code") === answer) {
-              return { success: true, message: "Correct answer" };
-          } else {
-              return { success: false, message: "Incorrect answer" };
+    let userEvents = user.get("events") || {};
+    let eventProgress = userEvents[eventId] || {};
+    let hintsPurchased = eventProgress.hintsPurchased || [];
+    let toolsPurchased = eventProgress.toolsPurchased || [];
+    let balance = parseMoney(user.get("balance"));
+
+    const now = new Date().getTime();
+    if (eventProgress.cooldownUntil && eventProgress.cooldownUntil > now && action !== 'getStatus') {
+      return { success: false, message: "Aguarde o Cooldown", cooldownUntil: eventProgress.cooldownUntil };
+    }
+
+    if (action === 'getStatus') {
+      let isHintVisible = false;
+      let hintData = null;
+      let canBuyHint = false;
+      let isBlocked = false;
+      let hasCompass = false;
+      let hasMap = false;
+      let hasRadar = false;
+      let destinationLocation = null;
+
+      const Enigma = Parse.Object.extend("Enigma");
+      const query = new Parse.Query(Enigma);
+      const enigma = await query.get(enigmaId, { useMasterKey: true });
+
+      if (enigma) {
+        let linkedHints = enigma.get("linkedHints") || [];
+        canBuyHint = linkedHints.length > 0 && !hintsPurchased.includes(enigmaId);
+
+        if (hintsPurchased.includes(enigmaId) && linkedHints.length > 0) {
+          isHintVisible = true;
+          const Hint = Parse.Object.extend("Hint");
+          const hintQuery = new Parse.Query(Hint);
+          const hintObj = await hintQuery.get(linkedHints[0], { useMasterKey: true });
+          if (hintObj) {
+            hintData = {
+              type: hintObj.get("type"),
+              data: hintObj.get("data")
+            };
           }
+        }
+
+        hasCompass = toolsPurchased.includes("compass");
+        hasMap = toolsPurchased.includes("map");
+        hasRadar = toolsPurchased.includes("radar");
+
+        let compassStr = enigma.get("compassCoords");
+        if (compassStr) {
+          let parts = compassStr.split(",");
+          if (parts.length === 2) {
+            destinationLocation = {
+              latitude: parseFloat(parts[0].trim()),
+              longitude: parseFloat(parts[1].trim())
+            };
+          }
+        } else {
+          let loc = enigma.get("location");
+          if (loc && loc.latitude && loc.longitude) {
+            destinationLocation = {
+              latitude: loc.latitude,
+              longitude: loc.longitude
+            };
+          }
+        }
+
+        if (eventProgress.cooldownUntil && eventProgress.cooldownUntil > now) {
+          isBlocked = true;
+        }
       }
-      return { success: true, message: "Action handled." };
-  } catch(error) {
-      throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
+
+      return {
+        success: true,
+        currentPhase: eventProgress.currentPhase || 1,
+        currentEnigma: eventProgress.currentEnigma || 1,
+        hintsPurchased: hintsPurchased,
+        toolsPurchased: toolsPurchased,
+        cooldownUntil: eventProgress.cooldownUntil || null,
+        isHintVisible: isHintVisible,
+        hintData: hintData,
+        canBuyHint: canBuyHint,
+        isBlocked: isBlocked,
+        hasCompass: hasCompass,
+        hasMap: hasMap,
+        hasRadar: hasRadar,
+        destinationLocation: destinationLocation,
+        compassDuration: enigma ? (enigma.get("compassDuration") || 0) : 0,
+        compassPrice: enigma ? (enigma.get("compassPrice") || 15.0) : 15.0,
+        radarPrice: enigma ? (enigma.get("radarPrice") || 10.0) : 10.0
+      };
+    } else if (action === 'purchaseHint') {
+      const pOrder = phaseOrder || eventProgress.currentPhase || 1;
+      const cost = pOrder * 5.0; 
+
+      if (balance < cost) {
+        throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Saldo insuficiente para comprar a dica.");
+      }
+
+      const Enigma = Parse.Object.extend("Enigma");
+      const query = new Parse.Query(Enigma);
+      const enigma = await query.get(enigmaId, { useMasterKey: true });
+
+      let linkedHints = enigma ? (enigma.get("linkedHints") || []) : [];
+      if (linkedHints.length === 0) {
+        throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Não há dicas disponíveis para este enigma.");
+      }
+
+      const Hint = Parse.Object.extend("Hint");
+      const hintQuery = new Parse.Query(Hint);
+      const randomIndex = Math.floor(Math.random() * linkedHints.length);
+      const randomHintId = linkedHints[randomIndex];
+      const hintObj = await hintQuery.get(randomHintId, { useMasterKey: true });
+
+      if (!hintObj) {
+        throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Dica não encontrada.");
+      }
+
+      user.set("balance", Number((balance - cost).toFixed(2)));
+
+      const hint = {
+        type: hintObj.get("type"),
+        data: hintObj.get("data")
+      };
+
+      hintsPurchased.push(enigmaId);
+      eventProgress.hintsPurchased = hintsPurchased;
+      userEvents[eventId] = eventProgress;
+      user.set("events", userEvents);
+      await user.save(null, { useMasterKey: true });
+
+      return { success: true, hint: hint, message: "Dica comprada com sucesso." };
+
+    } else if (action === 'consumeTool') {
+      if (!toolType) throw new Parse.Error(Parse.Error.INVALID_QUERY, "toolType is required.");
+
+      const index = toolsPurchased.indexOf(toolType);
+      if (index > -1) {
+        toolsPurchased.splice(index, 1);
+        eventProgress.toolsPurchased = toolsPurchased;
+        userEvents[eventId] = eventProgress;
+        user.set("events", userEvents);
+        await user.save(null, { useMasterKey: true });
+      }
+
+      return { success: true, message: "Ferramenta consumida." };
+
+    } else if (action === 'purchaseTool') {
+      let enigma = null;
+      if (enigmaId) {
+        const Enigma = Parse.Object.extend("Enigma");
+        const query = new Parse.Query(Enigma);
+        enigma = await query.get(enigmaId, { useMasterKey: true });
+      }
+
+      let cost = 0;
+      if (toolType === 'map') cost = enigma ? (enigma.get("mapPrice") || 20.0) : 20.0;
+      else if (toolType === 'compass') {
+         cost = enigma ? (enigma.get("compassPrice") || 15.0) : 15.0;
+      } else if (toolType === 'radar') {
+         cost = enigma ? (enigma.get("radarPrice") || 10.0) : 10.0;
+      }
+      else throw new Parse.Error(Parse.Error.INVALID_QUERY, "Invalid tool type.");
+
+      if (balance < cost) {
+        throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Saldo insuficiente para comprar a ferramenta.");
+      }
+
+      user.set("balance", Number((balance - cost).toFixed(2)));
+
+      toolsPurchased.push(toolType);
+      eventProgress.toolsPurchased = toolsPurchased;
+      userEvents[eventId] = eventProgress;
+      user.set("events", userEvents);
+      await user.save(null, { useMasterKey: true });
+
+      return { success: true, message: "Ferramenta comprada com sucesso." };
+
+    } else if (action === 'validateCode' || action === 'verify_code' || action === 'scan_enigma') {
+      const { latitude, longitude } = request.params;
+      const guess = code || answer;
+      
+      const Enigma = Parse.Object.extend("Enigma");
+      const query = new Parse.Query(Enigma);
+      const enigma = await query.get(enigmaId, { useMasterKey: true });
+
+      if (latitude !== undefined && longitude !== undefined) {
+        const userGeoPoint = new Parse.GeoPoint({ latitude: parseFloat(latitude), longitude: parseFloat(longitude) });
+        const enigmaGeoPoint = enigma.get("location");
+        
+        if (enigmaGeoPoint) {
+          const distanceToEnigma = userGeoPoint.kilometersTo(enigmaGeoPoint);
+          if (distanceToEnigma > 0.15) {
+            throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Você não está próximo o suficiente do alvo para validar este código.");
+          }
+        }
+
+        const lastLoc = user.get("lastLocation");
+        const lastTime = user.get("lastLocationTime");
+        const now = new Date();
+
+        if (lastLoc && lastTime) {
+          const distanceKm = lastLoc.kilometersTo(userGeoPoint);
+          const timeDiffHours = (now.getTime() - lastTime.getTime()) / (1000 * 60 * 60);
+          
+          if (timeDiffHours > 0) {
+            const speedKmH = distanceKm / timeDiffHours;
+            if (speedKmH > 120) {
+              const FraudLog = Parse.Object.extend("FraudLog");
+              const fraud = new FraudLog();
+              fraud.set("user", user);
+              fraud.set("eventId", eventId);
+              fraud.set("enigmaId", enigmaId);
+              fraud.set("reason", "Impossible Travel Detectado");
+              fraud.set("speedKmH", speedKmH);
+              await fraud.save(null, { useMasterKey: true });
+
+              throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Movimentação irreal detectada. Sua ação foi bloqueada pelo sistema Anti-Fraude.");
+            }
+          }
+        }
+
+        user.set("lastLocation", userGeoPoint);
+        user.set("lastLocationTime", now);
+        await user.save(null, { useMasterKey: true });
+      }
+
+      const rawEnigmaCode = enigma.get("code");
+      const enigmaCode = String(rawEnigmaCode !== undefined && rawEnigmaCode !== null ? rawEnigmaCode : "").trim().toUpperCase();
+      const userGuess = String(guess !== undefined && guess !== null ? guess : "").trim().toUpperCase();
+
+      if (enigmaCode.length > 0 && enigmaCode === userGuess) {
+        if (typeof rawEnigmaCode !== 'string') {
+          enigma.set("code", enigmaCode);
+          await enigma.save(null, { useMasterKey: true });
+        }
+        const Event = Parse.Object.extend("Event");
+        const eventQuery = new Parse.Query(Event);
+        const eventObj = await eventQuery.get(eventId, { useMasterKey: true });
+
+        const eventType = eventObj.get("eventType") || 'classic';
+
+        if (eventType === 'find_and_win') {
+          const enigmaPrize = parseMoney(enigma.get("prize"));
+          const currentBalance = parseMoney(user.get("balance"));
+          const newBalance = Number((currentBalance + enigmaPrize).toFixed(2));
+          user.set("balance", newBalance);
+
+          let currentXP = user.get("xp") || 0;
+          currentXP += 50; 
+          user.set("xp", currentXP);
+          user.set("league", getLeagueByXP(currentXP));
+
+          enigma.set("status", "closed");
+          enigma.set("closedAt", new Date());
+          await enigma.save(null, { useMasterKey: true });
+
+          let solvedEnigmas = eventProgress.solvedEnigmas || [];
+          solvedEnigmas.push(enigmaId);
+          eventProgress.solvedEnigmas = solvedEnigmas;
+          userEvents[eventId] = eventProgress;
+          user.set("events", userEvents);
+
+          if (enigmaPrize > 0) {
+            try {
+              const Transaction = Parse.Object.extend("Transaction");
+              const tx = new Transaction();
+              tx.set("type", "prize");
+              tx.set("amount", enigmaPrize);
+              tx.set("description", "Recompensa Baú - " + (enigma.get("instruction") || enigma.get("title") || "Find & Win"));
+              tx.set("status", "completed");
+              tx.set("user", user);
+              await tx.save(null, { useMasterKey: true });
+            } catch (txErr) {
+              console.error("Erro ao registrar transação de prêmio Find & Win:", txErr);
+            }
+          }
+
+          await user.save(null, { useMasterKey: true });
+
+          return {
+            success: true,
+            message: "Resposta Correta! Recompensa instantânea creditada.",
+            nextStep: {
+              type: 'find_and_win_complete', 
+              prizeWon: enigmaPrize,
+              enigmaData: {}
+            }
+          };
+        } else {
+          // ===================================================================
+          // MODALIDADE CLASSIC
+          // ===================================================================
+          const Phase = Parse.Object.extend("Phase");
+          const phaseQuery = new Parse.Query(Phase);
+          phaseQuery.equalTo("event", eventObj);
+          phaseQuery.ascending("order");
+          const phases = await phaseQuery.find({ useMasterKey: true });
+
+          const currentPhaseOrder = eventProgress.currentPhase || 1;
+          const currentEnigmaOrder = eventProgress.currentEnigma || 1;
+
+          let currentPhaseObj = phases.find(p => p.get("order") === currentPhaseOrder);
+          if (!currentPhaseObj && phases.length > 0) {
+            currentPhaseObj = phases[0];
+          }
+
+          const enigmaQuery = new Parse.Query(Enigma);
+          enigmaQuery.equalTo("event", eventObj);
+          enigmaQuery.ascending("order");
+          const allEventEnigmas = await enigmaQuery.find({ useMasterKey: true });
+
+          const currentPhaseId = currentPhaseObj ? currentPhaseObj.id : null;
+          const phaseEnigmas = allEventEnigmas.filter(e => {
+            const pId = e.get("phaseId") || (e.get("phase") ? e.get("phase").id : null);
+            return pId === currentPhaseId;
+          });
+
+          let currentEnigmaIndex = phaseEnigmas.findIndex(e => e.id === enigmaId);
+          if (currentEnigmaIndex === -1) {
+            currentEnigmaIndex = currentEnigmaOrder - 1;
+          }
+
+          const hasMoreEnigmasInPhase = currentEnigmaIndex !== -1 && currentEnigmaIndex < phaseEnigmas.length - 1;
+
+          if (hasMoreEnigmasInPhase) {
+            const nextEnigmaObj = phaseEnigmas[currentEnigmaIndex + 1];
+            const nextEnigmaSafe = nextEnigmaObj.toJSON();
+            nextEnigmaSafe.id = nextEnigmaObj.id;
+            delete nextEnigmaSafe.code;
+            delete nextEnigmaSafe.compassCoords;
+            delete nextEnigmaSafe.createdAt;
+            delete nextEnigmaSafe.updatedAt;
+            nextEnigmaSafe.prize = 0.0;
+
+            eventProgress.currentPhase = currentPhaseOrder;
+            eventProgress.currentEnigma = currentEnigmaIndex + 2;
+            userEvents[eventId] = eventProgress;
+            user.set("events", userEvents);
+
+            let currentXP = user.get("xp") || 0;
+            currentXP += 50;
+            user.set("xp", currentXP);
+            user.set("league", getLeagueByXP(currentXP));
+
+            await user.save(null, { useMasterKey: true });
+
+            return {
+              success: true,
+              message: "Enigma resolvido! Prepare-se para o próximo desafio.",
+              nextStep: {
+                type: 'next_enigma',
+                enigmaData: nextEnigmaSafe
+              }
+            };
+          } else {
+            const currentPhaseIndex = phases.findIndex(p => p.id === currentPhaseId);
+            const hasMorePhases = currentPhaseIndex !== -1 && currentPhaseIndex < phases.length - 1;
+
+            if (hasMorePhases) {
+              const nextPhaseObj = phases[currentPhaseIndex + 1];
+              const nextPhaseOrder = nextPhaseObj.get("order");
+
+              eventProgress.currentPhase = nextPhaseOrder;
+              eventProgress.currentEnigma = 1;
+              userEvents[eventId] = eventProgress;
+              user.set("events", userEvents);
+
+              let currentXP = user.get("xp") || 0;
+              currentXP += 100;
+              user.set("xp", currentXP);
+              user.set("league", getLeagueByXP(currentXP));
+
+              await user.save(null, { useMasterKey: true });
+
+              return {
+                success: true,
+                message: `Fase ${currentPhaseOrder} concluída com sucesso! A Fase ${nextPhaseOrder} foi desbloqueada.`,
+                nextStep: {
+                  type: 'phase_complete',
+                  phaseOrder: currentPhaseOrder,
+                  nextPhaseOrder: nextPhaseOrder
+                }
+              };
+            } else {
+              // ===============================================================
+              // ÚLTIMA FASE CONCLUÍDA - REGRA DE PREMIAÇÃO EXCLUSIVA DO PRIMEIRO
+              // ===============================================================
+              const existingWinnerId = eventObj.get("winnerId");
+              const isEventClosed = eventObj.get("status") === "closed";
+
+              let rawPrize = eventObj.get("prizePool") || eventObj.get("prize") || "0";
+              const prizePool = parseMoney(rawPrize);
+
+              eventProgress.isCompleted = true;
+              eventProgress.completedAt = new Date();
+              userEvents[eventId] = eventProgress;
+              user.set("events", userEvents);
+
+              if (!existingWinnerId && !isEventClosed) {
+                // 1º LUGAR VENCEDOR
+                eventObj.set("winnerId", user.id);
+                eventObj.set("winnerName", user.get("name") || user.get("username") || "Explorador");
+                eventObj.set("winnerPhotoURL", user.get("photoURL") || null);
+                eventObj.set("status", "closed");
+                eventObj.set("completedAt", new Date());
+                await eventObj.save(null, { useMasterKey: true });
+
+                const currentBalance = parseMoney(user.get("balance"));
+                const newBalance = Number((currentBalance + prizePool).toFixed(2));
+                user.set("balance", newBalance);
+                user.set("lastWonEventName", eventObj.get("name") || eventObj.get("title") || "Evento Classic");
+
+                let currentXP = user.get("xp") || 0;
+                currentXP += 500;
+                user.set("xp", currentXP);
+                user.set("league", getLeagueByXP(currentXP));
+
+                let winnerEvents = user.get("winnerEvents") || [];
+                winnerEvents.push(eventId);
+                user.set("winnerEvents", winnerEvents);
+
+                if (prizePool > 0) {
+                  try {
+                    const Transaction = Parse.Object.extend("Transaction");
+                    const tx = new Transaction();
+                    tx.set("type", "prize");
+                    tx.set("amount", prizePool);
+                    tx.set("description", "Prêmio 1º Lugar - " + (eventObj.get("name") || eventObj.get("title") || "Classic"));
+                    tx.set("status", "completed");
+                    tx.set("user", user);
+                    await tx.save(null, { useMasterKey: true });
+                  } catch (txErr) {
+                    console.error("Erro ao registrar transação de prêmio Classic:", txErr);
+                  }
+                }
+
+                await user.save(null, { useMasterKey: true });
+
+                return {
+                  success: true,
+                  message: "PARABÉNS! Você foi o PRIMEIRO a finalizar todas as etapas e conquistou o prêmio total!",
+                  nextStep: {
+                    type: 'event_complete',
+                    isWinner: true,
+                    prizeWon: prizePool,
+                    winnerName: user.get("name") || user.get("username") || "Explorador"
+                  }
+                };
+              } else {
+                // Concluiu após o primeiro colocado
+                let currentXP = user.get("xp") || 0;
+                currentXP += 250;
+                user.set("xp", currentXP);
+                user.set("league", getLeagueByXP(currentXP));
+                await user.save(null, { useMasterKey: true });
+
+                const winnerName = eventObj.get("winnerName") || "Outro explorador";
+                return {
+                  success: true,
+                  message: `Você completou todas as fases do evento! O prêmio principal já foi conquistado pelo 1º colocado (${winnerName}), mas você completou a jornada com honra!`,
+                  nextStep: {
+                    type: 'event_complete',
+                    isWinner: false,
+                    prizeWon: 0.0,
+                    winnerName: winnerName
+                  }
+                };
+              }
+            }
+          }
+        }
+      } else {
+        const cooldownTime = now + (3 * 60 * 1000); 
+        eventProgress.cooldownUntil = cooldownTime;
+        userEvents[eventId] = eventProgress;
+        user.set("events", userEvents);
+        await user.save(null, { useMasterKey: true });
+
+        return {
+          success: false,
+          message: "Código Incorreto. Você recebeu uma penalidade.",
+          cooldownUntil: cooldownTime,
+          cooldownUntilIso: new Date(cooldownTime).toISOString()
+        };
+      }
+    }
+    return { success: true, message: "Action handled." };
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
+  }
+});
+
+Parse.Cloud.afterFind("Enigma", (request) => {
+  const user = request.user;
+  const isAdmin = user && (user.get("isAdmin") === true || user.get("role") === "admin" || user.get("role") === "creator");
+
+  if (!request.master && !isAdmin && request.objects) {
+    request.objects.forEach((enigma) => {
+      enigma.unset("code");
+      enigma.unset("compassCoords");
+    });
+  }
+  return request.objects;
+});
+
+// -----------------------------------------------------------------------------
+// GATEWAYS DE PAGAMENTO & WEBHOOKS (Mercado Pago, Stripe, Asaas, Efi, Pagar.me)
+// -----------------------------------------------------------------------------
+
+Parse.Cloud.define("getActiveGatewayConfig", async (request) => {
+  const query = new Parse.Query("GatewayConfig");
+  query.equalTo("isDefault", true);
+  query.equalTo("isActive", true);
+  const config = await query.first({ useMasterKey: true });
+
+  if (!config) {
+    return {
+      success: true,
+      gateway: "mercadopago",
+      environment: "production",
+      publicKey: ""
+    };
+  }
+
+  const keys = config.get("keys") || {};
+  return {
+    success: true,
+    gateway: config.get("gatewayId"),
+    name: config.get("name"),
+    environment: config.get("environment") || "production",
+    publicKey: keys.public_key || keys.publishable_key || keys.api_key || ""
+  };
+});
+
+Parse.Cloud.define("paymentWebhook", async (request) => {
+  const { gateway } = request.params;
+  const payload = request.params;
+
+  console.log(`[Payment Webhook] Recebida notificação do gateway: ${gateway}`, JSON.stringify(payload));
+
+  // Tenta localizar a transação por IDs em múltiplos formatos de payload
+  let transactionId = payload.transactionId || payload.id || (payload.data ? payload.data.id : null) || (payload.payment ? payload.payment.id : null);
+  let extRef = payload.external_reference || (payload.payment ? payload.payment.externalReference : null) || (payload.data ? payload.data.external_reference : null);
+
+  let tx = null;
+  if (transactionId) {
+    const qTx = new Parse.Query("Transaction");
+    qTx.equalTo("objectId", transactionId);
+    tx = await qTx.first({ useMasterKey: true });
+
+    if (!tx) {
+      const qGatewayId = new Parse.Query("Transaction");
+      qGatewayId.equalTo("gatewayPaymentId", String(transactionId));
+      tx = await qGatewayId.first({ useMasterKey: true });
+    }
+  }
+
+  if (!tx && extRef) {
+    const qRef = new Parse.Query("Transaction");
+    qRef.equalTo("objectId", extRef);
+    tx = await qRef.first({ useMasterKey: true });
+  }
+
+  if (tx && tx.get("status") !== "approved" && tx.get("status") !== "completed") {
+    tx.set("status", "approved");
+    tx.set("gateway", gateway || tx.get("gateway") || "mercadopago");
+    tx.set("approvedAt", new Date());
+    await tx.save(null, { useMasterKey: true });
+
+    // Credita o saldo atomicamente na carteira do usuário
+    const user = tx.get("user");
+    if (user) {
+      await user.fetch({ useMasterKey: true });
+      const currentBalance = parseMoney(user.get("balance"));
+      const amount = parseMoney(tx.get("amount"));
+      const newBalance = Number((currentBalance + amount).toFixed(2));
+      user.set("balance", newBalance);
+      await user.save(null, { useMasterKey: true });
+      console.log(`[Payment Webhook] Saldo creditado: R$ ${amount} para usuário ${user.id}. Novo saldo: R$ ${newBalance}`);
+    }
+
+    return { success: true, message: "Transaction approved and wallet credited." };
+  }
+
+  return { success: true, message: "Webhook acknowledged." };
+});
+
+Parse.Cloud.define("requestWithdrawal", async (request) => {
+  const user = request.user;
+  if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Usuário não autenticado.");
+  const { amount, pixKey, pixKeyType } = request.params;
+  const numAmount = parseMoney(amount);
+
+  if (!numAmount || numAmount <= 0) {
+    throw new Parse.Error(Parse.Error.INVALID_QUERY, "Valor de saque inválido.");
+  }
+  if (!pixKey || typeof pixKey !== 'string' || pixKey.trim().length === 0) {
+    throw new Parse.Error(Parse.Error.INVALID_QUERY, "Chave Pix é obrigatória.");
+  }
+
+  try {
+    await user.fetch({ useMasterKey: true });
+    const currentBalance = parseMoney(user.get("balance"));
+    if (currentBalance < numAmount) {
+      throw new Parse.Error(Parse.Error.VALIDATION_ERROR, "Saldo insuficiente para o saque solicitado.");
+    }
+
+    // Debita o saldo imediatamente para evitar saques simultâneos
+    const newBalance = Number((currentBalance - numAmount).toFixed(2));
+    user.set("balance", newBalance);
+    await user.save(null, { useMasterKey: true });
+
+    const userName = user.get("name") || user.get("username") || "Jogador";
+    const userEmail = user.get("email") || "";
+
+    // Cria registro na classe Withdrawal com leitura pública (para o painel admin carregar sem bloqueio de ACL)
+    const Withdrawal = Parse.Object.extend("Withdrawal");
+    const withdrawal = new Withdrawal();
+    withdrawal.set("amount", numAmount);
+    withdrawal.set("status", "pending");
+    withdrawal.set("pixKey", pixKey.trim());
+    withdrawal.set("pixKeyType", pixKeyType || "CHAVE_ALEATORIA");
+    withdrawal.set("user", user);
+    withdrawal.set("userName", userName);
+    withdrawal.set("userEmail", userEmail);
+
+    // Define ACL estritamente privada: apenas o próprio usuário e Master Key têm acesso
+    const acl = new Parse.ACL();
+    acl.setPublicReadAccess(false);
+    acl.setPublicWriteAccess(false);
+    acl.setReadAccess(user.id, true);
+    acl.setWriteAccess(user.id, false);
+    withdrawal.setACL(acl);
+
+    await withdrawal.save(null, { useMasterKey: true });
+
+    // Registra na Transaction para extrato unificado
+    const Transaction = Parse.Object.extend("Transaction");
+    const tx = new Transaction();
+    tx.set("type", "withdrawal");
+    tx.set("amount", numAmount);
+    tx.set("status", "pending");
+    tx.set("user", user);
+    tx.set("withdrawalId", withdrawal.id);
+    tx.set("pixKey", pixKey.trim());
+    tx.set("pixKeyType", pixKeyType || "CHAVE_ALEATORIA");
+    tx.set("description", `Saque Pix para ${pixKey.trim()}`);
+
+    const txAcl = new Parse.ACL();
+    txAcl.setPublicReadAccess(false);
+    txAcl.setPublicWriteAccess(false);
+    txAcl.setReadAccess(user.id, true);
+    txAcl.setWriteAccess(user.id, false);
+    tx.setACL(txAcl);
+
+    await tx.save(null, { useMasterKey: true });
+
+    console.log(`[requestWithdrawal] Saque solicitado: R$ ${numAmount} por ${userName} (${user.id}). Novo saldo: R$ ${newBalance}`);
+
+    return {
+      success: true,
+      message: "Solicitação de saque enviada com sucesso!",
+      withdrawalId: withdrawal.id,
+      newBalance: newBalance
+    };
+  } catch (error) {
+    console.error("[requestWithdrawal Error]", error);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao solicitar saque: " + error.message);
   }
 });

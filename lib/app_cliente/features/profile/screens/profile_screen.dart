@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -20,6 +21,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   
   void _showEditProfileModal(ParseUser user) {
+    SoundService.playOpen();
     final nameController = TextEditingController(text: user.get<String>('name') ?? '');
     final phoneController = TextEditingController(text: user.get<String>('phone') ?? '');
     bool isSaving = false;
@@ -150,6 +152,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 setModalState(() => isSaving = false);
 
                                 if (response.success) {
+                                  SoundService.playSuccess();
                                   if (context.mounted) {
                                     Navigator.of(context).pop();
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -163,6 +166,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     setState(() {});
                                   }
                                 } else {
+                                  SoundService.playError();
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
@@ -361,6 +365,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         _buildGamerStats(eventosJogados, eventosVencidos),
                         const SizedBox(height: 20),
                         _buildInfoCard(email, phone),
+                        const SizedBox(height: 20),
+                        _buildAudioSettingsCard(),
                         const SizedBox(height: 28),
                         _buildActionButtons(context, ref, user),
                         const SizedBox(height: 40),
@@ -577,6 +583,66 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  Widget _buildAudioSettingsCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.darkCardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.verdeVale.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: FaIcon(
+                  SoundService.isMuted ? FontAwesomeIcons.volumeXmark : FontAwesomeIcons.volumeHigh,
+                  color: AppColors.verdeVale,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Efeitos Sonoros (SFX)',
+                    style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    SoundService.isMuted ? 'Áudio desativado' : 'Áudio e efeitos ativados',
+                    style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 11),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Switch(
+            value: !SoundService.isMuted,
+            activeThumbColor: AppColors.verdeVale,
+            onChanged: (enabled) {
+              setState(() {
+                SoundService.isMuted = !enabled;
+              });
+              if (enabled) {
+                SoundService.playClick();
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInfoRow(dynamic icon, String label, String value) {
     return Row(
       children: [
@@ -627,6 +693,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           isPrimary: false,
           color: AppColors.danger,
           onTap: () async {
+            SoundService.playClick();
             await ref.read(authRepositoryProvider).signOut();
           },
         ),

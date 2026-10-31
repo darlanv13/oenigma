@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 void showCompletionDialog(
@@ -8,6 +9,11 @@ void showCompletionDialog(
   required VoidCallback onOkPressed,
   required bool isPhaseComplete,
 }) {
+  if (isPhaseComplete) {
+    SoundService.playVictory();
+  } else {
+    SoundService.playSuccess();
+  }
   showGeneralDialog(
     context: context,
     barrierDismissible: false,

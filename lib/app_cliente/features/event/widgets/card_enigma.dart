@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/app_cliente/features/enigma/screens/enigma_screen.dart';
 import 'map_dots_painter.dart';
@@ -32,6 +33,7 @@ class _CardEnigmaState extends State<CardEnigma> {
 
   void _handleTap(bool isTemporarilyBlocked) {
     if (isTemporarilyBlocked) {
+      SoundService.playError();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Este baú já foi saqueado e desaparecerá em breve.'),
@@ -43,6 +45,7 @@ class _CardEnigmaState extends State<CardEnigma> {
       return;
     }
 
+    SoundService.playOpen();
     final mockPhase = PhaseModel(
       id: 'find_and_win',
       order: 1,

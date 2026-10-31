@@ -6,6 +6,7 @@ import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/app_cliente/features/auth/screens/signup_screen.dart';
 import 'package:oenigma/app_cliente/features/auth/screens/forgot_password_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:pinput/pinput.dart';
 
@@ -44,6 +45,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       if (mounted) {
         if (error != null) {
+          SoundService.playError();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(error, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -53,6 +55,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           );
         } else {
+          SoundService.playSuccess();
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
         setState(() => _isLoading = false);

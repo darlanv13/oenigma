@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/app_cliente/features/event/widgets/event_card.dart';
@@ -42,6 +43,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _reloadData() async {
+    SoundService.playClick();
     return await ref.refresh(homeEventsProvider.future);
   }
 

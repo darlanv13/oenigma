@@ -2,11 +2,14 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import 'package:oenigma/core/utils/app_colors.dart';
+
+/// Mapa de Perímetro da Expedição Antiga (Estilo Indiana Jones / Cores Vale).
 class MapRadiusWidget extends StatefulWidget {
   final double destinationLatitude;
   final double destinationLongitude;
@@ -37,7 +40,7 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
 
   late AnimationController _pulseController;
 
-  // Dark/Night map style JSON
+  // Estilo escuro com tons de pedra de templo e esmeralda Vale
   final String _mapStyle = '''
   [
     {
@@ -55,7 +58,7 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
     {
       "featureType": "administrative.locality",
       "elementType": "labels.text.fill",
-      "stylers": [{"color": "#00E5FF"}]
+      "stylers": [{"color": "#F3A522"}]
     },
     {
       "featureType": "poi",
@@ -243,13 +246,13 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF00E5FF).withValues(alpha: 0.35),
+          color: AppColors.verdeVale.withValues(alpha: 0.5),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 15,
+            blurRadius: 16,
             offset: const Offset(0, 6),
           ),
         ],
@@ -258,7 +261,7 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
         borderRadius: BorderRadius.circular(18),
         child: Stack(
           children: [
-            // Mapa do Google
+            // Mapa do Google com Estilo Noturno
             GoogleMap(
               initialCameraPosition: CameraPosition(
                 target: _obfuscatedCenter,
@@ -278,36 +281,36 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
                   markerId: const MarkerId('destination'),
                   position: _obfuscatedCenter,
                   icon: _customMarkerIcon ??
-                      BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueCyan),
+                      BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
                   infoWindow: const InfoWindow(
-                    title: 'Área do Enigma',
-                    snippet: 'O alvo está escondido neste raio.',
+                    title: 'Perímetro da Relíquia',
+                    snippet: 'O tesouro repousa neste raio estimado.',
                   ),
                 ),
               },
               circles: {
-                // Círculo Interno com preenchimento tático
+                // Perímetro Interno da Relíquia
                 Circle(
                   circleId: const CircleId('search_area_fill'),
                   center: _obfuscatedCenter,
                   radius: 300.0,
-                  fillColor: const Color(0xFF00E5FF).withValues(alpha: 0.12),
-                  strokeColor: const Color(0xFF00E5FF).withValues(alpha: 0.8),
+                  fillColor: AppColors.verdeVale.withValues(alpha: 0.14),
+                  strokeColor: AppColors.verdeVale.withValues(alpha: 0.85),
                   strokeWidth: 2,
                 ),
-                // Círculo Externo de Pulso/Perímetro
+                // Borda Dourada Externa
                 Circle(
                   circleId: const CircleId('search_area_outer'),
                   center: _obfuscatedCenter,
                   radius: 315.0,
                   fillColor: Colors.transparent,
-                  strokeColor: const Color(0xFFF3A522).withValues(alpha: 0.5),
+                  strokeColor: AppColors.amareloVale.withValues(alpha: 0.5),
                   strokeWidth: 1,
                 ),
               },
             ),
 
-            // Top Telemetry Header HUD
+            // Top HUD do Mapa: Perímetro & Distância da Expedição
             Positioned(
               top: 10,
               left: 10,
@@ -318,28 +321,28 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.75),
+                      color: Colors.black.withValues(alpha: 0.80),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: const Color(0xFF00E5FF).withValues(alpha: 0.3),
+                        color: AppColors.verdeVale.withValues(alpha: 0.4),
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const FaIcon(
-                          FontAwesomeIcons.satelliteDish,
-                          color: Color(0xFF00E5FF),
+                          FontAwesomeIcons.compass,
+                          color: AppColors.verdeVale,
                           size: 11,
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'RAIO: 300M',
-                          style: GoogleFonts.orbitron(
-                            color: const Color(0xFF00E5FF),
+                          'PERÍMETRO: 300M',
+                          style: GoogleFonts.cinzel(
+                            color: AppColors.verdeVale,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
+                            letterSpacing: 0.8,
                           ),
                         ),
                       ],
@@ -349,10 +352,10 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.75),
+                        color: Colors.black.withValues(alpha: 0.80),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: const Color(0xFFF3A522).withValues(alpha: 0.4),
+                          color: AppColors.amareloVale.withValues(alpha: 0.5),
                         ),
                       ),
                       child: Row(
@@ -360,14 +363,14 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
                         children: [
                           const FaIcon(
                             FontAwesomeIcons.route,
-                            color: Color(0xFFF3A522),
+                            color: AppColors.amareloVale,
                             size: 10,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             '~${distanceMeters.toStringAsFixed(0)}M',
-                            style: GoogleFonts.orbitron(
-                              color: const Color(0xFFF3A522),
+                            style: GoogleFonts.cinzel(
+                              color: AppColors.amareloVale,
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                             ),
@@ -379,45 +382,45 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
               ),
             ),
 
-            // Floating Tactical Control Buttons (Direita)
+            // Botões de Ação do Mapa da Expedição (Direita)
             Positioned(
               bottom: 12,
               right: 12,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Alternar Mapa Satélite / Tático
+                  // Alternar Visão Normal / Satélite
                   _buildMapActionButton(
                     icon: _currentMapType == MapType.normal
                         ? FontAwesomeIcons.earthAmericas
                         : FontAwesomeIcons.map,
-                    tooltip: 'Satélite / Modo Tático',
-                    color: const Color(0xFF00E5FF),
+                    tooltip: 'Visão Satélite / Pergaminho',
+                    color: AppColors.verdeVale,
                     onTap: _toggleMapType,
                   ),
                   const SizedBox(height: 8),
 
-                  // Centralizar no Alvo
+                  // Centralizar na Relíquia
                   _buildMapActionButton(
-                    icon: FontAwesomeIcons.bullseye,
-                    tooltip: 'Centralizar no Alvo',
-                    color: const Color(0xFFF3A522),
+                    icon: FontAwesomeIcons.gem,
+                    tooltip: 'Centralizar na Relíquia',
+                    color: AppColors.amareloVale,
                     onTap: _recenterTarget,
                   ),
                   const SizedBox(height: 8),
 
-                  // Centralizar na Minha Posição (se GPS disponível)
+                  // Centralizar na Posição do Explorador
                   if (_hasLocationPermission) ...[
                     _buildMapActionButton(
                       icon: FontAwesomeIcons.locationCrosshairs,
                       tooltip: 'Minha Posição',
-                      color: const Color(0xFF00E5FF),
+                      color: AppColors.verdeVale,
                       onTap: _recenterUser,
                     ),
                     const SizedBox(height: 8),
                   ],
 
-                  // Botão de Expandir em Tela Cheia (se callback fornecido)
+                  // Expandir Mapa
                   if (widget.onExpand != null)
                     _buildMapActionButton(
                       icon: FontAwesomeIcons.upRightAndDownLeftFromCenter,
@@ -446,9 +449,9 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
         width: 38,
         height: 38,
         decoration: BoxDecoration(
-          color: const Color(0xFF142023).withValues(alpha: 0.9),
+          color: AppColors.darkCardColor.withValues(alpha: 0.92),
           shape: BoxShape.circle,
-          border: Border.all(color: color.withValues(alpha: 0.4), width: 1.2),
+          border: Border.all(color: color.withValues(alpha: 0.5), width: 1.2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.5),

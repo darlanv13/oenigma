@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -5,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 
 import 'package:oenigma/core/models/event_model.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import '../screens/event_details_screen.dart';
 
@@ -24,11 +26,48 @@ class EventCard extends StatefulWidget {
   State<EventCard> createState() => _EventCardState();
 }
 
-class _EventCardState extends State<EventCard> {
+class _EventCardState extends State<EventCard> with SingleTickerProviderStateMixin {
   double _scale = 1.0;
+
+  // Controlador e interpolações para animação física da PNG do prêmio
+  late final AnimationController _animController;
+  late final Animation<double> _floatAnimation;
+  late final Animation<double> _tiltAnimation;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2600),
+    )..repeat(reverse: true);
+
+    // Flutuação vertical suave
+    _floatAnimation = Tween<double>(begin: -6.0, end: 6.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOutSine),
+    );
+
+    // Inclinação sutil em 3D
+    _tiltAnimation = Tween<double>(begin: -0.015, end: 0.015).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOutSine),
+    );
+
+    // Respiração de escala orgânica
+    _scaleAnimation = Tween<double>(begin: 0.985, end: 1.015).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOutSine),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
 
   Future<void> _handleTap() async {
     setState(() => _scale = 1.0);
+    SoundService.playClick();
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -47,7 +86,7 @@ class _EventCardState extends State<EventCard> {
     final isClassic = event.eventType == 'classic';
     final isObjeto = event.prizeType == 'objeto';
 
-    // Título do Evento: se for Objeto, assume a modalidade conforme a imagem de referência
+    // Título do Evento: se for Objeto, assume a modalidade conforme a referência
     final String displayTitle = isObjeto
         ? (isClassic ? 'Modo Clássico' : 'Ache & Ganhe')
         : (event.name.isNotEmpty ? event.name : (isClassic ? 'Modo Clássico' : 'Ache & Ganhe'));
@@ -71,7 +110,7 @@ class _EventCardState extends State<EventCard> {
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFF131D24), // Fundo grafite/ciano escuro idêntico à referência
+            color: const Color(0xFF131D24),
             borderRadius: BorderRadius.circular(28),
             border: Border.all(
               color: const Color(0xFF1E3A45),
@@ -96,26 +135,37 @@ class _EventCardState extends State<EventCard> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 1. LINHA DO TOPO: Moedas + Prêmio + Badge de Modalidade (Sem a tag Ativo)
+                      // 1. LINHA DO TOPO: Moedas com moldura sutil + TÍTULO DO PRÊMIO EM DESTAQUE + Badge de Modalidade
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Ícone de moedas empilhadas
-                          const FaIcon(
-                            FontAwesomeIcons.coins,
-                            color: Color(0xFFF3A522),
-                            size: 20,
+                          // Moldura sutil e elegante para o ícone de moedas
+                          Container(
+                            padding: const EdgeInsets.all(5.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF3A522).withValues(alpha: 0.14),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color(0xFFF3A522).withValues(alpha: 0.35),
+                                width: 1,
+                              ),
+                            ),
+                            child: const FaIcon(
+                              FontAwesomeIcons.coins,
+                              color: Color(0xFFF3A522),
+                              size: 13,
+                            ),
                           ),
                           const SizedBox(width: 8),
 
-                          // Nome do Prêmio (Objeto) ou Valor em Dinheiro
+                          // Título do Prêmio em Destaque Absoluto (Limpo, Nítido e com Grande Presença)
                           Expanded(
                             child: Text(
                               event.prize,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
-                                fontSize: 21,
+                                fontSize: 22,
                                 fontWeight: FontWeight.w900,
                                 color: const Color(0xFFF3A522),
                                 letterSpacing: -0.3,
@@ -148,7 +198,7 @@ class _EventCardState extends State<EventCard> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.poppins(
-                                    fontSize: 20,
+                                    fontSize: 19,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.white,
                                     height: 1.15,
@@ -162,7 +212,7 @@ class _EventCardState extends State<EventCard> {
                                     const FaIcon(
                                       FontAwesomeIcons.locationDot,
                                       color: Color(0xFF00A4B4),
-                                      size: 13,
+                                      size: 12.5,
                                     ),
                                     const SizedBox(width: 6),
                                     Expanded(
@@ -171,8 +221,8 @@ class _EventCardState extends State<EventCard> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: GoogleFonts.inter(
-                                          color: const Color(0xFF919191),
-                                          fontSize: 13,
+                                          color: const Color(0xFF91A3AE),
+                                          fontSize: 12.5,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -184,8 +234,8 @@ class _EventCardState extends State<EventCard> {
                                 // Badge de Dificuldade
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 5,
+                                    horizontal: 11,
+                                    vertical: 4.5,
                                   ),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF0C171F),
@@ -199,15 +249,15 @@ class _EventCardState extends State<EventCard> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       const FaIcon(
-                                        FontAwesomeIcons.star,
+                                        FontAwesomeIcons.solidStar,
                                         color: Color(0xFFF3A522),
-                                        size: 11,
+                                        size: 10.5,
                                       ),
-                                      const SizedBox(width: 6),
+                                      const SizedBox(width: 5.5),
                                       Text(
                                         'Dificuldade: $displayDifficulty',
                                         style: GoogleFonts.inter(
-                                          color: const Color(0xFFD6D6D6),
+                                          color: const Color(0xFFCFD8DC),
                                           fontSize: 11.5,
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -220,13 +270,13 @@ class _EventCardState extends State<EventCard> {
                           ),
                           const SizedBox(width: 10),
 
-                          // LADO DIREITO: Showcase do Prêmio (Foto PNG ou Saco de Dinheiro + 1º Lugar + Brilhos)
+                          // LADO DIREITO: Showcase do Prêmio (Imagem PNG 100% transparente com levitação orgânica)
                           _buildPrizeShowcase(isObjeto, event),
                         ],
                       ),
                       const SizedBox(height: 12),
 
-                      // 3. BASE DO CARD: Botão Cápsula Total
+                      // 3. BASE DO CARD: Botão Cápsula de Inscrição / Entrada
                       Container(
                         width: double.infinity,
                         height: 46,
@@ -281,7 +331,7 @@ class _EventCardState extends State<EventCard> {
     );
   }
 
-  // Pílulas superiores (CLASSIC / ATIVO)
+  // Pílulas superiores (CLASSIC / FIND & WIN)
   Widget _buildHeaderBadge({required dynamic icon, required String label}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -316,123 +366,194 @@ class _EventCardState extends State<EventCard> {
     );
   }
 
-  // Showcase do Prêmio com estrelinhas brilhantes e badge de 1º Lugar
+  // Showcase do Prêmio: PNG sem nenhum fundo artificial, maior presença visual e levitação orgânica
   Widget _buildPrizeShowcase(bool isObjeto, EventModel event) {
     return SizedBox(
-      width: 125,
-      height: 106,
+      width: 130,
+      height: 110,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // 1. Estrela de 4 pontas decorativa amarela (topo direito)
-          const Positioned(
-            top: 2,
-            right: 4,
-            child: _SparkleWidget(
-              color: Color(0xFFF3A522),
-              size: 13,
-            ),
-          ),
-
-          // 2. Estrela de 4 pontas decorativa ciano (canto inferior esquerdo)
-          const Positioned(
-            bottom: 18,
-            left: 2,
-            child: _SparkleWidget(
-              color: Color(0xFF00A4B4),
-              size: 9,
-            ),
-          ),
-
-          // 3. Sombra de piso suave abaixo do produto
+          // 1. Iluminação sutil e difusa de palco (fundo 100% transparente nas bordas, sem cortes)
           Positioned(
-            bottom: 10,
+            top: 4,
+            bottom: 14,
             child: Container(
-              width: 65,
-              height: 8,
+              width: 82,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.55),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                  ),
-                ],
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFFF3A522).withValues(alpha: 0.12),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 1.0],
+                ),
               ),
             ),
           ),
 
-          // 4. Imagem do Prêmio (Objeto com PNG transparente) ou Saco de Dinheiro
+          // 2. Estrela de 4 pontas decorativa amarela (topo direito) com pulsação suave
+          Positioned(
+            top: 2,
+            right: 6,
+            child: AnimatedBuilder(
+              animation: _animController,
+              builder: (context, _) => Transform.scale(
+                scale: 0.8 + 0.3 * math.sin(_animController.value * math.pi),
+                child: const _SparkleWidget(
+                  color: Color(0xFFF3A522),
+                  size: 12,
+                ),
+              ),
+            ),
+          ),
+
+          // 3. Estrela de 4 pontas decorativa ciano (canto inferior esquerdo) com pulsação suave
+          Positioned(
+            bottom: 20,
+            left: 4,
+            child: AnimatedBuilder(
+              animation: _animController,
+              builder: (context, _) => Transform.scale(
+                scale: 0.8 + 0.3 * math.cos(_animController.value * math.pi),
+                child: const _SparkleWidget(
+                  color: Color(0xFF00A4B4),
+                  size: 9,
+                ),
+              ),
+            ),
+          ),
+
+          // 4. Sombra de piso suave abaixo do produto reativa à altura de levitação
+          Positioned(
+            bottom: 10,
+            child: AnimatedBuilder(
+              animation: _animController,
+              builder: (context, _) {
+                // Quando o produto sobe, a sombra encolhe e suaviza; quando desce, amplia
+                final factor = (_floatAnimation.value + 6.0) / 12.0; // 0.0 (alto) a 1.0 (baixo)
+                final shadowWidth = 52.0 + 16.0 * factor;
+                final shadowOpacity = 0.25 + 0.30 * factor;
+                return Container(
+                  width: shadowWidth,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: shadowOpacity),
+                        blurRadius: 8 * (1.5 - 0.5 * factor),
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // 5. Imagem do Prêmio (Flutuando em 3D: levitação vertical + leve inclinação + micro-respiração)
           Positioned(
             top: 0,
             bottom: 12,
-            left: 8,
-            right: 8,
-            child: isObjeto && event.prizeImageUrl != null && event.prizeImageUrl!.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: (event.prizeImageUrl!.contains('iphone17_PNG39') && event.prizeImageUrl!.contains('back4app.com'))
-                        ? 'https://pngimg.com/uploads/iphone17/iphone17_PNG39.png'
-                        : event.prizeImageUrl!,
-                    fit: BoxFit.contain,
-                    placeholder: (context, url) => const Center(
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.verdeVale,
-                        ),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => const Center(
-                      child: FaIcon(
-                        FontAwesomeIcons.gift,
-                        color: Color(0xFFF3A522),
-                        size: 38,
-                      ),
-                    ),
-                  )
-                : const Center(
-                    child: FaIcon(
-                      FontAwesomeIcons.sackDollar,
-                      color: Color(0xFFF3A522),
-                      size: 54,
+            left: 6,
+            right: 6,
+            child: AnimatedBuilder(
+              animation: _animController,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, _floatAnimation.value),
+                  child: Transform.rotate(
+                    angle: _tiltAnimation.value,
+                    child: Transform.scale(
+                      scale: _scaleAnimation.value,
+                      child: child,
                     ),
                   ),
+                );
+              },
+              child: isObjeto && event.prizeImageUrl != null && event.prizeImageUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: (event.prizeImageUrl!.contains('iphone17_PNG39') &&
+                              event.prizeImageUrl!.contains('back4app.com'))
+                          ? 'https://pngimg.com/uploads/iphone17/iphone17_PNG39.png'
+                          : event.prizeImageUrl!,
+                      fit: BoxFit.contain,
+                      placeholder: (context, url) => const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.verdeVale,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => const Center(
+                        child: FaIcon(
+                          FontAwesomeIcons.gift,
+                          color: Color(0xFFF3A522),
+                          size: 38,
+                        ),
+                      ),
+                    )
+                  : const Center(
+                      child: FaIcon(
+                        FontAwesomeIcons.sackDollar,
+                        color: Color(0xFFF3A522),
+                        size: 54,
+                      ),
+                    ),
+            ),
           ),
 
-          // 5. Badge Dourada "1º LUGAR"
+          // 6. Badge Dourada com Troféu "1º LUGAR" estilizada com alto contraste
           Positioned(
             bottom: 0,
             right: 2,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8.5, vertical: 3),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [
-                    Color(0xFFFFA726),
+                    Color(0xFFFFB300),
                     Color(0xFFF57C00),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: const Color(0xFFFFF176).withValues(alpha: 0.6),
+                  width: 0.8,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.4),
+                    color: Colors.black.withValues(alpha: 0.35),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: Text(
-                '1º LUGAR',
-                style: GoogleFonts.poppins(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 10,
-                  letterSpacing: 0.5,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const FaIcon(
+                    FontAwesomeIcons.trophy,
+                    color: Color(0xFF131D24),
+                    size: 8.5,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '1º LUGAR',
+                    style: GoogleFonts.poppins(
+                      color: const Color(0xFF131D24),
+                      fontWeight: FontWeight.w900,
+                      fontSize: 9.5,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -555,6 +676,7 @@ class _SparkleWidget extends StatelessWidget {
   }
 }
 
+// Pintor da estrela de 4 pontas com curvas afuniladas
 class _SparklePainter extends CustomPainter {
   final Color color;
   _SparklePainter({required this.color});

@@ -53,28 +53,116 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
     super.dispose();
   }
 
+  ParseObject? _getSafeUser(ParseObject obj) {
+    final raw = obj.get<dynamic>('user');
+    if (raw is ParseObject) return raw;
+    if (raw is Map) {
+      final uMap = Map<String, dynamic>.from(raw);
+      final userObj = ParseUser(null, null, null);
+      userObj.objectId = uMap['objectId']?.toString();
+      uMap.forEach((k, v) {
+        if (k != 'objectId' && v != null) userObj.set(k, v);
+      });
+      return userObj;
+    }
+    return null;
+  }
+
+  ParseObject _parseObjectFromMap(String className, Map<dynamic, dynamic> map) {
+    final Map<String, dynamic> cleanMap = Map<String, dynamic>.from(map);
+    final obj = ParseObject(className);
+    if (cleanMap['objectId'] != null) {
+      obj.objectId = cleanMap['objectId'].toString();
+    }
+    if (cleanMap['createdAt'] != null) {
+      final dt = DateTime.tryParse(cleanMap['createdAt'].toString());
+      if (dt != null) obj.set<DateTime>('createdAt', dt);
+    }
+    if (cleanMap['updatedAt'] != null) {
+      final dt = DateTime.tryParse(cleanMap['updatedAt'].toString());
+      if (dt != null) obj.set<DateTime>('updatedAt', dt);
+    }
+    cleanMap.forEach((key, val) {
+      if (key != 'objectId' && key != 'createdAt' && key != 'updatedAt' && val != null) {
+        if (key == 'amount') {
+          obj.set<num>('amount', val is num ? val : (num.tryParse(val.toString()) ?? 0.0));
+        } else if (key == 'user' && val is Map) {
+          final uMap = Map<String, dynamic>.from(val);
+          final userObj = ParseUser(null, null, null);
+          userObj.objectId = uMap['objectId']?.toString();
+          uMap.forEach((uK, uV) {
+            if (uK != 'objectId' && uV != null) userObj.set(uK, uV);
+          });
+          obj.set('user', userObj);
+        } else {
+          obj.set(key, val);
+        }
+      }
+    });
+    return obj;
+  }
+
   Future<void> _loadAllFinancialData() async {
     setState(() => _isLoading = true);
     try {
-      // 1. Carrega Solicitações de Saque
-      final wQuery = QueryBuilder<ParseObject>(ParseObject('Withdrawal'))
-        ..includeObject(['user'])
-        ..orderByDescending('createdAt')
-        ..setLimit(500);
-      final wResponse = await wQuery.query();
-      final withdrawals = wResponse.success && wResponse.results != null
-          ? (wResponse.results as List<ParseObject>)
-          : <ParseObject>[];
+      List<ParseObject> withdrawals = [];
+      List<ParseObject> allTx = [];
 
-      // 2. Carrega Transações (Depósitos e geral)
-      final tQuery = QueryBuilder<ParseObject>(ParseObject('Transaction'))
-        ..includeObject(['user'])
-        ..orderByDescending('createdAt')
-        ..setLimit(1000);
-      final tResponse = await tQuery.query();
-      final allTx = tResponse.success && tResponse.results != null
-          ? (tResponse.results as List<ParseObject>)
-          : <ParseObject>[];
+      // 1. Obtém a sessão do usuário admin atual
+      final currentUser = await ParseUser.currentUser() as ParseUser?;
+      final sessionToken = currentUser?.sessionToken;
+
+      // 2. Carrega via Cloud Function segura (usa MasterKey no backend, sem expor permissão pública de CLP)
+      try {
+        final params = <String, dynamic>{};
+        if (sessionToken != null) params['sessionToken'] = sessionToken;
+        final headers = <String, String>{};
+        if (sessionToken != null) headers['X-Parse-Session-Token'] = sessionToken;
+
+        final cloudRes = await ParseCloudFunction('getAdminFinancialData').execute(
+          parameters: params.isNotEmpty ? params : null,
+          headers: headers.isNotEmpty ? headers : null,
+        );
+        if (cloudRes.success && cloudRes.result != null) {
+          final data = Map<String, dynamic>.from(cloudRes.result as Map);
+          final rawW = (data['withdrawals'] as List?) ?? [];
+          final rawT = (data['transactions'] as List?) ?? [];
+
+          withdrawals = rawW
+              .map((item) => _parseObjectFromMap('Withdrawal', item as Map))
+              .toList();
+          allTx = rawT
+              .map((item) => _parseObjectFromMap('Transaction', item as Map))
+              .toList();
+        } else {
+          debugPrint('[AdminFinance] Cloud Function aviso: ${cloudRes.error?.message}');
+        }
+      } catch (e) {
+        debugPrint('[AdminFinance] Erro ao carregar via Cloud Function: $e');
+      }
+
+      // Fallback para query direta (se CLP estiver aberta)
+      if (withdrawals.isEmpty) {
+        final wQuery = QueryBuilder<ParseObject>(ParseObject('Withdrawal'))
+          ..includeObject(['user'])
+          ..orderByDescending('createdAt')
+          ..setLimit(500);
+        final wResponse = await wQuery.query();
+        if (wResponse.success && wResponse.results != null) {
+          withdrawals = wResponse.results as List<ParseObject>;
+        }
+      }
+
+      if (allTx.isEmpty) {
+        final tQuery = QueryBuilder<ParseObject>(ParseObject('Transaction'))
+          ..includeObject(['user'])
+          ..orderByDescending('createdAt')
+          ..setLimit(1000);
+        final tResponse = await tQuery.query();
+        if (tResponse.success && tResponse.results != null) {
+          allTx = tResponse.results as List<ParseObject>;
+        }
+      }
 
       // Separa depósitos
       final deposits = allTx.where((tx) => tx.get<String>('type') == 'deposit').toList();
@@ -174,7 +262,7 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
         final desc = (d.get<String>('description') ?? '').toLowerCase();
         final gateway = (d.get<String>('gateway') ?? '').toLowerCase();
         final id = (d.objectId ?? '').toLowerCase();
-        final user = d.get<ParseObject>('user');
+        final user = _getSafeUser(d);
         final userName = (user?.get<String>('name') ?? user?.get<String>('username') ?? '').toLowerCase();
         final userEmail = (user?.get<String>('email') ?? '').toLowerCase();
         return desc.contains(query) || gateway.contains(query) || id.contains(query) || userName.contains(query) || userEmail.contains(query);
@@ -191,7 +279,7 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
         final query = _searchQuery.toLowerCase();
         final desc = (tx.get<String>('description') ?? '').toLowerCase();
         final id = (tx.objectId ?? '').toLowerCase();
-        final user = tx.get<ParseObject>('user');
+        final user = _getSafeUser(tx);
         final userName = (user?.get<String>('name') ?? user?.get<String>('username') ?? '').toLowerCase();
         return desc.contains(query) || id.contains(query) || userName.contains(query);
       }
@@ -634,7 +722,7 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
   }
 
   Widget _buildWithdrawalCard(ParseObject w) {
-    final user = w.get<ParseObject>('user');
+    final user = _getSafeUser(w);
     final userId = user?.objectId ?? (w.get<String>('objectId') ?? '');
     final userName = w.get<String>('userName') ?? (user?.get<String>('name') ?? user?.get<String>('username') ?? 'Jogador Desconhecido');
     final userEmail = w.get<String>('userEmail') ?? (user?.get<String>('email') ?? 'Sem email');
@@ -836,25 +924,38 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
           // Ações Administrativas
           if (status == 'pending') ...[
             ElevatedButton.icon(
+              icon: const FaIcon(FontAwesomeIcons.bolt, size: 12),
+              label: const Text('Pagar Pix (API)'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.amareloVale,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () => _showAutoPayoutModal(w, userName, amount, pixKey, pixKeyType, userId),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton.icon(
               icon: const FaIcon(FontAwesomeIcons.check, size: 12),
-              label: const Text('Aprovar & Pagar'),
+              label: const Text('Aprovar Manual'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.verdeVale,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () => _showApproveWithdrawalModal(w, userName, amount, pixKey, pixKeyType, userId),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             OutlinedButton.icon(
               icon: const FaIcon(FontAwesomeIcons.xmark, size: 12),
               label: const Text('Rejeitar'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.redAccent,
                 side: const BorderSide(color: Colors.redAccent),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () => _showRejectWithdrawalModal(w, userName, amount, userId),
@@ -916,7 +1017,7 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
   }
 
   Widget _buildDepositCard(ParseObject d) {
-    final user = d.get<ParseObject>('user');
+    final user = _getSafeUser(d);
     final userName = user?.get<String>('name') ?? user?.get<String>('username') ?? 'Jogador';
     final userEmail = user?.get<String>('email') ?? '';
     final amount = (d.get<num>('amount') ?? 0.0).toDouble();
@@ -1059,10 +1160,10 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
             ),
           ),
           // Ação para Aprovar Manualmente caso webhook tenha falhado
-          if (status == 'pending')
+          if (status == 'pending') ...[
             ElevatedButton.icon(
               icon: const FaIcon(FontAwesomeIcons.circleCheck, size: 12),
-              label: const Text('Aprovar Manualmente'),
+              label: const Text('Aprovar Manual'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.amareloVale,
                 foregroundColor: Colors.black,
@@ -1070,7 +1171,20 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: () => _showApproveDepositManualModal(d, userName, amount),
-            )
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              icon: const FaIcon(FontAwesomeIcons.xmark, size: 12),
+              label: const Text('Cancelar'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.redAccent,
+                side: const BorderSide(color: Colors.redAccent),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () => _executeCancelDeposit(d.objectId!),
+            ),
+          ]
           else
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -1123,7 +1237,7 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
                     final amount = (tx.get<num>('amount') ?? 0.0).toDouble();
                     final status = tx.get<String>('status') ?? 'pending';
                     final desc = tx.get<String>('description') ?? type.toUpperCase();
-                    final user = tx.get<ParseObject>('user');
+                    final user = _getSafeUser(tx);
                     final userName = user?.get<String>('name') ?? user?.get<String>('username') ?? 'Usuário';
 
                     final isIncome = type == 'deposit' || type == 'reward';
@@ -1204,6 +1318,129 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
   // ==========================================
   // MODAIS DE AÇÃO
   // ==========================================
+  void _showAutoPayoutModal(
+    ParseObject w,
+    String userName,
+    double amount,
+    String pixKey,
+    String pixKeyType,
+    String userId,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return AdminModal(
+          title: '⚡ Pagamento Automático Pix (API)',
+          maxWidth: 550,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.amareloVale.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.4)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Jogador:', style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 13)),
+                        Text(userName, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Valor da Transferência:', style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 13)),
+                        Text(
+                          'R\$ ${amount.toStringAsFixed(2).replaceAll('.', ',')}',
+                          style: GoogleFonts.poppins(color: AppColors.amareloVale, fontWeight: FontWeight.w800, fontSize: 20),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Tipo de Chave:', style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 13)),
+                        Text(pixKeyType, style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Chave Pix Destino:', style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 13)),
+                        SelectableText(
+                          pixKey,
+                          style: GoogleFonts.robotoMono(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                ),
+                child: Row(
+                  children: [
+                    const FaIcon(FontAwesomeIcons.circleInfo, size: 16, color: AppColors.amareloVale),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'O sistema executará a transferência Pix imediata via API do Gateway ativo configurado. O comprovante bancário e o EndToEnd ID serão salvos automaticamente.',
+                        style: GoogleFonts.inter(color: Colors.white70, fontSize: 12, height: 1.3),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogCtx),
+                    child: Text('Cancelar', style: GoogleFonts.inter(color: AppColors.cinzaMedio)),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    icon: const FaIcon(FontAwesomeIcons.bolt, size: 14),
+                    label: const Text('Confirmar & Transferir Agora'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.amareloVale,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: () async {
+                      Navigator.pop(dialogCtx);
+                      await _executeWithdrawalAction(
+                        w.objectId!,
+                        userId,
+                        'auto_payout',
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _showApproveWithdrawalModal(
     ParseObject w,
     String userName,
@@ -1485,27 +1722,51 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
     );
 
     try {
+      final currentUser = await ParseUser.currentUser() as ParseUser?;
+      final sessionToken = currentUser?.sessionToken;
+
       final params = <String, dynamic>{
         'withdrawalId': withdrawalId,
         'objectId': userId,
         'action': action,
       };
+      if (sessionToken != null) params['sessionToken'] = sessionToken;
       if (receipt != null && receipt.isNotEmpty) params['receipt'] = receipt;
       if (rejectionReason != null && rejectionReason.isNotEmpty) {
         params['rejectionReason'] = rejectionReason;
       }
 
+      final headers = <String, String>{};
+      if (sessionToken != null) headers['X-Parse-Session-Token'] = sessionToken;
+
       final res = await ParseCloudFunction('processWithdrawal').execute(
         parameters: params,
+        headers: headers.isNotEmpty ? headers : null,
       );
 
       if (mounted) {
         Navigator.pop(context); // fecha loading
         if (res.success) {
+          final resData = res.result is Map ? Map<String, dynamic>.from(res.result as Map) : null;
+          final receiptMsg = (resData != null && resData['receipt'] != null)
+              ? '\nComprovante: ${resData['receipt']}'
+              : '';
+          String feedback = 'Operação realizada com sucesso!';
+          if (action == 'auto_payout') {
+            feedback = (resData != null && resData['message'] != null)
+                ? '${resData['message']}$receiptMsg'
+                : '⚡ Pagamento automático Pix executado com sucesso!$receiptMsg';
+          } else if (action == 'approve') {
+            feedback = 'Saque aprovado e marcado como pago!$receiptMsg';
+          } else {
+            feedback = 'Saque rejeitado e saldo estornado com sucesso!';
+          }
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(action == 'approve' ? 'Saque aprovado e marcado como pago!' : 'Saque rejeitado e saldo estornado com sucesso!'),
-              backgroundColor: action == 'approve' ? AppColors.verdeVale : Colors.redAccent,
+              content: Text(feedback),
+              backgroundColor: action == 'reject' ? Colors.redAccent : AppColors.verdeVale,
+              duration: const Duration(seconds: 4),
             ),
           );
           _loadAllFinancialData();
@@ -1525,6 +1786,81 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
     }
   }
 
+  Future<void> _executeCancelDeposit(String transactionId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.darkCardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Cancelar Depósito?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: const Text(
+          'Deseja realmente cancelar esta solicitação de depósito pendente?',
+          style: TextStyle(color: AppColors.cinzaMedio),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Voltar', style: TextStyle(color: AppColors.cinzaMedio)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sim, Cancelar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.verdeVale)),
+    );
+
+    try {
+      final currentUser = await ParseUser.currentUser() as ParseUser?;
+      final sessionToken = currentUser?.sessionToken;
+
+      final params = <String, dynamic>{'transactionId': transactionId};
+      if (sessionToken != null) params['sessionToken'] = sessionToken;
+
+      final headers = <String, String>{};
+      if (sessionToken != null) headers['X-Parse-Session-Token'] = sessionToken;
+
+      final res = await ParseCloudFunction('cancelDeposit').execute(
+        parameters: params,
+        headers: headers.isNotEmpty ? headers : null,
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        if (res.success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Depósito pendente cancelado com sucesso.'), backgroundColor: Colors.redAccent),
+          );
+          _loadAllFinancialData();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erro: ${res.error?.message ?? "Falha ao cancelar"}'), backgroundColor: Colors.redAccent),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Exceção ao cancelar depósito: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
+  }
+
   Future<void> _executeApproveDepositManual(String transactionId) async {
     showDialog(
       context: context,
@@ -1533,8 +1869,18 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
     );
 
     try {
+      final currentUser = await ParseUser.currentUser() as ParseUser?;
+      final sessionToken = currentUser?.sessionToken;
+
+      final params = <String, dynamic>{'transactionId': transactionId};
+      if (sessionToken != null) params['sessionToken'] = sessionToken;
+
+      final headers = <String, String>{};
+      if (sessionToken != null) headers['X-Parse-Session-Token'] = sessionToken;
+
       final res = await ParseCloudFunction('approveDepositManual').execute(
-        parameters: {'transactionId': transactionId},
+        parameters: params,
+        headers: headers.isNotEmpty ? headers : null,
       );
 
       if (mounted) {
@@ -1591,7 +1937,7 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
 
       // Dados de Depósitos
       final depositsData = _deposits.take(40).map((d) {
-        final user = d.get<ParseObject>('user');
+        final user = _getSafeUser(d);
         final userName = user?.get<String>('name') ?? user?.get<String>('username') ?? 'Jogador';
         final gateway = (d.get<String>('gateway') ?? 'MERCADOPAGO').toUpperCase();
         final amount = (d.get<num>('amount') ?? 0.0).toDouble();

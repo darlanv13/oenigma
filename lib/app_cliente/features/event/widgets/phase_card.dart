@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/app_cliente/features/enigma/screens/enigma_screen.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -73,6 +74,7 @@ class PhaseCard extends StatelessWidget {
             onTap: isPlayable
                 ? () {
                     if (phase.enigmas.isNotEmpty) {
+                      SoundService.playCheckpoint();
                       int enigmaIndex = currentEnigma - 1;
                       if (enigmaIndex < 0 ||
                           enigmaIndex >= phase.enigmas.length) {
@@ -101,6 +103,7 @@ class PhaseCard extends StatelessWidget {
                   }
                 : (isLocked
                     ? () {
+                        SoundService.playError();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Row(
@@ -129,6 +132,7 @@ class PhaseCard extends StatelessWidget {
                       }
                     : () {
                         if (phase.enigmas.isNotEmpty) {
+                          SoundService.playCheckpoint();
                           Navigator.push(
                             context,
                             MaterialPageRoute(

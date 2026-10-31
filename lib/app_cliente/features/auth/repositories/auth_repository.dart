@@ -30,6 +30,21 @@ class AuthRepository {
     _authStateController.add(_currentUser);
   }
 
+  Future<ParseUser?> reloadUser() async {
+    final user = await ParseUser.currentUser() as ParseUser?;
+    if (user != null && user.sessionToken != null) {
+      final response = await ParseUser.getCurrentUserFromServer(
+        user.sessionToken!,
+      );
+      if (response?.success ?? false) {
+        _currentUser = response!.result as ParseUser?;
+        _authStateController.add(_currentUser);
+        return _currentUser;
+      }
+    }
+    return _currentUser;
+  }
+
   Future<String?> signInWithCpfAndPassword(
     String cpf,
     String password,

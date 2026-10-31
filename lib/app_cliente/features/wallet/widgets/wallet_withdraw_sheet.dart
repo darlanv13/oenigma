@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+
+import 'package:oenigma/core/services/sound_service.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 
 class WalletWithdrawSheet extends StatefulWidget {
   final double currentBalance;
-  final VoidCallback onWithdrawSuccess;
 
   const WalletWithdrawSheet({
     super.key,
     required this.currentBalance,
-    required this.onWithdrawSuccess,
   });
 
   @override
@@ -22,15 +22,32 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
   final _amountController = TextEditingController();
   final _pixKeyController = TextEditingController();
 
-  String _pixKeyType = 'CPF'; // CPF, EMAIL, TELEFONE, CHAVE_ALEATORIA
+  String _pixKeyType = 'CPF'; // CPF, CNPJ, EMAIL, TELEFONE, CHAVE_ALEATORIA
   bool _isLoading = false;
   String? _errorMessage;
+  double _enteredAmount = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController.addListener(_onAmountChanged);
+  }
 
   @override
   void dispose() {
+    _amountController.removeListener(_onAmountChanged);
     _amountController.dispose();
     _pixKeyController.dispose();
     super.dispose();
+  }
+
+  void _onAmountChanged() {
+    final text = _amountController.text.replaceAll(',', '.').trim();
+    final parsed = double.tryParse(text) ?? 0.0;
+    setState(() {
+      _enteredAmount = parsed;
+      _errorMessage = null;
+    });
   }
 
   void _setAmount(double value) {
@@ -39,7 +56,6 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
     } else {
       _amountController.text = value.toStringAsFixed(2);
     }
-    setState(() => _errorMessage = null);
   }
 
   Future<void> _submitWithdrawal() async {
@@ -84,45 +100,10 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
       if (!mounted) return;
 
       if (res.success) {
-        Navigator.pop(context); // fecha sheet
-        widget.onWithdrawSuccess();
-
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: AppColors.darkCardColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: AppColors.verdeVale.withValues(alpha: 0.3)),
-            ),
-            title: Row(
-              children: [
-                const FaIcon(FontAwesomeIcons.circleCheck, color: AppColors.verdeVale, size: 22),
-                const SizedBox(width: 10),
-                Text(
-                  'Solicitação Enviada!',
-                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ],
-            ),
-            content: Text(
-              'Sua solicitação de saque no valor de R\$ ${amount.toStringAsFixed(2).replaceAll('.', ',')} foi recebida com sucesso e está em análise para transferência Pix.',
-              style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 13, height: 1.4),
-            ),
-            actions: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.verdeVale,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Entendido'),
-              ),
-            ],
-          ),
-        );
+        SoundService.playReward();
+        Navigator.pop(context, amount);
       } else {
+        SoundService.playError();
         setState(() {
           _isLoading = false;
           _errorMessage = res.error?.message ?? 'Falha ao solicitar saque. Tente novamente.';
@@ -130,6 +111,7 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
       }
     } catch (e) {
       if (mounted) {
+        SoundService.playError();
         setState(() {
           _isLoading = false;
           _errorMessage = 'Erro ao processar: $e';
@@ -141,6 +123,7 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final remainingBalance = (widget.currentBalance - _enteredAmount).clamp(0.0, widget.currentBalance);
 
     return Container(
       decoration: BoxDecoration(
@@ -185,35 +168,49 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Transfira seus ganhos diretamente para sua conta bancária.',
+              'Transfira seus ganhos diretamente para sua conta bancária via Pix.',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 13),
             ),
             const SizedBox(height: 18),
 
-            // Card de Saldo Disponível
+            // Card Resumo de Saldo
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
                 children: [
-                  Text(
-                    'Saldo Disponível:',
-                    style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 13),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Saldo Disponível:', style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 13)),
+                      Text(
+                        'R\$ ${widget.currentBalance.toStringAsFixed(2).replaceAll('.', ',')}',
+                        style: GoogleFonts.poppins(color: AppColors.amareloVale, fontWeight: FontWeight.w800, fontSize: 16),
+                      ),
+                    ],
                   ),
-                  Text(
-                    'R\$ ${widget.currentBalance.toStringAsFixed(2).replaceAll('.', ',')}',
-                    style: GoogleFonts.poppins(
-                      color: AppColors.amareloVale,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
+                  if (_enteredAmount > 0) ...[
+                    const Divider(color: Colors.white12, height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Saldo Restante:', style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 12)),
+                        Text(
+                          'R\$ ${remainingBalance.toStringAsFixed(2).replaceAll('.', ',')}',
+                          style: GoogleFonts.poppins(
+                            color: _enteredAmount > widget.currentBalance ? Colors.redAccent : Colors.white70,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -268,6 +265,8 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
               child: Row(
                 children: [
                   _buildPixTypeChip('CPF', 'CPF'),
+                  const SizedBox(width: 8),
+                  _buildPixTypeChip('CNPJ', 'CNPJ'),
                   const SizedBox(width: 8),
                   _buildPixTypeChip('E-mail', 'EMAIL'),
                   const SizedBox(width: 8),
@@ -402,13 +401,15 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
     switch (_pixKeyType) {
       case 'CPF':
         return 'Digite seu CPF (apenas números)';
+      case 'CNPJ':
+        return 'Digite o CNPJ (apenas números)';
       case 'EMAIL':
         return 'Digite seu e-mail cadastrado no Pix';
       case 'TELEFONE':
-        return 'Digite seu celular com DDD (Ex: 94991234567)';
+        return 'Digite seu celular com DDD (Ex: 11999998888)';
       case 'CHAVE_ALEATORIA':
       default:
-        return 'Cole sua chave Pix aleatória';
+        return 'Cole sua chave Pix aleatória (EVP)';
     }
   }
 }

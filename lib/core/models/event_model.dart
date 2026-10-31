@@ -23,6 +23,8 @@ class EventModel {
   final String? prizeImageUrl; // URL da imagem PNG do prêmio
   final String difficulty; // ex: 'Média'
 
+  String get description => fullDescription;
+
   EventModel({
     required this.id,
     required this.name,
@@ -78,6 +80,20 @@ class EventModel {
         map['prizeImageUrl']?.toString() ?? map['imageUrl']?.toString();
     final String difficulty = map['difficulty']?.toString() ?? 'Média';
 
+    final String rawDescription = (map['description']?.toString().trim().isNotEmpty ?? false)
+        ? map['description'].toString().trim()
+        : (map['fullDescription']?.toString().trim().isNotEmpty ?? false)
+            ? map['fullDescription'].toString().trim()
+            : (map['descricao']?.toString().trim().isNotEmpty ?? false)
+                ? map['descricao'].toString().trim()
+                : (map['details']?.toString().trim().isNotEmpty ?? false)
+                    ? map['details'].toString().trim()
+                    : '';
+    final String parsedDescription =
+        (rawDescription.isNotEmpty && rawDescription != 'Nenhuma descrição.')
+            ? rawDescription
+            : '';
+
     String formattedPrize;
     if (prizeType == 'objeto') {
       formattedPrize = rawPrize.isNotEmpty
@@ -103,8 +119,7 @@ class EventModel {
       icon: map['icon'] ?? '',
       startDate: map['startDate'] ?? 'Data não definida',
       location: map['location'] ?? 'Local não definido',
-      fullDescription:
-          map['fullDescription'] ?? map['description'] ?? 'Nenhuma descrição.',
+      fullDescription: parsedDescription,
       status: map['status'] ?? 'open',
       winnerName: map['winnerName'],
       winnerPhotoURL: map['winnerPhotoURL'],
@@ -127,6 +142,7 @@ class EventModel {
       'icon': icon,
       'startDate': startDate,
       'location': location,
+      'description': fullDescription,
       'fullDescription': fullDescription,
       'status': status,
       'winnerName': winnerName,

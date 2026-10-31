@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class CertificateScreen extends StatelessWidget {
+class CertificateScreen extends StatefulWidget {
   final String eventName;
   final double prize;
 
@@ -13,6 +14,17 @@ class CertificateScreen extends StatelessWidget {
     required this.eventName,
     required this.prize,
   });
+
+  @override
+  State<CertificateScreen> createState() => _CertificateScreenState();
+}
+
+class _CertificateScreenState extends State<CertificateScreen> {
+  @override
+  void initState() {
+    super.initState();
+    SoundService.playBadge();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +106,7 @@ class CertificateScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6.0),
                 Text(
-                  eventName,
+                  widget.eventName,
                   style: GoogleFonts.poppins(
                     fontSize: 20.0,
                     fontWeight: FontWeight.w700,
@@ -113,7 +125,7 @@ class CertificateScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 6.0),
                 Text(
-                  currencyFormat.format(prize),
+                  currencyFormat.format(widget.prize),
                   style: GoogleFonts.poppins(
                     fontSize: 28.0,
                     fontWeight: FontWeight.w900,

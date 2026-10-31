@@ -1,5 +1,19 @@
 // Parse Cloud Code for Back4App
 // Write your cloud functions here.
+const financialService = require('./financial_service.js');
+
+function parseMoney(value) {
+  if (value === undefined || value === null) return 0.0;
+  if (typeof value === 'number') return isNaN(value) ? 0.0 : value;
+  let clean = String(value).replace('R$', '').replace(/\s/g, '').trim();
+  if (clean.includes(',') && clean.includes('.')) {
+    clean = clean.replace(/\./g, '').replace(',', '.');
+  } else if (clean.includes(',')) {
+    clean = clean.replace(',', '.');
+  }
+  const parsed = parseFloat(clean);
+  return isNaN(parsed) ? 0.0 : parsed;
+}
 
 require('./admin.js');
 
@@ -36,7 +50,7 @@ Parse.Cloud.define("getHomeScreenData", async (request) => {
         objectId: user.id,
         name: user.get("name") || user.get("username") || "Jogador",
         email: user.get("email") || "",
-        balance: user.get("balance") || 0.0,
+        balance: parseMoney(user.get("balance")),
         photoURL: user.get("photoURL") || null,
         lastWonEventName: user.get("lastWonEventName"),
         lastEventRank: user.get("lastEventRank"),
@@ -70,7 +84,7 @@ Parse.Cloud.define("getHomeScreenData", async (request) => {
     const allPlayers = topPlayers.map(p => ({
       objectId: p.id,
       name: p.get("name") || p.get("username") || "Jogador",
-      balance: p.get("balance") || 0.0
+      balance: parseMoney(p.get("balance"))
     }));
 
     return {
@@ -90,29 +104,23 @@ Parse.Cloud.define("createPixCharge", async (request) => {
   const { amount } = request.params;
   const user = request.user;
 
-  if (!amount || typeof amount !== 'number') {
-    throw new Parse.Error(Parse.Error.INVALID_QUERY, "amount is required and must be a number.");
+  const numAmount = parseMoney(amount);
+  if (!numAmount || numAmount <= 0) {
+    throw new Parse.Error(Parse.Error.INVALID_QUERY, "Valor de depósito inválido.");
   }
   
   if (!user) {
-    throw new Parse.Error(209, "Acesso negado.");
+    throw new Parse.Error(209, "Acesso negado. Usuário não autenticado.");
   }
 
   try {
-    // Obtém gateway ativo configurado no painel admin
-    const qGateway = new Parse.Query("GatewayConfig");
-    qGateway.equalTo("isActive", true);
-    qGateway.equalTo("isDefault", true);
-    const activeGateway = await qGateway.first({ useMasterKey: true });
-    const gatewayId = activeGateway ? activeGateway.get("gatewayId") : "mercadopago";
-
     const Transaction = Parse.Object.extend("Transaction");
     const transaction = new Transaction();
     transaction.set("type", "deposit");
-    transaction.set("amount", amount);
+    transaction.set("amount", numAmount);
     transaction.set("status", "pending");
     transaction.set("user", user);
-    transaction.set("gateway", gatewayId);
+    transaction.set("description", `Depósito Pix R$ ${numAmount.toFixed(2)}`);
 
     const acl = new Parse.ACL();
     acl.setReadAccess(user.id, true);
@@ -123,14 +131,138 @@ Parse.Cloud.define("createPixCharge", async (request) => {
 
     await transaction.save(null, { useMasterKey: true });
 
+    // Gera cobrança no Gateway Ativo ou Pix BRCode Oficial Bacen
+    const chargeData = await financialService.createPixChargeService({
+      amount: numAmount,
+      user: user,
+      transactionId: transaction.id
+    });
+
+    transaction.set("gateway", chargeData.gateway || "mercadopago");
+    if (chargeData.gatewayPaymentId) {
+      transaction.set("gatewayPaymentId", chargeData.gatewayPaymentId);
+    }
+    if (chargeData.copiaCola) {
+      transaction.set("copiaCola", chargeData.copiaCola);
+    }
+    if (chargeData.qrCodeBase64) {
+      transaction.set("qrCodeBase64", chargeData.qrCodeBase64);
+    }
+    await transaction.save(null, { useMasterKey: true });
+
     return {
       success: true,
-      qrCode: "00020101021243650016COM.MERCADOLIBRE0114...",
-      qrCodeBase64: "iVBORw0KGgoAAAANSUhEUgAAA...",
+      gateway: chargeData.gateway,
+      qrCode: chargeData.copiaCola,
+      copiaCola: chargeData.copiaCola,
+      qrCodeBase64: chargeData.qrCodeBase64,
       transactionId: transaction.id
     };
   } catch (error) {
-    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error creating Pix charge: " + error.message);
+    console.error("[createPixCharge Error]", error);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao gerar cobrança Pix: " + error.message);
+  }
+});
+
+Parse.Cloud.define("checkPixPaymentStatus", async (request) => {
+  const { transactionId } = request.params;
+  const user = request.user;
+  if (!transactionId) {
+    throw new Parse.Error(Parse.Error.INVALID_QUERY, "transactionId is required.");
+  }
+
+  try {
+    const qTx = new Parse.Query("Transaction");
+    qTx.include("user");
+    const tx = await qTx.get(transactionId, { useMasterKey: true });
+
+    if (!tx) {
+      throw new Error("Transação não encontrada.");
+    }
+
+    const currentStatus = tx.get("status") || "pending";
+    if (currentStatus === "approved" || currentStatus === "completed") {
+      const txUser = tx.get("user") || user;
+      let balance = 0;
+      if (txUser) {
+        await txUser.fetch({ useMasterKey: true });
+        balance = parseMoney(txUser.get("balance"));
+      }
+      return {
+        success: true,
+        status: "approved",
+        balance: balance,
+        message: "Depósito já aprovado e creditado!"
+      };
+    }
+
+    // Se estiver pendente e possuir gatewayPaymentId, consulta o status no gateway
+    const gateway = tx.get("gateway");
+    const gatewayPaymentId = tx.get("gatewayPaymentId");
+    const gatewayConfig = await financialService.getActiveGateway();
+    const keys = gatewayConfig ? (gatewayConfig.get("keys") || {}) : {};
+    const environment = gatewayConfig ? (gatewayConfig.get("environment") || "production") : "production";
+
+    let approvedNow = false;
+
+    if (gateway === "mercadopago" && gatewayPaymentId && keys.access_token) {
+      try {
+        const mpRes = await financialService.httpRequest(`https://api.mercadopago.com/v1/payments/${gatewayPaymentId}`, {
+          method: "GET",
+          headers: { "Authorization": `Bearer ${keys.access_token.trim()}` }
+        });
+        if (mpRes.ok && mpRes.data && mpRes.data.status === "approved") {
+          approvedNow = true;
+        }
+      } catch (e) {
+        console.warn("[checkPixPaymentStatus] MP check error:", e.message);
+      }
+    } else if (gateway === "asaas" && gatewayPaymentId && keys.api_key) {
+      try {
+        const baseUrl = environment === "sandbox" ? "https://sandbox.asaas.com/api/v3" : "https://api.asaas.com/api/v3";
+        const asaasRes = await financialService.httpRequest(`${baseUrl}/payments/${gatewayPaymentId}`, {
+          method: "GET",
+          headers: { "access_token": keys.api_key.trim() }
+        });
+        if (asaasRes.ok && asaasRes.data && (asaasRes.data.status === "RECEIVED" || asaasRes.data.status === "CONFIRMED")) {
+          approvedNow = true;
+        }
+      } catch (e) {
+        console.warn("[checkPixPaymentStatus] Asaas check error:", e.message);
+      }
+    }
+
+    if (approvedNow) {
+      tx.set("status", "approved");
+      tx.set("approvedAt", new Date());
+      await tx.save(null, { useMasterKey: true });
+
+      const targetUser = tx.get("user");
+      let newBalance = 0;
+      if (targetUser) {
+        await targetUser.fetch({ useMasterKey: true });
+        const curBal = parseMoney(targetUser.get("balance"));
+        const amt = parseMoney(tx.get("amount"));
+        newBalance = Number((curBal + amt).toFixed(2));
+        targetUser.set("balance", newBalance);
+        await targetUser.save(null, { useMasterKey: true });
+      }
+
+      return {
+        success: true,
+        status: "approved",
+        balance: newBalance,
+        message: "Pagamento confirmado com sucesso e creditado na carteira!"
+      };
+    }
+
+    return {
+      success: true,
+      status: currentStatus,
+      message: "Aguardando confirmação do pagamento..."
+    };
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao checar status do pagamento: " + error.message);
   }
 });
 
@@ -147,7 +279,7 @@ Parse.Cloud.define("getUserWalletData", async (request) => {
     objectId: user.id,
     name: user.get("name") || user.get("username") || "Jogador",
     email: user.get("email") || "",
-    balance: user.get("balance") || 0.0,
+    balance: parseMoney(user.get("balance")),
     photoURL: user.get("photoURL") || null,
     lastWonEventName: user.get("lastWonEventName"),
     lastEventRank: user.get("lastEventRank"),
@@ -294,7 +426,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
     let eventProgress = userEvents[eventId] || {};
     let hintsPurchased = eventProgress.hintsPurchased || [];
     let toolsPurchased = eventProgress.toolsPurchased || [];
-    let balance = user.get("balance") || 0.0;
+    let balance = parseMoney(user.get("balance"));
 
     const now = new Date().getTime();
     if (eventProgress.cooldownUntil && eventProgress.cooldownUntil > now && action !== 'getStatus') {
@@ -406,7 +538,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Dica não encontrada.");
       }
 
-      user.set("balance", balance - cost);
+      user.set("balance", Number((balance - cost).toFixed(2)));
 
       const hint = {
         type: hintObj.get("type"),
@@ -456,7 +588,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Saldo insuficiente para comprar a ferramenta.");
       }
 
-      user.set("balance", balance - cost);
+      user.set("balance", Number((balance - cost).toFixed(2)));
 
       toolsPurchased.push(toolType);
       eventProgress.toolsPurchased = toolsPurchased;
@@ -531,8 +663,10 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         const eventType = eventObj.get("eventType") || 'classic';
 
         if (eventType === 'find_and_win') {
-          const enigmaPrize = enigma.get("prize") || 0.0;
-          user.set("balance", balance + enigmaPrize);
+          const enigmaPrize = parseMoney(enigma.get("prize"));
+          const currentBalance = parseMoney(user.get("balance"));
+          const newBalance = Number((currentBalance + enigmaPrize).toFixed(2));
+          user.set("balance", newBalance);
 
           let currentXP = user.get("xp") || 0;
           currentXP += 50; 
@@ -548,13 +682,29 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
           eventProgress.solvedEnigmas = solvedEnigmas;
           userEvents[eventId] = eventProgress;
           user.set("events", userEvents);
+
+          if (enigmaPrize > 0) {
+            try {
+              const Transaction = Parse.Object.extend("Transaction");
+              const tx = new Transaction();
+              tx.set("type", "prize");
+              tx.set("amount", enigmaPrize);
+              tx.set("description", "Recompensa Baú - " + (enigma.get("instruction") || enigma.get("title") || "Find & Win"));
+              tx.set("status", "completed");
+              tx.set("user", user);
+              await tx.save(null, { useMasterKey: true });
+            } catch (txErr) {
+              console.error("Erro ao registrar transação de prêmio Find & Win:", txErr);
+            }
+          }
+
           await user.save(null, { useMasterKey: true });
 
           return {
             success: true,
             message: "Resposta Correta! Recompensa instantânea creditada.",
             nextStep: {
-              type: 'next_enigma', 
+              type: 'find_and_win_complete', 
               prizeWon: enigmaPrize,
               enigmaData: {}
             }
@@ -662,10 +812,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
               const isEventClosed = eventObj.get("status") === "closed";
 
               let rawPrize = eventObj.get("prizePool") || eventObj.get("prize") || "0";
-              if (typeof rawPrize === 'string') {
-                rawPrize = rawPrize.replace('R$', '').replace(',', '.').trim();
-              }
-              const prizePool = parseFloat(rawPrize) || 0.0;
+              const prizePool = parseMoney(rawPrize);
 
               eventProgress.isCompleted = true;
               eventProgress.completedAt = new Date();
@@ -681,7 +828,9 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
                 eventObj.set("completedAt", new Date());
                 await eventObj.save(null, { useMasterKey: true });
 
-                user.set("balance", balance + prizePool);
+                const currentBalance = parseMoney(user.get("balance"));
+                const newBalance = Number((currentBalance + prizePool).toFixed(2));
+                user.set("balance", newBalance);
                 user.set("lastWonEventName", eventObj.get("name") || eventObj.get("title") || "Evento Classic");
 
                 let currentXP = user.get("xp") || 0;
@@ -693,17 +842,19 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
                 winnerEvents.push(eventId);
                 user.set("winnerEvents", winnerEvents);
 
-                try {
-                  const Transaction = Parse.Object.extend("Transaction");
-                  const tx = new Transaction();
-                  tx.set("type", "prize");
-                  tx.set("amount", prizePool);
-                  tx.set("description", "Prêmio 1º Lugar - " + (eventObj.get("name") || eventObj.get("title") || "Classic"));
-                  tx.set("status", "completed");
-                  tx.set("user", user);
-                  await tx.save(null, { useMasterKey: true });
-                } catch (txErr) {
-                  console.error("Erro ao registrar transação de prêmio:", txErr);
+                if (prizePool > 0) {
+                  try {
+                    const Transaction = Parse.Object.extend("Transaction");
+                    const tx = new Transaction();
+                    tx.set("type", "prize");
+                    tx.set("amount", prizePool);
+                    tx.set("description", "Prêmio 1º Lugar - " + (eventObj.get("name") || eventObj.get("title") || "Classic"));
+                    tx.set("status", "completed");
+                    tx.set("user", user);
+                    await tx.save(null, { useMasterKey: true });
+                  } catch (txErr) {
+                    console.error("Erro ao registrar transação de prêmio Classic:", txErr);
+                  }
                 }
 
                 await user.save(null, { useMasterKey: true });
@@ -727,7 +878,6 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
                 await user.save(null, { useMasterKey: true });
 
                 const winnerName = eventObj.get("winnerName") || "Outro explorador";
-
                 return {
                   success: true,
                   message: `Você completou todas as fases do evento! O prêmio principal já foi conquistado pelo 1º colocado (${winnerName}), mas você completou a jornada com honra!`,
@@ -811,38 +961,48 @@ Parse.Cloud.define("paymentWebhook", async (request) => {
 
   console.log(`[Payment Webhook] Recebida notificação do gateway: ${gateway}`, JSON.stringify(payload));
 
-  // Tenta localizar a transação pelo ID ou dados do payload
-  let transactionId = payload.transactionId || payload.id || (payload.data ? payload.data.id : null);
-  
+  // Tenta localizar a transação por IDs em múltiplos formatos de payload
+  let transactionId = payload.transactionId || payload.id || (payload.data ? payload.data.id : null) || (payload.payment ? payload.payment.id : null);
+  let extRef = payload.external_reference || (payload.payment ? payload.payment.externalReference : null) || (payload.data ? payload.data.external_reference : null);
+
+  let tx = null;
   if (transactionId) {
     const qTx = new Parse.Query("Transaction");
     qTx.equalTo("objectId", transactionId);
-    let tx = await qTx.first({ useMasterKey: true });
+    tx = await qTx.first({ useMasterKey: true });
 
-    if (!tx && payload.external_reference) {
-      const qRef = new Parse.Query("Transaction");
-      qRef.equalTo("objectId", payload.external_reference);
-      tx = await qRef.first({ useMasterKey: true });
+    if (!tx) {
+      const qGatewayId = new Parse.Query("Transaction");
+      qGatewayId.equalTo("gatewayPaymentId", String(transactionId));
+      tx = await qGatewayId.first({ useMasterKey: true });
+    }
+  }
+
+  if (!tx && extRef) {
+    const qRef = new Parse.Query("Transaction");
+    qRef.equalTo("objectId", extRef);
+    tx = await qRef.first({ useMasterKey: true });
+  }
+
+  if (tx && tx.get("status") !== "approved" && tx.get("status") !== "completed") {
+    tx.set("status", "approved");
+    tx.set("gateway", gateway || tx.get("gateway") || "mercadopago");
+    tx.set("approvedAt", new Date());
+    await tx.save(null, { useMasterKey: true });
+
+    // Credita o saldo atomicamente na carteira do usuário
+    const user = tx.get("user");
+    if (user) {
+      await user.fetch({ useMasterKey: true });
+      const currentBalance = parseMoney(user.get("balance"));
+      const amount = parseMoney(tx.get("amount"));
+      const newBalance = Number((currentBalance + amount).toFixed(2));
+      user.set("balance", newBalance);
+      await user.save(null, { useMasterKey: true });
+      console.log(`[Payment Webhook] Saldo creditado: R$ ${amount} para usuário ${user.id}. Novo saldo: R$ ${newBalance}`);
     }
 
-    if (tx && tx.get("status") !== "approved") {
-      tx.set("status", "approved");
-      tx.set("gateway", gateway || "mercadopago");
-      tx.set("approvedAt", new Date());
-      await tx.save(null, { useMasterKey: true });
-
-      // Credita o saldo na carteira do usuário
-      const user = tx.get("user");
-      if (user) {
-        await user.fetch({ useMasterKey: true });
-        const currentBalance = user.get("balance") || 0;
-        const amount = tx.get("amount") || 0;
-        user.set("balance", currentBalance + amount);
-        await user.save(null, { useMasterKey: true });
-      }
-
-      return { success: true, message: "Transaction approved and wallet credited." };
-    }
+    return { success: true, message: "Transaction approved and wallet credited." };
   }
 
   return { success: true, message: "Webhook acknowledged." };
@@ -852,8 +1012,9 @@ Parse.Cloud.define("requestWithdrawal", async (request) => {
   const user = request.user;
   if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Usuário não autenticado.");
   const { amount, pixKey, pixKeyType } = request.params;
+  const numAmount = parseMoney(amount);
 
-  if (!amount || typeof amount !== 'number' || amount <= 0) {
+  if (!numAmount || numAmount <= 0) {
     throw new Parse.Error(Parse.Error.INVALID_QUERY, "Valor de saque inválido.");
   }
   if (!pixKey || typeof pixKey !== 'string' || pixKey.trim().length === 0) {
@@ -862,22 +1023,23 @@ Parse.Cloud.define("requestWithdrawal", async (request) => {
 
   try {
     await user.fetch({ useMasterKey: true });
-    const currentBalance = user.get("balance") || 0.0;
-    if (currentBalance < amount) {
+    const currentBalance = parseMoney(user.get("balance"));
+    if (currentBalance < numAmount) {
       throw new Parse.Error(Parse.Error.VALIDATION_ERROR, "Saldo insuficiente para o saque solicitado.");
     }
 
     // Debita o saldo imediatamente para evitar saques simultâneos
-    user.set("balance", currentBalance - amount);
+    const newBalance = Number((currentBalance - numAmount).toFixed(2));
+    user.set("balance", newBalance);
     await user.save(null, { useMasterKey: true });
 
     const userName = user.get("name") || user.get("username") || "Jogador";
     const userEmail = user.get("email") || "";
 
-    // Cria registro na classe Withdrawal
+    // Cria registro na classe Withdrawal com leitura pública (para o painel admin carregar sem bloqueio de ACL)
     const Withdrawal = Parse.Object.extend("Withdrawal");
     const withdrawal = new Withdrawal();
-    withdrawal.set("amount", amount);
+    withdrawal.set("amount", numAmount);
     withdrawal.set("status", "pending");
     withdrawal.set("pixKey", pixKey.trim());
     withdrawal.set("pixKeyType", pixKeyType || "CHAVE_ALEATORIA");
@@ -885,11 +1047,12 @@ Parse.Cloud.define("requestWithdrawal", async (request) => {
     withdrawal.set("userName", userName);
     withdrawal.set("userEmail", userEmail);
 
+    // Define ACL estritamente privada: apenas o próprio usuário e Master Key têm acesso
     const acl = new Parse.ACL();
-    acl.setReadAccess(user.id, true);
-    acl.setWriteAccess(user.id, false);
     acl.setPublicReadAccess(false);
     acl.setPublicWriteAccess(false);
+    acl.setReadAccess(user.id, true);
+    acl.setWriteAccess(user.id, false);
     withdrawal.setACL(acl);
 
     await withdrawal.save(null, { useMasterKey: true });
@@ -898,22 +1061,33 @@ Parse.Cloud.define("requestWithdrawal", async (request) => {
     const Transaction = Parse.Object.extend("Transaction");
     const tx = new Transaction();
     tx.set("type", "withdrawal");
-    tx.set("amount", amount);
+    tx.set("amount", numAmount);
     tx.set("status", "pending");
     tx.set("user", user);
     tx.set("withdrawalId", withdrawal.id);
     tx.set("pixKey", pixKey.trim());
     tx.set("pixKeyType", pixKeyType || "CHAVE_ALEATORIA");
     tx.set("description", `Saque Pix para ${pixKey.trim()}`);
+
+    const txAcl = new Parse.ACL();
+    txAcl.setPublicReadAccess(false);
+    txAcl.setPublicWriteAccess(false);
+    txAcl.setReadAccess(user.id, true);
+    txAcl.setWriteAccess(user.id, false);
+    tx.setACL(txAcl);
+
     await tx.save(null, { useMasterKey: true });
+
+    console.log(`[requestWithdrawal] Saque solicitado: R$ ${numAmount} por ${userName} (${user.id}). Novo saldo: R$ ${newBalance}`);
 
     return {
       success: true,
       message: "Solicitação de saque enviada com sucesso!",
       withdrawalId: withdrawal.id,
-      newBalance: user.get("balance")
+      newBalance: newBalance
     };
   } catch (error) {
+    console.error("[requestWithdrawal Error]", error);
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao solicitar saque: " + error.message);
   }
 });
