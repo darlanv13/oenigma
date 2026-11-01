@@ -12,8 +12,7 @@ import 'package:oenigma/app_cliente/features/enigma/widgets/map_radius_widget.da
 import 'package:oenigma/app_cliente/features/enigma/widgets/relic_corner_painter.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
-/// Câmara da Relíquia & Validação: Estilo Indiana Jones / Tomb Raider com cores Vale.
-/// Possui Instinto do Explorador (Proximidade Quente/Frio), Selo da Relíquia, Bússola e Mapa.
+/// Câmara da Relíquia: limpa, direta, sem poluição visual e sem caixas aninhadas.
 class EnigmaTacticalArea extends StatelessWidget {
   final EnigmaController controller;
   final VoidCallback onShake;
@@ -33,177 +32,73 @@ class EnigmaTacticalArea extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(24),
+        color: const Color(0xFF131D24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.verdeVale.withValues(alpha: 0.45),
-          width: 1.5,
+          color: const Color(0xFF1E3A45),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.65),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
-          ),
-          BoxShadow(
-            color: AppColors.verdeVale.withValues(alpha: 0.10),
-            blurRadius: 18,
-            spreadRadius: 1,
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Stack(
-        children: [
-          // Cantoneiras ornamentadas de relíquia esmeralda
-          Positioned.fill(
-            child: CustomPaint(
-              painter: RelicCornerPainter(
-                color: AppColors.verdeVale.withValues(alpha: 0.35),
-                cornerLength: 22,
-                strokeWidth: 2.2,
-                showStuds: true,
-              ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. Barra de Proximidade (Instinto do Explorador) - Compacta e Elegante
+            _buildProximityStrip(isGpsEnigma),
+
+            const SizedBox(height: 14),
+
+            // 2. Seletor de Instrumentos em Segmented Control Moderno
+            _buildExpeditionTabSelector(isActionReady),
+
+            const SizedBox(height: 16),
+
+            // 3. Conteúdo da Aba Ativa
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: _buildCurrentTabContent(context, isActionReady, isGpsEnigma),
             ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(22),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Top Header da Câmara da Relíquia
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: AppColors.verdeVale.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: AppColors.verdeVale.withValues(alpha: 0.6),
-                          width: 1.3,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.verdeVale.withValues(alpha: 0.2),
-                            blurRadius: 8,
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: FaIcon(
-                          FontAwesomeIcons.landmark,
-                          color: AppColors.verdeVale,
-                          size: 17,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'CÂMARA DA RELÍQUIA',
-                            style: GoogleFonts.cinzel(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Instinto do explorador, bússola dourada & revelação',
-                            style: GoogleFonts.poppins(
-                              color: AppColors.cinzaMedio,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 18),
-
-                // 1. Instinto do Explorador (Proximidade Quente & Frio com Gemas Sagradas)
-                _buildExplorerInstinctBar(isGpsEnigma),
-
-                const SizedBox(height: 16),
-
-                // 2. Seletor de Instrumentos da Expedição
-                _buildExpeditionTabSelector(isActionReady),
-
-                const SizedBox(height: 18),
-
-                // 3. Conteúdo do Instrumento Ativo
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  child: _buildCurrentExpeditionContent(context, isActionReady, isGpsEnigma),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ).animate().fadeIn(duration: 500.ms, delay: 100.ms).slideY(begin: 0.05, end: 0);
+    ).animate().fadeIn(duration: 400.ms, delay: 100.ms);
   }
 
-  // --- INSTINTO DO EXPLORADOR (HOT & COLD COM GEMAS SAGRADAS E TOCHAS) ---
-  Widget _buildExplorerInstinctBar(bool isGpsEnigma) {
+  // --- 1. STRIP DE PROXIMIDADE (COMPACTA, MODERNA, SEM CAIXAS ANINHADAS) ---
+  Widget _buildProximityStrip(bool isGpsEnigma) {
     final distance = controller.distance;
 
     if (!isGpsEnigma && distance == null) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.35)),
+          color: const Color(0xFF0F171B),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.verdeVale.withValues(alpha: 0.16),
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.5)),
-              ),
-              child: const FaIcon(
-                FontAwesomeIcons.gem,
-                color: AppColors.verdeVale,
-                size: 16,
-              ),
+            const FaIcon(
+              FontAwesomeIcons.gem,
+              color: AppColors.verdeVale,
+              size: 13,
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 10),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'REVELAÇÃO DE RELÍQUIA FÍSICA',
-                    style: GoogleFonts.cinzel(
-                      color: Colors.white,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'Aponte a lente para o selo físico gravado ou inscreva o código.',
-                    style: GoogleFonts.poppins(
-                      color: AppColors.cinzaMedio,
-                      fontSize: 11,
-                      height: 1.3,
-                    ),
-                  ),
-                ],
+              child: Text(
+                'Aponte a lente para o QR Code da relíquia física.',
+                style: GoogleFonts.poppins(
+                  color: AppColors.cinzaMedio,
+                  fontSize: 11.5,
+                ),
               ),
             ),
           ],
@@ -212,195 +107,133 @@ class EnigmaTacticalArea extends StatelessWidget {
     }
 
     int gemLevel = 1;
-    String instinctTitle = 'TRILHA DA EXPEDIÇÃO';
-    String instinctSubtitle = 'Sintonizando instinto e bússola com a relíquia...';
-    Color instinctColor = AppColors.cinzaMedio;
-    dynamic instinctIcon = FontAwesomeIcons.compass;
+    String label = 'TRILHA DA EXPEDIÇÃO';
+    Color accentColor = AppColors.cinzaMedio;
+    dynamic icon = FontAwesomeIcons.compass;
 
     if (distance != null) {
       if (distance <= 25) {
         gemLevel = 5;
-        instinctTitle = 'RELÍQUIA AO SEU ALCANCE!';
-        instinctSubtitle = 'O tesouro está a poucos passos! Procure a marca sagrada.';
-        instinctColor = AppColors.verdeVale;
-        instinctIcon = FontAwesomeIcons.bullseye;
+        label = 'RELÍQUIA AO SEU ALCANCE!';
+        accentColor = AppColors.verdeVale;
+        icon = FontAwesomeIcons.bullseye;
       } else if (distance <= 75) {
         gemLevel = 4;
-        instinctTitle = 'FERVENDO! MUITO PRÓXIMO';
-        instinctSubtitle = 'Faltam ${distance.toInt()}m. Você está na câmara exata do tesouro!';
-        instinctColor = AppColors.amareloVale;
-        instinctIcon = FontAwesomeIcons.fire;
+        label = 'FERVENDO! MUITO PRÓXIMO';
+        accentColor = AppColors.amareloVale;
+        icon = FontAwesomeIcons.fire;
       } else if (distance <= 150) {
         gemLevel = 3;
-        instinctTitle = 'AQUECENDO • PASSO CERTO';
-        instinctSubtitle = 'Distância estimada: ${distance.toInt()} metros até o local.';
-        instinctColor = AppColors.amareloValeAlt;
-        instinctIcon = FontAwesomeIcons.personWalking;
+        label = 'AQUECENDO • PASSO CERTO';
+        accentColor = AppColors.amareloValeAlt;
+        icon = FontAwesomeIcons.personWalking;
       } else if (distance <= 300) {
         gemLevel = 2;
-        instinctTitle = 'TRILHA FRIA • MANTENHA A DIREÇÃO';
-        instinctSubtitle = 'A relíquia repousa a ${distance.toInt()} metros à frente.';
-        instinctColor = AppColors.cinzaMedio;
-        instinctIcon = FontAwesomeIcons.route;
+        label = 'TRILHA FRIA • SIGA EM FRENTE';
+        accentColor = AppColors.cinzaMedio;
+        icon = FontAwesomeIcons.route;
       } else {
         gemLevel = 1;
-        instinctTitle = 'DISTANTE NAS RUÍNAS';
-        instinctSubtitle = 'Distância: ${distance.toInt()}m. Siga pela rota indicada.';
-        instinctColor = AppColors.cinzaMedio.withValues(alpha: 0.7);
-        instinctIcon = FontAwesomeIcons.snowflake;
+        label = 'DISTANTE NAS RUÍNAS';
+        accentColor = AppColors.cinzaMedio.withValues(alpha: 0.7);
+        icon = FontAwesomeIcons.snowflake;
       }
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: instinctColor.withValues(alpha: 0.5), width: 1.4),
-        boxShadow: [
-          BoxShadow(
-            color: instinctColor.withValues(alpha: 0.15),
-            blurRadius: 14,
-          ),
-        ],
+        color: const Color(0xFF0F171B),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.35),
+          width: 1.0,
+        ),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: instinctColor.withValues(alpha: 0.18),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: instinctColor.withValues(alpha: 0.6), width: 1.2),
-                      ),
-                      child: Center(
-                        child: FaIcon(instinctIcon, color: instinctColor, size: 14),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        instinctTitle,
-                        style: GoogleFonts.cinzel(
-                          color: instinctColor,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.8,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
+          FaIcon(icon, color: accentColor, size: 12),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.cinzel(
+                color: accentColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.4,
               ),
-              const SizedBox(width: 8),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
 
-              // Gemas Sagradas de Proximidade (5 gemas em losango)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(5, (index) {
-                  final active = index < gemLevel;
-                  return Transform.rotate(
-                    angle: 0.785398, // 45 graus = Losango sagrado
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3.5),
-                      width: 9.0,
-                      height: 9.0,
-                      decoration: BoxDecoration(
-                        color: active ? instinctColor : Colors.white12,
-                        borderRadius: BorderRadius.circular(2),
-                        boxShadow: active
-                            ? [
-                                BoxShadow(
-                                  color: instinctColor.withValues(alpha: 0.7),
-                                  blurRadius: 6,
-                                  spreadRadius: 1,
-                                ),
-                              ]
-                            : null,
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
+          // 5 Gemas Sagradas em Losango Compacto
           Row(
-            children: [
-              Expanded(
-                child: Text(
-                  instinctSubtitle,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white70,
-                    fontSize: 11.5,
-                    height: 1.3,
-                  ),
-                ),
-              ),
-              if (distance != null) ...[
-                const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(5, (index) {
+              final active = index < gemLevel;
+              return Transform.rotate(
+                angle: 0.785398, // 45 graus
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                  width: 7.0,
+                  height: 7.0,
                   decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: instinctColor.withValues(alpha: 0.6), width: 1.2),
-                  ),
-                  child: Text(
-                    '${distance.toStringAsFixed(0)}M',
-                    style: GoogleFonts.cinzel(
-                      color: instinctColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
-                    ),
+                    color: active ? accentColor : Colors.white12,
+                    borderRadius: BorderRadius.circular(1.5),
                   ),
                 ),
-              ],
-            ],
+              );
+            }),
           ),
+
+          if (distance != null) ...[
+            const SizedBox(width: 10),
+            Text(
+              '${distance.toInt()}m',
+              style: GoogleFonts.cinzel(
+                color: accentColor,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  // --- SELETOR DE INSTRUMENTOS DA EXPEDIÇÃO ---
+  // --- 2. SELETOR DE INSTRUMENTOS (PILLS MODERNAS, SEM CAIXA PESADA) ---
   Widget _buildExpeditionTabSelector(bool isActionReady) {
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.3)),
+        color: const Color(0xFF0F171B),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Row(
         children: [
-          _buildExpeditionTabButton(
+          _buildTabPill(
             index: 0,
-            title: 'SELO DA RELÍQUIA',
+            title: 'LENTE QR',
             icon: FontAwesomeIcons.qrcode,
             badgeColor: isActionReady ? AppColors.verdeVale : AppColors.cinzaMedio,
           ),
-          const SizedBox(width: 4),
-          _buildExpeditionTabButton(
+          const SizedBox(width: 3),
+          _buildTabPill(
             index: 1,
-            title: 'BÚSSOLA DOURADA',
+            title: 'BÚSSOLA',
             icon: FontAwesomeIcons.compass,
             badgeColor: controller.hasCompass ? AppColors.verdeVale : AppColors.amareloVale,
             isLocked: !controller.hasCompass && !controller.hasRadar,
           ),
-          const SizedBox(width: 4),
-          _buildExpeditionTabButton(
+          const SizedBox(width: 3),
+          _buildTabPill(
             index: 2,
-            title: 'MAPA ANTIGO',
+            title: 'MAPA',
             icon: FontAwesomeIcons.mapLocationDot,
             badgeColor: controller.hasMap ? AppColors.verdeVale : AppColors.amareloVale,
             isLocked: !controller.hasMap,
@@ -410,7 +243,7 @@ class EnigmaTacticalArea extends StatelessWidget {
     );
   }
 
-  Widget _buildExpeditionTabButton({
+  Widget _buildTabPill({
     required int index,
     required String title,
     required dynamic icon,
@@ -426,63 +259,52 @@ class EnigmaTacticalArea extends StatelessWidget {
           controller.setSelectedTacticalTab(index);
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.verdeVale.withValues(alpha: 0.25)
+                ? AppColors.verdeVale.withValues(alpha: 0.22)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(11),
             border: Border.all(
-              color: isSelected ? AppColors.verdeVale : Colors.transparent,
-              width: 1.4,
+              color: isSelected ? AppColors.verdeVale.withValues(alpha: 0.6) : Colors.transparent,
+              width: 1,
             ),
           ),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                FaIcon(
-                  icon,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FaIcon(
+                icon,
+                color: isSelected ? Colors.white : AppColors.cinzaMedio,
+                size: 11,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                title,
+                style: GoogleFonts.cinzel(
                   color: isSelected ? Colors.white : AppColors.cinzaMedio,
-                  size: 12,
+                  fontSize: 9.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  letterSpacing: 0.4,
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  title,
-                  style: GoogleFonts.cinzel(
-                    color: isSelected ? Colors.white : AppColors.cinzaMedio,
-                    fontSize: 9.5,
-                    fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
-                    letterSpacing: 0.6,
-                  ),
+              ),
+              if (isLocked) ...[
+                const SizedBox(width: 4),
+                const FaIcon(
+                  FontAwesomeIcons.lock,
+                  color: AppColors.amareloVale,
+                  size: 8,
                 ),
-                const SizedBox(width: 5),
-                if (isLocked)
-                  const FaIcon(
-                    FontAwesomeIcons.lock,
-                    color: AppColors.amareloVale,
-                    size: 8.5,
-                  )
-                else
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: badgeColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
               ],
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildCurrentExpeditionContent(
+  Widget _buildCurrentTabContent(
     BuildContext context,
     bool isActionReady,
     bool isGpsEnigma,
@@ -498,7 +320,7 @@ class EnigmaTacticalArea extends StatelessWidget {
     }
   }
 
-  // --- ABA 0: LENTE DA RELÍQUIA / SCANNER DO TEMPLO ---
+  // --- ABA 0: LENTE DA RELÍQUIA (FLUIDA, SEM CAIXA DENTRO DE CAIXA) ---
   Widget _buildRelicScannerTab(
     BuildContext context,
     bool isActionReady,
@@ -508,169 +330,122 @@ class EnigmaTacticalArea extends StatelessWidget {
       key: const ValueKey('relic_scanner_tab'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Lente do Explorador com Cantoneiras Antigas
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isActionReady
-                  ? AppColors.verdeVale.withValues(alpha: 0.5)
-                  : Colors.white12,
-              width: 1.4,
-            ),
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 116,
-                height: 116,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.75),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isActionReady ? AppColors.verdeVale : AppColors.amareloVale.withValues(alpha: 0.4),
-                    width: 1.6,
-                  ),
-                  boxShadow: isActionReady
-                      ? [
-                          BoxShadow(
-                            color: AppColors.verdeVale.withValues(alpha: 0.3),
-                            blurRadius: 18,
-                            spreadRadius: 2,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CustomPaint(
-                      size: const Size(116, 116),
-                      painter: RelicCornerPainter(
-                        color: isActionReady ? AppColors.verdeVale : AppColors.amareloVale.withValues(alpha: 0.6),
-                        cornerLength: 20,
-                        strokeWidth: 2.2,
-                        showStuds: true,
-                      ),
-                    ),
-                    FaIcon(
-                      isActionReady
-                          ? FontAwesomeIcons.gem
-                          : FontAwesomeIcons.locationCrosshairs,
-                      color: isActionReady ? AppColors.verdeVale : AppColors.amareloVale,
-                      size: 40,
-                    ).animate(
-                      onPlay: (controller) => controller.repeat(reverse: true),
-                    ).scaleXY(
-                      begin: 0.94,
-                      end: 1.06,
-                      duration: 1600.ms,
-                      curve: Curves.easeInOut,
-                    ),
-                  ],
-                ),
+        // Abertura Central da Lente (Limpa e com Moldura Fina)
+        Center(
+          child: Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F171B),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isActionReady
+                    ? AppColors.verdeVale.withValues(alpha: 0.55)
+                    : AppColors.amareloVale.withValues(alpha: 0.35),
+                width: 1.2,
               ),
-
-              const SizedBox(height: 16),
-
-              if (isGpsEnigma && !controller.isNear) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.amareloVale.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.5)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const FaIcon(
-                        FontAwesomeIcons.triangleExclamation,
-                        color: AppColors.amareloVale,
-                        size: 13,
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          controller.distance != null
-                              ? 'Aproxime-se a menos de 100m da relíquia (Faltam ${controller.distance!.toInt()}m)'
-                              : 'Buscando conexão de coordenadas com o templo...',
-                          style: GoogleFonts.cinzel(
-                            color: AppColors.amareloVale,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CustomPaint(
+                  size: const Size(96, 96),
+                  painter: RelicCornerPainter(
+                    color: isActionReady ? AppColors.verdeVale : AppColors.amareloVale,
+                    cornerLength: 16,
+                    strokeWidth: 1.8,
+                    showStuds: false,
                   ),
                 ),
-                const SizedBox(height: 10),
-                TextButton.icon(
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    controller.setSelectedTacticalTab(1);
-                  },
-                  icon: const FaIcon(FontAwesomeIcons.compass, size: 13),
-                  label: Text(
-                    'ABRIR BÚSSOLA PARA TE GUIAR',
-                    style: GoogleFonts.cinzel(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.amareloVale,
-                  ),
-                ),
-              ] else ...[
-                Text(
-                  'LENTE DA RELÍQUIA PRONTA',
-                  style: GoogleFonts.cinzel(
-                    color: AppColors.verdeVale,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Aponte a câmera para a relíquia física gravada para desvendar.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    color: AppColors.cinzaMedio,
-                    fontSize: 12,
-                  ),
+                FaIcon(
+                  isActionReady ? FontAwesomeIcons.qrcode : FontAwesomeIcons.gem,
+                  color: isActionReady ? AppColors.verdeVale : AppColors.amareloVale,
+                  size: 34,
                 ),
               ],
-            ],
+            ),
           ),
         ),
 
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
 
-        // Botão Principal com Shimmer Dourado: REVELAR RELÍQUIA AGORA
+        // Texto Informativo / Aviso de Proximidade
+        if (isGpsEnigma && !controller.isNear) ...[
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.amareloVale.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.35)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const FaIcon(
+                    FontAwesomeIcons.triangleExclamation,
+                    color: AppColors.amareloVale,
+                    size: 11,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      controller.distance != null
+                          ? 'Aproxime-se a menos de 100m (Faltam ${controller.distance!.toInt()}m)'
+                          : 'Buscando coordenadas GPS do templo...',
+                      style: GoogleFonts.cinzel(
+                        color: AppColors.amareloVale,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Center(
+            child: TextButton.icon(
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                controller.setSelectedTacticalTab(1);
+              },
+              icon: const FaIcon(FontAwesomeIcons.compass, size: 11, color: AppColors.amareloVale),
+              label: Text(
+                'ABRIR BÚSSOLA',
+                style: GoogleFonts.cinzel(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.amareloVale,
+                ),
+              ),
+            ),
+          ),
+        ] else ...[
+          Center(
+            child: Text(
+              'Aponte a câmera para a relíquia física gravada no local.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                color: AppColors.cinzaMedio,
+                fontSize: 11.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        // Botão Principal: REVELAR RELÍQUIA AGORA
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(16),
             gradient: isActionReady
                 ? AppColors.gradienteVerdeVale
                 : const LinearGradient(
-                    colors: [Color(0xFF384346), Color(0xFF1E282A)],
+                    colors: [Color(0xFF243034), Color(0xFF192225)],
                   ),
-            boxShadow: isActionReady
-                ? [
-                    BoxShadow(
-                      color: AppColors.verdeVale.withValues(alpha: 0.4),
-                      blurRadius: 18,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
           ),
           child: ElevatedButton.icon(
             onPressed: isActionReady
@@ -693,43 +468,40 @@ class EnigmaTacticalArea extends StatelessWidget {
                 : null,
             icon: FaIcon(
               controller.isBlocked ? FontAwesomeIcons.hourglassHalf : FontAwesomeIcons.camera,
-              color: isActionReady ? Colors.white : Colors.grey,
-              size: 16,
+              color: isActionReady ? Colors.white : Colors.white38,
+              size: 14,
             ),
-            label: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                controller.isBlocked
-                    ? 'COOLDOWN DO EXPLORADOR'
-                    : (isActionReady ? 'REVELAR RELÍQUIA AGORA' : 'APROXIME-SE DO PONTO'),
-                style: GoogleFonts.cinzel(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
-                  color: isActionReady ? Colors.white : Colors.grey,
-                ),
+            label: Text(
+              controller.isBlocked
+                  ? 'COOLDOWN DO EXPLORADOR'
+                  : (isActionReady ? 'REVELAR RELÍQUIA AGORA' : 'APROXIME-SE DO PONTO'),
+              style: GoogleFonts.cinzel(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.8,
+                color: isActionReady ? Colors.white : Colors.white38,
               ),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.transparent,
               shadowColor: Colors.transparent,
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(16),
               ),
-              minimumSize: const Size(double.infinity, 54),
+              minimumSize: const Size(double.infinity, 48),
             ),
           ),
         ).animate(
-          onPlay: (controller) => controller.repeat(),
+          onPlay: (c) => c.repeat(),
         ).shimmer(
           duration: 2600.ms,
-          color: AppColors.amareloVale.withValues(alpha: 0.35),
+          color: AppColors.amareloVale.withValues(alpha: 0.25),
         ),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
 
-        // Ação Secundária: Inscrição Manual de Código
+        // Atalho de Inscrição Manual
         Center(
           child: TextButton.icon(
             onPressed: () {
@@ -748,15 +520,14 @@ class EnigmaTacticalArea extends StatelessWidget {
             icon: const FaIcon(
               FontAwesomeIcons.keyboard,
               color: AppColors.amareloVale,
-              size: 13,
+              size: 11,
             ),
             label: Text(
-              'INSCREVER CÓDIGO DA RELÍQUIA MANUALMENTE',
+              'INSCREVER CÓDIGO MANUAL',
               style: GoogleFonts.cinzel(
                 color: AppColors.amareloVale,
-                fontSize: 10.5,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -772,30 +543,24 @@ class EnigmaTacticalArea extends StatelessWidget {
     final targetLng = controller.targetLongitude;
 
     if (targetLat == null || targetLng == null) {
-      return Container(
-        key: const ValueKey('compass_tab_no_coords'),
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white12),
-        ),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           children: [
-            const FaIcon(FontAwesomeIcons.compass, color: AppColors.cinzaMedio, size: 36),
-            const SizedBox(height: 10),
+            const FaIcon(FontAwesomeIcons.compass, color: AppColors.cinzaMedio, size: 28),
+            const SizedBox(height: 8),
             Text(
               'Coordenadas Não Requeridas',
               style: GoogleFonts.cinzel(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 13,
+                fontSize: 12,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
-              'Este enigma não necessita de bússola direcional. Utilize a aba Selo da Relíquia para validar.',
-              style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 12),
+              'Utilize a aba Lente QR para validar este enigma.',
+              style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11),
               textAlign: TextAlign.center,
             ),
           ],
@@ -811,63 +576,51 @@ class EnigmaTacticalArea extends StatelessWidget {
         icon: FontAwesomeIcons.compass,
         accentColor: AppColors.amareloVale,
         description:
-          'Ativa a bússola dourada em tempo real com agulha direcional mística que te guia até a câmara exata do tesouro.',
+            'Ativa a agulha direcional mística que te guia em tempo real até a câmara exata.',
         price: controller.compassPrice,
         toolKey: 'compass',
       );
     }
 
-    return Container(
-      key: const ValueKey('compass_tab_unlocked'),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.amareloVale.withValues(alpha: 0.45),
-          width: 1.4,
+    return Column(
+      children: [
+        CompassWidget(
+          targetLatitude: targetLat,
+          targetLongitude: targetLng,
+          destinationLongitude: targetLng,
+          destinationLatitude: targetLat,
+          durationSeconds: controller.compassRemainingSeconds ?? controller.compassDuration,
+          isCompact: true,
+          onTick: controller.updateCompassRemainingSeconds,
+          onTimeUp: () => controller.onCompassTimeUp(context),
         ),
-      ),
-      child: Column(
-        children: [
-          CompassWidget(
-            targetLatitude: targetLat,
-            targetLongitude: targetLng,
-            destinationLongitude: targetLng,
-            destinationLatitude: targetLat,
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: () => EnigmaDialogs.openCompassExpanded(
+            context,
+            latitude: targetLat,
+            longitude: targetLng,
             durationSeconds: controller.compassRemainingSeconds ?? controller.compassDuration,
-            isCompact: true,
             onTick: controller.updateCompassRemainingSeconds,
             onTimeUp: () => controller.onCompassTimeUp(context),
           ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: () => EnigmaDialogs.openCompassExpanded(
-              context,
-              latitude: targetLat,
-              longitude: targetLng,
-              durationSeconds: controller.compassRemainingSeconds ?? controller.compassDuration,
-              onTick: controller.updateCompassRemainingSeconds,
-              onTimeUp: () => controller.onCompassTimeUp(context),
-            ),
-            icon: const FaIcon(FontAwesomeIcons.upRightAndDownLeftFromCenter, size: 12),
-            label: Text(
-              'EXPANDIR BÚSSOLA EM TELA CHEIA',
-              style: GoogleFonts.cinzel(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.amareloVale,
-              side: const BorderSide(color: AppColors.amareloVale, width: 1.3),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          icon: const FaIcon(FontAwesomeIcons.upRightAndDownLeftFromCenter, size: 10),
+          label: Text(
+            'EXPANDIR BÚSSOLA',
+            style: GoogleFonts.cinzel(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.8,
             ),
           ),
-        ],
-      ),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.amareloVale,
+            side: BorderSide(color: AppColors.amareloVale.withValues(alpha: 0.5), width: 1.0),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          ),
+        ),
+      ],
     );
   }
 
@@ -878,30 +631,24 @@ class EnigmaTacticalArea extends StatelessWidget {
     final targetLng = controller.targetLongitude;
 
     if (targetLat == null || targetLng == null) {
-      return Container(
-        key: const ValueKey('map_tab_no_coords'),
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white12),
-        ),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           children: [
-            const FaIcon(FontAwesomeIcons.mapLocationDot, color: AppColors.cinzaMedio, size: 36),
-            const SizedBox(height: 10),
+            const FaIcon(FontAwesomeIcons.mapLocationDot, color: AppColors.cinzaMedio, size: 28),
+            const SizedBox(height: 8),
             Text(
               'Mapa Não Requerido',
               style: GoogleFonts.cinzel(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 13,
+                fontSize: 12,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
-              'Este enigma não necessita de mapa topográfico. Utilize a aba Selo da Relíquia para validar.',
-              style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 12),
+              'Utilize a aba Lente QR para validar este enigma.',
+              style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11),
               textAlign: TextAlign.center,
             ),
           ],
@@ -917,22 +664,14 @@ class EnigmaTacticalArea extends StatelessWidget {
         icon: FontAwesomeIcons.mapLocationDot,
         accentColor: AppColors.verdeVale,
         description:
-          'Revela o pergaminho geográfico com o raio estimado das ruínas onde a relíquia sagrada se encontra.',
+            'Revela o perímetro geográfico com o raio estimado das ruínas onde a relíquia repousa.',
         price: controller.currentEnigma.mapPrice,
         toolKey: 'map',
       );
     }
 
-    return Container(
-      key: const ValueKey('map_tab_unlocked'),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.verdeVale.withValues(alpha: 0.45),
-          width: 1.4,
-        ),
-      ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
       child: MapRadiusWidget(
         destinationLatitude: targetLat,
         destinationLongitude: targetLng,
@@ -946,7 +685,7 @@ class EnigmaTacticalArea extends StatelessWidget {
     );
   }
 
-  // --- CARD DE INSTRUMENTO BLOQUEADO ---
+  // --- CARD DE INSTRUMENTO BLOQUEADO (LIMPO E COMPACTO) ---
   Widget _buildLockedToolCard({
     required BuildContext context,
     Key? key,
@@ -959,95 +698,69 @@ class EnigmaTacticalArea extends StatelessWidget {
   }) {
     return Container(
       key: key,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFF0F171B),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: accentColor.withValues(alpha: 0.4),
-          width: 1.4,
+          color: accentColor.withValues(alpha: 0.35),
+          width: 1,
         ),
       ),
       child: Column(
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: accentColor.withValues(alpha: 0.16),
-              border: Border.all(color: accentColor.withValues(alpha: 0.6), width: 1.5),
-            ),
-            child: Center(
-              child: FaIcon(icon, color: accentColor, size: 24),
-            ),
-          ),
-          const SizedBox(height: 12),
+          FaIcon(icon, color: accentColor, size: 24),
+          const SizedBox(height: 8),
           Text(
             title,
             style: GoogleFonts.cinzel(
               color: Colors.white,
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
+              letterSpacing: 0.8,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             description,
             style: GoogleFonts.poppins(
               color: AppColors.cinzaMedio,
-              fontSize: 12,
-              height: 1.4,
+              fontSize: 11,
+              height: 1.3,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                colors: [accentColor, accentColor.withValues(alpha: 0.85)],
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: controller.isLoading
+                ? null
+                : () async {
+                    final bool? confirmed =
+                        await EnigmaDialogs.showPurchaseConfirmation(
+                      context,
+                      cost: price,
+                      type: title,
+                    );
+                    if (confirmed == true && context.mounted) {
+                      controller.handleToolPurchase(toolKey, context);
+                    }
+                  },
+            icon: const FaIcon(FontAwesomeIcons.lockOpen, size: 11, color: Colors.black),
+            label: Text(
+              'DESBLOQUEAR (R\$ ${price.toInt()})',
+              style: GoogleFonts.cinzel(
+                color: Colors.black,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.6,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: accentColor.withValues(alpha: 0.35),
-                  blurRadius: 14,
-                ),
-              ],
             ),
-            child: ElevatedButton.icon(
-              onPressed: controller.isLoading
-                  ? null
-                  : () async {
-                      final bool? confirmed =
-                          await EnigmaDialogs.showPurchaseConfirmation(
-                        context,
-                        cost: price,
-                        type: title,
-                      );
-                      if (confirmed == true && context.mounted) {
-                        controller.handleToolPurchase(toolKey, context);
-                      }
-                    },
-              icon: const FaIcon(FontAwesomeIcons.lockOpen, size: 13, color: Colors.black),
-              label: Text(
-                'DESBLOQUEAR (R\$ ${price.toInt()})',
-                style: GoogleFonts.cinzel(
-                  color: Colors.black,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: accentColor,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
               ),
             ),
           ),

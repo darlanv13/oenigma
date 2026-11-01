@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:oenigma/app_cliente/features/enigma/controllers/enigma_controller.dart';
 import 'package:oenigma/app_cliente/features/enigma/widgets/enigma_card.dart';
@@ -17,7 +16,7 @@ export 'package:oenigma/app_cliente/features/enigma/screens/scanner_screen.dart'
 export 'package:oenigma/app_cliente/features/enigma/widgets/relic_corner_painter.dart';
 export 'package:oenigma/app_cliente/features/enigma/widgets/scanner_corners_painter.dart';
 
-/// Tela principal do Enigma: Expedição & Caça ao Tesouro (Estilo Indiana Jones / Cores Vale).
+/// Tela principal do Enigma: limpa, moderna, sem poluição visual e inspirada na página de detalhes.
 class EnigmaScreen extends StatefulWidget {
   final EventModel event;
   final PhaseModel phase;
@@ -85,56 +84,32 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       listenable: _controller,
       builder: (context, _) {
         return Scaffold(
-          backgroundColor: AppColors.darkBackground,
+          backgroundColor: const Color(0xFF0B1115),
           body: Stack(
             children: [
-              // Atmosfera de Templo / Caverna com Tochas Animadas (Cores Vale)
+              // Luzes ambientais suaves e discretas de fundo
               Positioned(
-                top: -80,
-                right: -80,
+                top: -50,
+                right: -50,
                 child: Container(
-                  width: 280,
-                  height: 280,
+                  width: 220,
+                  height: 220,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        AppColors.verdeVale.withValues(alpha: 0.22),
-                        AppColors.verdeVale.withValues(alpha: 0.0),
-                      ],
-                    ),
+                    color: AppColors.verdeVale.withValues(alpha: 0.10),
                   ),
-                ).animate(
-                  onPlay: (c) => c.repeat(reverse: true),
-                ).scaleXY(
-                  begin: 0.92,
-                  end: 1.08,
-                  duration: 3500.ms,
-                  curve: Curves.easeInOut,
                 ),
               ),
               Positioned(
-                bottom: 100,
-                left: -90,
+                bottom: 80,
+                left: -50,
                 child: Container(
-                  width: 300,
-                  height: 300,
+                  width: 220,
+                  height: 220,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        AppColors.amareloVale.withValues(alpha: 0.16),
-                        AppColors.amareloVale.withValues(alpha: 0.0),
-                      ],
-                    ),
+                    color: AppColors.amareloVale.withValues(alpha: 0.08),
                   ),
-                ).animate(
-                  onPlay: (c) => c.repeat(reverse: true),
-                ).scaleXY(
-                  begin: 1.05,
-                  end: 0.90,
-                  duration: 4000.ms,
-                  curve: Curves.easeInOut,
                 ),
               ),
 
@@ -153,12 +128,12 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                 child: CustomScrollView(
                   physics: const BouncingScrollPhysics(),
                   slivers: [
-                    // 1. Barra Superior da Expedição
+                    // 1. Barra Superior Discreta
                     SliverToBoxAdapter(
                       child: EnigmaHeader(controller: _controller),
                     ),
 
-                    // 2. Conteúdo Principal (Códice, Segredos & Câmara da Relíquia)
+                    // 2. Conteúdo Principal (Códice, Validação & Pistas)
                     SliverToBoxAdapter(
                       child: _controller.isLoading && _controller.hintsList.isEmpty
                           ? const Padding(
@@ -170,25 +145,25 @@ class _EnigmaScreenState extends State<EnigmaScreen>
                           : Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
-                                vertical: 20,
+                                vertical: 14,
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   EnigmaCard(enigma: _controller.currentEnigma),
-                                  const SizedBox(height: 18),
-                                  EnigmaHintsSection(
-                                    controller: _controller,
-                                    onShake: _triggerShake,
-                                    onEnigmaSolved: widget.onEnigmaSolved,
-                                  ),
-                                  const SizedBox(height: 18),
+                                  const SizedBox(height: 14),
                                   EnigmaTacticalArea(
                                     controller: _controller,
                                     onShake: _triggerShake,
                                     onEnigmaSolved: widget.onEnigmaSolved,
                                   ),
-                                  const SizedBox(height: 40),
+                                  const SizedBox(height: 14),
+                                  EnigmaHintsSection(
+                                    controller: _controller,
+                                    onShake: _triggerShake,
+                                    onEnigmaSolved: widget.onEnigmaSolved,
+                                  ),
+                                  const SizedBox(height: 32),
                                 ],
                               ),
                             ),

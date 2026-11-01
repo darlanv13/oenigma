@@ -10,7 +10,7 @@ import 'package:oenigma/app_cliente/features/enigma/widgets/relic_corner_painter
 import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
-/// Lente do Explorador: Câmera com moldura de relíquia antiga (Indiana Jones / Tomb Raider / Cores Vale).
+/// Lente do Explorador: Câmera limpa com moldura sutil de relíquia e cores Vale.
 class ScannerScreen extends StatefulWidget {
   final Function(String) onScan;
   const ScannerScreen({super.key, required this.onScan});
@@ -66,20 +66,19 @@ class _ScannerScreenState extends State<ScannerScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.darkCardColor,
+      backgroundColor: const Color(0xFF131D24),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        side: BorderSide(color: AppColors.amareloVale, width: 1.3),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetCtx) {
         return SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
           child: Padding(
             padding: EdgeInsets.only(
-              left: 24,
-              right: 24,
-              top: 24,
-              bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 24,
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 20,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -93,77 +92,73 @@ class _ScannerScreenState extends State<ScannerScreen>
                         const FaIcon(
                           FontAwesomeIcons.keyboard,
                           color: AppColors.amareloVale,
-                          size: 18,
+                          size: 16,
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         Text(
                           'INSCREVER CÓDIGO',
                           style: GoogleFonts.cinzel(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            letterSpacing: 1.2,
+                            fontSize: 13,
+                            letterSpacing: 1.0,
                           ),
                         ),
                       ],
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: AppColors.cinzaMedio),
+                      icon: const Icon(Icons.close, color: AppColors.cinzaMedio, size: 20),
                       onPressed: () => Navigator.of(sheetCtx).pop(),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   'Digite o código do enigma gravado na placa ou relíquia física:',
                   style: GoogleFonts.poppins(
                     color: AppColors.cinzaMedio,
-                    fontSize: 12.5,
+                    fontSize: 12,
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
                 TextField(
                   controller: textController,
                   autofocus: true,
                   textCapitalization: TextCapitalization.characters,
                   style: GoogleFonts.cinzel(
                     color: AppColors.amareloVale,
-                    fontSize: 18,
+                    fontSize: 17,
                     letterSpacing: 2,
                     fontWeight: FontWeight.bold,
                   ),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: Colors.black.withValues(alpha: 0.6),
+                    fillColor: const Color(0xFF0F171B),
                     hintText: 'EX: RELIQUIA-01',
                     hintStyle: GoogleFonts.cinzel(
                       color: Colors.white24,
-                      fontSize: 13,
+                      fontSize: 12.5,
                     ),
                     prefixIcon: const Icon(
                       Icons.qr_code,
                       color: AppColors.amareloVale,
+                      size: 20,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: AppColors.amareloVale),
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: AppColors.amareloVale.withValues(alpha: 0.4),
-                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: AppColors.amareloVale,
-                        width: 2,
-                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppColors.amareloVale, width: 1.5),
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
                 ElevatedButton(
                   onPressed: () {
                     final code = textController.text.trim();
@@ -176,16 +171,16 @@ class _ScannerScreenState extends State<ScannerScreen>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.amareloVale,
                     foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   child: Text(
                     'VALIDAR E AVANÇAR',
                     style: GoogleFonts.cinzel(
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 1.2,
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ),
@@ -200,7 +195,7 @@ class _ScannerScreenState extends State<ScannerScreen>
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-    final double reticleSize = (screenSize.width * 0.68).clamp(210.0, 280.0);
+    final double reticleSize = (screenSize.width * 0.65).clamp(200.0, 260.0);
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -229,7 +224,7 @@ class _ScannerScreenState extends State<ScannerScreen>
           Positioned.fill(
             child: ColorFiltered(
               colorFilter: ColorFilter.mode(
-                Colors.black.withValues(alpha: 0.68),
+                Colors.black.withValues(alpha: 0.65),
                 BlendMode.srcOut,
               ),
               child: Stack(
@@ -247,7 +242,7 @@ class _ScannerScreenState extends State<ScannerScreen>
                       height: reticleSize,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(22),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                   ),
@@ -256,34 +251,24 @@ class _ScannerScreenState extends State<ScannerScreen>
             ),
           ),
 
-          // Moldura Ornamental da Relíquia com Cantoneiras Antigas & Feixe Dourado
+          // Moldura Limpa da Relíquia
           Center(
             child: SizedBox(
               width: reticleSize,
               height: reticleSize,
               child: Stack(
                 children: [
-                  // Cantoneiras Ornamentais em Ouro Asteca
                   CustomPaint(
                     size: Size(reticleSize, reticleSize),
                     painter: RelicCornerPainter(
                       color: AppColors.amareloVale,
-                      cornerLength: 28,
-                      strokeWidth: 3.0,
-                      showStuds: true,
+                      cornerLength: 22,
+                      strokeWidth: 2.2,
+                      showStuds: false,
                     ),
                   ),
 
-                  // Selo central sutil
-                  Center(
-                    child: FaIcon(
-                      FontAwesomeIcons.gem,
-                      color: AppColors.verdeVale.withValues(alpha: 0.35),
-                      size: 20,
-                    ),
-                  ),
-
-                  // Feixe de Revelação da Relíquia (Dourado & Esmeralda)
+                  // Linha de Varredura
                   AnimatedBuilder(
                     animation: _laserController,
                     builder: (context, child) {
@@ -292,7 +277,7 @@ class _ScannerScreenState extends State<ScannerScreen>
                         left: 8,
                         right: 8,
                         child: Container(
-                          height: 3.5,
+                          height: 2.5,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(2),
                             gradient: const LinearGradient(
@@ -305,13 +290,6 @@ class _ScannerScreenState extends State<ScannerScreen>
                               ],
                               stops: [0.0, 0.25, 0.5, 0.75, 1.0],
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.amareloVale.withValues(alpha: 0.75),
-                                blurRadius: 10,
-                                spreadRadius: 1.5,
-                              ),
-                            ],
                           ),
                         ),
                       );
@@ -330,37 +308,38 @@ class _ScannerScreenState extends State<ScannerScreen>
             child: SafeArea(
               bottom: false,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.darkBackground.withValues(alpha: 0.90),
+                  color: const Color(0xFF0B1115).withValues(alpha: 0.90),
                   border: Border(
                     bottom: BorderSide(
-                      color: AppColors.amareloVale.withValues(alpha: 0.35),
-                      width: 1.2,
+                      color: Colors.white.withValues(alpha: 0.08),
+                      width: 1.0,
                     ),
                   ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Botão Voltar
+                    // Botão Voltar Redondo
                     GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
                       child: Container(
-                        width: 40,
-                        height: 40,
+                        width: 38,
+                        height: 38,
                         decoration: BoxDecoration(
-                          color: AppColors.darkCardColor,
+                          color: const Color(0xFF131D24),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: AppColors.amareloVale.withValues(alpha: 0.5),
+                            color: Colors.white.withValues(alpha: 0.12),
+                            width: 1.2,
                           ),
                         ),
                         child: const Center(
                           child: FaIcon(
                             FontAwesomeIcons.chevronLeft,
-                            color: AppColors.amareloVale,
-                            size: 14,
+                            color: Colors.white,
+                            size: 13,
                           ),
                         ),
                       ),
@@ -368,38 +347,28 @@ class _ScannerScreenState extends State<ScannerScreen>
 
                     // Título da Lente
                     Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                'LENTE DA RELÍQUIA',
-                                style: GoogleFonts.cinzel(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'LENTE DA RELÍQUIA',
+                            style: GoogleFonts.cinzel(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 1.0,
                             ),
-                            const SizedBox(height: 2),
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                'ENQUADRE A INSCRIÇÃO SAGRADA',
-                                style: GoogleFonts.cinzel(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.amareloVale,
-                                  letterSpacing: 1,
-                                ),
-                              ),
+                          ),
+                          Text(
+                            'ENQUADRE O QR CODE SAGRADO',
+                            style: GoogleFonts.cinzel(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.amareloVale,
+                              letterSpacing: 0.8,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
 
@@ -410,22 +379,22 @@ class _ScannerScreenState extends State<ScannerScreen>
                         GestureDetector(
                           onTap: _toggleTorch,
                           child: Container(
-                            width: 40,
-                            height: 40,
+                            width: 38,
+                            height: 38,
                             decoration: BoxDecoration(
-                              color: _isTorchOn
-                                  ? AppColors.amareloVale
-                                  : AppColors.darkCardColor,
+                              color: _isTorchOn ? AppColors.amareloVale : const Color(0xFF131D24),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.amareloVale.withValues(alpha: 0.6),
+                                color: _isTorchOn
+                                    ? AppColors.amareloVale
+                                    : Colors.white.withValues(alpha: 0.12),
                               ),
                             ),
                             child: Center(
                               child: FaIcon(
                                 FontAwesomeIcons.fire,
-                                color: _isTorchOn ? Colors.black : AppColors.amareloVale,
-                                size: 15,
+                                color: _isTorchOn ? Colors.black : Colors.white,
+                                size: 14,
                               ),
                             ),
                           ),
@@ -434,20 +403,20 @@ class _ScannerScreenState extends State<ScannerScreen>
                         GestureDetector(
                           onTap: _switchCamera,
                           child: Container(
-                            width: 40,
-                            height: 40,
+                            width: 38,
+                            height: 38,
                             decoration: BoxDecoration(
-                              color: AppColors.darkCardColor,
+                              color: const Color(0xFF131D24),
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: AppColors.verdeVale.withValues(alpha: 0.5),
+                                color: Colors.white.withValues(alpha: 0.12),
                               ),
                             ),
                             child: const Center(
                               child: FaIcon(
                                 FontAwesomeIcons.arrowsRotate,
                                 color: Colors.white,
-                                size: 14,
+                                size: 13,
                               ),
                             ),
                           ),
@@ -460,66 +429,33 @@ class _ScannerScreenState extends State<ScannerScreen>
             ),
           ),
 
-          // Barra Inferior com Instrução e Atalho de Inscrição Manual
+          // Barra Inferior com Atalho de Inscrição Manual
           Positioned(
             bottom: 28,
-            left: 20,
-            right: 20,
+            left: 24,
+            right: 24,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.8),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.amareloVale.withValues(alpha: 0.35),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const FaIcon(
-                        FontAwesomeIcons.circleInfo,
-                        color: AppColors.amareloVale,
-                        size: 12,
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          'Aponte para o selo ou inscrição física no local',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
                 ElevatedButton.icon(
                   onPressed: _openManualCodeSheet,
-                  icon: const FaIcon(FontAwesomeIcons.keyboard, size: 14),
+                  icon: const FaIcon(FontAwesomeIcons.keyboard, size: 13),
                   label: Text(
                     'INSCREVER CÓDIGO MANUAL',
                     style: GoogleFonts.cinzel(
                       fontWeight: FontWeight.w800,
-                      fontSize: 11.5,
-                      letterSpacing: 1,
+                      fontSize: 11,
+                      letterSpacing: 0.8,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.darkCardColor.withValues(alpha: 0.95),
+                    backgroundColor: const Color(0xFF131D24),
                     foregroundColor: AppColors.amareloVale,
-                    side: const BorderSide(color: AppColors.amareloVale, width: 1.3),
+                    side: BorderSide(color: AppColors.amareloVale.withValues(alpha: 0.5), width: 1.0),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                   ),
                 ),
               ],
@@ -535,138 +471,126 @@ class _ScannerScreenState extends State<ScannerScreen>
 
   Widget _buildConfirmationOverlay() {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
-          padding: const EdgeInsets.all(24),
-          width: MediaQuery.of(context).size.width * 0.88,
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
-          ),
+          padding: const EdgeInsets.all(20),
+          width: MediaQuery.of(context).size.width * 0.85,
           decoration: BoxDecoration(
-            color: AppColors.darkCardColor.withValues(alpha: 0.96),
-            borderRadius: BorderRadius.circular(24),
+            color: const Color(0xFF131D24).withValues(alpha: 0.98),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: AppColors.verdeVale,
-              width: 1.8,
+              width: 1.4,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.verdeVale.withValues(alpha: 0.35),
-                blurRadius: 25,
-                spreadRadius: 2,
-              ),
-            ],
           ),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.verdeVale.withValues(alpha: 0.18),
-                    border: Border.all(
-                      color: AppColors.verdeVale,
-                      width: 2,
-                    ),
-                  ),
-                  child: const Center(
-                    child: FaIcon(
-                      FontAwesomeIcons.check,
-                      color: AppColors.verdeVale,
-                      size: 26,
-                    ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.verdeVale.withValues(alpha: 0.15),
+                  border: Border.all(
+                    color: AppColors.verdeVale,
+                    width: 1.5,
                   ),
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  'RELÍQUIA ENCONTRADA!',
-                  style: GoogleFonts.cinzel(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.5,
+                child: const Center(
+                  child: FaIcon(
+                    FontAwesomeIcons.check,
+                    color: AppColors.verdeVale,
+                    size: 22,
                   ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'RELÍQUIA ENCONTRADA!',
+                style: GoogleFonts.cinzel(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.0,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Inscrição identificada pela lente sagrada:',
+                style: GoogleFonts.poppins(
+                  color: AppColors.cinzaMedio,
+                  fontSize: 11.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F171B),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                ),
+                child: Text(
+                  _detectedQRCode!,
                   textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(
+                    color: AppColors.amareloVale,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Inscrição identificada pela lente sagrada:',
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    widget.onScan(_detectedQRCode!);
+                    Navigator.of(context).pop();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.verdeVale,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    'DECIFRAR RELÍQUIA',
+                    style: GoogleFonts.cinzel(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.0,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextButton(
+                onPressed: () {
+                  setState(() => _detectedQRCode = null);
+                  _scannerController.start();
+                },
+                child: Text(
+                  'Escanear Novamente',
                   style: GoogleFonts.poppins(
                     color: AppColors.cinzaMedio,
+                    fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
-                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: AppColors.verdeVale.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  child: Text(
-                    _detectedQRCode!,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.cinzel(
-                      color: AppColors.amareloVale,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      widget.onScan(_detectedQRCode!);
-                      Navigator.of(context).pop();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.verdeVale,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Text(
-                      'DECIFRAR RELÍQUIA',
-                      style: GoogleFonts.cinzel(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                        fontSize: 13.5,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () {
-                    setState(() => _detectedQRCode = null);
-                    _scannerController.start();
-                  },
-                  child: Text(
-                    'Escanear Novamente',
-                    style: GoogleFonts.poppins(
-                      color: AppColors.cinzaMedio,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
