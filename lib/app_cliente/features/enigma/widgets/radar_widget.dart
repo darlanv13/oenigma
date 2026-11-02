@@ -23,6 +23,7 @@ class RadarWidget extends StatefulWidget {
   final int remainingSeconds;
   final VoidCallback? onTimeUp;
   final Function(int)? onTick;
+  final bool enableToolTimer;
 
   const RadarWidget({
     super.key,
@@ -35,6 +36,7 @@ class RadarWidget extends StatefulWidget {
     this.remainingSeconds = 900,
     this.onTimeUp,
     this.onTick,
+    this.enableToolTimer = true,
   });
 
   @override
@@ -503,13 +505,17 @@ class _RadarWidgetState extends State<RadarWidget>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         FaIcon(
-                          FontAwesomeIcons.stopwatch,
+                          widget.enableToolTimer
+                              ? FontAwesomeIcons.stopwatch
+                              : FontAwesomeIcons.infinity,
                           size: 8,
                           color: isLowTime ? Colors.redAccent : AppColors.amareloVale,
                         ),
                         const SizedBox(width: 3),
                         Text(
-                          _formatTime(widget.remainingSeconds),
+                          widget.enableToolTimer
+                              ? _formatTime(widget.remainingSeconds)
+                              : 'ILIMITADO',
                           style: GoogleFonts.spaceMono(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,

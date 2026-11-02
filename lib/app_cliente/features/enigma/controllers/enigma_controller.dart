@@ -90,17 +90,32 @@ class EnigmaController extends ChangeNotifier {
   bool get isClassic => event.eventType == 'classic';
   bool get isGpsEnigma => _currentEnigma.type == 'gps';
   bool get isActionReady => (!isGpsEnigma || _isNear) && !_isBlocked;
+  bool get enableToolTimer => _currentEnigma.enableToolTimer;
+  bool get enableFakeTargets => _currentEnigma.enableFakeTargets;
 
   double? get targetLatitude =>
       _destinationLocation?['latitude'] ?? _currentEnigma.location?.latitude;
   double? get targetLongitude =>
       _destinationLocation?['longitude'] ?? _currentEnigma.location?.longitude;
 
-  /// Retorna deterministamente os 5 alvos (1 real + 4 fakes num raio de 300m)
+  /// Retorna deterministamente os alvos da caçada:
+  /// Se enableFakeTargets for false, retorna APENAS o alvo real da relíquia!
+  /// Se enableFakeTargets for true, retorna os 5 alvos (1 real + 4 fakes num raio de 300m).
   List<DecoyTarget> get targets {
     final lat = targetLatitude;
     final lng = targetLongitude;
     if (lat == null || lng == null) return [];
+    if (!_currentEnigma.enableFakeTargets) {
+      return [
+        DecoyTarget(
+          index: 1,
+          label: 'Alvo Principal',
+          latitude: lat,
+          longitude: lng,
+          isReal: true,
+        ),
+      ];
+    }
     return DecoyLocationService.generateTargets(
       enigmaId: _currentEnigma.id,
       trueLatitude: lat,
@@ -110,6 +125,12 @@ class EnigmaController extends ChangeNotifier {
 
   void setSelectedTacticalTab(int index) {
     _selectedTacticalTab = index;
+    if (!_currentEnigma.enableToolTimer) {
+      // Cronômetro desabilitado no painel admin para este enigma: uso livre
+      setActiveTool(null);
+      notifyListeners();
+      return;
+    }
     switch (index) {
       case 1:
         if (_hasCompass && _compassRemainingSeconds > 0) {
@@ -375,6 +396,17 @@ class EnigmaController extends ChangeNotifier {
             'longitude': (statusData['destinationLocation']['longitude'] as num).toDouble(),
           };
         }
+
+        if (statusData['enableToolTimer'] != null || statusData['enableFakeTargets'] != null) {
+          _currentEnigma = _currentEnigma.copyWith(
+            enableToolTimer: statusData['enableToolTimer'] != null
+                ? statusData['enableToolTimer'] == true
+                : _currentEnigma.enableToolTimer,
+            enableFakeTargets: statusData['enableFakeTargets'] != null
+                ? statusData['enableFakeTargets'] == true
+                : _currentEnigma.enableFakeTargets,
+          );
+        }
         notifyListeners();
 
         if (_isBlocked && statusData['cooldownUntil'] != null && context.mounted) {
@@ -461,6 +493,17 @@ class EnigmaController extends ChangeNotifier {
             'latitude': (statusData['destinationLocation']['latitude'] as num).toDouble(),
             'longitude': (statusData['destinationLocation']['longitude'] as num).toDouble(),
           };
+        }
+
+        if (statusData['enableToolTimer'] != null || statusData['enableFakeTargets'] != null) {
+          _currentEnigma = _currentEnigma.copyWith(
+            enableToolTimer: statusData['enableToolTimer'] != null
+                ? statusData['enableToolTimer'] == true
+                : _currentEnigma.enableToolTimer,
+            enableFakeTargets: statusData['enableFakeTargets'] != null
+                ? statusData['enableFakeTargets'] == true
+                : _currentEnigma.enableFakeTargets,
+          );
         }
         notifyListeners();
 

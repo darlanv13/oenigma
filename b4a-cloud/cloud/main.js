@@ -630,6 +630,8 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         hasMap: hasMap,
         hasRadar: hasRadar,
         destinationLocation: destinationLocation,
+        enableToolTimer: enigma ? (enigma.get("enableToolTimer") !== false) : true,
+        enableFakeTargets: enigma ? (enigma.get("enableFakeTargets") !== false) : true,
         compassDuration: 900,
         compassRemainingSeconds: hasCompass ? (eventProgress.toolTimes?.['compass'] || 900) : 0,
         radarRemainingSeconds: hasRadar ? (eventProgress.toolTimes?.['radar'] || 900) : 0,
@@ -699,6 +701,17 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
 
     } else if (action === 'syncToolUsage') {
       if (!toolType) throw new Parse.Error(Parse.Error.INVALID_QUERY, "toolType is required.");
+
+      const isTimerEnabled = enigma ? (enigma.get("enableToolTimer") !== false) : true;
+      if (!isTimerEnabled) {
+        return {
+          success: true,
+          toolType: toolType,
+          remainingSeconds: 900,
+          expired: false
+        };
+      }
+
       const secs = Math.max(0, parseInt(request.params.usedSeconds) || 0);
 
       let toolTimes = eventProgress.toolTimes || {};

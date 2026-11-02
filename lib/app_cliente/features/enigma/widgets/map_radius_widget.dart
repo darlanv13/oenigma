@@ -17,6 +17,7 @@ class MapRadiusWidget extends StatefulWidget {
   final VoidCallback? onExpand;
   final List<DecoyTarget>? targets;
   final int remainingSeconds;
+  final bool enableToolTimer;
 
   const MapRadiusWidget({
     super.key,
@@ -26,6 +27,7 @@ class MapRadiusWidget extends StatefulWidget {
     this.onExpand,
     this.targets,
     this.remainingSeconds = 900,
+    this.enableToolTimer = true,
   });
 
   @override
@@ -423,13 +425,17 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         FaIcon(
-                          FontAwesomeIcons.stopwatch,
+                          widget.enableToolTimer
+                              ? FontAwesomeIcons.stopwatch
+                              : FontAwesomeIcons.infinity,
                           color: isLowTime ? Colors.redAccent : AppColors.amareloVale,
                           size: 10,
                         ),
                         const SizedBox(width: 5),
                         Text(
-                          _formatTime(widget.remainingSeconds),
+                          widget.enableToolTimer
+                              ? _formatTime(widget.remainingSeconds)
+                              : 'ILIMITADO',
                           style: GoogleFonts.spaceMono(
                             color: isLowTime ? Colors.redAccent : AppColors.amareloVale,
                             fontSize: 10,

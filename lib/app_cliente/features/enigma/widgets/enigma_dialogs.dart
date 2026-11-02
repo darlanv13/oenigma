@@ -557,6 +557,7 @@ class EnigmaDialogs {
     required double longitude,
     List<DecoyTarget>? targets,
     int remainingSeconds = 900,
+    bool enableToolTimer = true,
   }) {
     showDialog(
       context: context,
@@ -610,6 +611,7 @@ class EnigmaDialogs {
                   destinationLongitude: longitude,
                   targets: targets,
                   remainingSeconds: remainingSeconds,
+                  enableToolTimer: enableToolTimer,
                   isCompact: false,
                 ),
               ),
@@ -629,6 +631,7 @@ class EnigmaDialogs {
     required ValueChanged<int> onTick,
     required VoidCallback onTimeUp,
     List<DecoyTarget>? targets,
+    bool enableToolTimer = true,
   }) {
     showDialog(
       context: context,
@@ -683,6 +686,7 @@ class EnigmaDialogs {
                 destinationLatitude: latitude,
                 durationSeconds: durationSeconds,
                 targets: targets,
+                enableToolTimer: enableToolTimer,
                 isCompact: false,
                 onTick: onTick,
                 onTimeUp: () {
@@ -707,6 +711,7 @@ class EnigmaDialogs {
     double? initialDistance,
     List<DecoyTarget>? targets,
     int remainingSeconds = 900,
+    bool enableToolTimer = true,
     VoidCallback? onTimeUp,
     Function(int)? onTick,
   }) {
@@ -762,6 +767,7 @@ class EnigmaDialogs {
                 initialDistance: initialDistance,
                 targets: targets,
                 remainingSeconds: remainingSeconds,
+                enableToolTimer: enableToolTimer,
                 onTimeUp: onTimeUp,
                 onTick: onTick,
                 isCompact: false,

@@ -1837,6 +1837,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
     // NOVOS CONTROLADORES: Bússola e Coordenadas Obrigatórias
     bool hasCompass = data?['hasCompass'] ?? false;
+    bool enableToolTimer = data?['enableToolTimer'] ?? true;
+    bool enableFakeTargets = data?['enableFakeTargets'] ?? true;
     final compassCoordsCtrl = TextEditingController(
       text: data?['compassCoords'],
     );
@@ -2293,6 +2295,57 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               ),
                             ],
 
+                            SwitchListTile(
+                              title: const Text(
+                                'Cronômetro Ativo nas Ferramentas (15 min)',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: const Text(
+                                'Desconta 15 min apenas quando a ferramenta está aberta (pausa ao fechar). Se desativado, o uso é ilimitado.',
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              value: enableToolTimer,
+                              activeColor: primaryAmber,
+                              contentPadding: EdgeInsets.zero,
+                              onChanged: (val) {
+                                setState(() {
+                                  enableToolTimer = val;
+                                });
+                              },
+                            ),
+                            SwitchListTile(
+                              title: const Text(
+                                'Alvos Falsos no Raio de 300m (Decoys)',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: const Text(
+                                'Exibe 4 anomalias fake no raio de 300m para exigir busca física. Se desativado, aponta direto à relíquia.',
+                                style: TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              value: enableFakeTargets,
+                              activeColor: primaryAmber,
+                              contentPadding: EdgeInsets.zero,
+                              onChanged: (val) {
+                                setState(() {
+                                  enableFakeTargets = val;
+                                });
+                              },
+                            ),
+
                             const SizedBox(height: 16),
                             const Divider(color: Colors.white24),
                             const SizedBox(height: 12),
@@ -2503,6 +2556,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                       'hasMap': data?['hasMap'] ?? false,
                                       'radarPrice': data?['radarPrice'] ?? 2.99,
                                       'mapPrice': data?['mapPrice'] ?? 4.99,
+                                      'enableToolTimer': enableToolTimer,
+                                      'enableFakeTargets': enableFakeTargets,
                                       'imageUrl': photoUrlCtrl.text,
                                       'audioUrl': audioUrlCtrl.text,
                                     };

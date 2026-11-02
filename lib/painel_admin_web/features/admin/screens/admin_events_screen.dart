@@ -1895,6 +1895,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     bool hasCompass = isEdit ? (enigma.get<bool>('hasCompass') ?? false) : false;
     bool hasMap = isEdit ? (enigma.get<bool>('hasMap') ?? false) : false;
     bool hasRadar = isEdit ? (enigma.get<bool>('hasRadar') ?? false) : false;
+    bool enableToolTimer = isEdit ? (enigma.get<bool>('enableToolTimer') ?? true) : true;
+    bool enableFakeTargets = isEdit ? (enigma.get<bool>('enableFakeTargets') ?? true) : true;
     bool isSaving = false;
 
     showDialog(
@@ -2088,6 +2090,58 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: cardColor.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    ),
+                    child: Column(
+                      children: [
+                        SwitchListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          activeThumbColor: primaryAmber,
+                          title: Text(
+                            'Cronômetro Ativo (15 Minutos)',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Conta 15 minutos somente com a ferramenta aberta (pausa ao fechar). Desative para uso ilimitado.',
+                            style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 11),
+                          ),
+                          value: enableToolTimer,
+                          onChanged: (val) => setFormState(() => enableToolTimer = val),
+                        ),
+                        Divider(color: Colors.white.withValues(alpha: 0.06), height: 16),
+                        SwitchListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          activeThumbColor: primaryAmber,
+                          title: Text(
+                            'Alvos Falsos no Raio de 300m (Decoys)',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Exibe 4 anomalias fake no raio de 300m para forçar exploração. Desative para apontar direto à relíquia.',
+                            style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 11),
+                          ),
+                          value: enableFakeTargets,
+                          onChanged: (val) => setFormState(() => enableFakeTargets = val),
+                        ),
+                      ],
+                    ),
+                  ),
                   if (hasCompass || hasMap || hasRadar) ...[
                     const SizedBox(height: 12),
                     Row(
@@ -2202,6 +2256,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                         'hasCompass': hasCompass,
                                         'hasMap': hasMap,
                                         'hasRadar': hasRadar,
+                                        'enableToolTimer': enableToolTimer,
+                                        'enableFakeTargets': enableFakeTargets,
                                         'compassCoords': compassCoordsCtrl.text.trim(),
                                         if (!isEdit) 'status': 'open',
                                       },

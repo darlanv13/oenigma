@@ -32,6 +32,8 @@ class EnigmaModel {
   final String compassCoords;
   final String mapCoords;
   final String radarCoords;
+  final bool enableToolTimer;
+  final bool enableFakeTargets;
 
   EnigmaModel({
     required this.id,
@@ -63,6 +65,8 @@ class EnigmaModel {
     this.compassCoords = '',
     this.mapCoords = '',
     this.radarCoords = '',
+    this.enableToolTimer = true,
+    this.enableFakeTargets = true,
   });
 
   EnigmaModel copyWith({
@@ -94,6 +98,8 @@ class EnigmaModel {
     String? compassCoords,
     String? mapCoords,
     String? radarCoords,
+    bool? enableToolTimer,
+    bool? enableFakeTargets,
   }) {
     return EnigmaModel(
       id: id ?? this.id,
@@ -124,6 +130,8 @@ class EnigmaModel {
       compassCoords: compassCoords ?? this.compassCoords,
       mapCoords: mapCoords ?? this.mapCoords,
       radarCoords: radarCoords ?? this.radarCoords,
+      enableToolTimer: enableToolTimer ?? this.enableToolTimer,
+      enableFakeTargets: enableFakeTargets ?? this.enableFakeTargets,
     );
   }
 
@@ -195,6 +203,8 @@ class EnigmaModel {
       compassCoords: map['compassCoords']?.toString() ?? '',
       mapCoords: map['mapCoords']?.toString() ?? '',
       radarCoords: map['radarCoords']?.toString() ?? '',
+      enableToolTimer: map['enableToolTimer'] != null ? map['enableToolTimer'] == true : true,
+      enableFakeTargets: map['enableFakeTargets'] != null ? map['enableFakeTargets'] == true : true,
     );
   }
 
@@ -230,6 +240,8 @@ class EnigmaModel {
       'compassCoords': compassCoords,
       'mapCoords': mapCoords,
       'radarCoords': radarCoords,
+      'enableToolTimer': enableToolTimer,
+      'enableFakeTargets': enableFakeTargets,
     };
   }
 }

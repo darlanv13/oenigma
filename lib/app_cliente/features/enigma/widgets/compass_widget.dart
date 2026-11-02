@@ -20,6 +20,7 @@ class CompassWidget extends StatefulWidget {
   final Function(int) onTick;
   final bool isCompact;
   final List<DecoyTarget>? targets;
+  final bool enableToolTimer;
 
   const CompassWidget({
     super.key,
@@ -32,6 +33,7 @@ class CompassWidget extends StatefulWidget {
     required this.onTick,
     this.isCompact = false,
     this.targets,
+    this.enableToolTimer = true,
   });
 
   @override
@@ -67,6 +69,7 @@ class _CompassWidgetState extends State<CompassWidget>
   }
 
   void _startTimer() {
+    if (!widget.enableToolTimer) return;
     if (_remainingSeconds <= 0) return;
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
@@ -257,10 +260,18 @@ class _CompassWidgetState extends State<CompassWidget>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const FaIcon(FontAwesomeIcons.hourglassHalf, color: AppColors.amareloVale, size: 12),
+                    FaIcon(
+                      widget.enableToolTimer
+                          ? FontAwesomeIcons.hourglassHalf
+                          : FontAwesomeIcons.infinity,
+                      color: AppColors.amareloVale,
+                      size: 12,
+                    ),
                     const SizedBox(width: 6),
                     Text(
-                      _formatTime(_remainingSeconds),
+                      widget.enableToolTimer
+                          ? _formatTime(_remainingSeconds)
+                          : 'ILIMITADO',
                       style: GoogleFonts.cinzel(
                         color: AppColors.amareloVale,
                         fontSize: 12.5,

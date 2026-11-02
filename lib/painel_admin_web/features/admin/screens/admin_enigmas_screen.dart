@@ -836,6 +836,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     bool hasRadar = isEdit ? (enigma.get<bool>('hasRadar') ?? false) : false;
     bool hasMap = isEdit ? (enigma.get<bool>('hasMap') ?? false) : false;
     bool hasCompass = isEdit ? (enigma.get<bool>('hasCompass') ?? false) : false;
+    bool enableToolTimer = isEdit ? (enigma.get<bool>('enableToolTimer') ?? true) : true;
+    bool enableFakeTargets = isEdit ? (enigma.get<bool>('enableFakeTargets') ?? true) : true;
     
     double radarPrice = isEdit ? (enigma.get<num>('radarPrice')?.toDouble() ?? 2.99) : 2.99;
     double mapPrice = isEdit ? (enigma.get<num>('mapPrice')?.toDouble() ?? 4.99) : 4.99;
@@ -1003,6 +1005,67 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                     radarPrice,
                     (val) => setModalState(() => hasRadar = val),
                     (val) => radarPrice = val,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Configurações Táticas das Ferramentas:',
+                    style: GoogleFonts.inter(
+                      color: secondaryTextColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: cardColor.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    ),
+                    child: Column(
+                      children: [
+                        SwitchListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          activeThumbColor: primaryAmber,
+                          title: Text(
+                            'Cronômetro Ativo (15 Minutos)',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Desconta 15 minutos somente com a ferramenta aberta (pausa ao fechar). Se desativado, o uso é ilimitado.',
+                            style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 11),
+                          ),
+                          value: enableToolTimer,
+                          onChanged: (val) => setModalState(() => enableToolTimer = val),
+                        ),
+                        Divider(color: Colors.white.withValues(alpha: 0.06), height: 16),
+                        SwitchListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          activeThumbColor: primaryAmber,
+                          title: Text(
+                            'Alvos Falsos no Raio de 300m (Decoys)',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Gera 4 ecos falsos em torno do tesouro para exigir exploração física. Se desativado, aponta direto para a relíquia.',
+                            style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 11),
+                          ),
+                          value: enableFakeTargets,
+                          onChanged: (val) => setModalState(() => enableFakeTargets = val),
+                        ),
+                      ],
+                    ),
                   ),
                   if (tipo == 'photo') ...[
                     const SizedBox(height: 12),
@@ -1597,6 +1660,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                                     'hasMap': hasMap,
                                     'radarPrice': radarPrice,
                                     'mapPrice': mapPrice,
+                                    'enableToolTimer': enableToolTimer,
+                                    'enableFakeTargets': enableFakeTargets,
                                     'imageUrl': tipo == 'photo'
                                         ? photoUrlCtrl.text.trim()
                                         : '',
