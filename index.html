@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>O Enigma | Portal de Acesso</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #080B10;
+      --card-bg: rgba(18, 24, 34, 0.85);
+      --card-border: #8C7335;
+      --gold-primary: #D4AF37;
+      --gold-light: #F6E27A;
+      --gold-glow: rgba(212, 175, 55, 0.35);
+      --teal-accent: #00D2B4;
+      --teal-glow: rgba(0, 210, 180, 0.25);
+      --text-main: #EDEDED;
+      --text-muted: #9EABB8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at 50% 20%, #151D29 0%, var(--bg-deep) 80%);
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background grid / dust */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        radial-gradient(var(--gold-glow) 1px, transparent 1px),
+        radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      background-position: 0 0, 20px 20px;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 36px;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--gold-primary);
+      background: rgba(212, 175, 55, 0.08);
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold-light);
+    }
+
+    .title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 900;
+      letter-spacing: 4px;
+      background: linear-gradient(180deg, #FFFFFF 0%, var(--gold-light) 50%, var(--gold-primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 4px 20px var(--gold-glow);
+      text-transform: uppercase;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      max-width: 600px;
+      line-height: 1.6;
+      margin: 0 auto;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 28px;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      border-radius: 18px;
+      padding: 36px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 20px;
+      position: relative;
+      backdrop-filter: blur(12px);
+      transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: var(--gold-primary);
+      box-shadow: 0 18px 40px var(--gold-glow);
+    }
+
+    .card-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      border: 1px solid;
+    }
+
+    .card-client .card-icon {
+      background: rgba(0, 210, 180, 0.1);
+      border-color: var(--teal-accent);
+      color: var(--teal-accent);
+      box-shadow: 0 0 25px var(--teal-glow);
+    }
+
+    .card-admin .card-icon {
+      background: rgba(212, 175, 55, 0.1);
+      border-color: var(--gold-primary);
+      color: var(--gold-light);
+      box-shadow: 0 0 25px var(--gold-glow);
+    }
+
+    .card h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.5rem;
+      color: #FFFFFF;
+      letter-spacing: 1px;
+    }
+
+    .card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      flex-grow: 1;
+    }
+
+    .portal-btn {
+      width: 100%;
+      padding: 16px 24px;
+      border-radius: 10px;
+      font-family: 'Cinzel', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-decoration: none;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+
+    .btn-client {
+      background: linear-gradient(135deg, #00D2B4, #008775);
+      color: #071311;
+      border: 1px solid #00F5D4;
+      box-shadow: 0 4px 15px var(--teal-glow);
+    }
+
+    .btn-client:hover {
+      background: linear-gradient(135deg, #00F5D4, #00B49B);
+      box-shadow: 0 6px 25px rgba(0, 245, 212, 0.5);
+      transform: scale(1.02);
+    }
+
+    .btn-admin {
+      background: linear-gradient(135deg, var(--gold-light), var(--gold-primary));
+      color: #1A1305;
+      border: 1px solid #FFE082;
+      box-shadow: 0 4px 15px var(--gold-glow);
+    }
+
+    .btn-admin:hover {
+      background: linear-gradient(135deg, #FFF0A0, var(--gold-light));
+      box-shadow: 0 6px 25px rgba(246, 226, 122, 0.6);
+      transform: scale(1.02);
+    }
+
+    footer {
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: #6C7A89;
+      letter-spacing: 1px;
+    }
+
+    footer a {
+      color: var(--gold-light);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="brand-badge">Caça ao Tesouro Real &bull; Zero Trust</div>
+
+    <div class="title-group">
+      <h1>O Enigma</h1>
+      <p class="subtitle">Escolha seu portal de entrada na expedição arqueológica mística</p>
+    </div>
+
+    <section class="cards-grid">
+      <!-- App Cliente -->
+      <article class="card card-client">
+        <div class="card-icon">🧭</div>
+        <h2>App do Caçador</h2>
+        <p>Interface dos participantes para explorar mapas, decifrar códigos, usar bússola ancestral, radar místico e reivindicar relíquias.</p>
+        <a href="cliente/" class="portal-btn btn-client">Entrar na Expedição &rarr;</a>
+      </article>
+
+      <!-- Painel Admin -->
+      <article class="card card-admin">
+        <div class="card-icon">📜</div>
+        <h2>Painel do Mestre</h2>
+        <p>Centro de comando administrativo para gerenciar eventos, fases, enigmas, regras de cronômetro, decoys e auditar saques via Pix.</p>
+        <a href="admin/" class="portal-btn btn-admin">Acessar Admin &rarr;</a>
+      </article>
+    </section>
+
+    <footer>
+      O Enigma &bull; Plataforma Segura de Caça ao Tesouro &bull; <a href="https://github.com/darlanv13/oenigma" target="_blank" rel="noopener">GitHub</a>
+    </footer>
+  </main>
+</body>
+</html>
+
