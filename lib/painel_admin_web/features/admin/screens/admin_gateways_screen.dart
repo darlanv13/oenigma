@@ -57,10 +57,10 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
       GatewayItem(
         id: 'stripe',
         name: 'Stripe',
-        subtitle: 'Padrão mundial para pagamentos em cartão, Apple Pay e Google Pay.',
+        subtitle: 'Padrão mundial para pagamentos em Pix instantâneo, Cartão, Apple Pay e Google Pay.',
         brandColor: const Color(0xFF635BFF),
         icon: FontAwesomeIcons.stripeS,
-        supportedMethods: ['CARTÃO', 'APPLE PAY', 'GOOGLE PAY'],
+        supportedMethods: ['PIX', 'CARTÃO', 'APPLE PAY', 'GOOGLE PAY'],
         isActive: false,
         isDefault: false,
         environment: 'sandbox',
@@ -71,8 +71,8 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
           'currency': 'brl',
         },
         keyLabels: {
-          'publishable_key': 'Publishable Key (pk_...)',
-          'secret_key': 'Secret Key (sk_...)',
+          'publishable_key': 'Publishable Key (pk_live_... ou pk_test_...)',
+          'secret_key': 'Secret Key (sk_live_... ou sk_test_...)',
           'webhook_secret': 'Webhook Signing Secret (whsec_...)',
           'currency': 'Moeda Padrão (ex: brl)',
         },

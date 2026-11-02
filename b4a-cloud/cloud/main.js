@@ -230,6 +230,19 @@ Parse.Cloud.define("checkPixPaymentStatus", async (request) => {
       } catch (e) {
         console.warn("[checkPixPaymentStatus] Asaas check error:", e.message);
       }
+    } else if (gateway === "stripe" && gatewayPaymentId && (keys.secret_key || keys.api_key)) {
+      try {
+        const stripeKey = (keys.secret_key || keys.api_key || "").trim();
+        const stripeRes = await financialService.httpRequest(`https://api.stripe.com/v1/payment_intents/${gatewayPaymentId}`, {
+          method: "GET",
+          headers: { "Authorization": `Bearer ${stripeKey}` }
+        });
+        if (stripeRes.ok && stripeRes.data && stripeRes.data.status === "succeeded") {
+          approvedNow = true;
+        }
+      } catch (e) {
+        console.warn("[checkPixPaymentStatus] Stripe check error:", e.message);
+      }
     }
 
     if (approvedNow) {
@@ -1150,6 +1163,15 @@ Parse.Cloud.define("paymentWebhook", async (request) => {
   // Tenta localizar a transação por IDs em múltiplos formatos de payload
   let transactionId = payload.transactionId || payload.id || (payload.data ? payload.data.id : null) || (payload.payment ? payload.payment.id : null);
   let extRef = payload.external_reference || (payload.payment ? payload.payment.externalReference : null) || (payload.data ? payload.data.external_reference : null);
+
+  // Suporte especial para payloads de webhook do Stripe (payment_intent.succeeded)
+  if (payload.type === "payment_intent.succeeded" && payload.data && payload.data.object) {
+    const pi = payload.data.object;
+    transactionId = (pi.metadata && pi.metadata.transactionId) ? pi.metadata.transactionId : pi.id;
+    if (!extRef && pi.metadata && pi.metadata.transactionId) {
+      extRef = pi.metadata.transactionId;
+    }
+  }
 
   let tx = null;
   if (transactionId) {

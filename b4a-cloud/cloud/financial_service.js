@@ -210,7 +210,59 @@ async function createPixChargeService({ amount, user, transactionId }) {
     }
   }
 
-  // 3. Fallback Seguro: BACEN EMV BRCode Oficial
+  // 3. Tenta integração via STRIPE (PaymentIntent com Pix) se secret_key configurada
+  if (gatewayId === "stripe" && (keys.secret_key || keys.api_key)) {
+    const stripeKey = (keys.secret_key || keys.api_key || "").trim();
+    if (stripeKey.length > 10) {
+      try {
+        const amountInCents = Math.round(Number(amount) * 100);
+        const payerEmail = (user.get("email") || "jogador@oenigma.com").trim();
+        const payerName = (user.get("name") || user.get("username") || "Jogador O Enigma").trim();
+        const currency = (keys.currency || "brl").toLowerCase().trim();
+
+        // Monta payload URL-encoded padrão da API REST do Stripe
+        const bodyParams = [
+          `amount=${encodeURIComponent(amountInCents)}`,
+          `currency=${encodeURIComponent(currency)}`,
+          `payment_method_types[]=pix`,
+          `payment_method_data[type]=pix`,
+          `payment_method_data[billing_details][name]=${encodeURIComponent(payerName)}`,
+          `payment_method_data[billing_details][email]=${encodeURIComponent(payerEmail)}`,
+          `confirm=true`,
+          `description=${encodeURIComponent(`Deposito Carteira O Enigma - ${transactionId}`)}`,
+          `metadata[transactionId]=${encodeURIComponent(String(transactionId))}`,
+          `metadata[userId]=${encodeURIComponent(String(user.id))}`
+        ].join('&');
+
+        const stripeRes = await httpRequest("https://api.stripe.com/v1/payment_intents", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${stripeKey}`,
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: bodyParams
+        });
+
+        if (stripeRes.ok && stripeRes.data && stripeRes.data.id) {
+          gatewayPaymentId = stripeRes.data.id;
+          const nextAction = stripeRes.data.next_action;
+          if (nextAction && nextAction.pix_display_qr_code) {
+            qrCodeCopiaCola = nextAction.pix_display_qr_code.data;
+            if (nextAction.pix_display_qr_code.image_url_png) {
+              qrCodeBase64 = nextAction.pix_display_qr_code.image_url_png;
+            }
+          }
+          console.log(`[Stripe Pix] PaymentIntent Pix criado com sucesso: ${gatewayPaymentId}`);
+        } else {
+          console.warn("[Stripe Pix] Erro na criação:", JSON.stringify(stripeRes.data));
+        }
+      } catch (err) {
+        console.warn("[Stripe Pix] Falha na requisição:", err.message);
+      }
+    }
+  }
+
+  // 4. Fallback Seguro: BACEN EMV BRCode Oficial
   // Se o gateway não tiver credenciais ativas ou estiver em teste, gera BRCode válido padrão Bacen
   if (!qrCodeCopiaCola) {
     const pixKey = keys.pix_key || "oenigma.oficial@gmail.com";
