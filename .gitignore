@@ -70,3 +70,19 @@ functions/certs/
 
 .firebase/
 scratch/
+
+# ==============================================================================
+# SecOps & Zero Trust: Arquivos de Segredos, Credenciais e Ambiente
+# ==============================================================================
+.env
+.env.*
+*.env
+!.env.example
+*.keystore
+*.jks
+key.properties
+google-services.json
+GoogleService-Info.plist
+b4a-cloud/.parse.local
+.parse.local
+

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:oenigma/core/config/env_config.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
-import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -8,12 +8,7 @@ import 'package:oenigma/painel_admin_web/features/auth/screens/login_screen.dart
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Parse().initialize(
-    'ThUDHY1ayK6ah9JFm9YLHTDF9FKMHTU096eqkDKK',
-    'https://parseapi.back4app.com',
-    clientKey: 'ZyTU944E8jmtJuDu4lL2mh5tcQR7AErvhL0xNY5d',
-    autoSendSessionId: true,
-  );
+  await EnvConfig.initializeParse();
   runApp(const ProviderScope(child: AdminApp()));
 }
 

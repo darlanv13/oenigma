@@ -1,5 +1,5 @@
+import 'package:oenigma/core/config/env_config.dart';
 import 'package:oenigma/core/services/push_notification_service.dart';
-import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
 
@@ -15,13 +15,7 @@ import 'package:oenigma/core/widgets/app_background.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('pt_BR', null);
-  await Parse().initialize(
-    'ThUDHY1ayK6ah9JFm9YLHTDF9FKMHTU096eqkDKK', // Replace with valid App ID
-    'https://parseapi.back4app.com', // Replace with valid Server URLrsrs
-    clientKey:
-        'ZyTU944E8jmtJuDu4lL2mh5tcQR7AErvhL0xNY5d', // Replace with valid Client Key
-    autoSendSessionId: true,
-  );
+  await EnvConfig.initializeParse();
 
   await PushNotificationService().initialize();
 

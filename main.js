@@ -270,6 +270,113 @@ Parse.Cloud.define("checkPixPaymentStatus", async (request) => {
 // Missing Frontend Functions
 // -----------------------------------------------------------------------------
 
+Parse.Cloud.define("getUserTransactions", async (request) => {
+  const user = request.user;
+  if (!user) {
+    throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "User not authenticated.");
+  }
+  try {
+    const Transaction = Parse.Object.extend("Transaction");
+    const query = new Parse.Query(Transaction);
+    query.equalTo("user", user);
+    query.descending("createdAt");
+    query.limit(30);
+    const results = await query.find({ useMasterKey: true });
+    return results.map(t => {
+      const json = t.toJSON();
+      json.id = t.id;
+      json.objectId = t.id;
+      if (t.createdAt) {
+        json.createdAt = t.createdAt instanceof Date ? t.createdAt.toISOString() : t.createdAt;
+      }
+      return json;
+    });
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
+  }
+});
+
+Parse.Cloud.define("getSafeEventEnigmas", async (request) => {
+  const { eventId } = request.params;
+  const user = request.user;
+  if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "User not authenticated.");
+  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
+
+  try {
+    const Enigma = Parse.Object.extend("Enigma");
+    const query = new Parse.Query(Enigma);
+    query.equalTo("eventId", eventId);
+    query.ascending("order");
+    const results = await query.find({ useMasterKey: true });
+
+    return results.map(e => {
+      const json = e.toJSON();
+      json.id = e.id;
+      json.objectId = e.id;
+      // Blindagem de Payload SecOps: NUNCA envia resposta nem coordenadas exatas
+      delete json.code;
+      delete json.compassCoords;
+      return json;
+    });
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
+  }
+});
+
+Parse.Cloud.define("getEnigmaHints", async (request) => {
+  const { enigmaId, eventId } = request.params;
+  const user = request.user;
+  if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "User not authenticated.");
+  if (!enigmaId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "enigmaId is required.");
+
+  try {
+    const userEvents = user.get("events") || {};
+    const eventProgress = userEvents[eventId] || {};
+    const hintsPurchased = eventProgress.hintsPurchased || [];
+
+    const Hint = Parse.Object.extend("Hint");
+    const query = new Parse.Query(Hint);
+    query.equalTo("linkedEnigmaId", enigmaId);
+    const results = await query.find({ useMasterKey: true });
+
+    return results.map(h => {
+      const json = h.toJSON();
+      json.id = h.id;
+      json.objectId = h.id;
+      const isPurchased = hintsPurchased.includes(h.id);
+      const price = h.get("price") || 0;
+      // SecOps Zero Trust: se nao foi comprada e tem custo, oculta o segredo
+      if (!isPurchased && price > 0) {
+        json.data = null;
+        json.text = null;
+        json.description = "Pista bloqueada. Adquira para desvendar este segredo.";
+      }
+      return json;
+    });
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, error.message);
+  }
+});
+
+Parse.Cloud.define("reportFraud", async (request) => {
+  const { eventId, enigmaId, reason } = request.params;
+  const user = request.user;
+  if (!user) return { success: false };
+
+  try {
+    const FraudLog = Parse.Object.extend("FraudLog");
+    const fraud = new FraudLog();
+    fraud.set("user", user);
+    fraud.set("eventId", eventId || "");
+    fraud.set("enigmaId", enigmaId || "");
+    fraud.set("reason", reason || "Suspeita de Fraude");
+    await fraud.save(null, { useMasterKey: true });
+    return { success: true };
+  } catch (e) {
+    return { success: false };
+  }
+});
+
 Parse.Cloud.define("getUserWalletData", async (request) => {
   const user = request.user;
   if (!user) {
@@ -464,6 +571,22 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
           }
         }
 
+        let toolTimes = eventProgress.toolTimes || {};
+        toolsPurchased.forEach(t => {
+          if (toolTimes[t] === undefined) toolTimes[t] = 900;
+        });
+
+        // Remove ferramentas expiradas
+        const initialToolsCount = toolsPurchased.length;
+        toolsPurchased = toolsPurchased.filter(t => (toolTimes[t] || 0) > 0);
+        if (toolsPurchased.length !== initialToolsCount) {
+          eventProgress.toolsPurchased = toolsPurchased;
+          eventProgress.toolTimes = toolTimes;
+          userEvents[eventId] = eventProgress;
+          user.set("events", userEvents);
+          await user.save(null, { useMasterKey: true });
+        }
+
         hasCompass = toolsPurchased.includes("compass");
         hasMap = toolsPurchased.includes("map");
         hasRadar = toolsPurchased.includes("radar");
@@ -507,7 +630,13 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         hasMap: hasMap,
         hasRadar: hasRadar,
         destinationLocation: destinationLocation,
-        compassDuration: enigma ? (enigma.get("compassDuration") || 0) : 0,
+        enableToolTimer: enigma ? (enigma.get("enableToolTimer") !== false) : true,
+        enableFakeTargets: enigma ? (enigma.get("enableFakeTargets") !== false) : true,
+        compassDuration: 900,
+        compassRemainingSeconds: hasCompass ? (eventProgress.toolTimes?.['compass'] || 900) : 0,
+        radarRemainingSeconds: hasRadar ? (eventProgress.toolTimes?.['radar'] || 900) : 0,
+        mapRemainingSeconds: hasMap ? (eventProgress.toolTimes?.['map'] || 900) : 0,
+        toolTimes: eventProgress.toolTimes || {},
         compassPrice: enigma ? (enigma.get("compassPrice") || 15.0) : 15.0,
         radarPrice: enigma ? (enigma.get("radarPrice") || 10.0) : 10.0
       };
@@ -560,12 +689,57 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
       if (index > -1) {
         toolsPurchased.splice(index, 1);
         eventProgress.toolsPurchased = toolsPurchased;
-        userEvents[eventId] = eventProgress;
-        user.set("events", userEvents);
-        await user.save(null, { useMasterKey: true });
+      }
+      let toolTimes = eventProgress.toolTimes || {};
+      toolTimes[toolType] = 0;
+      eventProgress.toolTimes = toolTimes;
+      userEvents[eventId] = eventProgress;
+      user.set("events", userEvents);
+      await user.save(null, { useMasterKey: true });
+
+      return { success: true, message: "Ferramenta consumida e finalizada." };
+
+    } else if (action === 'syncToolUsage') {
+      if (!toolType) throw new Parse.Error(Parse.Error.INVALID_QUERY, "toolType is required.");
+
+      const isTimerEnabled = enigma ? (enigma.get("enableToolTimer") !== false) : true;
+      if (!isTimerEnabled) {
+        return {
+          success: true,
+          toolType: toolType,
+          remainingSeconds: 900,
+          expired: false
+        };
       }
 
-      return { success: true, message: "Ferramenta consumida." };
+      const secs = Math.max(0, parseInt(request.params.usedSeconds) || 0);
+
+      let toolTimes = eventProgress.toolTimes || {};
+      let currentRemaining = toolTimes[toolType] !== undefined ? toolTimes[toolType] : 900;
+      let newRemaining = Math.max(0, currentRemaining - secs);
+      toolTimes[toolType] = newRemaining;
+      eventProgress.toolTimes = toolTimes;
+
+      let expired = false;
+      if (newRemaining <= 0) {
+        expired = true;
+        const idx = toolsPurchased.indexOf(toolType);
+        if (idx > -1) {
+          toolsPurchased.splice(idx, 1);
+          eventProgress.toolsPurchased = toolsPurchased;
+        }
+      }
+
+      userEvents[eventId] = eventProgress;
+      user.set("events", userEvents);
+      await user.save(null, { useMasterKey: true });
+
+      return {
+        success: true,
+        toolType: toolType,
+        remainingSeconds: newRemaining,
+        expired: expired
+      };
 
     } else if (action === 'purchaseTool') {
       let enigma = null;
@@ -590,13 +764,25 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
 
       user.set("balance", Number((balance - cost).toFixed(2)));
 
-      toolsPurchased.push(toolType);
+      if (!toolsPurchased.includes(toolType)) {
+        toolsPurchased.push(toolType);
+      }
       eventProgress.toolsPurchased = toolsPurchased;
+
+      // Cada ferramenta ganha 15 minutos (900 segundos) de uso ativo ao ser comprada
+      let toolTimes = eventProgress.toolTimes || {};
+      toolTimes[toolType] = 900;
+      eventProgress.toolTimes = toolTimes;
+
       userEvents[eventId] = eventProgress;
       user.set("events", userEvents);
       await user.save(null, { useMasterKey: true });
 
-      return { success: true, message: "Ferramenta comprada com sucesso." };
+      return {
+        success: true,
+        message: "Ferramenta comprada com sucesso. Disponível por 15 minutos de uso ativo.",
+        remainingSeconds: 900
+      };
 
     } else if (action === 'validateCode' || action === 'verify_code' || action === 'scan_enigma') {
       const { latitude, longitude } = request.params;
