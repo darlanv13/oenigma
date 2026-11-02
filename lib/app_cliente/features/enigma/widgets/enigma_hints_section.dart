@@ -281,21 +281,6 @@ class EnigmaHintsSection extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              if (enigma.hasMap)
-                Expanded(
-                  child: _buildToolChip(
-                    context: context,
-                    title: 'MAPA',
-                    icon: FontAwesomeIcons.mapLocationDot,
-                    color: AppColors.verdeVale,
-                    isPurchased: controller.hasMap,
-                    price: enigma.mapPrice,
-                    tabIndex: 2,
-                    toolKey: 'map',
-                  ),
-                ),
-              if (enigma.hasMap && (enigma.hasCompass || enigma.hasRadar))
-                const SizedBox(width: 6),
               if (enigma.hasCompass)
                 Expanded(
                   child: _buildToolChip(
@@ -309,7 +294,7 @@ class EnigmaHintsSection extends StatelessWidget {
                     toolKey: 'compass',
                   ),
                 ),
-              if ((enigma.hasMap || enigma.hasCompass) && enigma.hasRadar)
+              if (enigma.hasCompass && (enigma.hasRadar || enigma.hasMap))
                 const SizedBox(width: 6),
               if (enigma.hasRadar)
                 Expanded(
@@ -317,11 +302,26 @@ class EnigmaHintsSection extends StatelessWidget {
                     context: context,
                     title: 'RADAR',
                     icon: FontAwesomeIcons.satelliteDish,
-                    color: AppColors.verdeValeAlt,
+                    color: AppColors.verdeVale,
                     isPurchased: controller.hasRadar,
                     price: enigma.radarPrice,
-                    tabIndex: 1,
+                    tabIndex: 2,
                     toolKey: 'radar',
+                  ),
+                ),
+              if (enigma.hasRadar && enigma.hasMap)
+                const SizedBox(width: 6),
+              if (enigma.hasMap)
+                Expanded(
+                  child: _buildToolChip(
+                    context: context,
+                    title: 'MAPA',
+                    icon: FontAwesomeIcons.mapLocationDot,
+                    color: AppColors.verdeVale,
+                    isPurchased: controller.hasMap,
+                    price: enigma.mapPrice,
+                    tabIndex: 3,
+                    toolKey: 'map',
                   ),
                 ),
             ],

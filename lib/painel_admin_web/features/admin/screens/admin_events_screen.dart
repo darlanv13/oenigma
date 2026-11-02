@@ -3129,26 +3129,104 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   }
 
   // =========================================================================
-  //  10. MODAIS DE EVENTO (CRIAR E EDITAR) COM PREVIEW DA TAG
+  //  10. GERADOR DE DESCRIÇÃO E REGRAS PADRÃO DO EVENTO
+  // =========================================================================
+  String _buildEventDescriptionTemplate({
+    required String eventType,
+    required String prizeType,
+    String? prizeValue,
+    int phaseCount = 5,
+    int enigmaCount = 3,
+  }) {
+    final isClassic = eventType == 'classic';
+    final isObjeto = prizeType == 'objeto';
+    final prizeLabel = (prizeValue != null && prizeValue.trim().isNotEmpty)
+        ? prizeValue.trim()
+        : (isObjeto ? 'Prêmio Oficial' : 'Prêmio em Dinheiro');
+
+    final buffer = StringBuffer();
+
+    // 1. Regras do Evento (sem emojis, texto curto e objetivo)
+    if (isClassic) {
+      buffer.writeln('REGRAS DO EVENTO (MODALIDADE CLASSIC):');
+      buffer.writeln('- Expedição sequencial por fases no mundo real com enigmas de texto, áudio e localização.');
+      buffer.writeln('- Decifre cada enigma e valide o código ou QR Code no local físico para avançar.');
+    } else {
+      buffer.writeln('REGRAS DO EVENTO (MODALIDADE FIND & WIN):');
+      buffer.writeln('- Caçada simultânea com baús de relíquias distribuídos pelo mapa da região.');
+      buffer.writeln('- O primeiro explorador a localizar e escanear o QR Code de um baú garante o prêmio.');
+    }
+
+    // 2. Estrutura (padrão: 5 fases e 3 enigmas)
+    buffer.writeln('\nESTRUTURA:');
+    if (isClassic) {
+      buffer.writeln('- $phaseCount fases sequenciais e $enigmaCount enigmas desafiadores no total.');
+    } else {
+      buffer.writeln('- $enigmaCount baús ativos simultaneamente no mapa da caçada.');
+    }
+
+    // 3. Ferramentas Disponíveis
+    buffer.writeln('\nFERRAMENTAS DISPONÍVEIS:');
+    buffer.writeln('- Bússola 360°, Radar Sonar de Proximidade, Mapa do Perímetro e Pistas Adicionais.');
+
+    // 4. Premiação e Segurança
+    buffer.writeln('\nPREMIAÇÃO E SEGURANÇA:');
+    if (isObjeto) {
+      buffer.writeln('- Entrega de "$prizeLabel" presencial mediante documento oficial e termo de entrega.');
+    } else {
+      buffer.writeln('- Valor de "$prizeLabel" creditado na carteira do app com resgate via Pix.');
+    }
+    buffer.writeln('- Auditoria anti-fraude: Fake GPS ou velocidade acima de 120 km/h acarreta desclassificação.');
+
+    return buffer.toString();
+  }
+
+  // =========================================================================
+  //  11. MODAIS DE EVENTO (CRIAR E EDITAR) COM PREVIEW DA TAG
   // =========================================================================
   void _showAddEventModal(BuildContext context) {
     final nomeController = TextEditingController();
     final premioController = TextEditingController();
     final prizeImageUrlController = TextEditingController();
-    final descricaoController = TextEditingController();
     final localController = TextEditingController();
+    final fasesCountController = TextEditingController(text: '5');
+    final enigmasCountController = TextEditingController(text: '3');
     String status = 'open';
     String eventType = 'classic';
     String prizeType = 'dinheiro'; // 'dinheiro' ou 'objeto'
+
+    int getPhaseCount() => int.tryParse(fasesCountController.text.trim()) ?? 5;
+    int getEnigmaCount() => int.tryParse(enigmasCountController.text.trim()) ?? 3;
+
+    // A área de descrição inicia pré-preenchida com o padrão 5 fases e 3 enigmas
+    final descricaoController = TextEditingController(
+      text: _buildEventDescriptionTemplate(
+        eventType: eventType,
+        prizeType: prizeType,
+        prizeValue: premioController.text.trim(),
+        phaseCount: 5,
+        enigmaCount: 3,
+      ),
+    );
 
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            void updateTemplateDescription() {
+              descricaoController.text = _buildEventDescriptionTemplate(
+                eventType: eventType,
+                prizeType: prizeType,
+                prizeValue: premioController.text.trim(),
+                phaseCount: getPhaseCount(),
+                enigmaCount: getEnigmaCount(),
+              );
+            }
+
             return AdminModal(
               title: 'Criar Novo Evento',
-              maxWidth: 580,
+              maxWidth: 620,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -3156,23 +3234,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     controller: nomeController,
                     hint: 'Nome do evento (Ex: Caçada Vale do Aço)',
                   ),
-                  const SizedBox(height: 12),
-                  _buildInputForm(
-                    controller: descricaoController,
-                    hint: 'Descrição do evento',
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
+                        flex: 2,
                         child: _buildInputForm(
                           controller: localController,
-                          hint: 'Local / Cidade (Ex: Canaã dos Carajás)',
+                          hint: 'Cidade / Local (Ex: Canaã dos Carajás)',
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
+                        flex: 1,
                         child: _buildSelectForm(
                           value: status,
                           items: const [
@@ -3187,7 +3261,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
@@ -3204,18 +3278,30 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             ),
                           ],
                           onChanged: (val) {
-                            if (val != null) setModalState(() => eventType = val);
+                            if (val != null) {
+                              setModalState(() {
+                                eventType = val;
+                                if (eventType == 'find_and_win') {
+                                  fasesCountController.text = '1';
+                                  enigmasCountController.text = '3';
+                                } else {
+                                  fasesCountController.text = '5';
+                                  enigmasCountController.text = '3';
+                                }
+                                updateTemplateDescription();
+                              });
+                            }
                           },
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: _buildSelectForm(
                           value: prizeType,
                           items: const [
                             DropdownMenuItem(
                               value: 'dinheiro',
-                              child: Text('Prêmio em Dinheiro (R\$)'),
+                              child: Text('Prêmio em Dinheiro (Pix)'),
                             ),
                             DropdownMenuItem(
                               value: 'objeto',
@@ -3223,21 +3309,65 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             ),
                           ],
                           onChanged: (val) {
-                            if (val != null) setModalState(() => prizeType = val);
+                            if (val != null) {
+                              setModalState(() {
+                                prizeType = val;
+                                updateTemplateDescription();
+                              });
+                            }
                           },
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  _buildInputForm(
-                    controller: premioController,
-                    hint: prizeType == 'objeto'
-                        ? 'Nome do Produto (Ex: IPHONE 17, PLAYSTATION 5)'
-                        : 'Valor do Prêmio Total (Ex: 5.000,00 ou R\$ 5.000,00)',
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: _buildInputForm(
+                          controller: premioController,
+                          hint: prizeType == 'objeto'
+                              ? 'Nome do Produto (Ex: iPhone 17)'
+                              : 'Valor Total (Ex: 5.000,00 ou R\$ 5.000)',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      if (eventType == 'classic') ...[
+                        Expanded(
+                          flex: 1,
+                          child: _buildInputForm(
+                            controller: fasesCountController,
+                            hint: 'Fases (5)',
+                            keyboardType: TextInputType.number,
+                            onChanged: (_) => setModalState(updateTemplateDescription),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 1,
+                          child: _buildInputForm(
+                            controller: enigmasCountController,
+                            hint: 'Enigmas (3)',
+                            keyboardType: TextInputType.number,
+                            onChanged: (_) => setModalState(updateTemplateDescription),
+                          ),
+                        ),
+                      ] else ...[
+                        Expanded(
+                          flex: 1,
+                          child: _buildInputForm(
+                            controller: enigmasCountController,
+                            hint: 'Baús (3)',
+                            keyboardType: TextInputType.number,
+                            onChanged: (_) => setModalState(updateTemplateDescription),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   if (prizeType == 'objeto') ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
@@ -3248,7 +3378,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 18),
+                          icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 16),
                           tooltip: 'Upload de Foto do Prêmio',
                           onPressed: () async {
                             final url = await AdminUploadUtil.pickAndUploadImage(context);
@@ -3261,41 +3391,92 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     ),
                   ],
                   const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
+                  // Cabeçalho da Descrição com Botão de Ação Rápida sem emoji
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildModalityTag(eventType, isLarge: true),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.4),
+                      Row(
+                        children: [
+                          const FaIcon(FontAwesomeIcons.fileLines, size: 11, color: primaryAmber),
+                          const SizedBox(width: 6),
+                          Text(
+                            'REGRAS E DIRETRIZES DA CAÇADA',
+                            style: GoogleFonts.inter(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          prizeType == 'objeto' ? '📦 OBJETO FÍSICO' : '💰 EM DINHEIRO',
-                          style: TextStyle(
-                            color: prizeType == 'objeto' ? primaryAmber : successColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                        ],
+                      ),
+                      InkWell(
+                        onTap: () {
+                          setModalState(updateTemplateDescription);
+                        },
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: primaryAmber.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: primaryAmber.withValues(alpha: 0.35)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const FaIcon(FontAwesomeIcons.arrowsRotate, size: 9, color: primaryAmber),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Atualizar Texto',
+                                style: GoogleFonts.inter(
+                                  color: primaryAmber,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
+                  _buildInputForm(
+                    controller: descricaoController,
+                    hint: 'Regras, fases, ferramentas e premiação do evento...',
+                    maxLines: 6,
+                  ),
+                  const SizedBox(height: 14),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      _buildModalityTag(eventType, isLarge: false),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Text(
+                          prizeType == 'objeto' ? 'OBJETO FÍSICO' : 'EM DINHEIRO (PIX)',
+                          style: TextStyle(
+                            color: prizeType == 'objeto' ? primaryAmber : successColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
                       _buildButton(
                         'Cancelar',
                         onTap: () => Navigator.of(context).pop(),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       _buildButton(
                         'Criar Evento',
                         isPrimary: true,
@@ -3391,6 +3572,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final prizeImageUrlController = TextEditingController(
       text: event.get<String>('prizeImageUrl') ?? '',
     );
+    final fasesCountController = TextEditingController(text: '5');
+    final enigmasCountController = TextEditingController(text: '3');
     String status = event.get<String>('status') ?? 'encerrado';
     String eventType = event.get<String>('eventType') ?? 'classic';
 
@@ -3421,28 +3604,58 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
     final premioController = TextEditingController(text: initialPrizeText);
 
+    int getPhaseCount() => int.tryParse(fasesCountController.text.trim()) ?? 5;
+    int getEnigmaCount() => int.tryParse(enigmasCountController.text.trim()) ?? 3;
+
+    // Se estiver vazio, pré-preenche com as regras completas padrão 5 fases e 3 enigmas
+    if (descricaoController.text.trim().isEmpty) {
+      descricaoController.text = _buildEventDescriptionTemplate(
+        eventType: eventType,
+        prizeType: prizeType,
+        prizeValue: premioController.text.trim(),
+        phaseCount: getPhaseCount(),
+        enigmaCount: getEnigmaCount(),
+      );
+    }
+
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            void updateTemplateDescription() {
+              descricaoController.text = _buildEventDescriptionTemplate(
+                eventType: eventType,
+                prizeType: prizeType,
+                prizeValue: premioController.text.trim(),
+                phaseCount: getPhaseCount(),
+                enigmaCount: getEnigmaCount(),
+              );
+            }
+
             return AdminModal(
               title: 'Editar Evento',
-              maxWidth: 580,
+              maxWidth: 620,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _buildInputForm(
+                    controller: nomeController,
+                    hint: 'Nome do evento',
+                  ),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
                         flex: 2,
                         child: _buildInputForm(
-                          controller: nomeController,
-                          hint: 'Nome do evento',
+                          controller: localController,
+                          hint: 'Cidade / Local',
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
+                        flex: 1,
                         child: _buildSelectForm(
                           value: status,
                           items: const [
@@ -3457,65 +3670,101 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: _buildInputForm(
-                          controller: descricaoController,
-                          hint: 'Descrição do evento',
-                          maxLines: 2,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildInputForm(
-                          controller: localController,
-                          hint: 'Local / Cidade',
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
                         child: _buildSelectForm(
                           value: eventType,
                           items: const [
-                            DropdownMenuItem(value: 'classic', child: Text('Modalidade Classic')),
-                            DropdownMenuItem(value: 'find_and_win', child: Text('Modalidade Find & Win')),
+                            DropdownMenuItem(value: 'classic', child: Text('Modalidade Classic (Fases)')),
+                            DropdownMenuItem(value: 'find_and_win', child: Text('Modalidade Find & Win (Baús)')),
                           ],
                           onChanged: (val) {
-                            if (val != null) setModalState(() => eventType = val);
+                            if (val != null) {
+                              setModalState(() {
+                                eventType = val;
+                                if (eventType == 'find_and_win') {
+                                  fasesCountController.text = '1';
+                                  enigmasCountController.text = '3';
+                                } else {
+                                  fasesCountController.text = '5';
+                                  enigmasCountController.text = '3';
+                                }
+                                updateTemplateDescription();
+                              });
+                            }
                           },
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: _buildSelectForm(
                           value: prizeType,
                           items: const [
-                            DropdownMenuItem(value: 'dinheiro', child: Text('Prêmio em Dinheiro (R\$)')),
+                            DropdownMenuItem(value: 'dinheiro', child: Text('Prêmio em Dinheiro (Pix)')),
                             DropdownMenuItem(value: 'objeto', child: Text('Objeto Físico (Produto)')),
                           ],
                           onChanged: (val) {
-                            if (val != null) setModalState(() => prizeType = val);
+                            if (val != null) {
+                              setModalState(() {
+                                prizeType = val;
+                                updateTemplateDescription();
+                              });
+                            }
                           },
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  _buildInputForm(
-                    controller: premioController,
-                    hint: prizeType == 'objeto'
-                        ? 'Nome do Produto (Ex: IPHONE 17, PLAYSTATION 5)'
-                        : 'Valor do Prêmio Total (Ex: 5.000,00 ou R\$ 5.000,00)',
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: _buildInputForm(
+                          controller: premioController,
+                          hint: prizeType == 'objeto'
+                              ? 'Nome do Produto (Ex: iPhone 17)'
+                              : 'Valor Total (Ex: 5.000,00 ou R\$ 5.000)',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      if (eventType == 'classic') ...[
+                        Expanded(
+                          flex: 1,
+                          child: _buildInputForm(
+                            controller: fasesCountController,
+                            hint: 'Fases (5)',
+                            keyboardType: TextInputType.number,
+                            onChanged: (_) => setModalState(updateTemplateDescription),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 1,
+                          child: _buildInputForm(
+                            controller: enigmasCountController,
+                            hint: 'Enigmas (3)',
+                            keyboardType: TextInputType.number,
+                            onChanged: (_) => setModalState(updateTemplateDescription),
+                          ),
+                        ),
+                      ] else ...[
+                        Expanded(
+                          flex: 1,
+                          child: _buildInputForm(
+                            controller: enigmasCountController,
+                            hint: 'Baús (3)',
+                            keyboardType: TextInputType.number,
+                            onChanged: (_) => setModalState(updateTemplateDescription),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   if (prizeType == 'objeto') ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
@@ -3526,7 +3775,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 18),
+                          icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 16),
                           tooltip: 'Upload de Imagem do Prêmio',
                           onPressed: () async {
                             final url = await AdminUploadUtil.pickAndUploadImage(context);
@@ -3539,41 +3788,92 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     ),
                   ],
                   const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
+                  // Cabeçalho da Descrição com Botão de Ação Rápida sem emoji
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildModalityTag(eventType, isLarge: true),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.4),
+                      Row(
+                        children: [
+                          const FaIcon(FontAwesomeIcons.fileLines, size: 11, color: primaryAmber),
+                          const SizedBox(width: 6),
+                          Text(
+                            'REGRAS E DIRETRIZES DA CAÇADA',
+                            style: GoogleFonts.inter(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
                           ),
-                        ),
-                        child: Text(
-                          prizeType == 'objeto' ? '📦 OBJETO FÍSICO' : '💰 EM DINHEIRO',
-                          style: TextStyle(
-                            color: prizeType == 'objeto' ? primaryAmber : successColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                        ],
+                      ),
+                      InkWell(
+                        onTap: () {
+                          setModalState(updateTemplateDescription);
+                        },
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: primaryAmber.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: primaryAmber.withValues(alpha: 0.35)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const FaIcon(FontAwesomeIcons.arrowsRotate, size: 9, color: primaryAmber),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Atualizar Texto',
+                                style: GoogleFonts.inter(
+                                  color: primaryAmber,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 8),
+                  _buildInputForm(
+                    controller: descricaoController,
+                    hint: 'Regras, fases, ferramentas e premiação do evento...',
+                    maxLines: 6,
+                  ),
+                  const SizedBox(height: 14),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      _buildModalityTag(eventType, isLarge: false),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Text(
+                          prizeType == 'objeto' ? 'OBJETO FÍSICO' : 'EM DINHEIRO (PIX)',
+                          style: TextStyle(
+                            color: prizeType == 'objeto' ? primaryAmber : successColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
                       _buildButton(
                         'Cancelar',
                         onTap: () => Navigator.of(context).pop(),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       _buildButton(
                         'Salvar Evento',
                         isPrimary: true,
@@ -4108,10 +4408,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     required TextEditingController controller,
     required String hint,
     int maxLines = 1,
+    TextInputType? keyboardType,
+    ValueChanged<String>? onChanged,
   }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
+      keyboardType: keyboardType,
+      onChanged: onChanged,
       style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
       decoration: InputDecoration(
         hintText: hint,

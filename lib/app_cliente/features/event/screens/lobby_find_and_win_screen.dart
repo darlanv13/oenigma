@@ -56,36 +56,37 @@ class _LobbyFindEndWinScreenState extends ConsumerState<LobbyFindEndWinScreen>
     _enigmasStream = Stream.periodic(const Duration(seconds: 5)).asyncMap((
       _,
     ) async {
-      final query = QueryBuilder<ParseObject>(ParseObject('Enigma'))
-        ..whereEqualTo('eventId', widget.event.id)
-        ..orderByAscending('order');
-
-      final response = await query.query();
-      if (response.success && response.results != null) {
-        return response.results!.map((e) {
-          final doc = e as ParseObject;
+      final response = await ParseCloudFunction('getSafeEventEnigmas').execute(
+        parameters: {'eventId': widget.event.id},
+      );
+      if (response.success && response.result is List) {
+        final list = response.result as List;
+        return list.map((item) {
+          final map = Map<String, dynamic>.from(item as Map);
           return EnigmaModel.fromMap({
-            'id': doc.objectId,
-            'title': doc.get<dynamic>('title')?.toString() ?? doc.get<dynamic>('name')?.toString() ?? '',
-            'instruction': doc.get<dynamic>('instruction')?.toString() ?? '',
-            'prize': doc.get<dynamic>('prize') ?? 0,
-            'imageUrl': doc.get<dynamic>('imageUrl')?.toString(),
-            'audioUrl': doc.get<dynamic>('audioUrl')?.toString(),
-            'type': doc.get<dynamic>('type')?.toString() ?? 'text',
-            'characteristics': doc.get<List<dynamic>>('characteristics') ?? [],
-            'status': doc.get<dynamic>('status')?.toString(),
-            'closedAt': doc.get<DateTime>('closedAt'),
-            'code': doc.get<dynamic>('code')?.toString() ?? '',
-            'icon': doc.get<dynamic>('icon')?.toString() ?? 'skull',
-            'difficulty': doc.get<dynamic>('difficulty')?.toString() ?? 'MÉDIA',
-            'hasCompass': doc.get<dynamic>('hasCompass') == true,
-            'hasMap': doc.get<dynamic>('hasMap') == true,
-            'hasRadar': doc.get<dynamic>('hasRadar') == true,
-            'compassPrice': doc.get<dynamic>('compassPrice'),
-            'mapPrice': doc.get<dynamic>('mapPrice'),
-            'radarPrice': doc.get<dynamic>('radarPrice'),
-            'compassDuration': doc.get<dynamic>('compassDuration'),
-            'compassCoords': doc.get<dynamic>('compassCoords')?.toString(),
+            'id': map['id'] ?? map['objectId'],
+            'title': map['title'] ?? map['name'] ?? '',
+            'instruction': map['instruction'] ?? '',
+            'prize': map['prize'] ?? 0,
+            'imageUrl': map['imageUrl'],
+            'audioUrl': map['audioUrl'],
+            'type': map['type'] ?? 'text',
+            'characteristics': map['characteristics'] ?? [],
+            'status': map['status'],
+            'closedAt': map['closedAt'] != null
+                ? DateTime.tryParse(map['closedAt'].toString())
+                : null,
+            'code': '', // SecOps Blindagem: resposta correta mantida oculta no servidor
+            'icon': map['icon'] ?? 'skull',
+            'difficulty': map['difficulty'] ?? 'MÉDIA',
+            'hasCompass': map['hasCompass'] == true,
+            'hasMap': map['hasMap'] == true,
+            'hasRadar': map['hasRadar'] == true,
+            'compassPrice': map['compassPrice'],
+            'mapPrice': map['mapPrice'],
+            'radarPrice': map['radarPrice'],
+            'compassDuration': map['compassDuration'],
+            'compassCoords': null, // SecOps Blindagem: coordenadas mantidas ocultas no servidor
           });
         }).toList();
       }

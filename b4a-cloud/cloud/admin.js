@@ -87,9 +87,25 @@ Parse.Cloud.define("getAdminDashboardData", async (request) => {
     withdrawalsQuery.equalTo("status", "pending");
     const pendingWithdrawalsCount = await withdrawalsQuery.count({ useMasterKey: true });
 
+    const totalEventsQuery = new Parse.Query('Event');
+    const totalEventsCount = await totalEventsQuery.count({ useMasterKey: true }).catch(() => activeEventsCount);
+
+    const enigmasQuery = new Parse.Query('Enigma');
+    const totalEnigmasCount = await enigmasQuery.count({ useMasterKey: true }).catch(() => 0);
+
+    const bannersQuery = new Parse.Query('Banner');
+    const totalBannersCount = await bannersQuery.count({ useMasterKey: true }).catch(() => 0);
+
+    const hintsQuery = new Parse.Query('Hint');
+    const totalHintsCount = await hintsQuery.count({ useMasterKey: true }).catch(() => 0);
+
     return {
       users: usersCount,
       activeEvents: activeEventsCount,
+      totalEvents: totalEventsCount,
+      totalEnigmas: totalEnigmasCount,
+      totalBanners: totalBannersCount,
+      totalHints: totalHintsCount,
       totalDeposits: totalDepositsCount,
       pendingWithdrawals: pendingWithdrawalsCount
     };

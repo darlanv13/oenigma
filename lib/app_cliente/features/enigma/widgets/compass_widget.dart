@@ -7,6 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:oenigma/app_cliente/features/enigma/services/decoy_location_service.dart';
 import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
@@ -18,6 +19,7 @@ class CompassWidget extends StatefulWidget {
   final VoidCallback onTimeUp;
   final Function(int) onTick;
   final bool isCompact;
+  final List<DecoyTarget>? targets;
 
   const CompassWidget({
     super.key,
@@ -29,6 +31,7 @@ class CompassWidget extends StatefulWidget {
     required this.onTimeUp,
     required this.onTick,
     this.isCompact = false,
+    this.targets,
   });
 
   @override
@@ -46,6 +49,7 @@ class _CompassWidgetState extends State<CompassWidget>
   late int _remainingSeconds;
   Timer? _countdownTimer;
   bool _wasLockedOn = false;
+  int _selectedTargetIndex = 0;
 
   @override
   void initState() {
@@ -184,18 +188,35 @@ class _CompassWidgetState extends State<CompassWidget>
       );
     }
 
+    final List<DecoyTarget> effectiveTargets = (widget.targets != null && widget.targets!.isNotEmpty)
+        ? widget.targets!
+        : [
+            DecoyTarget(
+              index: 1,
+              label: 'Sinal 1',
+              latitude: widget.targetLatitude,
+              longitude: widget.targetLongitude,
+              isReal: true,
+            ),
+          ];
+
+    if (_selectedTargetIndex >= effectiveTargets.length) {
+      _selectedTargetIndex = 0;
+    }
+    final currentTarget = effectiveTargets[_selectedTargetIndex];
+
     final double distance = Geolocator.distanceBetween(
       _currentPosition!.latitude,
       _currentPosition!.longitude,
-      widget.targetLatitude,
-      widget.targetLongitude,
+      currentTarget.latitude,
+      currentTarget.longitude,
     );
 
     final double bearing = Geolocator.bearingBetween(
       _currentPosition!.latitude,
       _currentPosition!.longitude,
-      widget.targetLatitude,
-      widget.targetLongitude,
+      currentTarget.latitude,
+      currentTarget.longitude,
     );
 
     final double targetAngle = (bearing - _currentHeading) * (math.pi / 180);
@@ -227,7 +248,7 @@ class _CompassWidgetState extends State<CompassWidget>
             if (widget.durationSeconds > 0)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                margin: const EdgeInsets.only(right: 8, bottom: 12),
+                margin: const EdgeInsets.only(right: 8, bottom: 10),
                 decoration: BoxDecoration(
                   color: AppColors.amareloVale.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(16),
@@ -252,7 +273,7 @@ class _CompassWidgetState extends State<CompassWidget>
               ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              margin: const EdgeInsets.only(bottom: 12),
+              margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(16),
@@ -276,6 +297,93 @@ class _CompassWidgetState extends State<CompassWidget>
             ),
           ],
         ),
+
+        // Seletor de Anomalia Magnética (4 fake + 1 real no raio de 300m)
+        if (effectiveTargets.length > 1) ...[
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0C1417),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.amareloVale.withValues(alpha: 0.4),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const FaIcon(FontAwesomeIcons.chevronLeft, size: 10, color: AppColors.amareloVale),
+                  onPressed: _selectedTargetIndex > 0
+                      ? () {
+                          HapticFeedback.selectionClick();
+                          setState(() => _selectedTargetIndex--);
+                        }
+                      : null,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'SINAL ${_selectedTargetIndex + 1} DE ${effectiveTargets.length} (${distance.toInt()}m)',
+                  style: GoogleFonts.cinzel(
+                    color: AppColors.amareloVale,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: const FaIcon(FontAwesomeIcons.chevronRight, size: 10, color: AppColors.amareloVale),
+                  onPressed: _selectedTargetIndex < effectiveTargets.length - 1
+                      ? () {
+                          HapticFeedback.selectionClick();
+                          setState(() => _selectedTargetIndex++);
+                        }
+                      : null,
+                ),
+              ],
+            ),
+          ),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 4,
+            runSpacing: 4,
+            children: List.generate(effectiveTargets.length, (idx) {
+              final isSel = idx == _selectedTargetIndex;
+              return GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _selectedTargetIndex = idx);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: isSel ? AppColors.amareloVale : Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isSel ? AppColors.amareloVale : Colors.white12,
+                    ),
+                  ),
+                  child: Text(
+                    'Sinal ${idx + 1}',
+                    style: GoogleFonts.cinzel(
+                      color: isSel ? Colors.black : Colors.white70,
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 8),
+        ],
 
         // Mostrador da Bússola Dourada em Latão e Obsidiana
         Center(

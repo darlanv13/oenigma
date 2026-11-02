@@ -1,20 +1,22 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import 'package:oenigma/app_cliente/features/enigma/services/decoy_location_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 /// Mapa de Perímetro da Expedição Antiga (Estilo Indiana Jones / Cores Vale).
+/// Apresenta o raio de 300 metros, até 5 alvos (1 real + 4 decoys) e contagem ativa de 15min.
 class MapRadiusWidget extends StatefulWidget {
   final double destinationLatitude;
   final double destinationLongitude;
   final bool isCompact;
   final VoidCallback? onExpand;
+  final List<DecoyTarget>? targets;
+  final int remainingSeconds;
 
   const MapRadiusWidget({
     super.key,
@@ -22,6 +24,8 @@ class MapRadiusWidget extends StatefulWidget {
     required this.destinationLongitude,
     this.isCompact = false,
     this.onExpand,
+    this.targets,
+    this.remainingSeconds = 900,
   });
 
   @override
@@ -118,7 +122,7 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
     {
       "featureType": "water",
       "elementType": "labels.text.fill",
-      "stylers": [{"color": "#264350"}]
+      "stylers": [{"color": "#007D8A"}]
     }
   ]
   ''';
@@ -126,19 +130,25 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
   @override
   void initState() {
     super.initState();
-    _obfuscatedCenter = _generateObfuscatedLocation(
-      widget.destinationLatitude,
-      widget.destinationLongitude,
-      130.0,
-    );
 
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
 
-    _checkLocationPermission();
-    _loadCustomMarker();
+    _obfuscateCenter();
+    _checkPermissions();
+    _createCustomMarker();
+  }
+
+  @override
+  void didUpdateWidget(covariant MapRadiusWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.destinationLatitude != widget.destinationLatitude ||
+        oldWidget.destinationLongitude != widget.destinationLongitude) {
+      _obfuscateCenter();
+      _recenterTarget();
+    }
   }
 
   @override
@@ -148,25 +158,40 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
     super.dispose();
   }
 
-  Future<void> _loadCustomMarker() async {
+  void _obfuscateCenter() {
+    _obfuscatedCenter = LatLng(
+      widget.destinationLatitude,
+      widget.destinationLongitude,
+    );
+  }
+
+  Future<void> _checkPermissions() async {
     try {
-      final icon = await BitmapDescriptor.asset(
-        const ImageConfiguration(size: Size(44, 44)),
-        'assets/images/compass_icon.png',
-      );
-      if (mounted) setState(() => _customMarkerIcon = icon);
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse) {
+        setState(() {
+          _hasLocationPermission = true;
+        });
+        _getCurrentLocation();
+        _startLocationUpdates();
+      }
     } catch (_) {}
   }
 
-  Future<void> _checkLocationPermission() async {
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.whileInUse ||
-        permission == LocationPermission.always) {
+  Future<void> _getCurrentLocation() async {
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
       if (mounted) {
-        setState(() => _hasLocationPermission = true);
-        _startLocationUpdates();
+        setState(() {
+          _currentPosition = pos;
+        });
       }
-    }
+    } catch (_) {}
   }
 
   void _startLocationUpdates() {
@@ -176,43 +201,44 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
         distanceFilter: 3,
       ),
     ).listen((pos) {
-      if (mounted) setState(() => _currentPosition = pos);
+      if (mounted) {
+        setState(() {
+          _currentPosition = pos;
+        });
+      }
     });
   }
 
-  LatLng _generateObfuscatedLocation(
-    double lat,
-    double lng,
-    double maxRadiusMeters,
-  ) {
-    final random = math.Random();
-    final radiusInDegrees = maxRadiusMeters / 111000.0;
-    final u = random.nextDouble();
-    final v = random.nextDouble();
-    final w = radiusInDegrees * math.sqrt(u);
-    final t = 2 * math.pi * v;
-    final x = w * math.cos(t);
-    final y = w * math.sin(t);
-    final adjustedLon = x / math.cos(lat * math.pi / 180.0);
-    return LatLng(lat + y, lng + adjustedLon);
+  Future<void> _createCustomMarker() async {
+    try {
+      _customMarkerIcon = BitmapDescriptor.defaultMarkerWithHue(
+        BitmapDescriptor.hueYellow,
+      );
+    } catch (_) {}
   }
 
   void _recenterTarget() {
-    HapticFeedback.selectionClick();
-    _mapController?.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: _obfuscatedCenter, zoom: 16.0),
-      ),
-    );
+    if (_mapController != null) {
+      _mapController!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: _obfuscatedCenter,
+            zoom: 16.2,
+          ),
+        ),
+      );
+    }
   }
 
   void _recenterUser() {
-    HapticFeedback.selectionClick();
-    if (_currentPosition != null) {
-      _mapController?.animateCamera(
+    if (_mapController != null && _currentPosition != null) {
+      _mapController!.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
-            target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+            target: LatLng(
+              _currentPosition!.latitude,
+              _currentPosition!.longitude,
+            ),
             zoom: 16.5,
           ),
         ),
@@ -221,7 +247,6 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
   }
 
   void _toggleMapType() {
-    HapticFeedback.selectionClick();
     setState(() {
       _currentMapType = _currentMapType == MapType.normal
           ? MapType.satellite
@@ -229,10 +254,52 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
     });
   }
 
+  String _formatTime(int totalSeconds) {
+    final m = (totalSeconds ~/ 60).toString().padLeft(2, '0');
+    final s = (totalSeconds % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  Set<Marker> _buildMarkers() {
+    final markers = <Marker>{};
+
+    if (widget.targets != null && widget.targets!.isNotEmpty) {
+      for (final t in widget.targets!) {
+        markers.add(
+          Marker(
+            markerId: MarkerId('target_${t.index}'),
+            position: LatLng(t.latitude, t.longitude),
+            icon: _customMarkerIcon ??
+                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+            infoWindow: InfoWindow(
+              title: 'Anomalia Sagrada #${t.index}',
+              snippet: 'Eco detectado no raio de 300m da expedição.',
+            ),
+          ),
+        );
+      }
+    } else {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('destination'),
+          position: _obfuscatedCenter,
+          icon: _customMarkerIcon ??
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+          infoWindow: const InfoWindow(
+            title: 'Perímetro da Relíquia',
+            snippet: 'O tesouro repousa neste raio estimado.',
+          ),
+        ),
+      );
+    }
+
+    return markers;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final double mapHeight = widget.isCompact ? 260.0 : 380.0;
-    final double? distanceMeters = _currentPosition != null
+    final double mapHeight = widget.isCompact ? 220.0 : 420.0;
+    final distanceMeters = _currentPosition != null
         ? Geolocator.distanceBetween(
             _currentPosition!.latitude,
             _currentPosition!.longitude,
@@ -240,6 +307,8 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
             widget.destinationLongitude,
           )
         : null;
+
+    final isLowTime = widget.remainingSeconds < 120;
 
     return Container(
       height: mapHeight,
@@ -276,20 +345,9 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
               onMapCreated: (GoogleMapController controller) {
                 _mapController = controller;
               },
-              markers: {
-                Marker(
-                  markerId: const MarkerId('destination'),
-                  position: _obfuscatedCenter,
-                  icon: _customMarkerIcon ??
-                      BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
-                  infoWindow: const InfoWindow(
-                    title: 'Perímetro da Relíquia',
-                    snippet: 'O tesouro repousa neste raio estimado.',
-                  ),
-                ),
-              },
+              markers: _buildMarkers(),
               circles: {
-                // Perímetro Interno da Relíquia
+                // Perímetro Interno da Relíquia (300m)
                 Circle(
                   circleId: const CircleId('search_area_fill'),
                   center: _obfuscatedCenter,
@@ -298,7 +356,7 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
                   strokeColor: AppColors.verdeVale.withValues(alpha: 0.85),
                   strokeWidth: 2,
                 ),
-                // Borda Dourada Externa
+                // Borda Dourada Externa (315m)
                 Circle(
                   circleId: const CircleId('search_area_outer'),
                   center: _obfuscatedCenter,
@@ -310,7 +368,7 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
               },
             ),
 
-            // Top HUD do Mapa: Perímetro & Distância da Expedição
+            // Top HUD do Mapa: Perímetro, Timer Ativo de 15 Minutos & Distância
             Positioned(
               top: 10,
               left: 10,
@@ -318,10 +376,11 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Perímetro 300M
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.80),
+                      color: Colors.black.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: AppColors.verdeVale.withValues(alpha: 0.4),
@@ -333,14 +392,14 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
                         const FaIcon(
                           FontAwesomeIcons.compass,
                           color: AppColors.verdeVale,
-                          size: 11,
+                          size: 10,
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 5),
                         Text(
                           'PERÍMETRO: 300M',
                           style: GoogleFonts.cinzel(
                             color: AppColors.verdeVale,
-                            fontSize: 10,
+                            fontSize: 9.5,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.8,
                           ),
@@ -348,11 +407,45 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
                       ],
                     ),
                   ),
+
+                  // Timer Ativo de 15 Minutos (Pausa quando fecha)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: (isLowTime ? Colors.redAccent : AppColors.amareloVale)
+                            .withValues(alpha: 0.6),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FaIcon(
+                          FontAwesomeIcons.stopwatch,
+                          color: isLowTime ? Colors.redAccent : AppColors.amareloVale,
+                          size: 10,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          _formatTime(widget.remainingSeconds),
+                          style: GoogleFonts.spaceMono(
+                            color: isLowTime ? Colors.redAccent : AppColors.amareloVale,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Distância estimada até o epicentro
                   if (distanceMeters != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.80),
+                        color: Colors.black.withValues(alpha: 0.85),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: AppColors.amareloVale.withValues(alpha: 0.5),
@@ -366,12 +459,12 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
                             color: AppColors.amareloVale,
                             size: 10,
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 5),
                           Text(
                             '~${distanceMeters.toStringAsFixed(0)}M',
                             style: GoogleFonts.cinzel(
                               color: AppColors.amareloVale,
-                              fontSize: 10,
+                              fontSize: 9.5,
                               fontWeight: FontWeight.bold,
                             ),
                           ),

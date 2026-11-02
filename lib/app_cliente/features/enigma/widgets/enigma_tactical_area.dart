@@ -9,6 +9,7 @@ import 'package:oenigma/app_cliente/features/enigma/screens/scanner_screen.dart'
 import 'package:oenigma/app_cliente/features/enigma/widgets/compass_widget.dart';
 import 'package:oenigma/app_cliente/features/enigma/widgets/enigma_dialogs.dart';
 import 'package:oenigma/app_cliente/features/enigma/widgets/map_radius_widget.dart';
+import 'package:oenigma/app_cliente/features/enigma/widgets/radar_widget.dart';
 import 'package:oenigma/app_cliente/features/enigma/widgets/relic_corner_painter.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
@@ -228,11 +229,19 @@ class EnigmaTacticalArea extends StatelessWidget {
             title: 'BÚSSOLA',
             icon: FontAwesomeIcons.compass,
             badgeColor: controller.hasCompass ? AppColors.verdeVale : AppColors.amareloVale,
-            isLocked: !controller.hasCompass && !controller.hasRadar,
+            isLocked: !controller.hasCompass,
           ),
           const SizedBox(width: 3),
           _buildTabPill(
             index: 2,
+            title: 'RADAR',
+            icon: FontAwesomeIcons.satelliteDish,
+            badgeColor: controller.hasRadar ? AppColors.verdeVale : AppColors.amareloVale,
+            isLocked: !controller.hasRadar,
+          ),
+          const SizedBox(width: 3),
+          _buildTabPill(
+            index: 3,
             title: 'MAPA',
             icon: FontAwesomeIcons.mapLocationDot,
             badgeColor: controller.hasMap ? AppColors.verdeVale : AppColors.amareloVale,
@@ -277,24 +286,28 @@ class EnigmaTacticalArea extends StatelessWidget {
               FaIcon(
                 icon,
                 color: isSelected ? Colors.white : AppColors.cinzaMedio,
-                size: 11,
+                size: 10,
               ),
-              const SizedBox(width: 5),
-              Text(
-                title,
-                style: GoogleFonts.cinzel(
-                  color: isSelected ? Colors.white : AppColors.cinzaMedio,
-                  fontSize: 9.5,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  letterSpacing: 0.4,
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.cinzel(
+                    color: isSelected ? Colors.white : AppColors.cinzaMedio,
+                    fontSize: 9.0,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    letterSpacing: 0.3,
+                  ),
                 ),
               ),
               if (isLocked) ...[
-                const SizedBox(width: 4),
+                const SizedBox(width: 3),
                 const FaIcon(
                   FontAwesomeIcons.lock,
                   color: AppColors.amareloVale,
-                  size: 8,
+                  size: 7.5,
                 ),
               ],
             ],
@@ -313,6 +326,8 @@ class EnigmaTacticalArea extends StatelessWidget {
       case 1:
         return _buildCompassTab(context);
       case 2:
+        return _buildRadarTab(context);
+      case 3:
         return _buildMapTab(context);
       case 0:
       default:
@@ -538,7 +553,7 @@ class EnigmaTacticalArea extends StatelessWidget {
 
   // --- ABA 1: BÚSSOLA DOURADA 360° ---
   Widget _buildCompassTab(BuildContext context) {
-    final bool isUnlocked = controller.hasCompass || controller.hasRadar;
+    final bool isUnlocked = controller.hasCompass;
     final targetLat = controller.targetLatitude;
     final targetLng = controller.targetLongitude;
 
@@ -589,7 +604,8 @@ class EnigmaTacticalArea extends StatelessWidget {
           targetLongitude: targetLng,
           destinationLongitude: targetLng,
           destinationLatitude: targetLat,
-          durationSeconds: controller.compassRemainingSeconds ?? controller.compassDuration,
+          durationSeconds: controller.compassRemainingSeconds,
+          targets: controller.targets,
           isCompact: true,
           onTick: controller.updateCompassRemainingSeconds,
           onTimeUp: () => controller.onCompassTimeUp(context),
@@ -600,7 +616,8 @@ class EnigmaTacticalArea extends StatelessWidget {
             context,
             latitude: targetLat,
             longitude: targetLng,
-            durationSeconds: controller.compassRemainingSeconds ?? controller.compassDuration,
+            durationSeconds: controller.compassRemainingSeconds,
+            targets: controller.targets,
             onTick: controller.updateCompassRemainingSeconds,
             onTimeUp: () => controller.onCompassTimeUp(context),
           ),
@@ -624,7 +641,107 @@ class EnigmaTacticalArea extends StatelessWidget {
     );
   }
 
-  // --- ABA 2: MAPA DA EXPEDIÇÃO ---
+  // --- ABA 2: RADAR MÍSTICO (SONAR 360°) ---
+  Widget _buildRadarTab(BuildContext context) {
+    final bool isUnlocked = controller.hasRadar;
+    final targetLat = controller.targetLatitude;
+    final targetLng = controller.targetLongitude;
+
+    if (targetLat == null || targetLng == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          children: [
+            const FaIcon(FontAwesomeIcons.satelliteDish, color: AppColors.cinzaMedio, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              'Coordenadas Não Requeridas',
+              style: GoogleFonts.cinzel(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Utilize a aba Lente QR para validar este enigma.',
+              style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (!isUnlocked) {
+      return _buildLockedToolCard(
+        context: context,
+        key: const ValueKey('radar_tab_locked'),
+        title: 'RADAR MÍSTICO DE RELÍQUIAS',
+        icon: FontAwesomeIcons.satelliteDish,
+        accentColor: AppColors.verdeVale,
+        description:
+            'Ativa a varredura contínua de ondas e pulso de sonar para detectar a aproximação e o eco da relíquia.',
+        price: controller.currentEnigma.radarPrice,
+        toolKey: 'radar',
+      );
+    }
+
+    return Column(
+      children: [
+        RadarWidget(
+          targetLatitude: targetLat,
+          targetLongitude: targetLng,
+          initialDistance: controller.distance,
+          targets: controller.targets,
+          remainingSeconds: controller.radarRemainingSeconds,
+          onTick: controller.updateRadarRemainingSeconds,
+          onTimeUp: () => controller.onRadarTimeUp(context),
+          isCompact: true,
+          onExpand: () => EnigmaDialogs.openRadarExpanded(
+            context,
+            latitude: targetLat,
+            longitude: targetLng,
+            initialDistance: controller.distance,
+            targets: controller.targets,
+            remainingSeconds: controller.radarRemainingSeconds,
+            onTick: controller.updateRadarRemainingSeconds,
+            onTimeUp: () => controller.onRadarTimeUp(context),
+          ),
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: () => EnigmaDialogs.openRadarExpanded(
+            context,
+            latitude: targetLat,
+            longitude: targetLng,
+            initialDistance: controller.distance,
+            targets: controller.targets,
+            remainingSeconds: controller.radarRemainingSeconds,
+            onTick: controller.updateRadarRemainingSeconds,
+            onTimeUp: () => controller.onRadarTimeUp(context),
+          ),
+          icon: const FaIcon(FontAwesomeIcons.upRightAndDownLeftFromCenter, size: 10),
+          label: Text(
+            'EXPANDIR RADAR',
+            style: GoogleFonts.cinzel(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.8,
+            ),
+          ),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.verdeVale,
+            side: BorderSide(color: AppColors.verdeVale.withValues(alpha: 0.5), width: 1.0),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- ABA 3: MAPA DA EXPEDIÇÃO ---
   Widget _buildMapTab(BuildContext context) {
     final bool isUnlocked = controller.hasMap;
     final targetLat = controller.targetLatitude;
@@ -675,11 +792,15 @@ class EnigmaTacticalArea extends StatelessWidget {
       child: MapRadiusWidget(
         destinationLatitude: targetLat,
         destinationLongitude: targetLng,
+        targets: controller.targets,
+        remainingSeconds: controller.mapRemainingSeconds,
         isCompact: true,
         onExpand: () => EnigmaDialogs.openMapExpanded(
           context,
           latitude: targetLat,
           longitude: targetLng,
+          targets: controller.targets,
+          remainingSeconds: controller.mapRemainingSeconds,
         ),
       ),
     );

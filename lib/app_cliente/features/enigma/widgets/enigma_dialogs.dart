@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:oenigma/app_cliente/features/enigma/services/decoy_location_service.dart';
 import 'package:oenigma/app_cliente/features/enigma/widgets/compass_widget.dart';
 import 'package:oenigma/app_cliente/features/enigma/widgets/enigma_audio_dialog.dart';
 import 'package:oenigma/app_cliente/features/enigma/widgets/map_radius_widget.dart';
+import 'package:oenigma/app_cliente/features/enigma/widgets/radar_widget.dart';
 import 'package:oenigma/app_cliente/features/enigma/widgets/relic_corner_painter.dart';
 import 'package:oenigma/app_cliente/features/wallet/screens/wallet_screen.dart';
 import 'package:oenigma/core/models/event_model.dart';
@@ -140,25 +142,43 @@ class EnigmaDialogs {
     );
   }
 
-  /// Diálogo informativo após ativação de instrumento (Bússola ou Mapa)
+  /// Diálogo informativo após ativação de instrumento (Bússola, Radar ou Mapa)
   static void showToolActivated(BuildContext context, String toolType) {
+    Color accentColor = AppColors.verdeVale;
+    String title = 'Mapa da Expedição Aberto!';
+    dynamic icon = FontAwesomeIcons.mapLocationDot;
+    String description =
+        '1. O perímetro da câmara foi traçado no mapa.\n2. A relíquia está dentro deste raio estimado.\n3. Desloque-se até o local e procure a inscrição física.';
+
+    if (toolType == 'compass') {
+      accentColor = AppColors.amareloVale;
+      title = 'Bússola Dourada Ativada!';
+      icon = FontAwesomeIcons.compass;
+      description =
+          '1. A agulha dourada aponta para a relíquia sagrada.\n2. O ponto brilhante é o local exato.\n3. Gire o celular para orientar a direção.\n4. O medidor rúnico indicará a distância.';
+    } else if (toolType == 'radar') {
+      accentColor = AppColors.verdeVale;
+      title = 'Radar Místico Ativado!';
+      icon = FontAwesomeIcons.satelliteDish;
+      description =
+          '1. O sonar tático faz a varredura 360° do terreno.\n2. O pulso luminoso revela o eco da relíquia.\n3. Aproxime-se guiando-se pelas barras de intensidade do sinal.\n4. Use o botão Pulsar Sonar para disparar varreduras imediatas.';
+    }
+
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: BorderSide(
-            color: toolType == 'compass'
-                ? AppColors.amareloVale.withValues(alpha: 0.6)
-                : AppColors.verdeVale.withValues(alpha: 0.6),
+            color: accentColor.withValues(alpha: 0.6),
             width: 1.5,
           ),
         ),
         backgroundColor: AppColors.darkCardColor,
         title: Text(
-          toolType == 'compass' ? 'Bússola Dourada Ativada!' : 'Mapa da Expedição Aberto!',
+          title,
           style: GoogleFonts.cinzel(
-            color: toolType == 'compass' ? AppColors.amareloVale : AppColors.verdeVale,
+            color: accentColor,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
@@ -168,17 +188,13 @@ class EnigmaDialogs {
           mainAxisSize: MainAxisSize.min,
           children: [
             FaIcon(
-              toolType == 'compass'
-                  ? FontAwesomeIcons.compass
-                  : FontAwesomeIcons.mapLocationDot,
+              icon,
               size: 54,
-              color: toolType == 'compass' ? AppColors.amareloVale : AppColors.verdeVale,
+              color: accentColor,
             ),
             const SizedBox(height: 18),
             Text(
-              toolType == 'compass'
-                  ? '1. A agulha dourada aponta para a relíquia sagrada.\n2. O ponto brilhante é o local exato.\n3. Gire o celular para orientar a direção.\n4. O medidor rúnico indicará a distância.'
-                  : '1. O perímetro da câmara foi traçado no mapa.\n2. A relíquia está dentro deste raio estimado.\n3. Desloque-se até o local e procure a inscrição física.',
+              description,
               style: GoogleFonts.poppins(
                 color: AppColors.cinzaMedio,
                 fontSize: 13,
@@ -192,9 +208,7 @@ class EnigmaDialogs {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: toolType == 'compass'
-                    ? AppColors.amareloVale
-                    : AppColors.verdeVale,
+                backgroundColor: accentColor,
                 foregroundColor: toolType == 'compass' ? Colors.black : Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -541,6 +555,8 @@ class EnigmaDialogs {
     BuildContext context, {
     required double latitude,
     required double longitude,
+    List<DecoyTarget>? targets,
+    int remainingSeconds = 900,
   }) {
     showDialog(
       context: context,
@@ -592,6 +608,8 @@ class EnigmaDialogs {
                 child: MapRadiusWidget(
                   destinationLatitude: latitude,
                   destinationLongitude: longitude,
+                  targets: targets,
+                  remainingSeconds: remainingSeconds,
                   isCompact: false,
                 ),
               ),
@@ -610,6 +628,7 @@ class EnigmaDialogs {
     required int durationSeconds,
     required ValueChanged<int> onTick,
     required VoidCallback onTimeUp,
+    List<DecoyTarget>? targets,
   }) {
     showDialog(
       context: context,
@@ -663,6 +682,7 @@ class EnigmaDialogs {
                 destinationLongitude: longitude,
                 destinationLatitude: latitude,
                 durationSeconds: durationSeconds,
+                targets: targets,
                 isCompact: false,
                 onTick: onTick,
                 onTimeUp: () {
@@ -671,6 +691,80 @@ class EnigmaDialogs {
                     onTimeUp();
                   }
                 },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Diálogo expandido em tela cheia do Radar Místico (Sonar 360°)
+  static void openRadarExpanded(
+    BuildContext context, {
+    required double? latitude,
+    required double? longitude,
+    double? initialDistance,
+    List<DecoyTarget>? targets,
+    int remainingSeconds = 900,
+    VoidCallback? onTimeUp,
+    Function(int)? onTick,
+  }) {
+    SoundService.playOpen();
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(
+            color: AppColors.verdeVale.withValues(alpha: 0.6),
+            width: 1.5,
+          ),
+        ),
+        backgroundColor: AppColors.darkCardColor,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const FaIcon(
+                        FontAwesomeIcons.satelliteDish,
+                        color: AppColors.verdeVale,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'SONAR TÁTICO DE RELÍQUIAS',
+                        style: GoogleFonts.cinzel(
+                          color: Colors.white,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: AppColors.cinzaMedio),
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              RadarWidget(
+                targetLatitude: latitude,
+                targetLongitude: longitude,
+                initialDistance: initialDistance,
+                targets: targets,
+                remainingSeconds: remainingSeconds,
+                onTimeUp: onTimeUp,
+                onTick: onTick,
+                isCompact: false,
               ),
             ],
           ),

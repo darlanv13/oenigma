@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:oenigma/app_cliente/features/certificate/screens/winner_certificate_screen.dart';
 import 'package:oenigma/app_cliente/features/enigma/repositories/enigma_repository.dart';
+import 'package:oenigma/app_cliente/features/enigma/services/decoy_location_service.dart';
 import 'package:oenigma/app_cliente/features/enigma/widgets/enigma_dialogs.dart';
 import 'package:oenigma/app_cliente/features/event/repositories/event_repository.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
@@ -35,15 +36,22 @@ class EnigmaController extends ChangeNotifier {
   bool _isBlocked = false;
   Timer? _statusPollTimer;
 
-  // Ferramentas e Dicas
+  // Ferramentas e Dicas (Padrão: 15 minutos = 900s de uso ativo)
   bool _hasCompass = false;
   bool _hasMap = false;
   bool _hasRadar = false;
   int _selectedTacticalTab = 0;
   Map<String, double>? _destinationLocation;
-  int _compassDuration = 0;
+  int _compassDuration = 900;
   double _compassPrice = 15.0;
-  int? _compassRemainingSeconds;
+  int _compassRemainingSeconds = 900;
+  int _radarRemainingSeconds = 900;
+  int _mapRemainingSeconds = 900;
+
+  // Gerenciamento seguro de tempo de uso ativo (Zero Trust)
+  String? _activeTool;
+  Timer? _activeToolTimer;
+  int _unsyncedSeconds = 0;
 
   List<ParseObject> _hintsList = [];
   List<String> _hintsPurchased = [];
@@ -72,7 +80,10 @@ class EnigmaController extends ChangeNotifier {
   Map<String, double>? get destinationLocation => _destinationLocation;
   int get compassDuration => _compassDuration;
   double get compassPrice => _compassPrice;
-  int? get compassRemainingSeconds => _compassRemainingSeconds;
+  int get compassRemainingSeconds => _compassRemainingSeconds;
+  int get radarRemainingSeconds => _radarRemainingSeconds;
+  int get mapRemainingSeconds => _mapRemainingSeconds;
+  String? get activeTool => _activeTool;
   List<ParseObject> get hintsList => _hintsList;
   List<String> get hintsPurchased => _hintsPurchased;
 
@@ -85,36 +96,221 @@ class EnigmaController extends ChangeNotifier {
   double? get targetLongitude =>
       _destinationLocation?['longitude'] ?? _currentEnigma.location?.longitude;
 
+  /// Retorna deterministamente os 5 alvos (1 real + 4 fakes num raio de 300m)
+  List<DecoyTarget> get targets {
+    final lat = targetLatitude;
+    final lng = targetLongitude;
+    if (lat == null || lng == null) return [];
+    return DecoyLocationService.generateTargets(
+      enigmaId: _currentEnigma.id,
+      trueLatitude: lat,
+      trueLongitude: lng,
+    );
+  }
+
   void setSelectedTacticalTab(int index) {
     _selectedTacticalTab = index;
+    switch (index) {
+      case 1:
+        if (_hasCompass && _compassRemainingSeconds > 0) {
+          setActiveTool('compass');
+        } else {
+          setActiveTool(null);
+        }
+        break;
+      case 2:
+        if (_hasRadar && _radarRemainingSeconds > 0) {
+          setActiveTool('radar');
+        } else {
+          setActiveTool(null);
+        }
+        break;
+      case 3:
+        if (_hasMap && _mapRemainingSeconds > 0) {
+          setActiveTool('map');
+        } else {
+          setActiveTool(null);
+        }
+        break;
+      default:
+        setActiveTool(null);
+        break;
+    }
     notifyListeners();
+  }
+
+  /// Define qual ferramenta está aberta/visível.
+  /// A contagem só roda para a ferramenta aberta. Se fechar ou trocar, a contagem pausa.
+  void setActiveTool(String? toolType) {
+    if (_activeTool == toolType) return;
+
+    // Sincroniza o uso da ferramenta anterior
+    if (_activeTool != null && _unsyncedSeconds > 0) {
+      _syncToolUsageSilently(_activeTool!, _unsyncedSeconds);
+      _unsyncedSeconds = 0;
+    }
+
+    _activeToolTimer?.cancel();
+    _activeTool = toolType;
+
+    if (_activeTool != null) {
+      _startActiveToolTimer();
+    }
+    notifyListeners();
+  }
+
+  void _startActiveToolTimer() {
+    _activeToolTimer?.cancel();
+    _activeToolTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final current = _activeTool;
+      if (current == null) {
+        timer.cancel();
+        return;
+      }
+
+      int remaining = getToolRemainingSeconds(current);
+      if (remaining > 0) {
+        remaining--;
+        _setToolRemainingSeconds(current, remaining);
+        _unsyncedSeconds++;
+
+        // Sincroniza a cada 15 segundos de uso ativo ininterrupto
+        if (_unsyncedSeconds >= 15) {
+          _syncToolUsageSilently(current, _unsyncedSeconds);
+          _unsyncedSeconds = 0;
+        }
+        notifyListeners();
+      } else {
+        timer.cancel();
+        onToolTimeUp(current);
+      }
+    });
+  }
+
+  int getToolRemainingSeconds(String toolType) {
+    switch (toolType) {
+      case 'compass':
+        return _compassRemainingSeconds;
+      case 'radar':
+        return _radarRemainingSeconds;
+      case 'map':
+        return _mapRemainingSeconds;
+      default:
+        return 0;
+    }
+  }
+
+  void _setToolRemainingSeconds(String toolType, int seconds) {
+    switch (toolType) {
+      case 'compass':
+        _compassRemainingSeconds = seconds;
+        break;
+      case 'radar':
+        _radarRemainingSeconds = seconds;
+        break;
+      case 'map':
+        _mapRemainingSeconds = seconds;
+        break;
+    }
+    _saveLocalToolRemaining(toolType, seconds);
+  }
+
+  Future<void> _saveLocalToolRemaining(String toolType, int seconds) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('tool_remaining_${_currentEnigma.id}_$toolType', seconds);
+    } catch (_) {}
+  }
+
+  Future<int?> _loadLocalToolRemaining(String toolType) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt('tool_remaining_${_currentEnigma.id}_$toolType');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _syncToolUsageSilently(String toolType, int usedSeconds) async {
+    try {
+      await _enigmaRepository.callEnigmaFunction('syncToolUsage', {
+        'eventId': event.id,
+        'phaseOrder': phase.order,
+        'enigmaId': _currentEnigma.id,
+        'toolType': toolType,
+        'usedSeconds': usedSeconds,
+      });
+    } catch (_) {}
   }
 
   void updateCompassRemainingSeconds(int seconds) {
     _compassRemainingSeconds = seconds;
+    _saveLocalToolRemaining('compass', seconds);
     notifyListeners();
   }
 
-  void onCompassTimeUp(BuildContext context) {
-    _hasCompass = false;
-    _compassRemainingSeconds = null;
+  void updateRadarRemainingSeconds(int seconds) {
+    _radarRemainingSeconds = seconds;
+    _saveLocalToolRemaining('radar', seconds);
+    notifyListeners();
+  }
+
+  void updateMapRemainingSeconds(int seconds) {
+    _mapRemainingSeconds = seconds;
+    _saveLocalToolRemaining('map', seconds);
+    notifyListeners();
+  }
+
+  void onRadarTimeUp(BuildContext context) {
+    onToolTimeUp('radar', context: context);
+  }
+
+  void onMapTimeUp(BuildContext context) {
+    onToolTimeUp('map', context: context);
+  }
+
+  void onToolTimeUp(String toolType, {BuildContext? context}) {
+    switch (toolType) {
+      case 'compass':
+        _hasCompass = false;
+        _compassRemainingSeconds = 0;
+        break;
+      case 'radar':
+        _hasRadar = false;
+        _radarRemainingSeconds = 0;
+        break;
+      case 'map':
+        _hasMap = false;
+        _mapRemainingSeconds = 0;
+        break;
+    }
+    _activeTool = null;
+    _activeToolTimer?.cancel();
+    _consumeToolSilently(toolType);
+    setSelectedTacticalTab(0);
     notifyListeners();
 
-    _consumeToolSilently('compass');
-    if (context.mounted) {
+    if (context != null && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('O tempo da bússola acabou!'),
+        SnackBar(
+          content: Text('Os 15 minutos de uso de $toolType se esgotaram!'),
           backgroundColor: AppColors.amareloVale,
         ),
       );
     }
   }
 
+  void onCompassTimeUp(BuildContext context) {
+    onToolTimeUp('compass', context: context);
+  }
+
   /// Inicializa o estado do enigma carregando GPS, dicas e status remoto
   Future<void> resetEnigmaState(BuildContext context) async {
     _locationSubscription?.cancel();
     _statusPollTimer?.cancel();
+    _activeToolTimer?.cancel();
+    _activeTool = null;
+    _unsyncedSeconds = 0;
 
     _distance = null;
     _isNear = false;
@@ -124,7 +320,9 @@ class EnigmaController extends ChangeNotifier {
     _hasMap = false;
     _hasRadar = false;
     _destinationLocation = null;
-    _compassRemainingSeconds = null;
+    _compassRemainingSeconds = 900;
+    _radarRemainingSeconds = 900;
+    _mapRemainingSeconds = 900;
     _isLoadingHints = true;
     notifyListeners();
 
@@ -159,9 +357,17 @@ class EnigmaController extends ChangeNotifier {
         _hasCompass = statusData['hasCompass'] ?? _currentEnigma.hasCompass;
         _hasMap = statusData['hasMap'] ?? _currentEnigma.hasMap;
         _hasRadar = statusData['hasRadar'] ?? _currentEnigma.hasRadar;
-        _compassDuration = statusData['compassDuration'] ?? _currentEnigma.compassDuration;
+        _compassDuration = 900;
         _compassPrice = (statusData['compassPrice'] as num?)?.toDouble() ?? _currentEnigma.compassPrice;
         if (_compassPrice == 0.0) _compassPrice = 15.0;
+
+        final localCompass = await _loadLocalToolRemaining('compass');
+        final localRadar = await _loadLocalToolRemaining('radar');
+        final localMap = await _loadLocalToolRemaining('map');
+
+        _compassRemainingSeconds = localCompass ?? (statusData['compassRemainingSeconds'] as num?)?.toInt() ?? 900;
+        _radarRemainingSeconds = localRadar ?? (statusData['radarRemainingSeconds'] as num?)?.toInt() ?? 900;
+        _mapRemainingSeconds = localMap ?? (statusData['mapRemainingSeconds'] as num?)?.toInt() ?? 900;
 
         if (statusData['destinationLocation'] != null) {
           _destinationLocation = {
@@ -169,7 +375,6 @@ class EnigmaController extends ChangeNotifier {
             'longitude': (statusData['destinationLocation']['longitude'] as num).toDouble(),
           };
         }
-        _compassRemainingSeconds ??= _compassDuration;
         notifyListeners();
 
         if (_isBlocked && statusData['cooldownUntil'] != null && context.mounted) {
@@ -179,16 +384,25 @@ class EnigmaController extends ChangeNotifier {
     } catch (_) {}
   }
 
-  /// Busca a lista de dicas cadastradas no Parse
+  /// Busca a lista de dicas cadastradas via Cloud Function (SecOps Zero Trust)
   Future<void> loadHints() async {
     try {
-      final query = QueryBuilder<ParseObject>(ParseObject('Hint'))
-        ..whereEqualTo('linkedEnigmaId', _currentEnigma.id);
+      final response = await _enigmaRepository.callFunction('getEnigmaHints', {
+        'enigmaId': _currentEnigma.id,
+        'eventId': event.id,
+      });
 
-      final response = await query.query();
-
-      if (response.success && response.results != null) {
-        _hintsList = response.results as List<ParseObject>;
+      if (response.success && response.result is List) {
+        final list = response.result as List;
+        _hintsList = list.map((item) {
+          final map = Map<String, dynamic>.from(item as Map);
+          return ParseObject('Hint')
+            ..objectId = map['id'] ?? map['objectId']
+            ..set('price', map['price'])
+            ..set('type', map['type'])
+            ..set('description', map['description'])
+            ..set('data', map['data']);
+        }).toList();
       }
     } catch (e) {
       debugPrint("Erro ao carregar dicas: $e");
@@ -222,9 +436,25 @@ class EnigmaController extends ChangeNotifier {
         _hasCompass = statusData['hasCompass'] ?? _currentEnigma.hasCompass;
         _hasMap = statusData['hasMap'] ?? _currentEnigma.hasMap;
         _hasRadar = statusData['hasRadar'] ?? _currentEnigma.hasRadar;
-        _compassDuration = statusData['compassDuration'] ?? _currentEnigma.compassDuration;
+        _compassDuration = 900;
         _compassPrice = (statusData['compassPrice'] as num?)?.toDouble() ?? _currentEnigma.compassPrice;
         if (_compassPrice == 0.0) _compassPrice = 15.0;
+
+        final remoteCompass = (statusData['compassRemainingSeconds'] as num?)?.toInt() ??
+            (statusData['toolTimes']?['compass'] as num?)?.toInt() ?? 900;
+        final remoteRadar = (statusData['radarRemainingSeconds'] as num?)?.toInt() ??
+            (statusData['toolTimes']?['radar'] as num?)?.toInt() ?? 900;
+        final remoteMap = (statusData['mapRemainingSeconds'] as num?)?.toInt() ??
+            (statusData['toolTimes']?['map'] as num?)?.toInt() ?? 900;
+
+        final localCompass = await _loadLocalToolRemaining('compass');
+        final localRadar = await _loadLocalToolRemaining('radar');
+        final localMap = await _loadLocalToolRemaining('map');
+
+        // Pega o menor valor para segurança anti-burla (Zero Trust)
+        _compassRemainingSeconds = (localCompass != null && localCompass < remoteCompass) ? localCompass : remoteCompass;
+        _radarRemainingSeconds = (localRadar != null && localRadar < remoteRadar) ? localRadar : remoteRadar;
+        _mapRemainingSeconds = (localMap != null && localMap < remoteMap) ? localMap : remoteMap;
 
         if (statusData['destinationLocation'] != null) {
           _destinationLocation = {
@@ -232,7 +462,6 @@ class EnigmaController extends ChangeNotifier {
             'longitude': (statusData['destinationLocation']['longitude'] as num).toDouble(),
           };
         }
-        _compassRemainingSeconds ??= _compassDuration;
         notifyListeners();
 
         if (_isBlocked && statusData['cooldownUntil'] != null && context.mounted) {
@@ -316,16 +545,13 @@ class EnigmaController extends ChangeNotifier {
             ),
           );
         }
-        ParseUser.currentUser().then((user) {
-          if (user != null && user is ParseUser) {
-            ParseObject('FraudLog')
-              ..set('objectId', user.objectId)
-              ..set('eventId', event.id)
-              ..set('enigmaId', _currentEnigma.id)
-              ..set('reason', 'Fake GPS Detectado')
-              ..save();
-          }
-        });
+        try {
+          _enigmaRepository.callFunction('reportFraud', {
+            'eventId': event.id,
+            'enigmaId': _currentEnigma.id,
+            'reason': 'Fake GPS Detectado',
+          });
+        } catch (_) {}
         return;
       }
 
@@ -356,6 +582,24 @@ class EnigmaController extends ChangeNotifier {
       final data = Map<String, dynamic>.from(result.result);
 
       if (data['success'] ?? false) {
+        _setToolRemainingSeconds(toolType, 900);
+        switch (toolType) {
+          case 'compass':
+            _hasCompass = true;
+            _compassRemainingSeconds = 900;
+            setSelectedTacticalTab(1);
+            break;
+          case 'radar':
+            _hasRadar = true;
+            _radarRemainingSeconds = 900;
+            setSelectedTacticalTab(2);
+            break;
+          case 'map':
+            _hasMap = true;
+            _mapRemainingSeconds = 900;
+            setSelectedTacticalTab(3);
+            break;
+        }
         if (context.mounted) {
           await fetchInitialStatus(context);
         }
@@ -596,6 +840,11 @@ class EnigmaController extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_activeTool != null && _unsyncedSeconds > 0) {
+      _syncToolUsageSilently(_activeTool!, _unsyncedSeconds);
+      _unsyncedSeconds = 0;
+    }
+    _activeToolTimer?.cancel();
     _locationSubscription?.cancel();
     _statusPollTimer?.cancel();
     super.dispose();

@@ -10,6 +10,7 @@ import 'package:oenigma/painel_admin_web/features/admin/screens/admin_events_scr
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_banners_screen.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_gateways_screen.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_finance_screen.dart';
+import 'package:oenigma/painel_admin_web/features/admin/screens/admin_users_screen.dart';
 import 'package:oenigma/painel_admin_web/features/auth/providers/auth_provider.dart';
 
 class MainAdminScreen extends StatefulWidget {
@@ -22,13 +23,7 @@ class MainAdminScreen extends StatefulWidget {
 class _MainAdminScreenState extends State<MainAdminScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = const [
-    AdminDashboardScreen(),
-    AdminEventsScreen(),
-    AdminBannersScreen(),
-    AdminGatewaysScreen(),
-    AdminFinanceScreen(),
-  ];
+  late final List<Widget> _screens;
 
   final List<String> _titles = [
     'Dashboard',
@@ -36,7 +31,29 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
     'Banners',
     'Gateways de Pagamento',
     'Saques & Depósitos',
+    'Caçadores & Usuários',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      AdminDashboardScreen(
+        onNavigateTab: (index) {
+          if (index >= 0 && index < _titles.length) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          }
+        },
+      ),
+      const AdminEventsScreen(),
+      const AdminBannersScreen(),
+      const AdminGatewaysScreen(),
+      const AdminFinanceScreen(),
+      const AdminUsersScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,6 +98,8 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
           _buildMenuItem(3, FontAwesomeIcons.creditCard, 'Gateways'),
           const SizedBox(height: 6),
           _buildMenuItem(4, FontAwesomeIcons.moneyBillTransfer, 'Saques & Depósitos'),
+          const SizedBox(height: 6),
+          _buildMenuItem(5, FontAwesomeIcons.users, 'Caçadores'),
           const Spacer(),
           _buildLogoutButton(),
           const SizedBox(height: 12),

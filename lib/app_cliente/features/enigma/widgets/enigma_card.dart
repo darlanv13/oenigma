@@ -41,55 +41,57 @@ class EnigmaCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Header do Códice (Limpo e Direto)
+            // Top Header do Códice (Protegido contra overflow)
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: AppColors.amareloVale.withValues(alpha: 0.14),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.amareloVale.withValues(alpha: 0.45),
-                          width: 1,
-                        ),
-                      ),
-                      child: const Center(
-                        child: FaIcon(
-                          FontAwesomeIcons.scroll,
-                          color: AppColors.amareloVale,
-                          size: 14,
-                        ),
-                      ),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.amareloVale.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.amareloVale.withValues(alpha: 0.45),
+                      width: 1,
                     ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'CÓDICE ANCESTRAL',
-                          style: GoogleFonts.cinzel(
-                            color: AppColors.amareloVale,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                        Text(
-                          'Decifre o manuscrito para localizar o tesouro',
-                          style: GoogleFonts.poppins(
-                            color: AppColors.cinzaMedio,
-                            fontSize: 10.5,
-                          ),
-                        ),
-                      ],
+                  ),
+                  child: const Center(
+                    child: FaIcon(
+                      FontAwesomeIcons.scroll,
+                      color: AppColors.amareloVale,
+                      size: 14,
                     ),
-                  ],
+                  ),
                 ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'CÓDICE ANCESTRAL',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.cinzel(
+                          color: AppColors.amareloVale,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                      Text(
+                        'Decifre o manuscrito para localizar o tesouro',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          color: AppColors.cinzaMedio,
+                          fontSize: 10.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
