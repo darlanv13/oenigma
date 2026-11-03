@@ -120,6 +120,80 @@ async function getActiveGateway() {
 }
 
 /**
+ * Busca ou Cadastra Cliente no Asaas (exigência mandatória da API v3 do Asaas)
+ */
+async function getOrCreateAsaasCustomer({ baseUrl, apiKey, user }) {
+  let asaasCustomerId = user.get("asaasCustomerId");
+  if (asaasCustomerId && typeof asaasCustomerId === "string" && asaasCustomerId.startsWith("cus_")) {
+    return asaasCustomerId;
+  }
+
+  const rawCpf = (user.get("cpf") || user.get("username") || "").replace(/\D/g, "");
+  const hasValidCpf = rawCpf.length === 11;
+  const name = (user.get("name") || user.get("username") || "Jogador O Enigma").trim();
+  const email = (user.get("email") || (hasValidCpf ? `${rawCpf}@oenigma.com` : `jogador_${user.id}@oenigma.com`)).trim();
+  const phone = (user.get("phone") || "").replace(/\D/g, "");
+
+  // 1. Tenta buscar cliente existente no Asaas por CPF ou email
+  try {
+    const queryParam = hasValidCpf ? `cpfCnpj=${rawCpf}` : `email=${encodeURIComponent(email)}`;
+    const searchRes = await httpRequest(`${baseUrl}/customers?${queryParam}`, {
+      method: "GET",
+      headers: { "access_token": apiKey }
+    });
+
+    if (searchRes.ok && searchRes.data && Array.isArray(searchRes.data.data) && searchRes.data.data.length > 0) {
+      asaasCustomerId = searchRes.data.data[0].id;
+      user.set("asaasCustomerId", asaasCustomerId);
+      await user.save(null, { useMasterKey: true }).catch(() => {});
+      console.log(`[Asaas] Cliente existente vinculado: ${asaasCustomerId}`);
+      return asaasCustomerId;
+    }
+  } catch (e) {
+    console.warn("[Asaas] Erro ao pesquisar cliente existente:", e.message);
+  }
+
+  // 2. Se não encontrou, cria novo cliente
+  try {
+    const customerPayload = {
+      name: name,
+      email: email,
+      externalReference: user.id
+    };
+    if (hasValidCpf) {
+      customerPayload.cpfCnpj = rawCpf;
+    }
+    if (phone.length >= 10) {
+      customerPayload.mobilePhone = phone;
+    }
+
+    const createRes = await httpRequest(`${baseUrl}/customers`, {
+      method: "POST",
+      headers: {
+        "access_token": apiKey,
+        "Content-Type": "application/json"
+      },
+      body: customerPayload
+    });
+
+    if (createRes.ok && createRes.data && createRes.data.id) {
+      asaasCustomerId = createRes.data.id;
+      user.set("asaasCustomerId", asaasCustomerId);
+      await user.save(null, { useMasterKey: true }).catch(() => {});
+      console.log(`[Asaas] Novo cliente cadastrado no Asaas: ${asaasCustomerId}`);
+      return asaasCustomerId;
+    } else {
+      const errDetail = createRes.data?.errors?.[0]?.description || JSON.stringify(createRes.data);
+      console.warn("[Asaas] Falha ao cadastrar cliente:", errDetail);
+      throw new Error(`Asaas recusou cadastro do pagador: ${errDetail}`);
+    }
+  } catch (e) {
+    console.warn("[Asaas] Erro na requisição de criação de cliente:", e.message);
+    throw e;
+  }
+}
+
+/**
  * Criação de Cobrança Pix para Depósito
  */
 async function createPixChargeService({ amount, user, transactionId }) {
@@ -171,42 +245,68 @@ async function createPixChargeService({ amount, user, transactionId }) {
 
   // 2. Tenta integração via ASAAS se api_key configurada
   if (gatewayId === "asaas" && keys.api_key && keys.api_key.trim().length > 10) {
+    const rawApiKey = keys.api_key.trim();
+    // Auto-detecção inteligente de ambiente pela chave do Asaas
+    let baseUrl = "https://api.asaas.com/api/v3";
+    if (rawApiKey.startsWith("$aact_prod_")) {
+      baseUrl = "https://api.asaas.com/api/v3";
+    } else if (rawApiKey.startsWith("$aact_test_") || rawApiKey.startsWith("$aact_uat_") || environment === "sandbox") {
+      baseUrl = "https://sandbox.asaas.com/api/v3";
+    }
+
     try {
-      const baseUrl = environment === "sandbox" ? "https://sandbox.asaas.com/api/v3" : "https://api.asaas.com/api/v3";
-      
-      // Cria cobrança no Asaas
+      console.log(`[Asaas Pix] Conectando ao Asaas (${baseUrl})...`);
+      const customerId = await getOrCreateAsaasCustomer({ baseUrl, apiKey: rawApiKey, user });
+      if (!customerId) {
+        throw new Error("Não foi possível identificar ou cadastrar o pagador no Asaas.");
+      }
+
+      // Cria cobrança Pix no Asaas
       const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const paymentPayload = {
+        customer: customerId,
+        billingType: "PIX",
+        value: Number(amount),
+        dueDate: dueDate,
+        description: `Depósito Carteira O Enigma - ${transactionId}`,
+        externalReference: transactionId
+      };
+
       const asaasRes = await httpRequest(`${baseUrl}/payments`, {
         method: "POST",
         headers: {
-          "access_token": keys.api_key.trim(),
+          "access_token": rawApiKey,
           "Content-Type": "application/json"
         },
-        body: {
-          billingType: "PIX",
-          value: Number(amount),
-          dueDate: dueDate,
-          description: "Depósito Carteira Enigma City",
-          externalReference: transactionId
-        }
+        body: paymentPayload
       });
 
       if (asaasRes.ok && asaasRes.data && asaasRes.data.id) {
         gatewayPaymentId = asaasRes.data.id;
-        // Busca o QR Code Pix da cobrança criada
+        console.log(`[Asaas Pix] Cobrança criada: ${gatewayPaymentId}. Buscando QR Code Pix...`);
+
+        // Busca o QR Code Pix oficial da cobrança
         const qrRes = await httpRequest(`${baseUrl}/payments/${gatewayPaymentId}/pixQrCode`, {
           method: "GET",
-          headers: { "access_token": keys.api_key.trim() }
+          headers: { "access_token": rawApiKey }
         });
-        if (qrRes.ok && qrRes.data) {
+
+        if (qrRes.ok && qrRes.data && qrRes.data.payload) {
           qrCodeCopiaCola = qrRes.data.payload;
           qrCodeBase64 = qrRes.data.encodedImage;
+          console.log(`[Asaas Pix] QR Code Pix oficial obtido com sucesso!`);
+        } else {
+          const qrErr = qrRes.data?.errors?.[0]?.description || JSON.stringify(qrRes.data);
+          throw new Error(`Asaas gerou cobrança mas falhou no QR Code: ${qrErr}`);
         }
       } else {
-        console.warn("[Asaas Pix] Erro na criação:", JSON.stringify(asaasRes.data));
+        const errDetail = asaasRes.data?.errors?.[0]?.description || JSON.stringify(asaasRes.data);
+        console.warn("[Asaas Pix] Falha na criação da cobrança:", errDetail);
+        throw new Error(`Asaas recusou a cobrança: ${errDetail}`);
       }
     } catch (err) {
-      console.warn("[Asaas Pix] Falha na requisição:", err.message);
+      console.error("[Asaas Pix] Erro no fluxo Asaas:", err.message);
+      throw err;
     }
   }
 
@@ -309,7 +409,13 @@ async function executeAutomaticPayout({ withdrawal, targetUser, adminUser }) {
 
   // 1. INTEGRAÇÃO COM ASAAS (Transferência Pix Automática)
   if (gatewayId === "asaas" && keys.api_key && keys.api_key.trim().length > 10) {
-    const baseUrl = environment === "sandbox" ? "https://sandbox.asaas.com/api/v3" : "https://api.asaas.com/api/v3";
+    const rawApiKey = keys.api_key.trim();
+    let baseUrl = "https://api.asaas.com/api/v3";
+    if (rawApiKey.startsWith("$aact_prod_")) {
+      baseUrl = "https://api.asaas.com/api/v3";
+    } else if (rawApiKey.startsWith("$aact_test_") || rawApiKey.startsWith("$aact_uat_") || environment === "sandbox") {
+      baseUrl = "https://sandbox.asaas.com/api/v3";
+    }
     
     // Mapeamento de tipo de chave Pix para o padrão Asaas
     let asaasPixType = "EVP";

@@ -274,6 +274,7 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
 
     String currentEnv = item.environment;
     bool currentActive = item.isActive;
+    bool currentDefault = item.isDefault;
 
     showDialog(
       context: context,
@@ -445,6 +446,59 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+
+                  // Definir como Gateway Principal (Default)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: currentDefault ? AppColors.verdeVale.withValues(alpha: 0.1) : AppColors.darkCardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: currentDefault ? AppColors.verdeVale : Colors.white12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            FaIcon(
+                              FontAwesomeIcons.star,
+                              size: 14,
+                              color: currentDefault ? AppColors.amareloVale : AppColors.cinzaMedio,
+                            ),
+                            const SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Definir como Gateway Principal (Default)',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  'Provedor padrão utilizado pelo App para gerar depósitos Pix',
+                                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Switch(
+                          value: currentDefault,
+                          activeThumbColor: AppColors.verdeVale,
+                          onChanged: (val) {
+                            setModalState(() {
+                              currentDefault = val;
+                              if (val) currentActive = true;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 20),
 
                   // Campos de Credenciais
@@ -487,6 +541,15 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
                             controller: controllers[key],
                             obscureText: isObscure,
                             style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+                            onChanged: (val) {
+                              if (item.id == 'asaas' && key == 'api_key') {
+                                if (val.trim().startsWith(r'$aact_prod_') && currentEnv != 'production') {
+                                  setModalState(() => currentEnv = 'production');
+                                } else if ((val.trim().startsWith(r'$aact_test_') || val.trim().startsWith(r'$aact_uat_')) && currentEnv != 'sandbox') {
+                                  setModalState(() => currentEnv = 'sandbox');
+                                }
+                              }
+                            },
                             decoration: InputDecoration(
                               hintText: 'Digite o valor para $label',
                               hintStyle: TextStyle(
@@ -518,6 +581,27 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
                               ),
                             ),
                           ),
+                          if (item.id == 'asaas' && key == 'api_key' && controllers[key]!.text.trim().startsWith(r'$aact_prod_'))
+                            Container(
+                              margin: const EdgeInsets.only(top: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.4)),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.check_circle, size: 13, color: Colors.greenAccent),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Chave de Produção Asaas detectada (https://api.asaas.com)',
+                                    style: TextStyle(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     );
@@ -608,7 +692,7 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
                           foregroundColor: AppColors.amareloVale,
                         ),
                         onPressed: () {
-                          _testGatewayConnection(item, controllers);
+                          _testGatewayConnection(item, controllers, currentEnv);
                         },
                       ),
                       Row(
@@ -633,7 +717,19 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
                               item.environment = currentEnv;
                               item.isActive = currentActive;
 
-                              await _saveGateway(item);
+                              if (currentDefault) {
+                                for (var g in _gateways) {
+                                  if (g.id == item.id) {
+                                    g.isDefault = true;
+                                    g.isActive = true;
+                                  } else {
+                                    g.isDefault = false;
+                                  }
+                                  await _saveGateway(g);
+                                }
+                              } else {
+                                await _saveGateway(item);
+                              }
 
                               if (context.mounted) {
                                 Navigator.pop(context);
@@ -660,19 +756,19 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
     );
   }
 
-  void _testGatewayConnection(GatewayItem item, Map<String, TextEditingController> controllers) {
-    bool hasEmptyKey = false;
-    for (var key in item.keys.keys) {
-      if (controllers[key]!.text.trim().isEmpty) {
-        hasEmptyKey = true;
-        break;
-      }
-    }
+  Future<void> _testGatewayConnection(
+    GatewayItem item,
+    Map<String, TextEditingController> controllers,
+    String environment,
+  ) async {
+    final keys = {
+      for (var entry in controllers.entries) entry.key: entry.value.text.trim(),
+    };
 
-    if (hasEmptyKey) {
+    if (item.id == 'asaas' && (keys['api_key'] ?? '').isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Preencha todas as credenciais de ${item.name} antes de testar.'),
+        const SnackBar(
+          content: Text('Preencha a API Key do Asaas antes de testar.'),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -681,10 +777,65 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Conexão com a API do ${item.name} validada com sucesso!'),
-        backgroundColor: AppColors.verdeVale,
+        content: Row(
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            ),
+            const SizedBox(width: 12),
+            Text('Testando conexão com a API do ${item.name}...'),
+          ],
+        ),
+        backgroundColor: AppColors.darkCardColor,
+        duration: const Duration(seconds: 2),
       ),
     );
+
+    try {
+      final res = await ParseCloudFunction('testGatewayConnection').execute(
+        parameters: {
+          'gatewayId': item.id,
+          'keys': keys,
+          'environment': environment,
+        },
+      );
+
+      if (res.success && res.result != null) {
+        final data = Map<String, dynamic>.from(res.result as Map);
+        final bool ok = data['success'] == true;
+        final String msg = data['message'] ?? (ok ? 'Conexão validada com sucesso!' : 'Falha na conexão');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(msg),
+              backgroundColor: ok ? AppColors.verdeVale : Colors.redAccent,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao testar: ${res.error?.message ?? "Falha na comunicação"}'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao testar conexão: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   @override

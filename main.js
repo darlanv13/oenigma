@@ -219,10 +219,16 @@ Parse.Cloud.define("checkPixPaymentStatus", async (request) => {
       }
     } else if (gateway === "asaas" && gatewayPaymentId && keys.api_key) {
       try {
-        const baseUrl = environment === "sandbox" ? "https://sandbox.asaas.com/api/v3" : "https://api.asaas.com/api/v3";
+        const rawApiKey = keys.api_key.trim();
+        let baseUrl = "https://api.asaas.com/api/v3";
+        if (rawApiKey.startsWith("$aact_prod_")) {
+          baseUrl = "https://api.asaas.com/api/v3";
+        } else if (rawApiKey.startsWith("$aact_test_") || rawApiKey.startsWith("$aact_uat_") || environment === "sandbox") {
+          baseUrl = "https://sandbox.asaas.com/api/v3";
+        }
         const asaasRes = await financialService.httpRequest(`${baseUrl}/payments/${gatewayPaymentId}`, {
           method: "GET",
-          headers: { "access_token": keys.api_key.trim() }
+          headers: { "access_token": rawApiKey }
         });
         if (asaasRes.ok && asaasRes.data && (asaasRes.data.status === "RECEIVED" || asaasRes.data.status === "CONFIRMED")) {
           approvedNow = true;
@@ -1152,6 +1158,83 @@ Parse.Cloud.define("getActiveGatewayConfig", async (request) => {
     environment: config.get("environment") || "production",
     publicKey: keys.public_key || keys.publishable_key || keys.api_key || ""
   };
+});
+
+Parse.Cloud.define("testGatewayConnection", async (request) => {
+  const { gatewayId, keys, environment } = request.params;
+  const user = request.user;
+  if (!user || (!user.get("isAdmin") && user.get("role") !== "admin" && user.get("role") !== "creator")) {
+    throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, "Acesso restrito a administradores.");
+  }
+
+  if (gatewayId === "asaas") {
+    const rawApiKey = (keys?.api_key || "").trim();
+    if (!rawApiKey) return { success: false, message: "API Key do Asaas não informada." };
+    let baseUrl = "https://api.asaas.com/api/v3";
+    if (rawApiKey.startsWith("$aact_prod_")) {
+      baseUrl = "https://api.asaas.com/api/v3";
+    } else if (rawApiKey.startsWith("$aact_test_") || rawApiKey.startsWith("$aact_uat_") || environment === "sandbox") {
+      baseUrl = "https://sandbox.asaas.com/api/v3";
+    }
+
+    try {
+      const res = await financialService.httpRequest(`${baseUrl}/finance/balance`, {
+        method: "GET",
+        headers: { "access_token": rawApiKey }
+      });
+      if (res.ok && res.data) {
+        const balance = res.data.balance !== undefined ? res.data.balance : 0;
+        const envLabel = baseUrl.includes("sandbox") ? "SANDBOX (TESTES)" : "PRODUÇÃO (LIVE)";
+        return {
+          success: true,
+          message: `Conexão Asaas OK! Ambiente: ${envLabel}. Saldo da conta: R$ ${Number(balance).toFixed(2)}`
+        };
+      } else {
+        const err = res.data?.errors?.[0]?.description || JSON.stringify(res.data);
+        return { success: false, message: `Erro ao autenticar no Asaas: ${err}` };
+      }
+    } catch (e) {
+      return { success: false, message: `Falha na requisição Asaas: ${e.message}` };
+    }
+  }
+
+  if (gatewayId === "stripe") {
+    const stripeKey = (keys?.secret_key || keys?.api_key || "").trim();
+    if (!stripeKey) return { success: false, message: "Secret Key da Stripe não informada." };
+    try {
+      const res = await financialService.httpRequest("https://api.stripe.com/v1/balance", {
+        method: "GET",
+        headers: { "Authorization": `Bearer ${stripeKey}` }
+      });
+      if (res.ok) {
+        return { success: true, message: "Conexão com a Stripe validada com sucesso via API!" };
+      } else {
+        return { success: false, message: "Stripe recusou as credenciais: " + (res.data?.error?.message || JSON.stringify(res.data)) };
+      }
+    } catch (e) {
+      return { success: false, message: `Falha na requisição Stripe: ${e.message}` };
+    }
+  }
+
+  if (gatewayId === "mercadopago") {
+    const mpToken = (keys?.access_token || "").trim();
+    if (!mpToken) return { success: false, message: "Access Token do Mercado Pago não informado." };
+    try {
+      const res = await financialService.httpRequest("https://api.mercadopago.com/users/me", {
+        method: "GET",
+        headers: { "Authorization": `Bearer ${mpToken}` }
+      });
+      if (res.ok && res.data) {
+        return { success: true, message: `Conexão Mercado Pago OK! Usuário: ${res.data.nickname || res.data.id}` };
+      } else {
+        return { success: false, message: "Mercado Pago recusou o token." };
+      }
+    } catch (e) {
+      return { success: false, message: `Falha na requisição Mercado Pago: ${e.message}` };
+    }
+  }
+
+  return { success: true, message: "Gateway configurado." };
 });
 
 Parse.Cloud.define("paymentWebhook", async (request) => {
