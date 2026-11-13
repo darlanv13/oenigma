@@ -5,6 +5,7 @@ Os arquivos de som nesta pasta são provenientes do repositório open-source `ui
 Eles são de domínio público, livres para qualquer uso pessoal ou comercial sem necessidade de atribuição obrigatória.
 
 ## Arquivos:
+- `ambient_mystery.wav`: Trilha sonora contínua em loop de suspense e mistério (drone cinematográfico sub-grave, ressonância de sinos tibetanos de templo e ventos de caverna antiga).
 - `click.mp3`: Feedback tátil/sonoro de seleção de abas, filtros e cliques de botões.
 - `scanning.mp3`: Efeito sonoro de ativação do leitor holográfico de QR Code ou leitura de códigos.
 - `open.mp3`: Efeito sonoro de abertura de modais, gavetas de enigmas e baús.
