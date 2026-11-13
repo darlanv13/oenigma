@@ -133,6 +133,10 @@ Parse.Cloud.define("listAllUsers", async (request) => {
         cpf: user.get("cpf") || "",
         phone: user.get("phone") || "",
         walletBalance: user.get("balance") || 0,
+        referralsCount: user.get("referralsCount") || 0,
+        referredBy: user.get("referredBy") || "",
+        xp: user.get("xp") || 0,
+        league: user.get("league") || "Bronze",
         createdAt: user.createdAt
       };
     });
@@ -155,6 +159,58 @@ Parse.Cloud.define("grantAdminRole", async (request) => {
     return { success: true, message: "Admin role granted." };
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error granting admin role: " + error.message);
+  }
+});
+
+Parse.Cloud.define("getFraudLogs", async (request) => {
+  const admin = request.user;
+  if (!isAdminUser(admin, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+
+  try {
+    const FraudLog = Parse.Object.extend("FraudLog");
+    const query = new Parse.Query(FraudLog);
+    query.include("user");
+    query.descending("createdAt");
+    query.limit(100);
+    const logs = await query.find({ useMasterKey: true });
+
+    return logs.map(log => {
+      const u = log.get("user");
+      return {
+        objectId: log.id,
+        reason: log.get("reason") || "Atividade Suspeita",
+        speedKmH: log.get("speedKmH") || null,
+        eventId: log.get("eventId") || null,
+        enigmaId: log.get("enigmaId") || null,
+        createdAt: log.createdAt,
+        user: u ? {
+          objectId: u.id,
+          name: u.get("name") || u.get("username") || "Explorador",
+          email: u.get("email") || "",
+          cpf: u.get("cpf") || "",
+          isBanned: u.get("isBanned") || false
+        } : null
+      };
+    });
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao buscar logs de fraude: " + error.message);
+  }
+});
+
+Parse.Cloud.define("toggleBanUser", async (request) => {
+  const admin = request.user;
+  if (!isAdminUser(admin, request)) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Admin required.");
+  const { userId, isBanned } = request.params;
+  if (!userId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "userId is required.");
+
+  try {
+    const query = new Parse.Query(Parse.User);
+    const user = await query.get(userId, { useMasterKey: true });
+    user.set("isBanned", isBanned === true);
+    await user.save(null, { useMasterKey: true });
+    return { success: true, isBanned: isBanned === true, message: isBanned ? "Usuário banido com sucesso." : "Banimento removido." };
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao alterar banimento: " + error.message);
   }
 });
 

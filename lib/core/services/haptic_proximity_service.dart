@@ -86,3 +86,4 @@ class HapticProximityService {
     _pulseTimer = null;
   }
 }
+

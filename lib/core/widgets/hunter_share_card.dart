@@ -437,3 +437,4 @@ class _HunterShareCardState extends State<HunterShareCard> {
     );
   }
 }
+

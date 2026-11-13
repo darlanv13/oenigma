@@ -174,6 +174,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   final isAdmin = user['isAdmin'] ?? false;
                   final isBanned = user['isBanned'] ?? false;
                   final role = user['role'] ?? 'player';
+                  final referralsCount = (user['referralsCount'] as num?)?.toInt() ?? 0;
+                  final xp = (user['xp'] as num?)?.toInt() ?? 0;
+                  final league = (user['league'] ?? 'Bronze').toString();
+                  final walletBalance = (user['walletBalance'] as num?)?.toDouble() ?? 0.0;
 
                   return Card(
                     color: cardColor,
@@ -209,18 +213,20 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             '$email${isAdmin ? " • Admin" : ""}${role == "creator" ? " • Creator" : ""}${isBanned ? " • Banido" : ""}',
                             style: const TextStyle(color: secondaryTextColor),
                           ),
-                          if (cpf.toString().isNotEmpty ||
-                              phone.toString().isNotEmpty)
-                            Text(
-                              [
-                                if (cpf.toString().isNotEmpty) 'CPF: $cpf',
-                                if (phone.toString().isNotEmpty) 'Tel: $phone',
-                              ].join(' • '),
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12,
-                              ),
-                            ),
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 4,
+                            children: [
+                              if (cpf.toString().isNotEmpty)
+                                Text('CPF: $cpf', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                              if (phone.toString().isNotEmpty)
+                                Text('Tel: $phone', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                              Text('Saldo: R\$ ${walletBalance.toStringAsFixed(2)}', style: const TextStyle(color: AppColors.verdeVale, fontSize: 11, fontWeight: FontWeight.bold)),
+                              Text('🏆 Liga $league ($xp XP)', style: const TextStyle(color: AppColors.amareloVale, fontSize: 11)),
+                              Text('👥 $referralsCount ${referralsCount == 1 ? "indicação" : "indicações"}', style: const TextStyle(color: Colors.cyanAccent, fontSize: 11)),
+                            ],
+                          ),
                         ],
                       ),
                       trailing: Row(

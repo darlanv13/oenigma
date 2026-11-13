@@ -11,6 +11,7 @@ import 'package:oenigma/painel_admin_web/features/admin/screens/admin_banners_sc
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_gateways_screen.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_finance_screen.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/admin_users_screen.dart';
+import 'package:oenigma/painel_admin_web/features/admin/screens/admin_security_screen.dart';
 import 'package:oenigma/painel_admin_web/features/auth/providers/auth_provider.dart';
 
 class MainAdminScreen extends StatefulWidget {
@@ -32,6 +33,7 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
     'Gateways de Pagamento',
     'Saques & Depósitos',
     'Caçadores & Usuários',
+    'Segurança & Anti-Fraude',
   ];
 
   @override
@@ -52,6 +54,7 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
       const AdminGatewaysScreen(),
       const AdminFinanceScreen(),
       const AdminUsersScreen(),
+      const AdminSecurityScreen(),
     ];
   }
 
@@ -100,6 +103,8 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
           _buildMenuItem(4, FontAwesomeIcons.moneyBillTransfer, 'Saques & Depósitos'),
           const SizedBox(height: 6),
           _buildMenuItem(5, FontAwesomeIcons.users, 'Caçadores'),
+          const SizedBox(height: 6),
+          _buildMenuItem(6, FontAwesomeIcons.shieldHalved, 'Segurança & Fraudes'),
           const Spacer(),
           _buildLogoutButton(),
           const SizedBox(height: 12),

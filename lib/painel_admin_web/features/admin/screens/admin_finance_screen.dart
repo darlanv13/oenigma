@@ -1220,6 +1220,10 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
               const SizedBox(width: 8),
               _buildFilterPill('Saques', 'withdrawal', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: const Color(0xFF3B82F6)),
               const SizedBox(width: 8),
+              _buildFilterPill('Arsenal / Ferramentas', 'tool', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: Colors.amberAccent),
+              const SizedBox(width: 8),
+              _buildFilterPill('Bônus de Convites', 'bonus', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: Colors.purpleAccent),
+              const SizedBox(width: 8),
               _buildFilterPill('Prêmios Concedidos', 'reward', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: AppColors.amareloVale),
             ],
           ),
@@ -1240,9 +1244,25 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
                     final user = _getSafeUser(tx);
                     final userName = user?.get<String>('name') ?? user?.get<String>('username') ?? 'Usuário';
 
-                    final isIncome = type == 'deposit' || type == 'reward';
-                    final color = isIncome ? AppColors.verdeVale : (type == 'withdrawal' ? const Color(0xFF3B82F6) : Colors.redAccent);
-                    final icon = isIncome ? FontAwesomeIcons.arrowDown : FontAwesomeIcons.arrowUp;
+                    Color color;
+                    dynamic icon;
+                    final bool isIncome = type == 'deposit' || type == 'tool' || type == 'reward';
+                    if (type == 'tool') {
+                      color = Colors.amberAccent;
+                      icon = FontAwesomeIcons.toolbox;
+                    } else if (type == 'bonus') {
+                      color = Colors.purpleAccent;
+                      icon = FontAwesomeIcons.gift;
+                    } else if (type == 'deposit') {
+                      color = AppColors.verdeVale;
+                      icon = FontAwesomeIcons.arrowDown;
+                    } else if (type == 'withdrawal') {
+                      color = const Color(0xFF3B82F6);
+                      icon = FontAwesomeIcons.arrowUp;
+                    } else {
+                      color = AppColors.amareloVale;
+                      icon = FontAwesomeIcons.trophy;
+                    }
 
                     final createdAt = tx.createdAt;
                     final dateStr = createdAt != null
