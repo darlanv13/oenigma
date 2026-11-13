@@ -587,61 +587,32 @@ class EnigmaDialogs {
     int remainingSeconds = 900,
     bool enableToolTimer = true,
   }) {
+    SoundService.playOpen();
     showDialog(
       context: context,
-      builder: (context) => Dialog(
+      builder: (dialogCtx) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: BorderSide(
-            color: AppColors.verdeVale.withValues(alpha: 0.5),
+          side: const BorderSide(
+            color: Color(0xFF1E3A45),
             width: 1.5,
           ),
         ),
-        backgroundColor: AppColors.darkCardColor,
+        backgroundColor: const Color(0xFF131D24),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const FaIcon(
-                        FontAwesomeIcons.mapLocationDot,
-                        color: AppColors.verdeVale,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'MAPA DA EXPEDIÇÃO',
-                        style: GoogleFonts.cinzel(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.cinzaMedio),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: MapRadiusWidget(
-                  destinationLatitude: latitude,
-                  destinationLongitude: longitude,
-                  targets: targets,
-                  remainingSeconds: remainingSeconds,
-                  enableToolTimer: enableToolTimer,
-                  isCompact: false,
-                ),
+              MapRadiusWidget(
+                destinationLatitude: latitude,
+                destinationLongitude: longitude,
+                targets: targets,
+                remainingSeconds: remainingSeconds,
+                enableToolTimer: enableToolTimer,
+                isCompact: false,
+                onExpand: () => Navigator.of(dialogCtx).pop(),
               ),
             ],
           ),
@@ -661,52 +632,25 @@ class EnigmaDialogs {
     List<DecoyTarget>? targets,
     bool enableToolTimer = true,
   }) {
+    SoundService.playOpen();
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: BorderSide(
-            color: AppColors.amareloVale.withValues(alpha: 0.6),
+          side: const BorderSide(
+            color: Color(0xFF1E3A45),
             width: 1.5,
           ),
         ),
-        backgroundColor: AppColors.darkCardColor,
+        backgroundColor: const Color(0xFF131D24),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const FaIcon(
-                        FontAwesomeIcons.compass,
-                        color: AppColors.amareloVale,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'BÚSSOLA DOURADA 360°',
-                        style: GoogleFonts.cinzel(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.cinzaMedio),
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
               CompassWidget(
                 targetLatitude: latitude,
                 targetLongitude: longitude,
@@ -717,6 +661,7 @@ class EnigmaDialogs {
                 enableToolTimer: enableToolTimer,
                 isCompact: false,
                 onTick: onTick,
+                onExpand: () => Navigator.of(dialogContext).pop(),
                 onTimeUp: () {
                   if (Navigator.canPop(dialogContext)) {
                     Navigator.of(dialogContext).pop();
@@ -747,48 +692,20 @@ class EnigmaDialogs {
     showDialog(
       context: context,
       builder: (dialogContext) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: BorderSide(
-            color: AppColors.verdeVale.withValues(alpha: 0.6),
+          side: const BorderSide(
+            color: Color(0xFF1E3A45),
             width: 1.5,
           ),
         ),
-        backgroundColor: AppColors.darkCardColor,
+        backgroundColor: const Color(0xFF131D24),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const FaIcon(
-                        FontAwesomeIcons.satelliteDish,
-                        color: AppColors.verdeVale,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        'SONAR TÁTICO DE RELÍQUIAS',
-                        style: GoogleFonts.cinzel(
-                          color: Colors.white,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.cinzaMedio),
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
               RadarWidget(
                 targetLatitude: latitude,
                 targetLongitude: longitude,
@@ -799,6 +716,7 @@ class EnigmaDialogs {
                 onTimeUp: onTimeUp,
                 onTick: onTick,
                 isCompact: false,
+                onExpand: () => Navigator.of(dialogContext).pop(),
               ),
             ],
           ),

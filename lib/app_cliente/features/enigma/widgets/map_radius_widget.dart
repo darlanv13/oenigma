@@ -1,16 +1,19 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'package:oenigma/app_cliente/features/enigma/services/decoy_location_service.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 /// Mapa de Perímetro da Expedição Antiga (Estilo Indiana Jones / Cores Vale).
-/// Apresenta o raio de 300 metros, até 5 alvos (1 real + 4 decoys) e contagem ativa de 15min.
+/// Apresenta o raio de 300 metros, até 5 alvos (1 real + 4 decoys) e contagem ativa.
+/// Otimizado para carregamento instantâneo no Web, Android e iOS.
 class MapRadiusWidget extends StatefulWidget {
   final double destinationLatitude;
   final double destinationLongitude;
@@ -19,16 +22,20 @@ class MapRadiusWidget extends StatefulWidget {
   final List<DecoyTarget>? targets;
   final int remainingSeconds;
   final bool enableToolTimer;
+  final Function(int)? onTick;
+  final VoidCallback? onTimeUp;
 
   const MapRadiusWidget({
     super.key,
     required this.destinationLatitude,
     required this.destinationLongitude,
-    this.isCompact = false,
+    this.isCompact = true,
     this.onExpand,
     this.targets,
     this.remainingSeconds = 900,
     this.enableToolTimer = true,
+    this.onTick,
+    this.onTimeUp,
   });
 
   @override
@@ -38,221 +45,126 @@ class MapRadiusWidget extends StatefulWidget {
 class _MapRadiusWidgetState extends State<MapRadiusWidget>
     with SingleTickerProviderStateMixin {
   late LatLng _obfuscatedCenter;
-  bool _hasLocationPermission = false;
-  BitmapDescriptor? _customMarkerIcon;
   GoogleMapController? _mapController;
   MapType _currentMapType = MapType.normal;
   Position? _currentPosition;
   StreamSubscription<Position>? _positionSubscription;
+  bool _isMapReady = false;
 
-  late AnimationController _pulseController;
+  late int _remainingSeconds;
+  Timer? _countdownTimer;
+  int _selectedTargetIndex = 0;
 
   // Estilo escuro com tons de pedra de templo e esmeralda Vale
-  final String _mapStyle = '''
+  static const String _darkMapStyle = '''
   [
-    {
-      "elementType": "geometry",
-      "stylers": [{"color": "#1b242a"}]
-    },
-    {
-      "elementType": "labels.text.fill",
-      "stylers": [{"color": "#8fa3ad"}]
-    },
-    {
-      "elementType": "labels.text.stroke",
-      "stylers": [{"color": "#1b242a"}]
-    },
-    {
-      "featureType": "administrative.locality",
-      "elementType": "labels.text.fill",
-      "stylers": [{"color": "#F3A522"}]
-    },
-    {
-      "featureType": "poi",
-      "elementType": "labels.text.fill",
-      "stylers": [{"color": "#007D8A"}]
-    },
-    {
-      "featureType": "poi.park",
-      "elementType": "geometry",
-      "stylers": [{"color": "#142526"}]
-    },
-    {
-      "featureType": "poi.park",
-      "elementType": "labels.text.fill",
-      "stylers": [{"color": "#4e7b7f"}]
-    },
-    {
-      "featureType": "road",
-      "elementType": "geometry",
-      "stylers": [{"color": "#28373e"}]
-    },
-    {
-      "featureType": "road",
-      "elementType": "geometry.stroke",
-      "stylers": [{"color": "#151d21"}]
-    },
-    {
-      "featureType": "road",
-      "elementType": "labels.text.fill",
-      "stylers": [{"color": "#9ca5b3"}]
-    },
-    {
-      "featureType": "road.highway",
-      "elementType": "geometry",
-      "stylers": [{"color": "#005861"}]
-    },
-    {
-      "featureType": "road.highway",
-      "elementType": "geometry.stroke",
-      "stylers": [{"color": "#003b41"}]
-    },
-    {
-      "featureType": "road.highway",
-      "elementType": "labels.text.fill",
-      "stylers": [{"color": "#F3A522"}]
-    },
-    {
-      "featureType": "transit",
-      "elementType": "geometry",
-      "stylers": [{"color": "#202e35"}]
-    },
-    {
-      "featureType": "water",
-      "elementType": "geometry",
-      "stylers": [{"color": "#0d181d"}]
-    },
-    {
-      "featureType": "water",
-      "elementType": "labels.text.fill",
-      "stylers": [{"color": "#007D8A"}]
-    }
+    { "elementType": "geometry", "stylers": [{"color": "#11181d"}] },
+    { "elementType": "labels.text.fill", "stylers": [{"color": "#7c919d"}] },
+    { "elementType": "labels.text.stroke", "stylers": [{"color": "#11181d"}] },
+    { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{"color": "#F3A522"}] },
+    { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{"color": "#007D8A"}] },
+    { "featureType": "poi.park", "elementType": "geometry", "stylers": [{"color": "#0d1b1e"}] },
+    { "featureType": "road", "elementType": "geometry", "stylers": [{"color": "#1c2a31"}] },
+    { "featureType": "road", "elementType": "geometry.stroke", "stylers": [{"color": "#11181d"}] },
+    { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{"color": "#8c9ca9"}] },
+    { "featureType": "road.highway", "elementType": "geometry", "stylers": [{"color": "#005861"}] },
+    { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [{"color": "#F3A522"}] },
+    { "featureType": "water", "elementType": "geometry", "stylers": [{"color": "#081014"}] },
+    { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{"color": "#007D8A"}] }
   ]
   ''';
+
+  List<DecoyTarget> get _effectiveTargets {
+    if (widget.targets != null && widget.targets!.isNotEmpty) {
+      return widget.targets!;
+    }
+    return [
+      DecoyTarget(
+        index: 1,
+        label: 'Sinal 1',
+        latitude: widget.destinationLatitude,
+        longitude: widget.destinationLongitude,
+        isReal: true,
+      ),
+    ];
+  }
 
   @override
   void initState() {
     super.initState();
-
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-
-    _obfuscateCenter();
-    _checkPermissions();
-    _createCustomMarker();
-  }
-
-  @override
-  void didUpdateWidget(covariant MapRadiusWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.destinationLatitude != widget.destinationLatitude ||
-        oldWidget.destinationLongitude != widget.destinationLongitude) {
-      _obfuscateCenter();
-      _recenterTarget();
-    }
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    _positionSubscription?.cancel();
-    super.dispose();
-  }
-
-  void _obfuscateCenter() {
+    _remainingSeconds = widget.remainingSeconds;
     _obfuscatedCenter = LatLng(
       widget.destinationLatitude,
       widget.destinationLongitude,
     );
+
+    _initLocationFast();
+    _startTimer();
   }
 
-  Future<void> _checkPermissions() async {
-    try {
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.always ||
-          permission == LocationPermission.whileInUse) {
-        if (mounted) {
-          setState(() {
-            _hasLocationPermission = true;
-          });
+  void _startTimer() {
+    if (!widget.enableToolTimer || _remainingSeconds <= 0) return;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      setState(() {
+        _remainingSeconds--;
+        widget.onTick?.call(_remainingSeconds);
+        if (_remainingSeconds <= 0) {
+          timer.cancel();
+          widget.onTimeUp?.call();
         }
-        _getCurrentLocation();
-        _startLocationUpdates();
-      }
-    } catch (_) {}
-  }
-
-  Future<void> _getCurrentLocation() async {
-    try {
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: LocationSettings(
-          accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
-          timeLimit: const Duration(seconds: 15),
-        ),
-      );
-      if (mounted) {
-        setState(() {
-          _currentPosition = pos;
-        });
-      }
-    } catch (_) {
-      if (kIsWeb) {
-        try {
-          final pos = await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.low,
-              timeLimit: Duration(seconds: 15),
-            ),
-          );
-          if (mounted) {
-            setState(() {
-              _currentPosition = pos;
-            });
-          }
-        } catch (_) {}
-      }
-    }
-  }
-
-  void _startLocationUpdates() {
-    _positionSubscription?.cancel();
-    _positionSubscription = Geolocator.getPositionStream(
-      locationSettings: LocationSettings(
-        accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
-        distanceFilter: kIsWeb ? 0 : 3,
-      ),
-    ).listen((pos) {
-      if (mounted) {
-        setState(() {
-          _currentPosition = pos;
-        });
-      }
-    }, onError: (e) {
-      debugPrint("Map location stream error: $e");
+      });
     });
   }
 
-  Future<void> _createCustomMarker() async {
+  /// Inicialização instantânea não bloqueante da localização
+  Future<void> _initLocationFast() async {
+    // 1. Pega última posição em cache para não esperar pelo GPS
     try {
-      _customMarkerIcon = BitmapDescriptor.defaultMarkerWithHue(
-        BitmapDescriptor.hueYellow,
-      );
+      final lastKnown = await Geolocator.getLastKnownPosition();
+      if (lastKnown != null && mounted) {
+        setState(() => _currentPosition = lastKnown);
+      }
+    } catch (_) {}
+
+    // 2. Escuta stream de posição
+    try {
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+
+      if (perm == LocationPermission.whileInUse ||
+          perm == LocationPermission.always) {
+        _positionSubscription?.cancel();
+        _positionSubscription = Geolocator.getPositionStream(
+          locationSettings: LocationSettings(
+            accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+            distanceFilter: kIsWeb ? 0 : 3,
+          ),
+        ).listen(
+          (pos) {
+            if (mounted) setState(() => _currentPosition = pos);
+          },
+          onError: (_) {},
+        );
+      }
     } catch (_) {}
   }
 
-  void _recenterTarget() {
+  @override
+  void dispose() {
+    _positionSubscription?.cancel();
+    _countdownTimer?.cancel();
+    _mapController?.dispose();
+    super.dispose();
+  }
+
+  void _recenterTarget(LatLng target) {
     if (_mapController != null) {
       _mapController!.animateCamera(
         CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: _obfuscatedCenter,
-            zoom: 16.2,
-          ),
+          CameraPosition(target: target, zoom: 16.5),
         ),
       );
     }
@@ -263,10 +175,7 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
       _mapController!.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
-            target: LatLng(
-              _currentPosition!.latitude,
-              _currentPosition!.longitude,
-            ),
+            target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
             zoom: 16.5,
           ),
         ),
@@ -282,40 +191,29 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
     });
   }
 
-  String _formatTime(int totalSeconds) {
-    final m = (totalSeconds ~/ 60).toString().padLeft(2, '0');
-    final s = (totalSeconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
+  String _formatTime(int seconds) {
+    final int min = seconds ~/ 60;
+    final int sec = seconds % 60;
+    return '${min.toString().padLeft(2, '0')}:${sec.toString().padLeft(2, '0')}';
   }
 
   Set<Marker> _buildMarkers() {
     final markers = <Marker>{};
+    final targets = _effectiveTargets;
 
-    if (widget.targets != null && widget.targets!.isNotEmpty) {
-      for (final t in widget.targets!) {
-        markers.add(
-          Marker(
-            markerId: MarkerId('target_${t.index}'),
-            position: LatLng(t.latitude, t.longitude),
-            icon: _customMarkerIcon ??
-                BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
-            infoWindow: InfoWindow(
-              title: 'Anomalia Sagrada #${t.index}',
-              snippet: 'Eco detectado no raio de 300m da expedição.',
-            ),
-          ),
-        );
-      }
-    } else {
+    for (int i = 0; i < targets.length; i++) {
+      final t = targets[i];
+      final isSel = i == _selectedTargetIndex;
       markers.add(
         Marker(
-          markerId: const MarkerId('destination'),
-          position: _obfuscatedCenter,
-          icon: _customMarkerIcon ??
-              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
-          infoWindow: const InfoWindow(
-            title: 'Perímetro da Relíquia',
-            snippet: 'O tesouro repousa neste raio estimado.',
+          markerId: MarkerId('target_${t.index}'),
+          position: LatLng(t.latitude, t.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            isSel ? BitmapDescriptor.hueYellow : BitmapDescriptor.hueCyan,
+          ),
+          infoWindow: InfoWindow(
+            title: 'Sinal #${t.index}',
+            snippet: 'Eco no perímetro de 300m.',
           ),
         ),
       );
@@ -324,243 +222,169 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
     return markers;
   }
 
+  Set<Circle> _buildCircles() {
+    final circles = <Circle>{};
+    circles.add(
+      Circle(
+        circleId: const CircleId('relic_perimeter'),
+        center: _obfuscatedCenter,
+        radius: 300.0,
+        fillColor: const Color(0xFF007D8A).withValues(alpha: 0.14),
+        strokeColor: const Color(0xFF00A4B4).withValues(alpha: 0.7),
+        strokeWidth: 2,
+      ),
+    );
+    return circles;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final double mapHeight = widget.isCompact ? 220.0 : 420.0;
-    final distanceMeters = _currentPosition != null
-        ? Geolocator.distanceBetween(
-            _currentPosition!.latitude,
-            _currentPosition!.longitude,
-            widget.destinationLatitude,
-            widget.destinationLongitude,
-          )
-        : null;
+    final targets = _effectiveTargets;
+    if (_selectedTargetIndex >= targets.length) {
+      _selectedTargetIndex = 0;
+    }
+    final activeTarget = targets[_selectedTargetIndex];
 
-    final isLowTime = widget.remainingSeconds < 120;
+    double distance = 150.0;
+    if (_currentPosition != null) {
+      distance = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        activeTarget.latitude,
+        activeTarget.longitude,
+      );
+    }
+
+    // Altura padrão idêntica para todas as ferramentas
+    final double frameHeight = widget.isCompact ? 390.0 : 540.0;
 
     return Container(
-      height: mapHeight,
+      height: frameHeight,
+      width: double.infinity,
       decoration: BoxDecoration(
+        color: const Color(0xFF131D24),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.verdeVale.withValues(alpha: 0.5),
-          width: 1.5,
+          color: const Color(0xFF1E3A45),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         child: Stack(
           children: [
-            // Mapa do Google com Estilo Noturno
-            GoogleMap(
-              initialCameraPosition: CameraPosition(
-                target: _obfuscatedCenter,
-                zoom: 15.5,
-              ),
-              mapType: _currentMapType,
-              style: _currentMapType == MapType.normal ? _mapStyle : null,
-              myLocationEnabled: _hasLocationPermission,
-              myLocationButtonEnabled: false,
-              zoomControlsEnabled: false,
-              compassEnabled: true,
-              onMapCreated: (GoogleMapController controller) {
-                _mapController = controller;
-              },
-              markers: _buildMarkers(),
-              circles: {
-                // Perímetro Interno da Relíquia (300m)
-                Circle(
-                  circleId: const CircleId('search_area_fill'),
-                  center: _obfuscatedCenter,
-                  radius: 300.0,
-                  fillColor: AppColors.verdeVale.withValues(alpha: 0.14),
-                  strokeColor: AppColors.verdeVale.withValues(alpha: 0.85),
-                  strokeWidth: 2,
-                ),
-                // Borda Dourada Externa (315m)
-                Circle(
-                  circleId: const CircleId('search_area_outer'),
-                  center: _obfuscatedCenter,
-                  radius: 315.0,
-                  fillColor: Colors.transparent,
-                  strokeColor: AppColors.amareloVale.withValues(alpha: 0.5),
-                  strokeWidth: 1,
-                ),
-              },
-            ),
-
-            // Top HUD do Mapa: Perímetro, Timer Ativo de 15 Minutos & Distância
-            Positioned(
-              top: 10,
-              left: 10,
-              right: 10,
-              child: Row(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Perímetro 300M
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: AppColors.verdeVale.withValues(alpha: 0.4),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const FaIcon(
-                          FontAwesomeIcons.compass,
-                          color: AppColors.verdeVale,
-                          size: 10,
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          'PERÍMETRO: 300M',
-                          style: GoogleFonts.cinzel(
-                            color: AppColors.verdeVale,
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // 1. HUD SUPERIOR UNIFICADO
+                  _buildHeaderHud(),
 
-                  // Timer Ativo de 15 Minutos (Pausa quando fecha)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: (isLowTime ? Colors.redAccent : AppColors.amareloVale)
-                            .withValues(alpha: 0.6),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        FaIcon(
-                          widget.enableToolTimer
-                              ? FontAwesomeIcons.stopwatch
-                              : FontAwesomeIcons.infinity,
-                          color: isLowTime ? Colors.redAccent : AppColors.amareloVale,
-                          size: 10,
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          widget.enableToolTimer
-                              ? _formatTime(widget.remainingSeconds)
-                              : 'ILIMITADO',
-                          style: GoogleFonts.spaceMono(
-                            color: isLowTime ? Colors.redAccent : AppColors.amareloVale,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // 2. SELETOR DE ALVOS (Sinais 1 a 5)
+                  if (targets.length > 1)
+                    _buildTargetSelector(targets)
+                  else
+                    const SizedBox(height: 4),
 
-                  // Distância estimada até o epicentro
-                  if (distanceMeters != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: AppColors.amareloVale.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                  // 3. MAPA EXPEDIÇÃO (com carregamento instantâneo)
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Stack(
                         children: [
-                          const FaIcon(
-                            FontAwesomeIcons.route,
-                            color: AppColors.amareloVale,
-                            size: 10,
+                          // Grade de placeholder instantânea para evitar tela preta no Web
+                          Positioned.fill(
+                            child: Container(
+                              color: const Color(0xFF0A1215),
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const CircularProgressIndicator(
+                                      color: Color(0xFF00A4B4),
+                                      strokeWidth: 2,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      'SINCRONIZANDO MAPA DO CÓDICE...',
+                                      style: GoogleFonts.cinzel(
+                                        color: AppColors.cinzaMedio,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
-                          const SizedBox(width: 5),
-                          Text(
-                            '~${distanceMeters.toStringAsFixed(0)}M',
-                            style: GoogleFonts.cinzel(
-                              color: AppColors.amareloVale,
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.bold,
+
+                          // Google Map com estilo escuro
+                          GoogleMap(
+                            initialCameraPosition: CameraPosition(
+                              target: _obfuscatedCenter,
+                              zoom: 16.0,
+                            ),
+                            mapType: _currentMapType,
+                            myLocationEnabled: true,
+                            myLocationButtonEnabled: false,
+                            zoomControlsEnabled: false,
+                            compassEnabled: true,
+                            markers: _buildMarkers(),
+                            circles: _buildCircles(),
+                            style: _darkMapStyle,
+                            onMapCreated: (controller) {
+                              _mapController = controller;
+                              if (mounted) setState(() => _isMapReady = true);
+                            },
+                          ),
+
+                          // Controles Flutuantes do Mapa (Centralizar Alvo, Usuário, Satélite)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Column(
+                              children: [
+                                _buildMapFloatingButton(
+                                  icon: FontAwesomeIcons.layerGroup,
+                                  onTap: _toggleMapType,
+                                  tooltip: 'Camada de Satélite',
+                                ),
+                                const SizedBox(height: 6),
+                                _buildMapFloatingButton(
+                                  icon: FontAwesomeIcons.crosshairs,
+                                  onTap: () => _recenterTarget(
+                                    LatLng(activeTarget.latitude, activeTarget.longitude),
+                                  ),
+                                  tooltip: 'Centralizar Alvo',
+                                ),
+                                const SizedBox(height: 6),
+                                _buildMapFloatingButton(
+                                  icon: FontAwesomeIcons.locationArrow,
+                                  onTap: _recenterUser,
+                                  tooltip: 'Minha Posição',
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                ],
-              ),
-            ),
-
-            // Botões de Ação do Mapa da Expedição (Direita)
-            Positioned(
-              bottom: 12,
-              right: 12,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Alternar Visão Normal / Satélite
-                  _buildMapActionButton(
-                    icon: _currentMapType == MapType.normal
-                        ? FontAwesomeIcons.earthAmericas
-                        : FontAwesomeIcons.map,
-                    tooltip: 'Visão Satélite / Pergaminho',
-                    color: AppColors.verdeVale,
-                    onTap: _toggleMapType,
                   ),
+
                   const SizedBox(height: 8),
 
-                  // Centralizar na Relíquia
-                  _buildMapActionButton(
-                    icon: FontAwesomeIcons.gem,
-                    tooltip: 'Centralizar na Relíquia',
-                    color: AppColors.amareloVale,
-                    onTap: _recenterTarget,
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Centralizar na Posição do Explorador / Ativar Localização
-                  if (_hasLocationPermission) ...[
-                    _buildMapActionButton(
-                      icon: FontAwesomeIcons.locationCrosshairs,
-                      tooltip: 'Minha Posição',
-                      color: AppColors.verdeVale,
-                      onTap: _recenterUser,
-                    ),
-                    const SizedBox(height: 8),
-                  ] else ...[
-                    _buildMapActionButton(
-                      icon: FontAwesomeIcons.locationArrow,
-                      tooltip: 'Ativar Localização',
-                      color: AppColors.amareloVale,
-                      onTap: _checkPermissions,
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-
-                  // Expandir Mapa
-                  if (widget.onExpand != null)
-                    _buildMapActionButton(
-                      icon: FontAwesomeIcons.upRightAndDownLeftFromCenter,
-                      tooltip: 'Expandir Mapa',
-                      color: Colors.white,
-                      onTap: widget.onExpand!,
-                    ),
+                  // 4. TELEMETRIA INFERIOR UNIFICADA
+                  _buildFooterTelemetry(distance),
                 ],
               ),
             ),
@@ -570,32 +394,291 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
     );
   }
 
-  Widget _buildMapActionButton({
+  // ===========================================================================
+  // 1. HEADER HUD
+  // ===========================================================================
+  Widget _buildHeaderHud() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0C242C),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFF007D8A).withValues(alpha: 0.5),
+                  width: 1,
+                ),
+              ),
+              child: const FaIcon(
+                FontAwesomeIcons.mapLocationDot,
+                color: Color(0xFF00A4B4),
+                size: 11,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'MAPA DA EXPEDIÇÃO',
+              style: GoogleFonts.cinzel(
+                color: Colors.white,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
+        ),
+
+        // Timer
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1708),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFFF3A522).withValues(alpha: 0.4),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FaIcon(
+                widget.enableToolTimer
+                    ? FontAwesomeIcons.hourglassHalf
+                    : FontAwesomeIcons.infinity,
+                color: const Color(0xFFF3A522),
+                size: 9.5,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                widget.enableToolTimer
+                    ? _formatTime(_remainingSeconds)
+                    : 'ILIMITADO',
+                style: GoogleFonts.orbitron(
+                  color: const Color(0xFFF3A522),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Botão Expandir
+        if (widget.onExpand != null)
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              SoundService.playClick();
+              widget.onExpand!();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF18252E),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: const Color(0xFF1E3A45),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const FaIcon(
+                    FontAwesomeIcons.expand,
+                    color: Color(0xFF00A4B4),
+                    size: 10,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'EXPANDIR',
+                    style: GoogleFonts.cinzel(
+                      color: const Color(0xFF00A4B4),
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          const SizedBox(width: 20),
+      ],
+    );
+  }
+
+  // ===========================================================================
+  // 2. SELETOR DE ALVOS
+  // ===========================================================================
+  Widget _buildTargetSelector(List<DecoyTarget> targets) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(targets.length, (idx) {
+          final isSel = idx == _selectedTargetIndex;
+          final t = targets[idx];
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                SoundService.playClick();
+                setState(() => _selectedTargetIndex = idx);
+                _recenterTarget(LatLng(t.latitude, t.longitude));
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: isSel ? const Color(0xFF00A4B4) : const Color(0xFF0C1417),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSel
+                        ? const Color(0xFF00A4B4)
+                        : Colors.white.withValues(alpha: 0.15),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FaIcon(
+                      FontAwesomeIcons.locationPin,
+                      size: 8.5,
+                      color: isSel ? Colors.black : const Color(0xFF00A4B4),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Sinal ${idx + 1}',
+                      style: GoogleFonts.cinzel(
+                        color: isSel ? Colors.black : Colors.white70,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildMapFloatingButton({
     required dynamic icon,
-    required String tooltip,
-    required Color color,
     required VoidCallback onTap,
+    required String tooltip,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       child: Container(
-        width: 38,
-        height: 38,
+        width: 30,
+        height: 30,
         decoration: BoxDecoration(
-          color: AppColors.darkCardColor.withValues(alpha: 0.92),
+          color: const Color(0xFF131D24).withValues(alpha: 0.90),
           shape: BoxShape.circle,
-          border: Border.all(color: color.withValues(alpha: 0.5), width: 1.2),
+          border: Border.all(
+            color: const Color(0xFF1E3A45),
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.5),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              blurRadius: 4,
             ),
           ],
         ),
         child: Center(
-          child: FaIcon(icon, color: color, size: 14),
+          child: FaIcon(
+            icon,
+            size: 11,
+            color: const Color(0xFF00A4B4),
+          ),
         ),
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // 4. TELEMETRIA INFERIOR
+  // ===========================================================================
+  Widget _buildFooterTelemetry(double distance) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0C1417),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0xFF1E3A45),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              const FaIcon(
+                FontAwesomeIcons.circleDot,
+                color: Color(0xFF00A4B4),
+                size: 11,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${distance.toInt()} M',
+                style: GoogleFonts.orbitron(
+                  color: const Color(0xFF00A4B4),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+
+          Row(
+            children: [
+              const FaIcon(
+                FontAwesomeIcons.circleNodes,
+                color: AppColors.amareloVale,
+                size: 10,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                'RAIO 300M',
+                style: GoogleFonts.cinzel(
+                  color: AppColors.amareloVale,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
+          ),
+
+          Text(
+            _isMapReady ? 'SATÉLITE ON' : 'CARREGANDO',
+            style: GoogleFonts.cinzel(
+              color: _isMapReady ? AppColors.verdeVale : AppColors.cinzaMedio,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
     );
   }

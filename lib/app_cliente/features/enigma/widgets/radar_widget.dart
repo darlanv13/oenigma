@@ -13,7 +13,8 @@ import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 /// Ferramenta Mística de Radar: Sonar de varredura 360° com detecção de proximidade,
-/// eco luminoso de até 5 alvos (1 real + 4 decoys em raio 300m) e contagem ativa de 15min.
+/// eco luminoso dos 5 alvos e contagem ativa.
+/// Otimizada para carregamento instantâneo no Web, Android e iOS.
 class RadarWidget extends StatefulWidget {
   final double? targetLatitude;
   final double? targetLongitude;
@@ -55,11 +56,12 @@ class _RadarWidgetState extends State<RadarWidget>
   Position? _currentPosition;
   double _deviceHeading = 0.0;
   double _selectedRange = 250.0; // Metros (100m, 250m, 500m)
-  bool _isManualPinging = false;
-  DateTime? _lastHapticTime;
   int _selectedTargetIndex = 0;
+  DateTime? _lastHapticTime;
 
-  // Cache de distâncias e bearings por alvo
+  late int _remainingSeconds;
+  Timer? _countdownTimer;
+
   final Map<int, double> _targetDistances = {};
   final Map<int, double> _targetBearings = {};
 
@@ -84,23 +86,115 @@ class _RadarWidgetState extends State<RadarWidget>
   @override
   void initState() {
     super.initState();
+    _remainingSeconds = widget.remainingSeconds;
 
-    // 1. Feixe de Varredura Contínuo (360° em 3 segundos)
+    // 1. Feixe de Varredura Sonar (360° em 3 segundos)
     _sweepController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat();
 
-    // 2. Pulso Sonar Expansivo (1.8s)
+    // 2. Pulso de Eco Expansivo (1.8s)
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     )..repeat();
 
-    // Listener para feedback háptico quando o feixe passa por qualquer sinal
     _sweepController.addListener(_checkSweepIntersection);
 
-    _initSensors();
+    _initSensorsFast();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    if (!widget.enableToolTimer || _remainingSeconds <= 0) return;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      setState(() {
+        _remainingSeconds--;
+        widget.onTick?.call(_remainingSeconds);
+        if (_remainingSeconds <= 0) {
+          timer.cancel();
+          widget.onTimeUp?.call();
+        }
+      });
+    });
+  }
+
+  /// Inicialização instantânea não bloqueante
+  Future<void> _initSensorsFast() async {
+    // 1. Tenta recuperar a última posição em cache (< 20ms)
+    try {
+      final lastKnown = await Geolocator.getLastKnownPosition();
+      if (lastKnown != null && mounted) {
+        setState(() {
+          _currentPosition = lastKnown;
+          _recalculateTargetPositions(lastKnown);
+        });
+      }
+    } catch (_) {}
+
+    // 2. Verifica permissão de forma assíncrona
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always) {
+        _positionSubscription?.cancel();
+        _positionSubscription = Geolocator.getPositionStream(
+          locationSettings: LocationSettings(
+            accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+            distanceFilter: kIsWeb ? 0 : 2,
+          ),
+        ).listen(
+          (pos) {
+            if (mounted) {
+              setState(() {
+                _currentPosition = pos;
+                _recalculateTargetPositions(pos);
+              });
+            }
+          },
+          onError: (_) {},
+        );
+
+        _compassSubscription?.cancel();
+        if (FlutterCompass.events != null) {
+          _compassSubscription = FlutterCompass.events!.listen(
+            (event) {
+              if (mounted && event.heading != null) {
+                setState(() => _deviceHeading = event.heading!);
+              }
+            },
+            onError: (_) {},
+          );
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _recalculateTargetPositions(Position pos) {
+    final targets = _effectiveTargets;
+    for (int i = 0; i < targets.length; i++) {
+      final t = targets[i];
+      final d = Geolocator.distanceBetween(
+        pos.latitude,
+        pos.longitude,
+        t.latitude,
+        t.longitude,
+      );
+      final b = Geolocator.bearingBetween(
+        pos.latitude,
+        pos.longitude,
+        t.latitude,
+        t.longitude,
+      );
+      _targetDistances[i] = d;
+      _targetBearings[i] = b;
+    }
   }
 
   void _checkSweepIntersection() {
@@ -116,349 +210,356 @@ class _RadarWidgetState extends State<RadarWidget>
       final relativeTargetAngle = (bearing - _deviceHeading + 360.0) % 360.0;
       final diff = (sweepAngleDeg - relativeTargetAngle).abs();
 
-      if (diff < 14.0 || diff > 346.0) {
+      if (diff < 12.0 || diff > 348.0) {
         final now = DateTime.now();
         if (_lastHapticTime == null ||
-            now.difference(_lastHapticTime!).inMilliseconds > 750) {
+            now.difference(_lastHapticTime!).inMilliseconds > 450) {
           _lastHapticTime = now;
-          HapticFeedback.selectionClick();
-        }
-        break;
-      }
-    }
-  }
-
-  Future<void> _initSensors() async {
-    try {
-      LocationPermission hasPermission = await Geolocator.checkPermission();
-      if (hasPermission == LocationPermission.denied) {
-        hasPermission = await Geolocator.requestPermission();
-      }
-      if (hasPermission == LocationPermission.always ||
-          hasPermission == LocationPermission.whileInUse) {
-        try {
-          final pos = await Geolocator.getCurrentPosition(
-            locationSettings: LocationSettings(
-              accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
-              timeLimit: const Duration(seconds: 15),
-            ),
-          );
-          if (mounted) {
-            setState(() {
-              _currentPosition = pos;
-              _updateCalculations();
-            });
-          }
-        } catch (_) {
-          if (kIsWeb) {
-            try {
-              final pos = await Geolocator.getCurrentPosition(
-                locationSettings: const LocationSettings(
-                  accuracy: LocationAccuracy.low,
-                  timeLimit: Duration(seconds: 15),
-                ),
-              );
-              if (mounted) {
-                setState(() {
-                  _currentPosition = pos;
-                  _updateCalculations();
-                });
-              }
-            } catch (_) {}
+          if (i == _selectedTargetIndex) {
+            HapticFeedback.lightImpact();
+            SoundService.playClick();
           }
         }
-
-        _positionSubscription?.cancel();
-        _positionSubscription = Geolocator.getPositionStream(
-          locationSettings: LocationSettings(
-            accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
-            distanceFilter: kIsWeb ? 0 : 3,
-          ),
-        ).listen(
-          (pos) {
-            if (mounted) {
-              setState(() {
-                _currentPosition = pos;
-                _updateCalculations();
-              });
-            }
-          },
-          onError: (e) {
-            debugPrint("Radar location stream error: $e");
-          },
-        );
       }
-    } catch (_) {}
-
-    // Bússola para radar orientado à direção do explorador
-    try {
-      _compassSubscription?.cancel();
-      _compassSubscription = FlutterCompass.events?.listen((event) {
-        if (mounted && event.heading != null) {
-          setState(() {
-            _deviceHeading = event.heading!;
-          });
-        }
-      });
-    } catch (_) {}
-  }
-
-  void _updateCalculations() {
-    if (_currentPosition == null) return;
-
-    final targets = _effectiveTargets;
-    for (int i = 0; i < targets.length; i++) {
-      final target = targets[i];
-      final dist = Geolocator.distanceBetween(
-        _currentPosition!.latitude,
-        _currentPosition!.longitude,
-        target.latitude,
-        target.longitude,
-      );
-
-      final bearing = Geolocator.bearingBetween(
-        _currentPosition!.latitude,
-        _currentPosition!.longitude,
-        target.latitude,
-        target.longitude,
-      );
-
-      _targetDistances[i] = dist;
-      _targetBearings[i] = (bearing + 360.0) % 360.0;
     }
-  }
-
-  void _triggerManualPing() {
-    SoundService.playScan();
-    HapticFeedback.mediumImpact();
-    setState(() {
-      _isManualPinging = true;
-    });
-
-    _pulseController.forward(from: 0.0).then((_) {
-      if (mounted) {
-        setState(() {
-          _isManualPinging = false;
-        });
-        _pulseController.repeat();
-      }
-    });
-  }
-
-  String _formatTime(int totalSeconds) {
-    final m = (totalSeconds ~/ 60).toString().padLeft(2, '0');
-    final s = (totalSeconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
   }
 
   @override
   void dispose() {
-    _sweepController.removeListener(_checkSweepIntersection);
-    _sweepController.dispose();
-    _pulseController.dispose();
     _positionSubscription?.cancel();
     _compassSubscription?.cancel();
+    _sweepController.dispose();
+    _pulseController.dispose();
+    _countdownTimer?.cancel();
     super.dispose();
+  }
+
+  String _formatTime(int seconds) {
+    final int min = seconds ~/ 60;
+    final int sec = seconds % 60;
+    return '${min.toString().padLeft(2, '0')}:${sec.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final isCompact = widget.isCompact;
-    final double radarSize = isCompact ? 220.0 : 300.0;
     final targets = _effectiveTargets;
+    if (_selectedTargetIndex >= targets.length) {
+      _selectedTargetIndex = 0;
+    }
 
-    final selectedDist = _targetDistances[_selectedTargetIndex] ?? widget.initialDistance;
+    final currentTargetDistance = _targetDistances[_selectedTargetIndex] ??
+        widget.initialDistance ??
+        140.0;
+
+    // Altura padrão idêntica para todas as ferramentas
+    final double frameHeight = widget.isCompact ? 390.0 : 540.0;
+    final double radarSize = widget.isCompact ? 210.0 : 280.0;
 
     return Container(
-      padding: EdgeInsets.all(isCompact ? 12 : 18),
+      height: frameHeight,
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF0F171B),
+        color: const Color(0xFF131D24),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.verdeVale.withValues(alpha: 0.35),
+          color: const Color(0xFF1E3A45),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 16,
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 1. Barra de Telemetria Superior (Status, Timer Ativo de 15min e Sinal)
-          _buildRadarHeader(selectedDist),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            // Brilho esmeralda de fundo sutil
+            Positioned(
+              top: -40,
+              right: -40,
+              child: Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF007D8A).withValues(alpha: 0.12),
+                ),
+              ),
+            ),
 
-          const SizedBox(height: 10),
-
-          // Seletor de Sinais Detectados (5 Alvos no Raio de 300m)
-          if (targets.length > 1) _buildTargetSelector(),
-
-          const SizedBox(height: 10),
-
-          // 2. Visor Circular do Radar
-          Center(
-            child: SizedBox(
-              width: radarSize,
-              height: radarSize,
-              child: Stack(
-                alignment: Alignment.center,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Grade e Anéis Concêntricos
-                  CustomPaint(
-                    size: Size(radarSize, radarSize),
-                    painter: _RadarGridPainter(
-                      rangeMeters: _selectedRange,
-                      gridColor: AppColors.verdeVale.withValues(alpha: 0.22),
-                      accentColor: AppColors.verdeVale,
-                    ),
-                  ),
+                  // 1. HUD SUPERIOR UNIFICADO
+                  _buildHeaderHud(),
 
-                  // Pulso Sonar Expansivo
-                  AnimatedBuilder(
-                    animation: _pulseController,
-                    builder: (context, child) {
-                      final val = _pulseController.value;
-                      return Container(
-                        width: radarSize * val,
-                        height: radarSize * val,
+                  // 2. SELETOR DE ALVOS (Sinais 1 a 5)
+                  if (targets.length > 1)
+                    _buildTargetSelector(targets)
+                  else
+                    const SizedBox(height: 4),
+
+                  // 3. DISPLAY DO SONAR (210px / 280px)
+                  Expanded(
+                    child: Center(
+                      child: Container(
+                        width: radarSize,
+                        height: radarSize,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
+                          color: const Color(0xFF0A1215),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00A4B4).withValues(alpha: 0.25),
+                              blurRadius: 16,
+                            ),
+                          ],
                           border: Border.all(
-                            color: AppColors.verdeVale.withValues(
-                              alpha: (1.0 - val) * 0.45,
-                            ),
-                            width: 1.5,
+                            color: const Color(0xFF007D8A).withValues(alpha: 0.6),
+                            width: 2.2,
                           ),
                         ),
-                      );
-                    },
-                  ),
-
-                  // Feixe de Varredura 360° Rotativo
-                  AnimatedBuilder(
-                    animation: _sweepController,
-                    builder: (context, child) {
-                      final angle = _sweepController.value * 2 * math.pi;
-                      return Transform.rotate(
-                        angle: angle,
-                        child: Container(
-                          width: radarSize,
-                          height: radarSize,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: SweepGradient(
-                              startAngle: 0.0,
-                              endAngle: math.pi / 2,
-                              colors: [
-                                AppColors.verdeVale.withValues(alpha: 0.40),
-                                AppColors.verdeVale.withValues(alpha: 0.0),
-                              ],
-                              stops: const [0.0, 1.0],
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Grade estática do radar (60fps cacheada)
+                            RepaintBoundary(
+                              child: CustomPaint(
+                                size: Size(radarSize, radarSize),
+                                painter: const _RadarStaticGridPainter(),
+                              ),
                             ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
 
-                  // Blips / Ecos de todos os alvos detectados (1 Real + 4 Decoys)
-                  for (int i = 0; i < targets.length; i++)
-                    _buildTargetBlip(radarSize, i),
+                            // Feixe dinâmico e ecos dos alvos
+                            AnimatedBuilder(
+                              animation: _sweepController,
+                              builder: (context, _) {
+                                return CustomPaint(
+                                  size: Size(radarSize, radarSize),
+                                  painter: _RadarDynamicSweepPainter(
+                                    sweepValue: _sweepController.value,
+                                    pulseValue: _pulseController.value,
+                                    selectedRange: _selectedRange,
+                                    targets: targets,
+                                    targetDistances: _targetDistances,
+                                    targetBearings: _targetBearings,
+                                    deviceHeading: _deviceHeading,
+                                    selectedIndex: _selectedTargetIndex,
+                                  ),
+                                );
+                              },
+                            ),
 
-                  // Centro do Explorador (Você está aqui)
-                  Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: AppColors.verdeVale,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.verdeVale.withValues(alpha: 0.8),
-                          blurRadius: 8,
-                          spreadRadius: 2,
+                            // Centro do Operador
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(0xFF00A4B4),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Color(0xFF00A4B4),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.navigation,
-                        color: Colors.black,
-                        size: 9,
                       ),
+                    ),
+                  ),
+
+                  // 4. TELEMETRIA INFERIOR UNIFICADA & SELETOR DE ALCANCE
+                  _buildFooterTelemetry(currentTargetDistance),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // 1. HEADER HUD
+  // ===========================================================================
+  Widget _buildHeaderHud() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0C242C),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFF007D8A).withValues(alpha: 0.5),
+                  width: 1,
+                ),
+              ),
+              child: const FaIcon(
+                FontAwesomeIcons.satelliteDish,
+                color: Color(0xFF00A4B4),
+                size: 11,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'RADAR SONAR 360°',
+              style: GoogleFonts.cinzel(
+                color: Colors.white,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
+        ),
+
+        // Timer
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1708),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFFF3A522).withValues(alpha: 0.4),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FaIcon(
+                widget.enableToolTimer
+                    ? FontAwesomeIcons.hourglassHalf
+                    : FontAwesomeIcons.infinity,
+                color: const Color(0xFFF3A522),
+                size: 9.5,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                widget.enableToolTimer
+                    ? _formatTime(_remainingSeconds)
+                    : 'ILIMITADO',
+                style: GoogleFonts.orbitron(
+                  color: const Color(0xFFF3A522),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Botão Expandir
+        if (widget.onExpand != null)
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              SoundService.playClick();
+              widget.onExpand!();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF18252E),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: const Color(0xFF1E3A45),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const FaIcon(
+                    FontAwesomeIcons.expand,
+                    color: Color(0xFF00A4B4),
+                    size: 10,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'EXPANDIR',
+                    style: GoogleFonts.cinzel(
+                      color: const Color(0xFF00A4B4),
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-
-          const SizedBox(height: 14),
-
-          // 3. Controles Inferiores: Seletor de Escala & Botão de Pulso Sonar
-          _buildRadarControls(),
-        ],
-      ),
+          )
+        else
+          const SizedBox(width: 20),
+      ],
     );
   }
 
-  // --- SELETOR DOS 5 SINAIS DETECTADOS ---
-  Widget _buildTargetSelector() {
-    final targets = _effectiveTargets;
+  // ===========================================================================
+  // 2. SELETOR DE SINAIS
+  // ===========================================================================
+  Widget _buildTargetSelector(List<DecoyTarget> targets) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(targets.length, (idx) {
-          final isSelected = _selectedTargetIndex == idx;
+          final isSel = idx == _selectedTargetIndex;
           final dist = _targetDistances[idx];
-          final distLabel = dist != null ? '${dist.toInt()}m' : '---';
-
-          return GestureDetector(
-            onTap: () {
-              SoundService.playClick();
-              setState(() {
-                _selectedTargetIndex = idx;
-              });
-            },
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.amareloVale.withValues(alpha: 0.20)
-                    : const Color(0xFF131D24),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isSelected
-                      ? AppColors.amareloVale
-                      : Colors.white.withValues(alpha: 0.12),
-                  width: 1.0,
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                SoundService.playClick();
+                setState(() => _selectedTargetIndex = idx);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: isSel ? const Color(0xFF00A4B4) : const Color(0xFF0C1417),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSel
+                        ? const Color(0xFF00A4B4)
+                        : Colors.white.withValues(alpha: 0.15),
+                    width: 1,
+                  ),
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FaIcon(
-                    FontAwesomeIcons.signal,
-                    size: 9,
-                    color: isSelected ? AppColors.amareloVale : AppColors.cinzaMedio,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Sinal ${idx + 1} ($distLabel)',
-                    style: GoogleFonts.cinzel(
-                      fontSize: 9.5,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                      color: isSelected ? AppColors.amareloVale : AppColors.cinzaMedio,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FaIcon(
+                      FontAwesomeIcons.circleDot,
+                      size: 8.5,
+                      color: isSel ? Colors.black : const Color(0xFF00A4B4),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 4),
+                    Text(
+                      dist != null ? 'Sinal ${idx + 1} (${dist.toInt()}m)' : 'Sinal ${idx + 1}',
+                      style: GoogleFonts.cinzel(
+                        color: isSel ? Colors.black : Colors.white70,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -467,403 +568,270 @@ class _RadarWidgetState extends State<RadarWidget>
     );
   }
 
-  // --- CABEÇALHO DO RADAR COM TIMER ATIVO (15 MIN) E NÍVEL DE SINAL ---
-  Widget _buildRadarHeader(double? dist) {
-    int signalBars = 1;
-    String statusText = 'BUSCANDO ECO MÍSTICO...';
-    Color signalColor = AppColors.cinzaMedio;
-
-    if (dist != null) {
-      if (dist <= 25) {
-        signalBars = 5;
-        statusText = 'ALVO LOCALIZADO! (<25m)';
-        signalColor = AppColors.verdeVale;
-      } else if (dist <= 60) {
-        signalBars = 4;
-        statusText = 'SINAL INTENSO (${dist.toInt()}m)';
-        signalColor = AppColors.verdeVale;
-      } else if (dist <= 150) {
-        signalBars = 3;
-        statusText = 'SINAL EM PROXIMIDADE (${dist.toInt()}m)';
-        signalColor = AppColors.amareloVale;
-      } else if (dist <= 300) {
-        signalBars = 2;
-        statusText = 'ECO FRACO (${dist.toInt()}m)';
-        signalColor = AppColors.amareloValeAlt;
-      } else {
-        signalBars = 1;
-        statusText = 'FORA DE ALCANCE (${dist.toInt()}m)';
-        signalColor = AppColors.cinzaMedio;
-      }
-    }
-
-    final isLowTime = widget.remainingSeconds < 120;
-
-    return Row(
-      children: [
-        FaIcon(FontAwesomeIcons.satelliteDish, color: signalColor, size: 13),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  // ===========================================================================
+  // 4. TELEMETRIA INFERIOR & SELETOR DE ALCANCE
+  // ===========================================================================
+  Widget _buildFooterTelemetry(double currentDist) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0C1417),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: const Color(0xFF1E3A45),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Distância do Alvo Ativo
+          Row(
             children: [
-              Row(
-                children: [
-                  Text(
-                    'RADAR DE RELÍQUIAS',
-                    style: GoogleFonts.cinzel(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Badge do Timer Ativo de 15 Minutos (Pausa quando fecha)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: (isLowTime ? Colors.redAccent : AppColors.amareloVale)
-                          .withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: (isLowTime ? Colors.redAccent : AppColors.amareloVale)
-                            .withValues(alpha: 0.4),
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        FaIcon(
-                          widget.enableToolTimer
-                              ? FontAwesomeIcons.stopwatch
-                              : FontAwesomeIcons.infinity,
-                          size: 8,
-                          color: isLowTime ? Colors.redAccent : AppColors.amareloVale,
-                        ),
-                        const SizedBox(width: 3),
-                        Text(
-                          widget.enableToolTimer
-                              ? _formatTime(widget.remainingSeconds)
-                              : 'ILIMITADO',
-                          style: GoogleFonts.spaceMono(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w700,
-                            color: isLowTime ? Colors.redAccent : AppColors.amareloVale,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              const FaIcon(
+                FontAwesomeIcons.bullseye,
+                color: Color(0xFF00A4B4),
+                size: 11,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(width: 6),
               Text(
-                statusText,
-                style: GoogleFonts.poppins(
-                  color: signalColor,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 10,
+                '${currentDist.toInt()} M',
+                style: GoogleFonts.orbitron(
+                  color: const Color(0xFF00A4B4),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
-        ),
-        // Barras de Força de Sinal
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: List.generate(5, (index) {
-            final active = index < signalBars;
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 1.5),
-              width: 3.5,
-              height: 6.0 + (index * 3.0),
-              decoration: BoxDecoration(
-                color: active ? signalColor : Colors.white12,
-                borderRadius: BorderRadius.circular(1.5),
+
+          // Seletor de Alcance Rápido (100m, 250m, 500m)
+          Row(
+            children: [100.0, 250.0, 500.0].map((range) {
+              final isSel = _selectedRange == range;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _selectedRange = range);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isSel
+                          ? const Color(0xFF007D8A).withValues(alpha: 0.5)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: isSel ? const Color(0xFF00A4B4) : Colors.white12,
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      '${range.toInt()}m',
+                      style: GoogleFonts.orbitron(
+                        fontSize: 9,
+                        fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
+                        color: isSel ? Colors.white : AppColors.cinzaMedio,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          // Status de Varredura
+          Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.verdeVale,
+                ),
               ),
-            );
-          }),
-        ),
-        if (widget.isCompact && widget.onExpand != null) ...[
-          const SizedBox(width: 8),
-          IconButton(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            icon: const FaIcon(
-              FontAwesomeIcons.upRightAndDownLeftFromCenter,
-              color: AppColors.cinzaMedio,
-              size: 11,
-            ),
-            tooltip: 'Expandir Radar',
-            onPressed: widget.onExpand,
+              const SizedBox(width: 5),
+              Text(
+                'VARRENDO',
+                style: GoogleFonts.cinzel(
+                  color: AppColors.verdeVale,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
         ],
-      ],
-    );
-  }
-
-  // --- BLIP DO ALVO NO RADAR ---
-  Widget _buildTargetBlip(double radarSize, int targetIndex) {
-    final dist = _targetDistances[targetIndex];
-    final bearing = _targetBearings[targetIndex];
-    if (dist == null || bearing == null) return const SizedBox.shrink();
-
-    final isSelected = _selectedTargetIndex == targetIndex;
-
-    // Ângulo relativo entre a orientação do telefone e o azimute da relíquia
-    final relativeAngleRad =
-        ((bearing - _deviceHeading - 90.0) * math.pi) / 180.0;
-
-    // Distância proporcional dentro do raio de visualização
-    final radius = radarSize / 2.0;
-    final clampedDist = dist.clamp(0.0, _selectedRange);
-    final ratio = (clampedDist / _selectedRange) * 0.85;
-    final blipRadius = radius * ratio;
-
-    final dx = radius + blipRadius * math.cos(relativeAngleRad);
-    final dy = radius + blipRadius * math.sin(relativeAngleRad);
-
-    final isInsideScope = dist <= _selectedRange;
-
-    return Positioned(
-      left: dx - (isSelected ? 9 : 7),
-      top: dy - (isSelected ? 9 : 7),
-      child: AnimatedBuilder(
-        animation: _sweepController,
-        builder: (context, child) {
-          final relativeDeg = (bearing - _deviceHeading + 360.0) % 360.0;
-          final sweepDeg = _sweepController.value * 360.0;
-          final diff = (sweepDeg - relativeDeg).abs();
-          final isHighlighted = diff < 22.0 || diff > 338.0;
-
-          final Color blipColor = isHighlighted
-              ? AppColors.amareloVale
-              : (isSelected
-                  ? AppColors.amareloVale
-                  : (isInsideScope ? AppColors.verdeVale : Colors.redAccent.withValues(alpha: 0.6)));
-
-          return Container(
-            width: isSelected ? 18 : 14,
-            height: isSelected ? 18 : 14,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: blipColor,
-              border: isSelected
-                  ? Border.all(color: Colors.white, width: 1.2)
-                  : null,
-              boxShadow: [
-                BoxShadow(
-                  color: blipColor.withValues(alpha: isHighlighted ? 0.95 : 0.6),
-                  blurRadius: isHighlighted ? 12 : 6,
-                  spreadRadius: isHighlighted ? 3 : 1,
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                '${targetIndex + 1}',
-                style: GoogleFonts.cinzel(
-                  color: Colors.black,
-                  fontSize: isSelected ? 9 : 7.5,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          );
-        },
       ),
-    );
-  }
-
-  // --- CONTROLES DE ZOOM E PULSO SONAR ---
-  Widget _buildRadarControls() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // Seletor de Escala (100m, 250m, 500m)
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [100.0, 250.0, 500.0].map((range) {
-            final isSelected = _selectedRange == range;
-            return GestureDetector(
-              onTap: () {
-                SoundService.playClick();
-                setState(() {
-                  _selectedRange = range;
-                });
-              },
-              child: Container(
-                margin: const EdgeInsets.only(right: 6),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.verdeVale.withValues(alpha: 0.20)
-                      : const Color(0xFF131D24),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSelected
-                        ? AppColors.verdeVale
-                        : Colors.white.withValues(alpha: 0.08),
-                    width: 1.0,
-                  ),
-                ),
-                child: Text(
-                  '${range.toInt()}m',
-                  style: GoogleFonts.poppins(
-                    color: isSelected ? AppColors.verdeVale : AppColors.cinzaMedio,
-                    fontSize: 10,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-
-        // Botão de Disparo Manual de Sonar (Ping)
-        InkWell(
-          onTap: _isManualPinging ? null : _triggerManualPing,
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: AppColors.verdeVale.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: AppColors.verdeVale.withValues(alpha: 0.4),
-                width: 1.0,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const FaIcon(
-                  FontAwesomeIcons.waveSquare,
-                  color: AppColors.verdeVale,
-                  size: 10,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'PULSAR SONAR',
-                  style: GoogleFonts.cinzel(
-                    color: AppColors.verdeVale,
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
 
-/// Pintor customizado para os anéis de alcance e retículo tático do Radar
-class _RadarGridPainter extends CustomPainter {
-  final double rangeMeters;
-  final Color gridColor;
-  final Color accentColor;
-
-  _RadarGridPainter({
-    required this.rangeMeters,
-    required this.gridColor,
-    required this.accentColor,
-  });
+// =============================================================================
+// PAINTER 1: GRADE ESTÁTICA DO RADAR (CACHEADA)
+// =============================================================================
+class _RadarStaticGridPainter extends CustomPainter {
+  const _RadarStaticGridPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final maxRadius = size.width / 2;
+    final radius = size.width / 2;
 
-    final gridPaint = Paint()
-      ..color = gridColor
-      ..style = PaintingStyle.stroke
+    // Fundo Ciano/Preto
+    final bgPaint = Paint()
+      ..shader = const RadialGradient(
+        colors: [Color(0xFF0D1E22), Color(0xFF050B0D)],
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+    canvas.drawCircle(center, radius, bgPaint);
+
+    // 4 Anéis Concêntricos
+    final ringPaint = Paint()
+      ..color = const Color(0xFF007D8A).withValues(alpha: 0.28)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(center, radius * 0.25, ringPaint);
+    canvas.drawCircle(center, radius * 0.50, ringPaint);
+    canvas.drawCircle(center, radius * 0.75, ringPaint);
+    canvas.drawCircle(center, radius * 0.95, ringPaint);
+
+    // Eixos em Cruz Graduados
+    final axisPaint = Paint()
+      ..color = const Color(0xFF007D8A).withValues(alpha: 0.35)
       ..strokeWidth = 1.0;
+    canvas.drawLine(Offset(center.dx, 4), Offset(center.dx, size.height - 4), axisPaint);
+    canvas.drawLine(Offset(4, center.dy), Offset(size.width - 4, center.dy), axisPaint);
 
-    final borderPaint = Paint()
-      ..color = accentColor.withValues(alpha: 0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6;
-
-    // Borda Externa Metálica
-    canvas.drawCircle(center, maxRadius, borderPaint);
-
-    // 4 Círculos de Alcance Concêntricos
-    for (int i = 1; i <= 4; i++) {
-      final r = maxRadius * (i / 4.0);
-      canvas.drawCircle(center, r, gridPaint);
-    }
-
-    // Linhas em Cruz (Eixos N-S e L-O)
-    canvas.drawLine(
-      Offset(center.dx, 0),
-      Offset(center.dx, size.height),
-      gridPaint,
-    );
-    canvas.drawLine(
-      Offset(0, center.dy),
-      Offset(size.width, center.dy),
-      gridPaint,
-    );
-
-    // Eixos Diagonais Pontilhados (45° e 135°)
-    final diagPaint = Paint()
-      ..color = gridColor.withValues(alpha: 0.12)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
-
-    final cos45 = math.cos(math.pi / 4) * maxRadius;
-    final sin45 = math.sin(math.pi / 4) * maxRadius;
-
-    canvas.drawLine(
-      Offset(center.dx - cos45, center.dy - sin45),
-      Offset(center.dx + cos45, center.dy + sin45),
-      diagPaint,
-    );
-    canvas.drawLine(
-      Offset(center.dx - cos45, center.dy + sin45),
-      Offset(center.dx + cos45, center.dy - sin45),
-      diagPaint,
-    );
-
-    // Rótulos Cardeais (N, S, L, O)
-    _drawCardinalText(canvas, 'N', Offset(center.dx, 6));
-    _drawCardinalText(canvas, 'S', Offset(center.dx, size.height - 14));
-    _drawCardinalText(canvas, 'L', Offset(size.width - 10, center.dy - 5));
-    _drawCardinalText(canvas, 'O', Offset(4, center.dy - 5));
+    // Pontos Cardinais em Cinzel
+    _drawLabel(canvas, 'N', Offset(center.dx, 10), const Color(0xFF00A4B4));
+    _drawLabel(canvas, 'L', Offset(size.width - 12, center.dy), Colors.white54);
+    _drawLabel(canvas, 'S', Offset(center.dx, size.height - 12), Colors.white54);
+    _drawLabel(canvas, 'O', Offset(12, center.dy), Colors.white54);
   }
 
-  void _drawCardinalText(Canvas canvas, String text, Offset offset) {
-    final textPainter = TextPainter(
+  void _drawLabel(Canvas canvas, String text, Offset pos, Color color) {
+    final tp = TextPainter(
       text: TextSpan(
         text: text,
         style: GoogleFonts.cinzel(
-          color: accentColor.withValues(alpha: 0.7),
+          color: color,
           fontSize: 8.5,
           fontWeight: FontWeight.w800,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-
-    textPainter.paint(
-      canvas,
-      Offset(offset.dx - textPainter.width / 2, offset.dy),
-    );
+    tp.paint(canvas, Offset(pos.dx - tp.width / 2, pos.dy - tp.height / 2));
   }
 
   @override
-  bool shouldRepaint(covariant _RadarGridPainter oldDelegate) {
-    return oldDelegate.rangeMeters != rangeMeters ||
-        oldDelegate.gridColor != gridColor ||
-        oldDelegate.accentColor != accentColor;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// =============================================================================
+// PAINTER 2: FEIXE DINÂMICO E ECOS DOS ALVOS
+// =============================================================================
+class _RadarDynamicSweepPainter extends CustomPainter {
+  final double sweepValue;
+  final double pulseValue;
+  final double selectedRange;
+  final List<DecoyTarget> targets;
+  final Map<int, double> targetDistances;
+  final Map<int, double> targetBearings;
+  final double deviceHeading;
+  final int selectedIndex;
+
+  _RadarDynamicSweepPainter({
+    required this.sweepValue,
+    required this.pulseValue,
+    required this.selectedRange,
+    required this.targets,
+    required this.targetDistances,
+    required this.targetBearings,
+    required this.deviceHeading,
+    required this.selectedIndex,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+    final sweepAngleRad = sweepValue * 2 * math.pi;
+
+    // 1. Feixe de Varredura com Rastro Gradiente
+    final sweepPaint = Paint()
+      ..shader = SweepGradient(
+        colors: [
+          Colors.transparent,
+          const Color(0xFF00A4B4).withValues(alpha: 0.05),
+          const Color(0xFF00A4B4).withValues(alpha: 0.40),
+        ],
+        stops: const [0.0, 0.75, 1.0],
+        transform: GradientRotation(sweepAngleRad - math.pi / 2),
+      ).createShader(Rect.fromCircle(center: center, radius: radius))
+      ..style = PaintingStyle.fill;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius * 0.95),
+      0,
+      2 * math.pi,
+      true,
+      sweepPaint,
+    );
+
+    // Linha frontal do feixe
+    final sweepFrontX = center.dx + radius * 0.95 * math.cos(sweepAngleRad - math.pi / 2);
+    final sweepFrontY = center.dy + radius * 0.95 * math.sin(sweepAngleRad - math.pi / 2);
+    final linePaint = Paint()
+      ..color = const Color(0xFF00D2B4)
+      ..strokeWidth = 1.5;
+    canvas.drawLine(center, Offset(sweepFrontX, sweepFrontY), linePaint);
+
+    // 2. Renderização dos Ecos dos Alvos (Blips)
+    for (int i = 0; i < targets.length; i++) {
+      final dist = targetDistances[i] ?? 120.0;
+      final bearing = targetBearings[i] ?? 0.0;
+
+      final relativeAngle = (bearing - deviceHeading) * math.pi / 180.0;
+      final normDist = math.min(1.0, dist / selectedRange);
+      final blipRadius = normDist * (radius * 0.88);
+
+      final blipX = center.dx + blipRadius * math.cos(relativeAngle - math.pi / 2);
+      final blipY = center.dy + blipRadius * math.sin(relativeAngle - math.pi / 2);
+      final blipOffset = Offset(blipX, blipY);
+
+      final isSelected = i == selectedIndex;
+      final blipColor = isSelected ? const Color(0xFFF3A522) : const Color(0xFF00A4B4);
+
+      // Pulso luminoso do alvo
+      if (isSelected) {
+        final ripplePaint = Paint()
+          ..color = blipColor.withValues(alpha: 0.4 * (1.0 - pulseValue))
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5;
+        canvas.drawCircle(blipOffset, 6 + 10 * pulseValue, ripplePaint);
+      }
+
+      // Ponto do alvo
+      final dotPaint = Paint()..color = blipColor;
+      canvas.drawCircle(blipOffset, isSelected ? 5.5 : 4.0, dotPaint);
+
+      final corePaint = Paint()..color = Colors.white;
+      canvas.drawCircle(blipOffset, 2.0, corePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RadarDynamicSweepPainter oldDelegate) {
+    return oldDelegate.sweepValue != sweepValue ||
+        oldDelegate.pulseValue != pulseValue ||
+        oldDelegate.selectedRange != selectedRange ||
+        oldDelegate.selectedIndex != selectedIndex ||
+        oldDelegate.deviceHeading != deviceHeading;
   }
 }

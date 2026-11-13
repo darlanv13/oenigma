@@ -12,14 +12,18 @@ import 'package:oenigma/app_cliente/features/enigma/services/decoy_location_serv
 import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
-/// Bússola Dourada do Explorador: Estilo Indiana Jones / Tomb Raider com cores Vale.
+/// Bússola Dourada do Explorador: Relíquia em latão e obsidiana de alta performance.
+/// Otimizada para carregamento instantâneo no Web, Android e iOS.
 class CompassWidget extends StatefulWidget {
   final double targetLatitude;
   final double targetLongitude;
+  final double? destinationLongitude;
+  final double? destinationLatitude;
   final int durationSeconds;
   final VoidCallback onTimeUp;
   final Function(int) onTick;
   final bool isCompact;
+  final VoidCallback? onExpand;
   final List<DecoyTarget>? targets;
   final bool enableToolTimer;
 
@@ -27,12 +31,13 @@ class CompassWidget extends StatefulWidget {
     super.key,
     required this.targetLatitude,
     required this.targetLongitude,
-    double? destinationLongitude,
-    double? destinationLatitude,
+    this.destinationLongitude,
+    this.destinationLatitude,
     required this.durationSeconds,
     required this.onTimeUp,
     required this.onTick,
-    this.isCompact = false,
+    this.isCompact = true,
+    this.onExpand,
     this.targets,
     this.enableToolTimer = true,
   });
@@ -43,11 +48,13 @@ class CompassWidget extends StatefulWidget {
 
 class _CompassWidgetState extends State<CompassWidget>
     with SingleTickerProviderStateMixin {
-  late AnimationController _scannerController;
+  late final AnimationController _animController;
 
   double _currentHeading = 0.0;
+  double _manualHeadingOffset = 0.0;
+  bool _hasCompassSensor = true;
   Position? _currentPosition;
-  bool _hasPermissions = false;
+  bool _hasPermissions = true;
   StreamSubscription<Position>? _positionSubscription;
   StreamSubscription<CompassEvent>? _compassSubscription;
 
@@ -56,72 +63,74 @@ class _CompassWidgetState extends State<CompassWidget>
   bool _wasLockedOn = false;
   int _selectedTargetIndex = 0;
 
+  List<DecoyTarget> get _effectiveTargets {
+    if (widget.targets != null && widget.targets!.isNotEmpty) {
+      return widget.targets!;
+    }
+    return [
+      DecoyTarget(
+        index: 1,
+        label: 'Sinal 1',
+        latitude: widget.targetLatitude,
+        longitude: widget.targetLongitude,
+        isReal: true,
+      ),
+    ];
+  }
+
   @override
   void initState() {
     super.initState();
     _remainingSeconds = widget.durationSeconds;
 
-    // Controlador da rotação da agulha e pulso místico
-    _scannerController = AnimationController(
+    // Controlador para o pulso suave da bússola
+    _animController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2400),
     )..repeat();
 
-    _initSensors();
+    _initSensorsFast();
     _startTimer();
   }
 
   void _startTimer() {
-    if (!widget.enableToolTimer) return;
-    if (_remainingSeconds <= 0) return;
+    if (!widget.enableToolTimer || _remainingSeconds <= 0) return;
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted) {
-        setState(() {
-          _remainingSeconds--;
-          widget.onTick(_remainingSeconds);
-          if (_remainingSeconds <= 0) {
-            timer.cancel();
-            widget.onTimeUp();
-          }
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _remainingSeconds--;
+        widget.onTick(_remainingSeconds);
+        if (_remainingSeconds <= 0) {
+          timer.cancel();
+          widget.onTimeUp();
+        }
+      });
     });
   }
 
-  Future<void> _initSensors() async {
+  /// Inicialização ultra-rápida não bloqueante de geolocalização e sensores
+  Future<void> _initSensorsFast() async {
+    // 1. Tenta recuperar a última posição conhecida em milissegundos
+    try {
+      final lastKnown = await Geolocator.getLastKnownPosition();
+      if (lastKnown != null && mounted) {
+        setState(() => _currentPosition = lastKnown);
+      }
+    } catch (_) {}
+
+    // 2. Verifica permissão de forma assíncrona
     try {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.whileInUse ||
-          permission == LocationPermission.always) {
-        if (mounted) setState(() => _hasPermissions = true);
+      final hasPerm = permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always;
+      if (mounted) setState(() => _hasPermissions = hasPerm);
 
-        // Obter posição inicial imediatamente
-        try {
-          final pos = await Geolocator.getCurrentPosition(
-            locationSettings: LocationSettings(
-              accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
-              timeLimit: const Duration(seconds: 15),
-            ),
-          );
-          if (mounted) setState(() => _currentPosition = pos);
-        } catch (_) {
-          if (kIsWeb) {
-            try {
-              final pos = await Geolocator.getCurrentPosition(
-                locationSettings: const LocationSettings(
-                  accuracy: LocationAccuracy.low,
-                  timeLimit: Duration(seconds: 15),
-                ),
-              );
-              if (mounted) setState(() => _currentPosition = pos);
-            } catch (_) {}
-          }
-        }
-
+      if (hasPerm) {
+        // Stream de posição contínuo
         _positionSubscription?.cancel();
         _positionSubscription = Geolocator.getPositionStream(
           locationSettings: LocationSettings(
@@ -129,25 +138,33 @@ class _CompassWidgetState extends State<CompassWidget>
             distanceFilter: kIsWeb ? 0 : 1,
           ),
         ).listen(
-          (Position position) {
-            if (mounted) setState(() => _currentPosition = position);
+          (pos) {
+            if (mounted) setState(() => _currentPosition = pos);
           },
-          onError: (e) {
-            debugPrint("Compass GPS stream error: $e");
-          },
+          onError: (_) {},
         );
 
+        // Stream de orientação da bússola
         _compassSubscription?.cancel();
-        _compassSubscription = FlutterCompass.events?.listen((CompassEvent event) {
-          if (mounted && event.heading != null) {
-            setState(() => _currentHeading = event.heading!);
-          }
-        });
-      } else {
-        if (mounted) setState(() => _hasPermissions = false);
+        if (FlutterCompass.events != null) {
+          _compassSubscription = FlutterCompass.events!.listen(
+            (event) {
+              if (mounted && event.heading != null) {
+                setState(() {
+                  _hasCompassSensor = true;
+                  _currentHeading = event.heading!;
+                });
+              }
+            },
+            onError: (_) {
+              if (mounted) setState(() => _hasCompassSensor = false);
+            },
+          );
+        } else {
+          if (mounted) setState(() => _hasCompassSensor = false);
+        }
       }
-    } catch (e) {
-      debugPrint("Compass sensor init error: $e");
+    } catch (_) {
       if (mounted) setState(() => _hasPermissions = false);
     }
   }
@@ -156,7 +173,7 @@ class _CompassWidgetState extends State<CompassWidget>
   void dispose() {
     _positionSubscription?.cancel();
     _compassSubscription?.cancel();
-    _scannerController.dispose();
+    _animController.dispose();
     _countdownTimer?.cancel();
     super.dispose();
   }
@@ -169,129 +186,52 @@ class _CompassWidgetState extends State<CompassWidget>
 
   String _getCardinalDirection(double heading) {
     final normalized = (heading % 360 + 360) % 360;
-    if (normalized >= 337.5 || normalized < 22.5) return 'Norte (N)';
-    if (normalized >= 22.5 && normalized < 67.5) return 'Nordeste (NE)';
-    if (normalized >= 67.5 && normalized < 112.5) return 'Leste (L)';
-    if (normalized >= 112.5 && normalized < 157.5) return 'Sudeste (SE)';
-    if (normalized >= 157.5 && normalized < 202.5) return 'Sul (S)';
-    if (normalized >= 202.5 && normalized < 247.5) return 'Sudoeste (SO)';
-    if (normalized >= 247.5 && normalized < 292.5) return 'Oeste (O)';
-    return 'Noroeste (NO)';
+    if (normalized >= 337.5 || normalized < 22.5) return 'N (000°)';
+    if (normalized >= 22.5 && normalized < 67.5) return 'NE (045°)';
+    if (normalized >= 67.5 && normalized < 112.5) return 'L (090°)';
+    if (normalized >= 112.5 && normalized < 157.5) return 'SE (135°)';
+    if (normalized >= 157.5 && normalized < 202.5) return 'S (180°)';
+    if (normalized >= 202.5 && normalized < 247.5) return 'SO (225°)';
+    if (normalized >= 247.5 && normalized < 292.5) return 'O (270°)';
+    return 'NO (315°)';
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_hasPermissions) {
-      return Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.danger.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const FaIcon(FontAwesomeIcons.triangleExclamation, color: AppColors.danger, size: 28),
-            const SizedBox(height: 10),
-            Text(
-              'Permissão de Localização Necessária',
-              style: GoogleFonts.cinzel(
-                color: AppColors.danger,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              kIsWeb
-                  ? 'Autorize a localização no navegador para sincronizar a bússola com a relíquia.'
-                  : 'Ative o GPS para sincronizar a bússola dourada com a relíquia.',
-              style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 14),
-            ElevatedButton.icon(
-              onPressed: _initSensors,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.verdeVale,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              icon: const FaIcon(FontAwesomeIcons.locationCrosshairs, size: 14),
-              label: Text(
-                'AUTORIZAR LOCALIZAÇÃO',
-                style: GoogleFonts.cinzel(fontWeight: FontWeight.bold, fontSize: 12),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_currentPosition == null) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 36),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: AppColors.amareloVale),
-            const SizedBox(height: 16),
-            Text(
-              'SINTONIZANDO A BÚSSOLA DOURADA...',
-              style: GoogleFonts.cinzel(
-                color: AppColors.amareloVale,
-                fontSize: 12.5,
-                letterSpacing: 1.5,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final List<DecoyTarget> effectiveTargets = (widget.targets != null && widget.targets!.isNotEmpty)
-        ? widget.targets!
-        : [
-            DecoyTarget(
-              index: 1,
-              label: 'Sinal 1',
-              latitude: widget.targetLatitude,
-              longitude: widget.targetLongitude,
-              isReal: true,
-            ),
-          ];
-
+    final effectiveTargets = _effectiveTargets;
     if (_selectedTargetIndex >= effectiveTargets.length) {
       _selectedTargetIndex = 0;
     }
     final currentTarget = effectiveTargets[_selectedTargetIndex];
 
-    final double distance = Geolocator.distanceBetween(
-      _currentPosition!.latitude,
-      _currentPosition!.longitude,
-      currentTarget.latitude,
-      currentTarget.longitude,
-    );
+    // Cálculos de distância e azimute
+    double distance = 150.0;
+    double bearing = 0.0;
 
-    final double bearing = Geolocator.bearingBetween(
-      _currentPosition!.latitude,
-      _currentPosition!.longitude,
-      currentTarget.latitude,
-      currentTarget.longitude,
-    );
+    if (_currentPosition != null) {
+      distance = Geolocator.distanceBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        currentTarget.latitude,
+        currentTarget.longitude,
+      );
+      bearing = Geolocator.bearingBetween(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+        currentTarget.latitude,
+        currentTarget.longitude,
+      );
+    }
 
-    final double targetAngle = (bearing - _currentHeading) * (math.pi / 180);
+    final effectiveHeading = (_currentHeading + _manualHeadingOffset) % 360;
+    final double targetAngle = (bearing - effectiveHeading) * (math.pi / 180);
 
-    // Diferença angular (-180 a +180) para detecção de alinhamento
-    double diffDegrees = (bearing - _currentHeading) % 360;
+    // Detecção de Lock-on (alinhamento em ±15°)
+    double diffDegrees = (bearing - effectiveHeading) % 360;
     if (diffDegrees > 180) diffDegrees -= 360;
     if (diffDegrees < -180) diffDegrees += 360;
     final bool isLockedOn = diffDegrees.abs() <= 15.0;
 
-    // Efeito tátil e sonoro quando o explorador aponta exatamente para a relíquia
     if (isLockedOn && !_wasLockedOn) {
       _wasLockedOn = true;
       HapticFeedback.selectionClick();
@@ -300,316 +240,501 @@ class _CompassWidgetState extends State<CompassWidget>
       _wasLockedOn = false;
     }
 
-    final double compassSize = widget.isCompact ? 200.0 : 255.0;
+    // Altura padrão unificada entre todas as ferramentas
+    final double frameHeight = widget.isCompact ? 390.0 : 540.0;
+    final double compassDialSize = widget.isCompact ? 210.0 : 280.0;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Top HUD da Bússola: Ampulheta de Tempo & Azimute
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+    return Container(
+      height: frameHeight,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFF131D24),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isLockedOn
+              ? const Color(0xFFF3A522)
+              : const Color(0xFF1E3A45),
+          width: isLockedOn ? 1.6 : 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isLockedOn ? const Color(0xFFF3A522) : Colors.black)
+                .withValues(alpha: isLockedOn ? 0.25 : 0.4),
+            blurRadius: isLockedOn ? 18 : 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
           children: [
-            if (widget.durationSeconds > 0)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                margin: const EdgeInsets.only(right: 8, bottom: 10),
+            // Brilho dourado de fundo sutil
+            Positioned(
+              top: -40,
+              right: -40,
+              child: Container(
+                width: 160,
+                height: 160,
                 decoration: BoxDecoration(
-                  color: AppColors.amareloVale.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.6), width: 1.2),
+                  shape: BoxShape.circle,
+                  color: isLockedOn
+                      ? const Color(0xFFF3A522).withValues(alpha: 0.12)
+                      : const Color(0xFF007D8A).withValues(alpha: 0.08),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    FaIcon(
-                      widget.enableToolTimer
-                          ? FontAwesomeIcons.hourglassHalf
-                          : FontAwesomeIcons.infinity,
-                      color: AppColors.amareloVale,
-                      size: 12,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      widget.enableToolTimer
-                          ? _formatTime(_remainingSeconds)
-                          : 'ILIMITADO',
-                      style: GoogleFonts.cinzel(
-                        color: AppColors.amareloVale,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
+              ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // 1. HUD SUPERIOR UNIFICADO (Título + Timer + Botão Expandir)
+                  _buildHeaderHud(isLockedOn),
+
+                  // 2. SELETOR DE ALVOS (Sinais 1 a 5)
+                  if (effectiveTargets.length > 1)
+                    _buildTargetSelector(effectiveTargets, distance)
+                  else
+                    const SizedBox(height: 4),
+
+                  // 3. MOSTRADOR CENTRAL DA BÚSSOLA (Interativo com suporte Web)
+                  Expanded(
+                    child: Center(
+                      child: GestureDetector(
+                        onHorizontalDragUpdate: (details) {
+                          // Permite girar o mostrador manualmente no Web se não houver bússola
+                          if (kIsWeb || !_hasCompassSensor) {
+                            setState(() {
+                              _manualHeadingOffset =
+                                  (_manualHeadingOffset + details.delta.dx * 0.5) % 360;
+                            });
+                          }
+                        },
+                        child: Container(
+                          width: compassDialSize,
+                          height: compassDialSize,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFF0C1318),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (isLockedOn
+                                        ? const Color(0xFFF3A522)
+                                        : Colors.black)
+                                    .withValues(alpha: isLockedOn ? 0.4 : 0.6),
+                                blurRadius: isLockedOn ? 20 : 12,
+                              ),
+                            ],
+                            border: Border.all(
+                              color: isLockedOn
+                                  ? const Color(0xFFF3A522)
+                                  : const Color(0xFF8C7335).withValues(alpha: 0.7),
+                              width: isLockedOn ? 3.5 : 2.5,
+                            ),
+                          ),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Mostrador estático de fundo (cacheado para 60fps no Web)
+                              RepaintBoundary(
+                                child: CustomPaint(
+                                  size: Size(compassDialSize, compassDialSize),
+                                  painter: const _AntiqueCompassDialPainter(),
+                                ),
+                              ),
+                              // Agulha e indicador dinâmicos
+                              AnimatedBuilder(
+                                animation: _animController,
+                                builder: (context, _) {
+                                  return CustomPaint(
+                                    size: Size(compassDialSize, compassDialSize),
+                                    painter: _CompassNeedlePainter(
+                                      targetAngle: targetAngle,
+                                      distance: distance,
+                                      isLockedOn: isLockedOn,
+                                      pulseValue: _animController.value,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              margin: const EdgeInsets.only(bottom: 10),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.4)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const FaIcon(FontAwesomeIcons.compass, color: AppColors.verdeVale, size: 12),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${_currentHeading.toInt()}° ${_getCardinalDirection(_currentHeading)}',
-                    style: GoogleFonts.cinzel(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
                   ),
+
+                  // 4. TELEMETRIA INFERIOR UNIFICADA (Distância, Azimute, Lock-on)
+                  _buildFooterTelemetry(distance, diffDegrees, isLockedOn),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
 
-        // Seletor de Anomalia Magnética (4 fake + 1 real no raio de 300m)
-        if (effectiveTargets.length > 1) ...[
-          Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0C1417),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.amareloVale.withValues(alpha: 0.4),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: const FaIcon(FontAwesomeIcons.chevronLeft, size: 10, color: AppColors.amareloVale),
-                  onPressed: _selectedTargetIndex > 0
-                      ? () {
-                          HapticFeedback.selectionClick();
-                          setState(() => _selectedTargetIndex--);
-                        }
-                      : null,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'SINAL ${_selectedTargetIndex + 1} DE ${effectiveTargets.length} (${distance.toInt()}m)',
-                  style: GoogleFonts.cinzel(
-                    color: AppColors.amareloVale,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: const FaIcon(FontAwesomeIcons.chevronRight, size: 10, color: AppColors.amareloVale),
-                  onPressed: _selectedTargetIndex < effectiveTargets.length - 1
-                      ? () {
-                          HapticFeedback.selectionClick();
-                          setState(() => _selectedTargetIndex++);
-                        }
-                      : null,
-                ),
-              ],
-            ),
-          ),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 4,
-            runSpacing: 4,
-            children: List.generate(effectiveTargets.length, (idx) {
-              final isSel = idx == _selectedTargetIndex;
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _selectedTargetIndex = idx);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                  decoration: BoxDecoration(
-                    color: isSel ? AppColors.amareloVale : Colors.white.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isSel ? AppColors.amareloVale : Colors.white12,
-                    ),
-                  ),
-                  child: Text(
-                    'Sinal ${idx + 1}',
-                    style: GoogleFonts.cinzel(
-                      color: isSel ? Colors.black : Colors.white70,
-                      fontSize: 8.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 8),
-        ],
-
-        // Mostrador da Bússola Dourada em Latão e Obsidiana
-        Center(
-          child: Container(
-            width: compassSize,
-            height: compassSize,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.darkCardColor,
-              boxShadow: [
-                BoxShadow(
-                  color: isLockedOn
-                      ? AppColors.amareloVale.withValues(alpha: 0.45)
-                      : Colors.black.withValues(alpha: 0.7),
-                  blurRadius: isLockedOn ? 24 : 14,
-                  spreadRadius: isLockedOn ? 2 : 0,
-                  offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: (isLockedOn ? AppColors.amareloVale : AppColors.verdeVale).withValues(alpha: 0.2),
-                  blurRadius: 4,
-                  offset: const Offset(-2, -2),
-                ),
-              ],
-              border: Border.all(
-                color: isLockedOn ? AppColors.amareloVale : AppColors.verdeValeDark,
-                width: isLockedOn ? 5 : 4,
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: ClipOval(
-                child: AnimatedBuilder(
-                  animation: _scannerController,
-                  builder: (context, child) {
-                    return CustomPaint(
-                      painter: ExpeditionCompassPainter(
-                        scannerAngle: _scannerController.value * 2 * math.pi,
-                        targetAngle: targetAngle,
-                        distance: distance,
-                        isLockedOn: isLockedOn,
-                      ),
-                    );
-                  },
+  // ===========================================================================
+  // 1. HEADER HUD
+  // ===========================================================================
+  Widget _buildHeaderHud(bool isLockedOn) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Título do Instrumento
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: const Color(0xFF281F08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFFF3A522).withValues(alpha: 0.5),
+                  width: 1,
                 ),
               ),
+              child: const FaIcon(
+                FontAwesomeIcons.compass,
+                color: Color(0xFFF3A522),
+                size: 11,
+              ),
             ),
-          ),
+            const SizedBox(width: 8),
+            Text(
+              'BÚSSOLA DOURADA',
+              style: GoogleFonts.cinzel(
+                color: Colors.white,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ],
         ),
 
-        const SizedBox(height: 14),
-
-        // Barra de Orientação do Explorador
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        // Centro: Timer da Ferramenta
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
           decoration: BoxDecoration(
-            color: isLockedOn
-                ? AppColors.amareloVale.withValues(alpha: 0.18)
-                : Colors.black.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(16),
+            color: const Color(0xFF1E1708),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isLockedOn ? AppColors.amareloVale : Colors.white24,
-              width: isLockedOn ? 1.5 : 1,
+              color: const Color(0xFFF3A522).withValues(alpha: 0.4),
+              width: 1,
             ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            children: [
+              FaIcon(
+                widget.enableToolTimer
+                    ? FontAwesomeIcons.hourglassHalf
+                    : FontAwesomeIcons.infinity,
+                color: const Color(0xFFF3A522),
+                size: 9.5,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                widget.enableToolTimer
+                    ? _formatTime(_remainingSeconds)
+                    : 'ILIMITADO',
+                style: GoogleFonts.orbitron(
+                  color: const Color(0xFFF3A522),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Botão Expandir no canto direito
+        if (widget.onExpand != null)
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              SoundService.playClick();
+              widget.onExpand!();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF18252E),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: const Color(0xFF1E3A45),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const FaIcon(
+                    FontAwesomeIcons.expand,
+                    color: Color(0xFF00A4B4),
+                    size: 10,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'EXPANDIR',
+                    style: GoogleFonts.cinzel(
+                      color: const Color(0xFF00A4B4),
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          const SizedBox(width: 20),
+      ],
+    );
+  }
+
+  // ===========================================================================
+  // 2. SELETOR DE ALVOS (SINAIS 1 A 5)
+  // ===========================================================================
+  Widget _buildTargetSelector(List<DecoyTarget> targets, double currentDist) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(targets.length, (idx) {
+          final isSel = idx == _selectedTargetIndex;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                SoundService.playClick();
+                setState(() => _selectedTargetIndex = idx);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: isSel ? const Color(0xFFF3A522) : const Color(0xFF0C1417),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSel
+                        ? const Color(0xFFF3A522)
+                        : Colors.white.withValues(alpha: 0.15),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FaIcon(
+                      FontAwesomeIcons.radio,
+                      size: 8.5,
+                      color: isSel ? Colors.black : const Color(0xFFF3A522),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Sinal ${idx + 1}',
+                      style: GoogleFonts.cinzel(
+                        color: isSel ? Colors.black : Colors.white70,
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // 4. FOOTER TELEMETRIA
+  // ===========================================================================
+  Widget _buildFooterTelemetry(double distance, double diffDegrees, bool isLockedOn) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0C1417),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isLockedOn
+              ? const Color(0xFFF3A522)
+              : const Color(0xFF1E3A45),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Distância em Orbitron
+          Row(
+            children: [
+              FaIcon(
+                FontAwesomeIcons.locationCrosshairs,
+                color: isLockedOn ? const Color(0xFFF3A522) : const Color(0xFF00A4B4),
+                size: 11,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${distance.toInt()} M',
+                style: GoogleFonts.orbitron(
+                  color: isLockedOn ? const Color(0xFFF3A522) : Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+
+          // Status de Alinhamento
+          Row(
             children: [
               FaIcon(
                 isLockedOn
                     ? FontAwesomeIcons.bullseye
-                    : (diffDegrees > 0 ? FontAwesomeIcons.arrowRight : FontAwesomeIcons.arrowLeft),
-                color: isLockedOn ? AppColors.amareloVale : AppColors.verdeVale,
-                size: 14,
+                    : (diffDegrees > 0
+                        ? FontAwesomeIcons.arrowRight
+                        : FontAwesomeIcons.arrowLeft),
+                color: isLockedOn ? const Color(0xFFF3A522) : AppColors.cinzaMedio,
+                size: 10,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 5),
               Text(
                 isLockedOn
-                    ? '🧭 ALINHADO COM A RELÍQUIA • AVANCE NESTA DIREÇÃO!'
+                    ? 'ALINHADO'
                     : (diffDegrees > 0
-                        ? 'GIRE PARA A DIREITA (${diffDegrees.toInt()}°)'
-                        : 'GIRE PARA A ESQUERDA (${(-diffDegrees).toInt()}°)'),
+                        ? 'GIRE DIREITA (${diffDegrees.toInt()}°)'
+                        : 'GIRE ESQUERDA (${(-diffDegrees).toInt()}°)'),
                 style: GoogleFonts.cinzel(
-                  color: isLockedOn ? AppColors.amareloVale : Colors.white,
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.6,
+                  color: isLockedOn ? const Color(0xFFF3A522) : Colors.white70,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
           ),
-        ),
 
-        const SizedBox(height: 12),
-
-        // Medidor Rúnico de Distância
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.8),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isLockedOn ? AppColors.amareloVale : AppColors.verdeVale,
-              width: 1.5,
+          // Azimute Cardeal
+          Text(
+            _getCardinalDirection(_currentHeading + _manualHeadingOffset),
+            style: GoogleFonts.orbitron(
+              color: AppColors.cinzaMedio,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: (isLockedOn ? AppColors.amareloVale : AppColors.verdeVale)
-                    .withValues(alpha: 0.3),
-                blurRadius: 10,
-              ),
-            ],
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FaIcon(
-                FontAwesomeIcons.locationArrow,
-                color: isLockedOn ? AppColors.amareloVale : AppColors.verdeVale,
-                size: 14,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                '${distance.toStringAsFixed(0)} METROS',
-                style: GoogleFonts.cinzel(
-                  color: isLockedOn ? AppColors.amareloVale : AppColors.verdeVale,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-// ---------------------------------------------------------
-// CUSTOM PAINTER - Rosa dos Ventos da Expedição Antiga
-// ---------------------------------------------------------
-class ExpeditionCompassPainter extends CustomPainter {
-  final double scannerAngle;
+// =============================================================================
+// PAINTER 1: MOSTRADOR ESTÁTICO DE LATÃO DA EXPEDIÇÃO (CACHEADO)
+// =============================================================================
+class _AntiqueCompassDialPainter extends CustomPainter {
+  const _AntiqueCompassDialPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    // Fundo Gradiente Obsidiana
+    final bgPaint = Paint()
+      ..shader = const RadialGradient(
+        colors: [Color(0xFF131D24), Color(0xFF080C0E)],
+      ).createShader(Rect.fromCircle(center: center, radius: radius));
+    canvas.drawCircle(center, radius, bgPaint);
+
+    // Anéis Concêntricos em Latão Envelhecido
+    final ringPaint = Paint()
+      ..color = const Color(0xFF8C7335).withValues(alpha: 0.35)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(center, radius * 0.94, ringPaint);
+    canvas.drawCircle(center, radius * 0.72, ringPaint);
+    canvas.drawCircle(center, radius * 0.40, ringPaint);
+
+    // Eixos Cardinais Sutis
+    final axisPaint = Paint()
+      ..color = const Color(0xFF8C7335).withValues(alpha: 0.25)
+      ..strokeWidth = 1.0;
+    canvas.drawLine(Offset(center.dx, radius * 0.1), Offset(center.dx, size.height - radius * 0.1), axisPaint);
+    canvas.drawLine(Offset(radius * 0.1, center.dy), Offset(size.width - radius * 0.1, center.dy), axisPaint);
+
+    // Traços de Graus a cada 30°
+    final tickPaint = Paint()
+      ..color = const Color(0xFFF3A522).withValues(alpha: 0.5)
+      ..strokeWidth = 1.5;
+
+    for (int deg = 0; deg < 360; deg += 30) {
+      final rad = deg * math.pi / 180;
+      final outerX = center.dx + radius * 0.92 * math.cos(rad);
+      final outerY = center.dy + radius * 0.92 * math.sin(rad);
+      final innerX = center.dx + radius * 0.84 * math.cos(rad);
+      final innerY = center.dy + radius * 0.84 * math.sin(rad);
+      canvas.drawLine(Offset(innerX, innerY), Offset(outerX, outerY), tickPaint);
+    }
+
+    // Marcações Cardinais (N, L, S, O)
+    _drawCardinal(canvas, center, 'N', 0, radius * 0.77, const Color(0xFFF3A522), true);
+    _drawCardinal(canvas, center, 'L', 90, radius * 0.77, Colors.white70, false);
+    _drawCardinal(canvas, center, 'S', 180, radius * 0.77, Colors.white70, false);
+    _drawCardinal(canvas, center, 'O', 270, radius * 0.77, Colors.white70, false);
+  }
+
+  void _drawCardinal(Canvas canvas, Offset center, String text, double angleDeg,
+      double dist, Color color, bool isNorth) {
+    final rad = (angleDeg - 90) * math.pi / 180;
+    final x = center.dx + dist * math.cos(rad);
+    final y = center.dy + dist * math.sin(rad);
+
+    final tp = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: GoogleFonts.cinzel(
+          color: color,
+          fontSize: isNorth ? 11 : 9,
+          fontWeight: isNorth ? FontWeight.w900 : FontWeight.w700,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    tp.paint(canvas, Offset(x - tp.width / 2, y - tp.height / 2));
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// =============================================================================
+// PAINTER 2: AGULHA DOURADA E ALVO DINÂMICO
+// =============================================================================
+class _CompassNeedlePainter extends CustomPainter {
   final double targetAngle;
   final double distance;
   final bool isLockedOn;
+  final double pulseValue;
 
-  ExpeditionCompassPainter({
-    required this.scannerAngle,
+  _CompassNeedlePainter({
     required this.targetAngle,
     required this.distance,
-    this.isLockedOn = false,
+    required this.isLockedOn,
+    required this.pulseValue,
   });
 
   @override
@@ -617,126 +742,94 @@ class ExpeditionCompassPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    // 1. Fundo de Obsidiana e Latão
-    final bgPaint = Paint()
-      ..shader = RadialGradient(
-        colors: isLockedOn
-            ? const [Color(0xFF28200E), Color(0xFF100C05)]
-            : const [Color(0xFF0F2023), Color(0xFF071012)],
-        stops: const [0.2, 1.0],
-      ).createShader(Rect.fromCircle(center: center, radius: radius));
-    canvas.drawCircle(center, radius, bgPaint);
+    // 1. Posição da Relíquia Sagrada
+    const double maxRange = 350.0;
+    final double displayRadius = distance > maxRange
+        ? radius * 0.72
+        : math.max(radius * 0.25, (distance / maxRange) * (radius * 0.70));
 
-    // 2. Círculos da Rosa dos Ventos & Marcações Antigas
-    final dialPaint = Paint()
-      ..color = (isLockedOn ? AppColors.amareloVale : AppColors.verdeVale).withValues(alpha: 0.28)
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawCircle(center, radius * 0.35, dialPaint);
-    canvas.drawCircle(center, radius * 0.70, dialPaint);
-    canvas.drawCircle(center, radius * 0.94, dialPaint);
-
-    // Linhas Cardinais (Cruzeta da Rosa dos Ventos)
-    final crossPaint = Paint()
-      ..color = (isLockedOn ? AppColors.amareloVale : AppColors.verdeVale).withValues(alpha: 0.35)
-      ..strokeWidth = 1.4;
-    canvas.drawLine(Offset(center.dx, radius * 0.1), Offset(center.dx, size.height - radius * 0.1), crossPaint);
-    canvas.drawLine(Offset(radius * 0.1, center.dy), Offset(size.width - radius * 0.1, center.dy), crossPaint);
-
-    // Letra N (Norte) no topo
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: 'N',
-        style: GoogleFonts.cinzel(
-          color: AppColors.amareloVale,
-          fontSize: 11,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    textPainter.paint(canvas, Offset(center.dx - textPainter.width / 2, 6));
-
-    // 3. Posição da Relíquia Sagrada (Target Gem)
-    const double maxRadarRange = 400.0;
-    final double displayRadius = distance > maxRadarRange
-        ? radius * 0.85
-        : (distance / maxRadarRange) * (radius * 0.82);
-
-    final double targetX = center.dx + displayRadius * math.cos(targetAngle - math.pi / 2);
-    final double targetY = center.dy + displayRadius * math.sin(targetAngle - math.pi / 2);
+    final targetX = center.dx + displayRadius * math.cos(targetAngle - math.pi / 2);
+    final targetY = center.dy + displayRadius * math.sin(targetAngle - math.pi / 2);
     final targetOffset = Offset(targetX, targetY);
 
-    // Feixe Místico se estiver Alinhado (Lock-On)
+    // Linha de Trava Mística
     if (isLockedOn) {
-      final lockBeamPaint = Paint()
-        ..color = AppColors.amareloVale.withValues(alpha: 0.4)
-        ..strokeWidth = 2.0
-        ..style = PaintingStyle.stroke;
-      canvas.drawLine(center, targetOffset, lockBeamPaint);
+      final beamPaint = Paint()
+        ..color = const Color(0xFFF3A522).withValues(alpha: 0.35 + 0.15 * math.sin(pulseValue * math.pi * 2))
+        ..strokeWidth = 2.0;
+      canvas.drawLine(center, targetOffset, beamPaint);
 
       final lockRingPaint = Paint()
-        ..color = AppColors.amareloVale
-        ..strokeWidth = 1.8
+        ..color = const Color(0xFFF3A522).withValues(alpha: 0.8)
+        ..strokeWidth = 1.5
         ..style = PaintingStyle.stroke;
-      canvas.drawCircle(targetOffset, 16, lockRingPaint);
+      canvas.drawCircle(targetOffset, 14 + 3 * pulseValue, lockRingPaint);
     }
 
-    // Glow e Gema Sagrada da Relíquia
+    // Gema da Relíquia
     final glowPaint = Paint()
-      ..color = AppColors.amareloVale.withValues(alpha: 0.6)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-    canvas.drawCircle(targetOffset, 12, glowPaint);
+      ..color = const Color(0xFFF3A522).withValues(alpha: 0.5)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawCircle(targetOffset, 10, glowPaint);
 
-    final dotPaint = Paint()..color = isLockedOn ? AppColors.amareloVale : const Color(0xFFFFD700);
-    canvas.drawCircle(targetOffset, 7, dotPaint);
+    final gemPaint = Paint()..color = const Color(0xFFF3A522);
+    canvas.drawCircle(targetOffset, 6, gemPaint);
 
-    final centerDotPaint = Paint()..color = Colors.white;
-    canvas.drawCircle(targetOffset, 2.5, centerDotPaint);
+    final gemCore = Paint()..color = Colors.white;
+    canvas.drawCircle(targetOffset, 2.5, gemCore);
 
-    // 4. Pulso da Tocha / Varredura da Bússola
-    final sweepPaint = Paint()
-      ..shader = SweepGradient(
-        colors: [
-          Colors.transparent,
-          (isLockedOn ? AppColors.amareloVale : AppColors.verdeVale).withValues(alpha: 0.04),
-          (isLockedOn ? AppColors.amareloVale : AppColors.verdeVale).withValues(alpha: 0.35),
-        ],
-        stops: const [0.0, 0.75, 1.0],
-        transform: GradientRotation(scannerAngle - math.pi / 2),
-      ).createShader(Rect.fromCircle(center: center, radius: radius))
-      ..style = PaintingStyle.fill;
+    // 2. Agulha Ornada de Navegação
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(targetAngle);
 
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      0,
-      2 * math.pi,
-      true,
-      sweepPaint,
-    );
+    // Ponta Norte (Dourada)
+    final northPath = Path()
+      ..moveTo(0, -radius * 0.65)
+      ..lineTo(radius * 0.08, 0)
+      ..lineTo(0, -radius * 0.10)
+      ..close();
 
-    // 5. Agulha Central do Explorador
-    final needlePaint = Paint()
-      ..color = AppColors.amareloVale
-      ..style = PaintingStyle.fill;
+    final northPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFFFA726), Color(0xFFF57C00)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ).createShader(Rect.fromLTWH(-10, -radius * 0.65, 20, radius * 0.65));
+    canvas.drawPath(northPath, northPaint);
 
-    final needlePath = Path();
-    needlePath.moveTo(center.dx, center.dy - 14);
-    needlePath.lineTo(center.dx - 7, center.dy + 8);
-    needlePath.lineTo(center.dx, center.dy + 4);
-    needlePath.lineTo(center.dx + 7, center.dy + 8);
-    needlePath.close();
+    final northPathLeft = Path()
+      ..moveTo(0, -radius * 0.65)
+      ..lineTo(-radius * 0.08, 0)
+      ..lineTo(0, -radius * 0.10)
+      ..close();
+    final northLeftPaint = Paint()..color = const Color(0xFFD48B10);
+    canvas.drawPath(northPathLeft, northLeftPaint);
 
-    canvas.drawShadow(needlePath, Colors.black, 4, true);
-    canvas.drawPath(needlePath, needlePaint);
+    // Ponta Sul (Aço Escuro)
+    final southPath = Path()
+      ..moveTo(0, radius * 0.45)
+      ..lineTo(radius * 0.07, 0)
+      ..lineTo(-radius * 0.07, 0)
+      ..close();
+    final southPaint = Paint()..color = const Color(0xFF324755);
+    canvas.drawPath(southPath, southPaint);
+
+    // Gema Central da Bússola
+    final pivotOuter = Paint()..color = const Color(0xFF8C7335);
+    canvas.drawCircle(Offset.zero, 8, pivotOuter);
+
+    final pivotCore = Paint()..color = const Color(0xFFF3A522);
+    canvas.drawCircle(Offset.zero, 4.5, pivotCore);
+
+    canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant ExpeditionCompassPainter oldDelegate) {
-    return oldDelegate.scannerAngle != scannerAngle ||
-        oldDelegate.targetAngle != targetAngle ||
+  bool shouldRepaint(covariant _CompassNeedlePainter oldDelegate) {
+    return oldDelegate.targetAngle != targetAngle ||
         oldDelegate.distance != distance ||
-        oldDelegate.isLockedOn != isLockedOn;
+        oldDelegate.isLockedOn != isLockedOn ||
+        oldDelegate.pulseValue != pulseValue;
   }
 }

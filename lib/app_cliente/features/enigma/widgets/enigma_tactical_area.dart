@@ -616,49 +616,27 @@ class EnigmaTacticalArea extends StatelessWidget {
       );
     }
 
-    return Column(
-      children: [
-        CompassWidget(
-          targetLatitude: targetLat,
-          targetLongitude: targetLng,
-          destinationLongitude: targetLng,
-          destinationLatitude: targetLat,
-          durationSeconds: controller.compassRemainingSeconds,
-          targets: controller.targets,
-          enableToolTimer: controller.enableToolTimer,
-          isCompact: true,
-          onTick: controller.updateCompassRemainingSeconds,
-          onTimeUp: () => controller.onCompassTimeUp(context),
-        ),
-        const SizedBox(height: 10),
-        OutlinedButton.icon(
-          onPressed: () => EnigmaDialogs.openCompassExpanded(
-            context,
-            latitude: targetLat,
-            longitude: targetLng,
-            durationSeconds: controller.compassRemainingSeconds,
-            targets: controller.targets,
-            enableToolTimer: controller.enableToolTimer,
-            onTick: controller.updateCompassRemainingSeconds,
-            onTimeUp: () => controller.onCompassTimeUp(context),
-          ),
-          icon: const FaIcon(FontAwesomeIcons.upRightAndDownLeftFromCenter, size: 10),
-          label: Text(
-            'EXPANDIR BÚSSOLA',
-            style: GoogleFonts.cinzel(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.8,
-            ),
-          ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.amareloVale,
-            side: BorderSide(color: AppColors.amareloVale.withValues(alpha: 0.5), width: 1.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          ),
-        ),
-      ],
+    return CompassWidget(
+      targetLatitude: targetLat,
+      targetLongitude: targetLng,
+      destinationLongitude: targetLng,
+      destinationLatitude: targetLat,
+      durationSeconds: controller.compassRemainingSeconds,
+      targets: controller.targets,
+      enableToolTimer: controller.enableToolTimer,
+      isCompact: true,
+      onTick: controller.updateCompassRemainingSeconds,
+      onTimeUp: () => controller.onCompassTimeUp(context),
+      onExpand: () => EnigmaDialogs.openCompassExpanded(
+        context,
+        latitude: targetLat,
+        longitude: targetLng,
+        durationSeconds: controller.compassRemainingSeconds,
+        targets: controller.targets,
+        enableToolTimer: controller.enableToolTimer,
+        onTick: controller.updateCompassRemainingSeconds,
+        onTimeUp: () => controller.onCompassTimeUp(context),
+      ),
     );
   }
 
@@ -686,7 +664,7 @@ class EnigmaTacticalArea extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Utilize a aba Lente QR para validar este enigma.',
-              style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11),
+              style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 11),
               textAlign: TextAlign.center,
             ),
           ],
@@ -708,60 +686,27 @@ class EnigmaTacticalArea extends StatelessWidget {
       );
     }
 
-    return Column(
-      children: [
-        RadarWidget(
-          targetLatitude: targetLat,
-          targetLongitude: targetLng,
-          initialDistance: controller.distance,
-          targets: controller.targets,
-          remainingSeconds: controller.radarRemainingSeconds,
-          enableToolTimer: controller.enableToolTimer,
-          onTick: controller.updateRadarRemainingSeconds,
-          onTimeUp: () => controller.onRadarTimeUp(context),
-          isCompact: true,
-          onExpand: () => EnigmaDialogs.openRadarExpanded(
-            context,
-            latitude: targetLat,
-            longitude: targetLng,
-            initialDistance: controller.distance,
-            targets: controller.targets,
-            remainingSeconds: controller.radarRemainingSeconds,
-            enableToolTimer: controller.enableToolTimer,
-            onTick: controller.updateRadarRemainingSeconds,
-            onTimeUp: () => controller.onRadarTimeUp(context),
-          ),
-        ),
-        const SizedBox(height: 10),
-        OutlinedButton.icon(
-          onPressed: () => EnigmaDialogs.openRadarExpanded(
-            context,
-            latitude: targetLat,
-            longitude: targetLng,
-            initialDistance: controller.distance,
-            targets: controller.targets,
-            remainingSeconds: controller.radarRemainingSeconds,
-            enableToolTimer: controller.enableToolTimer,
-            onTick: controller.updateRadarRemainingSeconds,
-            onTimeUp: () => controller.onRadarTimeUp(context),
-          ),
-          icon: const FaIcon(FontAwesomeIcons.upRightAndDownLeftFromCenter, size: 10),
-          label: Text(
-            'EXPANDIR RADAR',
-            style: GoogleFonts.cinzel(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.8,
-            ),
-          ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.verdeVale,
-            side: BorderSide(color: AppColors.verdeVale.withValues(alpha: 0.5), width: 1.0),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          ),
-        ),
-      ],
+    return RadarWidget(
+      targetLatitude: targetLat,
+      targetLongitude: targetLng,
+      initialDistance: controller.distance,
+      targets: controller.targets,
+      remainingSeconds: controller.radarRemainingSeconds,
+      enableToolTimer: controller.enableToolTimer,
+      onTick: controller.updateRadarRemainingSeconds,
+      onTimeUp: () => controller.onRadarTimeUp(context),
+      isCompact: true,
+      onExpand: () => EnigmaDialogs.openRadarExpanded(
+        context,
+        latitude: targetLat,
+        longitude: targetLng,
+        initialDistance: controller.distance,
+        targets: controller.targets,
+        remainingSeconds: controller.radarRemainingSeconds,
+        enableToolTimer: controller.enableToolTimer,
+        onTick: controller.updateRadarRemainingSeconds,
+        onTimeUp: () => controller.onRadarTimeUp(context),
+      ),
     );
   }
 
@@ -789,7 +734,7 @@ class EnigmaTacticalArea extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Utilize a aba Lente QR para validar este enigma.',
-              style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11),
+              style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 11),
               textAlign: TextAlign.center,
             ),
           ],
@@ -811,23 +756,20 @@ class EnigmaTacticalArea extends StatelessWidget {
       );
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: MapRadiusWidget(
-        destinationLatitude: targetLat,
-        destinationLongitude: targetLng,
+    return MapRadiusWidget(
+      destinationLatitude: targetLat,
+      destinationLongitude: targetLng,
+      targets: controller.targets,
+      remainingSeconds: controller.mapRemainingSeconds,
+      enableToolTimer: controller.enableToolTimer,
+      isCompact: true,
+      onExpand: () => EnigmaDialogs.openMapExpanded(
+        context,
+        latitude: targetLat,
+        longitude: targetLng,
         targets: controller.targets,
         remainingSeconds: controller.mapRemainingSeconds,
         enableToolTimer: controller.enableToolTimer,
-        isCompact: true,
-        onExpand: () => EnigmaDialogs.openMapExpanded(
-          context,
-          latitude: targetLat,
-          longitude: targetLng,
-          targets: controller.targets,
-          remainingSeconds: controller.mapRemainingSeconds,
-          enableToolTimer: controller.enableToolTimer,
-        ),
       ),
     );
   }
