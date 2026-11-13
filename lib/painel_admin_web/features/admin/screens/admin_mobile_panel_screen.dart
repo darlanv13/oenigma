@@ -47,6 +47,9 @@ class _AdminMobilePanelScreenState
             icon: const FaIcon(FontAwesomeIcons.rightFromBracket),
             onPressed: () async {
               await ref.read(authRepositoryProvider).signOut();
+              if (context.mounted && Navigator.of(context).canPop()) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
             },
             tooltip: 'Sair do Painel',
           ),

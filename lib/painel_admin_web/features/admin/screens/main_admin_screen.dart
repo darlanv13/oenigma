@@ -206,7 +206,46 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
       builder: (context, ref, child) {
         return InkWell(
           onTap: () async {
-            await ref.read(authRepositoryProvider).signOut();
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                backgroundColor: AppColors.darkCardColor,
+                title: Text(
+                  'Encerrar Sessão',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                content: Text(
+                  'Deseja realmente sair do painel administrativo?',
+                  style: GoogleFonts.inter(color: AppColors.cinzaMedio),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(
+                      'Cancelar',
+                      style: GoogleFonts.inter(color: AppColors.cinzaMedio),
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                    ),
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Sair'),
+                  ),
+                ],
+              ),
+            );
+
+            if (confirm == true) {
+              await ref.read(authRepositoryProvider).signOut();
+              if (context.mounted && Navigator.of(context).canPop()) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
+            }
           },
           borderRadius: BorderRadius.circular(8),
           child: Container(

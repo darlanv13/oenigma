@@ -12,7 +12,12 @@ import 'package:oenigma/painel_admin_web/features/auth/screens/forgot_password_s
 import 'package:oenigma/painel_admin_web/features/admin/screens/main_admin_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  final String? initialErrorMessage;
+
+  const LoginScreen({
+    super.key,
+    this.initialErrorMessage,
+  });
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -32,6 +37,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    _errorMessage = widget.initialErrorMessage;
     _loadSavedEmail();
   }
 
@@ -111,7 +117,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           final isAdmin = user?.get<bool>('isAdmin') ?? false;
           final role = user?.get<String>('role') ?? 'player';
 
-          if (!isAdmin && role != 'admin') {
+          if (!isAdmin && role != 'admin' && role != 'creator') {
             setState(() {
               _errorMessage = 'Acesso Restrito: Apenas administradores autorizados.';
               _isLoading = false;
@@ -136,9 +142,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             return;
           }
 
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const MainAdminScreen()),
-          );
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          }
         }
       }
     }
