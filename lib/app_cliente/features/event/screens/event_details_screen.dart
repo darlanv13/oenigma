@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -98,12 +99,22 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       await ref.read(eventRepositoryProvider).subscribeToEvent(widget.event.id);
       if (mounted) {
         SoundService.playSuccess();
+        HapticFeedback.mediumImpact();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text("Inscrição realizada com sucesso!"),
+            content: Text(
+              "Inscrição realizada com sucesso!",
+              style: GoogleFonts.cinzel(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             backgroundColor: AppColors.verdeVale,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: Color(0xFF1E3A45), width: 1.2),
+            ),
           ),
         );
         setState(() => _isSubscribed = true);
@@ -111,15 +122,22 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     } on ParseError catch (e) {
       if (mounted) {
         SoundService.playError();
+        HapticFeedback.heavyImpact();
         if (e.message.contains('saldo')) {
           _showInsufficientFundsDialog();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.message),
+              content: Text(
+                e.message,
+                style: GoogleFonts.inter(color: Colors.white),
+              ),
               backgroundColor: AppColors.danger,
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: Color(0xFF1E3A45), width: 1.2),
+              ),
             ),
           );
         }
@@ -132,42 +150,70 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 
   Future<bool?> _showSubscriptionConfirmationDialog() {
+    SoundService.playOpen();
+    HapticFeedback.lightImpact();
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.darkCardColor,
+        backgroundColor: const Color(0xFF131D24),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          side: const BorderSide(color: Color(0xFF1E3A45), width: 1.2),
         ),
         title: Text(
-          'Confirmar Inscrição',
-          style: GoogleFonts.poppins(
+          'CONFIRMAR INSCRIÇÃO',
+          style: GoogleFonts.cinzel(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            letterSpacing: 0.8,
           ),
         ),
         content: Text(
           'Confirma a sua inscrição no evento "${_currentEvent.name}"?',
-          style: GoogleFonts.inter(color: AppColors.cinzaMedio),
+          style: GoogleFonts.inter(
+            color: AppColors.cinzaMedio,
+            fontSize: 13,
+            height: 1.4,
+          ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Cancelar', style: GoogleFonts.inter(color: AppColors.cinzaMedio)),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              SoundService.playClick();
+              Navigator.of(context).pop(false);
+            },
+            child: Text(
+              'CANCELAR',
+              style: GoogleFonts.cinzel(
+                color: AppColors.cinzaMedio,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              SoundService.playClick();
+              Navigator.of(context).pop(true);
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.verdeVale,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             ),
-            child: const Text(
+            child: Text(
               'CONFIRMAR',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: GoogleFonts.cinzel(
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+                letterSpacing: 0.8,
+              ),
             ),
           ),
         ],
@@ -176,42 +222,63 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 
   void _showLoginRequiredDialog() {
+    SoundService.playOpen();
+    HapticFeedback.lightImpact();
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.darkCardColor,
+        backgroundColor: const Color(0xFF131D24),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          side: const BorderSide(color: Color(0xFF1E3A45), width: 1.2),
         ),
         title: Row(
           children: [
             const FaIcon(
               FontAwesomeIcons.userLock,
               color: AppColors.verdeVale,
-              size: 20,
+              size: 18,
             ),
             const SizedBox(width: 10),
             Text(
-              'Login Necessário',
-              style: GoogleFonts.poppins(
+              'LOGIN NECESSÁRIO',
+              style: GoogleFonts.cinzel(
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                letterSpacing: 0.8,
               ),
             ),
           ],
         ),
         content: Text(
           'Você precisa criar uma conta ou fazer login para iniciar a caçada.',
-          style: GoogleFonts.inter(color: AppColors.cinzaMedio),
+          style: GoogleFonts.inter(
+            color: AppColors.cinzaMedio,
+            fontSize: 13,
+            height: 1.4,
+          ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text('Cancelar', style: GoogleFonts.inter(color: AppColors.cinzaMedio)),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              SoundService.playClick();
+              Navigator.of(dialogContext).pop();
+            },
+            child: Text(
+              'CANCELAR',
+              style: GoogleFonts.cinzel(
+                color: AppColors.cinzaMedio,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
+              HapticFeedback.lightImpact();
+              SoundService.playClick();
               Navigator.of(dialogContext).pop();
               Navigator.push(
                 context,
@@ -224,12 +291,17 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               backgroundColor: AppColors.verdeVale,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             ),
-            child: const Text(
+            child: Text(
               'FAZER LOGIN',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: GoogleFonts.cinzel(
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+                letterSpacing: 0.8,
+              ),
             ),
           ),
         ],
@@ -238,38 +310,62 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   }
 
   void _showInsufficientFundsDialog() {
+    SoundService.playOpen();
+    HapticFeedback.lightImpact();
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.darkCardColor,
+        backgroundColor: const Color(0xFF131D24),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          side: BorderSide(
+            color: const Color(0xFFF3A522).withValues(alpha: 0.5),
+            width: 1.2,
+          ),
         ),
         title: Row(
           children: [
-            const FaIcon(FontAwesomeIcons.wallet, color: AppColors.amareloVale, size: 20),
+            const FaIcon(FontAwesomeIcons.wallet, color: AppColors.amareloVale, size: 18),
             const SizedBox(width: 10),
             Text(
-              'Saldo Insuficiente',
-              style: GoogleFonts.poppins(
+              'SALDO INSUFICIENTE',
+              style: GoogleFonts.cinzel(
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                letterSpacing: 0.8,
               ),
             ),
           ],
         ),
         content: Text(
           'Você não tem saldo para se inscrever. Deseja adicionar créditos à sua carteira?',
-          style: GoogleFonts.inter(color: AppColors.cinzaMedio),
+          style: GoogleFonts.inter(
+            color: AppColors.cinzaMedio,
+            fontSize: 13,
+            height: 1.4,
+          ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text('Cancelar', style: GoogleFonts.inter(color: AppColors.cinzaMedio)),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              SoundService.playClick();
+              Navigator.of(dialogContext).pop();
+            },
+            child: Text(
+              'CANCELAR',
+              style: GoogleFonts.cinzel(
+                color: AppColors.cinzaMedio,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
+              HapticFeedback.lightImpact();
+              SoundService.playClick();
               Navigator.of(dialogContext).pop();
               Navigator.push(
                 context,
@@ -282,12 +378,17 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               backgroundColor: AppColors.amareloVale,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             ),
-            child: const Text(
+            child: Text(
               'DEPOSITAR',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: GoogleFonts.cinzel(
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+                letterSpacing: 0.8,
+              ),
             ),
           ),
         ],
@@ -297,6 +398,9 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
 
   void _onCtaPressed() {
     if (_isLoading) return;
+    HapticFeedback.lightImpact();
+    SoundService.playClick();
+
     if (_isSubscribed) {
       if (_currentEvent.eventType == 'find_and_win') {
         Navigator.push(
@@ -336,7 +440,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isObjeto
-                    ? const Color(0xFF00A4B4).withValues(alpha: 0.12)
+                    ? const Color(0xFF007D8A).withValues(alpha: 0.12)
                     : const Color(0xFFF3A522).withValues(alpha: 0.10),
               ),
             ),
@@ -427,7 +531,11 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       children: [
         // Botão de Voltar Redondo
         GestureDetector(
-          onTap: () => Navigator.of(context).pop(),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            SoundService.playClick();
+            Navigator.of(context).pop();
+          },
           child: Container(
             width: 38,
             height: 38,
@@ -435,7 +543,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               color: const Color(0xFF131D24),
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.12),
+                color: const Color(0xFF1E3A45),
                 width: 1.2,
               ),
             ),
@@ -451,26 +559,26 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
 
         // Título Central
         Text(
-          isObjeto ? 'Prêmio Físico' : 'Premiação em Dinheiro',
-          style: GoogleFonts.poppins(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
+          isObjeto ? 'PRÊMIO FÍSICO' : 'PREMIAÇÃO EM DINHEIRO',
+          style: GoogleFonts.cinzel(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
             color: Colors.white,
-            letterSpacing: 0.3,
+            letterSpacing: 1.0,
           ),
         ),
 
         // Pill da Modalidade
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
           decoration: BoxDecoration(
             color: isObjeto ? const Color(0xFF0C242C) : const Color(0xFF241B08),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isObjeto
-                  ? const Color(0xFF00A4B4).withValues(alpha: 0.5)
-                  : const Color(0xFFF3A522).withValues(alpha: 0.5),
-              width: 1,
+                  ? const Color(0xFF007D8A).withValues(alpha: 0.6)
+                  : const Color(0xFFF3A522).withValues(alpha: 0.6),
+              width: 1.2,
             ),
           ),
           child: Row(
@@ -481,14 +589,14 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 size: 9.5,
                 color: isObjeto ? const Color(0xFF00A4B4) : const Color(0xFFF3A522),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 5),
               Text(
                 isClassic ? 'CLASSIC' : 'FIND & WIN',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.cinzel(
                   color: isObjeto ? const Color(0xFF00A4B4) : const Color(0xFFF3A522),
                   fontSize: 9.5,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0.8,
                 ),
               ),
             ],
@@ -509,7 +617,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xFF131D24),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
         boxShadow: [
           BoxShadow(
@@ -520,7 +628,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         child: Stack(
           children: [
             // Brilho radial ciano de fundo
@@ -531,7 +639,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                     center: const Alignment(0.45, 0),
                     radius: 0.8,
                     colors: [
-                      const Color(0xFF00A4B4).withValues(alpha: 0.18),
+                      const Color(0xFF007D8A).withValues(alpha: 0.18),
                       Colors.transparent,
                     ],
                   ),
@@ -568,7 +676,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                             color: const Color(0xFF0C242C),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: const Color(0xFF00A4B4).withValues(alpha: 0.45),
+                              color: const Color(0xFF007D8A).withValues(alpha: 0.5),
                               width: 1,
                             ),
                           ),
@@ -579,10 +687,11 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                               const SizedBox(width: 4),
                               Text(
                                 'ITEM FÍSICO',
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.cinzel(
                                   color: const Color(0xFF00A4B4),
                                   fontSize: 8.5,
                                   fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8,
                                 ),
                               ),
                             ],
@@ -593,10 +702,11 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                           event.prize,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                            fontSize: 17,
+                          style: GoogleFonts.cinzel(
+                            fontSize: 16,
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
+                            letterSpacing: 0.4,
                             height: 1.15,
                           ),
                         ),
@@ -616,10 +726,11 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                               const SizedBox(width: 4),
                               Text(
                                 '1º LUGAR LEVA',
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.cinzel(
                                   color: Colors.black,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 9,
+                                  letterSpacing: 0.6,
                                 ),
                               ),
                             ],
@@ -708,10 +819,10 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       height: 132,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF141C16),
-        borderRadius: BorderRadius.circular(22),
+        color: const Color(0xFF131D24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFF3A522).withValues(alpha: 0.35),
+          color: const Color(0xFFF3A522).withValues(alpha: 0.4),
           width: 1.2,
         ),
         boxShadow: [
@@ -723,7 +834,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         child: Stack(
           children: [
             // Brilho radial dourado
@@ -812,10 +923,11 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                               const SizedBox(width: 4),
                               Text(
                                 'BOUNTY VIA PIX • 1º LUGAR',
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.cinzel(
                                   color: const Color(0xFFF3A522),
                                   fontSize: 8.5,
                                   fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8,
                                 ),
                               ),
                             ],
@@ -824,7 +936,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                         const SizedBox(height: 4),
                         Text(
                           event.prize,
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.orbitron(
                             fontSize: 25,
                             fontWeight: FontWeight.w900,
                             color: const Color(0xFFF3A522),
@@ -871,7 +983,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     final String displayLocation = event.location.isNotEmpty && event.location != 'Local não definido'
         ? event.location
         : 'Canaã Dos Carajás';
-    final Color accentColor = isObjeto ? const Color(0xFF00A4B4) : const Color(0xFFF3A522);
+    final Color accentColor = isObjeto ? const Color(0xFF007D8A) : const Color(0xFFF3A522);
 
     return Row(
       children: [
@@ -880,23 +992,23 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             displayTitle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
+            style: GoogleFonts.cinzel(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
               color: Colors.white,
-              letterSpacing: -0.2,
+              letterSpacing: 0.4,
             ),
           ),
         ),
         const SizedBox(width: 8),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
           decoration: BoxDecoration(
             color: const Color(0xFF131D24),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.1),
-              width: 1,
+              color: const Color(0xFF1E3A45),
+              width: 1.2,
             ),
           ),
           child: Row(
@@ -909,7 +1021,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 style: GoogleFonts.inter(
                   color: Colors.white.withValues(alpha: 0.85),
                   fontSize: 11,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
@@ -925,33 +1037,33 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   Widget _buildCompactStatsBar(bool isObjeto) {
     final event = _currentEvent;
     final displayDifficulty = event.difficulty.isNotEmpty ? event.difficulty : 'Média';
-    final Color accentColor = isObjeto ? const Color(0xFF00A4B4) : const Color(0xFFF3A522);
+    final Color accentColor = isObjeto ? const Color(0xFF007D8A) : const Color(0xFFF3A522);
 
     // Status
-    String statusText = 'Ativo';
+    String statusText = 'ATIVO';
     Color statusColor = AppColors.verdeVale;
     dynamic statusIcon = FontAwesomeIcons.circleCheck;
 
     if (event.status == 'dev') {
-      statusText = 'Em breve';
+      statusText = 'EM BREVE';
       statusColor = const Color(0xFFF3A522);
       statusIcon = FontAwesomeIcons.clock;
     } else if (event.status == 'closed') {
-      statusText = 'Encerrado';
+      statusText = 'ENCERRADO';
       statusColor = AppColors.danger;
       statusIcon = FontAwesomeIcons.circleXmark;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
         color: const Color(0xFF131D24),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isObjeto
               ? const Color(0xFF1E3A45)
-              : const Color(0xFFF3A522).withValues(alpha: 0.25),
-          width: 1,
+              : const Color(0xFFF3A522).withValues(alpha: 0.3),
+          width: 1.2,
         ),
       ),
       child: FutureBuilder<Map<String, int>>(
@@ -964,7 +1076,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             etapasValue = '$solved/$total';
           } else {
             final total = snapshot.data?['total'] ?? 0;
-            etapasValue = total > 0 ? '$total Fases' : 'A definir';
+            etapasValue = total > 0 ? '$total' : '0';
           }
 
           return Row(
@@ -975,6 +1087,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                   statusText,
                   statusColor,
                   statusIcon,
+                  isMetric: false,
                 ),
               ),
               _buildStatDivider(),
@@ -984,15 +1097,17 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                   etapasValue,
                   Colors.white,
                   FontAwesomeIcons.cubes,
+                  isMetric: true,
                 ),
               ),
               _buildStatDivider(),
               Expanded(
                 child: _buildStatColumn(
                   'NÍVEL',
-                  displayDifficulty,
+                  displayDifficulty.toUpperCase(),
                   const Color(0xFFF3A522),
                   FontAwesomeIcons.star,
+                  isMetric: false,
                 ),
               ),
               _buildStatDivider(),
@@ -1002,6 +1117,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                   '${event.playerCount}',
                   accentColor,
                   FontAwesomeIcons.users,
+                  isMetric: true,
                 ),
               ),
             ],
@@ -1011,20 +1127,26 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     );
   }
 
-  Widget _buildStatColumn(String label, String value, Color color, dynamic icon) {
+  Widget _buildStatColumn(
+    String label,
+    String value,
+    Color color,
+    dynamic icon, {
+    bool isMetric = false,
+  }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: GoogleFonts.cinzel(
             color: AppColors.cinzaMedio,
             fontSize: 8.5,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.8,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -1035,11 +1157,17 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                 value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                ),
+                style: isMetric
+                    ? GoogleFonts.orbitron(
+                        color: color,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      )
+                    : GoogleFonts.cinzel(
+                        color: color,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                      ),
               ),
             ),
           ],
@@ -1063,7 +1191,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     final event = _currentEvent;
     final bool isClosed = event.status == 'closed';
     final hasWinner = event.winnerName != null && event.winnerName!.isNotEmpty;
-    final Color accentColor = isObjeto ? const Color(0xFF00A4B4) : const Color(0xFFF3A522);
+    final Color accentColor = isObjeto ? const Color(0xFF007D8A) : const Color(0xFFF3A522);
 
     final String displayDescription = event.fullDescription.trim().isNotEmpty
         ? event.fullDescription.trim()
@@ -1081,10 +1209,10 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: const Color(0xFF1E1708),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: const Color(0xFFF3A522).withValues(alpha: 0.4),
-                width: 1,
+                width: 1.2,
               ),
             ),
             child: Row(
@@ -1096,10 +1224,10 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                     'Prêmio já conquistado por: ${event.winnerName}!',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.cinzel(
                       color: const Color(0xFFF3A522),
                       fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -1112,7 +1240,10 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         // Card da Descrição do Evento
         GestureDetector(
           onTap: isLongText
-              ? () => setState(() => _isDescriptionExpanded = !_isDescriptionExpanded)
+              ? () {
+                  HapticFeedback.lightImpact();
+                  setState(() => _isDescriptionExpanded = !_isDescriptionExpanded);
+                }
               : null,
           child: Container(
             width: double.infinity,
@@ -1151,22 +1282,24 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                         ),
                         const SizedBox(width: 7),
                         Text(
-                          'Descrição do Evento',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                          'DESCRIÇÃO DO EVENTO',
+                          style: GoogleFonts.cinzel(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
                             color: Colors.white,
+                            letterSpacing: 0.8,
                           ),
                         ),
                       ],
                     ),
                     if (isLongText)
                       Text(
-                        _isDescriptionExpanded ? 'Ver menos' : 'Ver mais',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                        _isDescriptionExpanded ? 'VER MENOS' : 'VER MAIS',
+                        style: GoogleFonts.cinzel(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
                           color: accentColor,
+                          letterSpacing: 0.6,
                         ),
                       ),
                   ],
@@ -1227,7 +1360,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: (isObjeto ? const Color(0xFF00A4B4) : const Color(0xFFF3A522)).withValues(alpha: 0.35),
+              color: (isObjeto ? const Color(0xFF007D8A) : const Color(0xFFF3A522)).withValues(alpha: 0.35),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -1258,11 +1391,11 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                     : (isFree
                         ? 'INICIAR CAÇADA (GRÁTIS)'
                         : 'INSCRIÇÃO: R\$ ${_currentEvent.price.toStringAsFixed(2).replaceAll('.', ',')}'),
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.cinzel(
                   color: textColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.8,
                 ),
               ),
             ],
@@ -1289,7 +1422,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         children: [
           Text(
             label.toUpperCase(),
-            style: GoogleFonts.inter(
+            style: GoogleFonts.cinzel(
               color: AppColors.cinzaMedio,
               fontSize: 12,
               fontWeight: FontWeight.w800,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/models/event_model.dart';
@@ -43,6 +45,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _reloadData() async {
+    HapticFeedback.lightImpact();
     SoundService.playClick();
     return await ref.refresh(homeEventsProvider.future);
   }
@@ -64,16 +67,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               children: [
                 const FaIcon(
                   FontAwesomeIcons.circleExclamation,
-                  size: 48,
+                  size: 44,
                   color: AppColors.danger,
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Erro ao carregar dados.',
-                  style: TextStyle(
+                Text(
+                  'ERRO AO CARREGAR DADOS',
+                  style: GoogleFonts.cinzel(
                     color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -81,7 +85,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 32.0),
                   child: Text(
                     '$error',
-                    style: const TextStyle(color: AppColors.cinzaMedio),
+                    style: GoogleFonts.inter(
+                      color: AppColors.cinzaMedio,
+                      fontSize: 12.5,
+                      height: 1.4,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -91,17 +99,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   icon: const FaIcon(
                     FontAwesomeIcons.rotateRight,
                     color: Colors.white,
-                    size: 16,
+                    size: 14,
                   ),
-                  label: const Text(
+                  label: Text(
                     "TENTAR NOVAMENTE",
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                    style: GoogleFonts.cinzel(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.verdeVale,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
+                      side: const BorderSide(color: Color(0xFF1E3A45), width: 1.2),
                     ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -190,19 +203,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.verdeVale.withValues(alpha: 0.15),
-                    border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.4)),
+                    color: const Color(0xFF131D24),
+                    border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
                   ),
                   child: const FaIcon(
                     FontAwesomeIcons.calendarXmark,
-                    size: 40,
+                    size: 36,
                     color: AppColors.cinzaMedio,
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Nenhum evento ativo no momento.',
-                  style: TextStyle(color: AppColors.cinzaMedio, fontSize: 16),
+                Text(
+                  'NENHUM EVENTO ATIVO',
+                  style: GoogleFonts.cinzel(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Fique atento, novas caçadas serão liberadas em breve!',
+                  style: GoogleFonts.inter(
+                    color: AppColors.cinzaMedio,
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
