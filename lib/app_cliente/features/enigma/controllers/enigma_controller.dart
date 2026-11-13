@@ -86,6 +86,20 @@ class EnigmaController extends ChangeNotifier {
   int get radarRemainingSeconds => _radarRemainingSeconds;
   int get mapRemainingSeconds => _mapRemainingSeconds;
   String? get activeTool => _activeTool;
+
+  List<String> get toolsPurchased {
+    final list = <String>[];
+    if (_hasCompass && _compassRemainingSeconds > 0) list.add('compass');
+    if (_hasRadar && _radarRemainingSeconds > 0) list.add('radar');
+    if (_hasMap && _mapRemainingSeconds > 0) list.add('map');
+    return list;
+  }
+
+  Map<String, int> get toolTimes => {
+    'compass': _compassRemainingSeconds,
+    'radar': _radarRemainingSeconds,
+    'map': _mapRemainingSeconds,
+  };
   List<ParseObject> get hintsList => _hintsList;
   List<String> get hintsPurchased => _hintsPurchased;
 

@@ -10,7 +10,7 @@ class ArsenalToolItem {
   final String title;
   final String description;
   final double price;
-  final IconData icon;
+  final FaIconData icon;
   final Color accentColor;
   final bool isConsumableInstant;
 

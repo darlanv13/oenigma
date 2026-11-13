@@ -188,7 +188,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
     Color bannerColor;
     String statusTitle;
     String statusSub;
-    IconData iconData;
+    FaIconData iconData;
 
     if (distance <= 15) {
       bannerColor = const Color(0xFFFF334B);
@@ -209,7 +209,7 @@ class _EnigmaScreenState extends State<EnigmaScreen>
       bannerColor = AppColors.verdeVale;
       statusTitle = 'RADAR ATIVO';
       statusSub = 'Alvo no horizonte sensorial. Aproxime-se para calibrar o sensor.';
-      iconData = FontAwesomeIcons.radar;
+      iconData = FontAwesomeIcons.signal;
     }
 
     return Container(
