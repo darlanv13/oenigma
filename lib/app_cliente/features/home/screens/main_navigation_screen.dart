@@ -25,9 +25,6 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   int _selectedIndex = 0;
 
   void _onItemTapped(int index) {
-    if (_selectedIndex != index) {
-      SoundService.playClick();
-    }
     setState(() {
       _selectedIndex = index;
     });

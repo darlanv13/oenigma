@@ -604,7 +604,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: FaIcon(
-                  SoundService.isMuted ? FontAwesomeIcons.volumeXmark : FontAwesomeIcons.volumeHigh,
+                  SoundService.isAmbientMuted ? FontAwesomeIcons.volumeXmark : FontAwesomeIcons.music,
                   color: AppColors.verdeVale,
                   size: 16,
                 ),
@@ -614,12 +614,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Efeitos Sonoros (SFX)',
+                    'Som Ambiente de Mistério',
                     style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    SoundService.isMuted ? 'Áudio desativado' : 'Áudio e efeitos ativados',
+                    SoundService.isAmbientMuted ? 'Música ambiente desativada' : 'Música de suspense e mistério ativada',
                     style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 11),
                   ),
                 ],
@@ -627,15 +627,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           ),
           Switch(
-            value: !SoundService.isMuted,
+            value: !SoundService.isAmbientMuted,
             activeThumbColor: AppColors.verdeVale,
             onChanged: (enabled) {
               setState(() {
-                SoundService.isMuted = !enabled;
+                SoundService.toggleAmbientMute();
               });
-              if (enabled) {
-                SoundService.playClick();
-              }
             },
           ),
         ],

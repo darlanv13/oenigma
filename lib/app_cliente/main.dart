@@ -1,5 +1,6 @@
 import 'package:oenigma/core/config/env_config.dart';
 import 'package:oenigma/core/services/push_notification_service.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
 
@@ -27,9 +28,40 @@ void main() async {
   );
 }
 
-class EnigmaCityApp extends StatelessWidget {
+class EnigmaCityApp extends StatefulWidget {
   final bool hasSeenOnboarding;
   const EnigmaCityApp({super.key, required this.hasSeenOnboarding});
+
+  @override
+  State<EnigmaCityApp> createState() => _EnigmaCityAppState();
+}
+
+class _EnigmaCityAppState extends State<EnigmaCityApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Inicia a música ambiente de mistério contínua
+    SoundService.startAmbient();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      SoundService.resumeAmbient();
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      SoundService.pauseAmbient();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    SoundService.stopAmbient();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +122,7 @@ class EnigmaCityApp extends StatelessWidget {
           child: child ?? const SizedBox.shrink(),
         );
       },
-      home: hasSeenOnboarding ? const AuthWrapper() : const OnboardingScreen(),
+      home: widget.hasSeenOnboarding ? const AuthWrapper() : const OnboardingScreen(),
     );
   }
 }

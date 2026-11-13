@@ -220,11 +220,11 @@ Parse.Cloud.define("checkPixPaymentStatus", async (request) => {
     } else if (gateway === "asaas" && gatewayPaymentId && keys.api_key) {
       try {
         const rawApiKey = keys.api_key.trim();
-        let baseUrl = "https://api.asaas.com/api/v3";
+        let baseUrl = "https://api.asaas.com/v3";
         if (rawApiKey.startsWith("$aact_prod_")) {
-          baseUrl = "https://api.asaas.com/api/v3";
+          baseUrl = "https://api.asaas.com/v3";
         } else if (rawApiKey.startsWith("$aact_test_") || rawApiKey.startsWith("$aact_uat_") || environment === "sandbox") {
-          baseUrl = "https://sandbox.asaas.com/api/v3";
+          baseUrl = "https://api-sandbox.asaas.com/v3";
         }
         const asaasRes = await financialService.httpRequest(`${baseUrl}/payments/${gatewayPaymentId}`, {
           method: "GET",
@@ -236,18 +236,21 @@ Parse.Cloud.define("checkPixPaymentStatus", async (request) => {
       } catch (e) {
         console.warn("[checkPixPaymentStatus] Asaas check error:", e.message);
       }
-    } else if (gateway === "stripe" && gatewayPaymentId && (keys.secret_key || keys.api_key)) {
+    } else if (gateway === "abacatepay" && gatewayPaymentId && keys.api_key) {
       try {
-        const stripeKey = (keys.secret_key || keys.api_key || "").trim();
-        const stripeRes = await financialService.httpRequest(`https://api.stripe.com/v1/payment_intents/${gatewayPaymentId}`, {
+        const abacateKey = keys.api_key.trim();
+        const abacateRes = await financialService.httpRequest(`https://api.abacatepay.com/v2/transparents/get?id=${encodeURIComponent(gatewayPaymentId)}`, {
           method: "GET",
-          headers: { "Authorization": `Bearer ${stripeKey}` }
+          headers: { "Authorization": `Bearer ${abacateKey}` }
         });
-        if (stripeRes.ok && stripeRes.data && stripeRes.data.status === "succeeded") {
-          approvedNow = true;
+        if (abacateRes.ok && abacateRes.data && abacateRes.data.data) {
+          const st = abacateRes.data.data.status;
+          if (st === "COMPLETED" || st === "PAID" || st === "APPROVED") {
+            approvedNow = true;
+          }
         }
       } catch (e) {
-        console.warn("[checkPixPaymentStatus] Stripe check error:", e.message);
+        console.warn("[checkPixPaymentStatus] AbacatePay check error:", e.message);
       }
     }
 
@@ -1170,11 +1173,11 @@ Parse.Cloud.define("testGatewayConnection", async (request) => {
   if (gatewayId === "asaas") {
     const rawApiKey = (keys?.api_key || "").trim();
     if (!rawApiKey) return { success: false, message: "API Key do Asaas não informada." };
-    let baseUrl = "https://api.asaas.com/api/v3";
+    let baseUrl = "https://api.asaas.com/v3";
     if (rawApiKey.startsWith("$aact_prod_")) {
-      baseUrl = "https://api.asaas.com/api/v3";
+      baseUrl = "https://api.asaas.com/v3";
     } else if (rawApiKey.startsWith("$aact_test_") || rawApiKey.startsWith("$aact_uat_") || environment === "sandbox") {
-      baseUrl = "https://sandbox.asaas.com/api/v3";
+      baseUrl = "https://api-sandbox.asaas.com/v3";
     }
 
     try {
@@ -1190,7 +1193,9 @@ Parse.Cloud.define("testGatewayConnection", async (request) => {
           message: `Conexão Asaas OK! Ambiente: ${envLabel}. Saldo da conta: R$ ${Number(balance).toFixed(2)}`
         };
       } else {
-        const err = res.data?.errors?.[0]?.description || JSON.stringify(res.data);
+        const err = (res.data && res.data.errors && res.data.errors.length)
+          ? res.data.errors.map(e => e.description).join("; ")
+          : (res.data ? (typeof res.data === 'string' ? res.data : JSON.stringify(res.data)) : `HTTP ${res.status}`);
         return { success: false, message: `Erro ao autenticar no Asaas: ${err}` };
       }
     } catch (e) {
@@ -1198,21 +1203,22 @@ Parse.Cloud.define("testGatewayConnection", async (request) => {
     }
   }
 
-  if (gatewayId === "stripe") {
-    const stripeKey = (keys?.secret_key || keys?.api_key || "").trim();
-    if (!stripeKey) return { success: false, message: "Secret Key da Stripe não informada." };
+  if (gatewayId === "abacatepay") {
+    const abacateKey = (keys?.api_key || "").trim();
+    if (!abacateKey) return { success: false, message: "API Key do AbacatePay não informada." };
     try {
-      const res = await financialService.httpRequest("https://api.stripe.com/v1/balance", {
+      // Testa criando e verificando via endpoint transparents
+      const res = await financialService.httpRequest("https://api.abacatepay.com/v2/transparents/get?id=test_conn", {
         method: "GET",
-        headers: { "Authorization": `Bearer ${stripeKey}` }
+        headers: { "Authorization": `Bearer ${abacateKey}` }
       });
-      if (res.ok) {
-        return { success: true, message: "Conexão com a Stripe validada com sucesso via API!" };
-      } else {
-        return { success: false, message: "Stripe recusou as credenciais: " + (res.data?.error?.message || JSON.stringify(res.data)) };
+      // Even a 404 for test_conn means auth is valid; only 401/403 means bad key
+      if (res.status === 401 || res.status === 403) {
+        return { success: false, message: "AbacatePay recusou a API Key. Verifique se a chave está correta." };
       }
+      return { success: true, message: "Conexão com AbacatePay validada com sucesso!" };
     } catch (e) {
-      return { success: false, message: `Falha na requisição Stripe: ${e.message}` };
+      return { success: false, message: `Falha na requisição AbacatePay: ${e.message}` };
     }
   }
 
@@ -1243,16 +1249,21 @@ Parse.Cloud.define("paymentWebhook", async (request) => {
 
   console.log(`[Payment Webhook] Recebida notificação do gateway: ${gateway}`, JSON.stringify(payload));
 
+  // No Asaas, se o evento for intermediário (ex: PAYMENT_CREATED, PAYMENT_UPDATED), não aprova antes da liquidação real
+  if (gateway === "asaas" && payload.event && payload.event !== "PAYMENT_RECEIVED" && payload.event !== "PAYMENT_CONFIRMED") {
+    console.log(`[Payment Webhook] Asaas evento intermediário recebido: ${payload.event}. Aguardando liquidação.`);
+    return { success: true, message: `Asaas event ${payload.event} acknowledged.` };
+  }
+
   // Tenta localizar a transação por IDs em múltiplos formatos de payload
   let transactionId = payload.transactionId || payload.id || (payload.data ? payload.data.id : null) || (payload.payment ? payload.payment.id : null);
   let extRef = payload.external_reference || (payload.payment ? payload.payment.externalReference : null) || (payload.data ? payload.data.external_reference : null);
 
-  // Suporte especial para payloads de webhook do Stripe (payment_intent.succeeded)
-  if (payload.type === "payment_intent.succeeded" && payload.data && payload.data.object) {
-    const pi = payload.data.object;
-    transactionId = (pi.metadata && pi.metadata.transactionId) ? pi.metadata.transactionId : pi.id;
-    if (!extRef && pi.metadata && pi.metadata.transactionId) {
-      extRef = pi.metadata.transactionId;
+  // Suporte para payloads de webhook do AbacatePay (transparent.completed)
+  if (payload.type === "transparent.completed" && payload.data) {
+    transactionId = payload.data.externalId || payload.data.id;
+    if (!extRef && payload.data.externalId) {
+      extRef = payload.data.externalId;
     }
   }
 

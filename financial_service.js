@@ -10,10 +10,15 @@ const { URL } = require('url');
  * Universal HTTP Request Helper para Node.js
  */
 async function httpRequest(url, options = {}) {
+  const defaultHeaders = {
+    'User-Agent': 'EnigmaCity/1.0 (Node.js)'
+  };
+  const headers = Object.assign({}, defaultHeaders, options.headers || {});
+
   if (typeof fetch === 'function') {
     const fetchOptions = {
       method: options.method || 'GET',
-      headers: options.headers || {},
+      headers: headers,
     };
     if (options.body) {
       fetchOptions.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
@@ -26,7 +31,7 @@ async function httpRequest(url, options = {}) {
     } catch (e) {
       json = text;
     }
-    return { ok: res.ok, status: res.status, data: json };
+    return { ok: res.ok, status: res.status, data: json, rawText: text };
   }
 
   // Fallback para versões legadas com módulo https/http nativo
@@ -37,7 +42,7 @@ async function httpRequest(url, options = {}) {
   return new Promise((resolve, reject) => {
     const req = client.request(parsedUrl, {
       method: options.method || 'GET',
-      headers: options.headers || {},
+      headers: headers,
     }, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
@@ -47,7 +52,8 @@ async function httpRequest(url, options = {}) {
         resolve({
           ok: res.statusCode >= 200 && res.statusCode < 300,
           status: res.statusCode,
-          data: json
+          data: json,
+          rawText: data
         });
       });
     });
@@ -58,6 +64,20 @@ async function httpRequest(url, options = {}) {
     }
     req.end();
   });
+}
+
+/**
+ * Retorna a URL base correta do Asaas conforme a chave e o ambiente
+ * Produção: https://api.asaas.com/v3
+ * Sandbox: https://api-sandbox.asaas.com/v3
+ */
+function getAsaasBaseUrl(rawApiKey, environment) {
+  if (rawApiKey && rawApiKey.startsWith("$aact_prod_")) {
+    return "https://api.asaas.com/v3";
+  } else if (rawApiKey && (rawApiKey.startsWith("$aact_test_") || rawApiKey.startsWith("$aact_uat_") || environment === "sandbox")) {
+    return "https://api-sandbox.asaas.com/v3";
+  }
+  return environment === "production" ? "https://api.asaas.com/v3" : "https://api-sandbox.asaas.com/v3";
 }
 
 /**
@@ -183,7 +203,9 @@ async function getOrCreateAsaasCustomer({ baseUrl, apiKey, user }) {
       console.log(`[Asaas] Novo cliente cadastrado no Asaas: ${asaasCustomerId}`);
       return asaasCustomerId;
     } else {
-      const errDetail = createRes.data?.errors?.[0]?.description || JSON.stringify(createRes.data);
+      const errDetail = (createRes.data && createRes.data.errors && createRes.data.errors.length)
+        ? createRes.data.errors.map(e => e.description).join("; ")
+        : (createRes.data ? (typeof createRes.data === 'string' ? createRes.data : JSON.stringify(createRes.data)) : `HTTP ${createRes.status}`);
       console.warn("[Asaas] Falha ao cadastrar cliente:", errDetail);
       throw new Error(`Asaas recusou cadastro do pagador: ${errDetail}`);
     }
@@ -246,13 +268,7 @@ async function createPixChargeService({ amount, user, transactionId }) {
   // 2. Tenta integração via ASAAS se api_key configurada
   if (gatewayId === "asaas" && keys.api_key && keys.api_key.trim().length > 10) {
     const rawApiKey = keys.api_key.trim();
-    // Auto-detecção inteligente de ambiente pela chave do Asaas
-    let baseUrl = "https://api.asaas.com/api/v3";
-    if (rawApiKey.startsWith("$aact_prod_")) {
-      baseUrl = "https://api.asaas.com/api/v3";
-    } else if (rawApiKey.startsWith("$aact_test_") || rawApiKey.startsWith("$aact_uat_") || environment === "sandbox") {
-      baseUrl = "https://sandbox.asaas.com/api/v3";
-    }
+    const baseUrl = getAsaasBaseUrl(rawApiKey, environment);
 
     try {
       console.log(`[Asaas Pix] Conectando ao Asaas (${baseUrl})...`);
@@ -296,11 +312,16 @@ async function createPixChargeService({ amount, user, transactionId }) {
           qrCodeBase64 = qrRes.data.encodedImage;
           console.log(`[Asaas Pix] QR Code Pix oficial obtido com sucesso!`);
         } else {
-          const qrErr = qrRes.data?.errors?.[0]?.description || JSON.stringify(qrRes.data);
-          throw new Error(`Asaas gerou cobrança mas falhou no QR Code: ${qrErr}`);
+          const qrErr = (qrRes.data && qrRes.data.errors && qrRes.data.errors.length)
+            ? qrRes.data.errors.map(e => e.description).join("; ")
+            : (qrRes.data ? (typeof qrRes.data === 'string' ? qrRes.data : JSON.stringify(qrRes.data)) : `HTTP ${qrRes.status}`);
+          console.warn(`[Asaas Pix] Falha no QR Code do Asaas: ${qrErr}`);
+          throw new Error(`Asaas: ${qrErr}`);
         }
       } else {
-        const errDetail = asaasRes.data?.errors?.[0]?.description || JSON.stringify(asaasRes.data);
+        const errDetail = (asaasRes.data && asaasRes.data.errors && asaasRes.data.errors.length)
+          ? asaasRes.data.errors.map(e => e.description).join("; ")
+          : (asaasRes.data ? (typeof asaasRes.data === 'string' ? asaasRes.data : JSON.stringify(asaasRes.data)) : `HTTP ${asaasRes.status}`);
         console.warn("[Asaas Pix] Falha na criação da cobrança:", errDetail);
         throw new Error(`Asaas recusou a cobrança: ${errDetail}`);
       }
@@ -310,55 +331,39 @@ async function createPixChargeService({ amount, user, transactionId }) {
     }
   }
 
-  // 3. Tenta integração via STRIPE (PaymentIntent com Pix) se secret_key configurada
-  if (gatewayId === "stripe" && (keys.secret_key || keys.api_key)) {
-    const stripeKey = (keys.secret_key || keys.api_key || "").trim();
-    if (stripeKey.length > 10) {
-      try {
-        const amountInCents = Math.round(Number(amount) * 100);
-        const payerEmail = (user.get("email") || "jogador@oenigma.com").trim();
-        const payerName = (user.get("name") || user.get("username") || "Jogador O Enigma").trim();
-        const currency = (keys.currency || "brl").toLowerCase().trim();
+  // 3. Tenta integração via ABACATEPAY (Checkout Transparente Pix) se api_key configurada
+  if (gatewayId === "abacatepay" && keys.api_key && keys.api_key.trim().length > 10) {
+    try {
+      const abacateKey = keys.api_key.trim();
+      const amountInCents = Math.round(Number(amount) * 100);
 
-        // Monta payload URL-encoded padrão da API REST do Stripe
-        const bodyParams = [
-          `amount=${encodeURIComponent(amountInCents)}`,
-          `currency=${encodeURIComponent(currency)}`,
-          `payment_method_types[]=pix`,
-          `payment_method_data[type]=pix`,
-          `payment_method_data[billing_details][name]=${encodeURIComponent(payerName)}`,
-          `payment_method_data[billing_details][email]=${encodeURIComponent(payerEmail)}`,
-          `confirm=true`,
-          `description=${encodeURIComponent(`Deposito Carteira O Enigma - ${transactionId}`)}`,
-          `metadata[transactionId]=${encodeURIComponent(String(transactionId))}`,
-          `metadata[userId]=${encodeURIComponent(String(user.id))}`
-        ].join('&');
-
-        const stripeRes = await httpRequest("https://api.stripe.com/v1/payment_intents", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${stripeKey}`,
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-          body: bodyParams
-        });
-
-        if (stripeRes.ok && stripeRes.data && stripeRes.data.id) {
-          gatewayPaymentId = stripeRes.data.id;
-          const nextAction = stripeRes.data.next_action;
-          if (nextAction && nextAction.pix_display_qr_code) {
-            qrCodeCopiaCola = nextAction.pix_display_qr_code.data;
-            if (nextAction.pix_display_qr_code.image_url_png) {
-              qrCodeBase64 = nextAction.pix_display_qr_code.image_url_png;
-            }
+      const abacateRes = await httpRequest("https://api.abacatepay.com/v2/transparents/create", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${abacateKey}`,
+          "Content-Type": "application/json"
+        },
+        body: {
+          method: "PIX",
+          data: {
+            amount: amountInCents,
+            externalId: transactionId
           }
-          console.log(`[Stripe Pix] PaymentIntent Pix criado com sucesso: ${gatewayPaymentId}`);
-        } else {
-          console.warn("[Stripe Pix] Erro na criação:", JSON.stringify(stripeRes.data));
         }
-      } catch (err) {
-        console.warn("[Stripe Pix] Falha na requisição:", err.message);
+      });
+
+      if (abacateRes.ok && abacateRes.data && abacateRes.data.data && abacateRes.data.data.id) {
+        const chargeData = abacateRes.data.data;
+        gatewayPaymentId = chargeData.id;
+        qrCodeCopiaCola = chargeData.brCode || null;
+        // AbacatePay returns brCode (copia-cola), client renders QR from that string
+        console.log(`[AbacatePay Pix] Cobrança transparente criada: ${gatewayPaymentId}`);
+      } else {
+        const errMsg = abacateRes.data?.error || JSON.stringify(abacateRes.data);
+        console.warn("[AbacatePay Pix] Erro na criação:", errMsg);
       }
+    } catch (err) {
+      console.warn("[AbacatePay Pix] Falha na requisição:", err.message);
     }
   }
 
@@ -410,12 +415,7 @@ async function executeAutomaticPayout({ withdrawal, targetUser, adminUser }) {
   // 1. INTEGRAÇÃO COM ASAAS (Transferência Pix Automática)
   if (gatewayId === "asaas" && keys.api_key && keys.api_key.trim().length > 10) {
     const rawApiKey = keys.api_key.trim();
-    let baseUrl = "https://api.asaas.com/api/v3";
-    if (rawApiKey.startsWith("$aact_prod_")) {
-      baseUrl = "https://api.asaas.com/api/v3";
-    } else if (rawApiKey.startsWith("$aact_test_") || rawApiKey.startsWith("$aact_uat_") || environment === "sandbox") {
-      baseUrl = "https://sandbox.asaas.com/api/v3";
-    }
+    const baseUrl = getAsaasBaseUrl(rawApiKey, environment);
     
     // Mapeamento de tipo de chave Pix para o padrão Asaas
     let asaasPixType = "EVP";

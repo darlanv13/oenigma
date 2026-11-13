@@ -25,7 +25,7 @@ Este documento descreve as diretrizes mandatórias de segurança, arquitetura Ze
 | **Parse Client Key** | Flutter (Cliente & Admin) | Público Restrito | `.env` / `--dart-define` / `EnvConfig` |
 | **Parse Master Key** | Back4App Cloud Functions | **Crítico / Confidencial** | **EXCLUSIVO do servidor Back4App**. NUNCA no app cliente. |
 | **Google Maps API Key** | Android / Web | Público c/ Restrição | `local.properties` (Android) / `.env` |
-| **Tokens Gateways Pix (Stripe / Asaas / Mercado Pago / EFI)** | Cloud Functions | **Crítico / Confidencial** | Classe `GatewayConfig` no banco de dados via MasterKey / Back4App Environment Variables. NUNCA no app. |
+| **Tokens Gateways Pix (AbacatePay / Asaas / Mercado Pago / EFI)** | Cloud Functions | **Crítico / Confidencial** | Classe `GatewayConfig` no banco de dados via MasterKey / Back4App Environment Variables. NUNCA no app. |
 
 ---
 

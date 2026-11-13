@@ -1,88 +1,129 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 
-/// Serviço centralizado para reprodução de efeitos sonoros (SFX) na aplicação.
-/// Utiliza o pacote `audioplayers` com modo de baixa latência.
+/// Serviço centralizado para controle de áudio da aplicação.
+/// Os efeitos sonoros (SFX) pontuais foram removidos/desativados a pedido do usuário,
+/// mantendo exclusivamente a trilha ambiente contínua de mistério e suspense.
 class SoundService {
   SoundService._();
 
-  static final AudioPlayer _player = AudioPlayer();
-  static bool _initialized = false;
-  static bool isMuted = false;
+  // Player dedicado para a trilha ambiente de mistério
+  static final AudioPlayer _ambientPlayer = AudioPlayer();
+  static bool _ambientInitialized = false;
+  static bool isAmbientMuted = false;
+  static bool isAmbientPlaying = false;
+  static double ambientVolume = 0.35;
 
-  static Future<void> _init() async {
-    if (_initialized) return;
+  // Controle de efeitos sonoros (SFX): desativados / silenciados
+  static bool sfxEnabled = false;
+  static bool isMuted = true;
+
+  /// Inicializa o player da trilha ambiente
+  static Future<void> _initAmbient() async {
+    if (_ambientInitialized) return;
     try {
-      await _player.setPlayerMode(PlayerMode.lowLatency);
-      await _player.setReleaseMode(ReleaseMode.stop);
-      _initialized = true;
+      await _ambientPlayer.setPlayerMode(PlayerMode.mediaPlayer);
+      await _ambientPlayer.setReleaseMode(ReleaseMode.loop);
+      await _ambientPlayer.setVolume(ambientVolume);
+      _ambientInitialized = true;
     } catch (e) {
-      debugPrint('[SoundService] Erro ao inicializar player: $e');
+      debugPrint('[SoundService] Erro ao inicializar player ambiente: $e');
     }
   }
 
-  /// Toca um arquivo de som contido na pasta de assets.
-  /// O `AssetSource` utiliza por padrão o prefixo 'assets/'.
+  /// Inicia a reprodução da música ambiente de mistério em loop contínuo
+  static Future<void> startAmbient() async {
+    if (isAmbientMuted) return;
+    try {
+      await _initAmbient();
+      await _ambientPlayer.setVolume(ambientVolume);
+      await _ambientPlayer.setReleaseMode(ReleaseMode.loop);
+      await _ambientPlayer.play(AssetSource('sounds/ambient_mystery.wav'));
+      isAmbientPlaying = true;
+      debugPrint('[SoundService] Trilha sonora de mistério iniciada.');
+    } catch (e) {
+      debugPrint('[SoundService] Falha ao iniciar som ambiente: $e');
+    }
+  }
+
+  /// Pausa a trilha ambiente (ex: quando o app entra em segundo plano)
+  static Future<void> pauseAmbient() async {
+    try {
+      await _ambientPlayer.pause();
+      isAmbientPlaying = false;
+    } catch (_) {}
+  }
+
+  /// Retoma a trilha ambiente (ex: quando o app volta ao primeiro plano)
+  static Future<void> resumeAmbient() async {
+    if (isAmbientMuted) return;
+    try {
+      await _ambientPlayer.resume();
+      isAmbientPlaying = true;
+    } catch (_) {
+      startAmbient();
+    }
+  }
+
+  /// Para a trilha ambiente
+  static Future<void> stopAmbient() async {
+    try {
+      await _ambientPlayer.stop();
+      isAmbientPlaying = false;
+    } catch (_) {}
+  }
+
+  /// Alterna o estado de mudo da música ambiente de mistério
+  static void toggleAmbientMute() {
+    isAmbientMuted = !isAmbientMuted;
+    if (isAmbientMuted) {
+      _ambientPlayer.pause();
+      isAmbientPlaying = false;
+    } else {
+      resumeAmbient();
+    }
+  }
+
+  /// Ajusta o volume do som ambiente (0.0 a 1.0)
+  static Future<void> setAmbientVolume(double volume) async {
+    ambientVolume = volume.clamp(0.0, 1.0);
+    try {
+      await _ambientPlayer.setVolume(ambientVolume);
+    } catch (_) {}
+  }
+
+  // =========================================================================
+  // EFEITOS SONOROS (SFX) REMOVIDOS / SILENCIADOS
+  // Mantidos como no-ops para compatibilidade com chamadas existentes no código
+  // =========================================================================
+
   static Future<void> play(String assetRelativePath) async {
-    if (isMuted) return;
-    try {
-      await _init();
-      await _player.stop();
-      await _player.play(AssetSource(assetRelativePath));
-    } catch (e) {
-      debugPrint('[SoundService] Falha ao reproduzir áudio ($assetRelativePath): $e');
-    }
+    // Efeitos sonoros removidos conforme solicitação
   }
 
-  /// Som de sucesso / resposta correta / QR code validado
-  static Future<void> playSuccess() => play('sounds/success.mp3');
+  static Future<void> playSuccess() async {}
+  static Future<void> playError() async {}
+  static Future<void> playVictory() async {}
+  static Future<void> playReward() async {}
+  static Future<void> playUnlock() async {}
+  static Future<void> playClick() async {}
+  static Future<void> playScan() async {}
+  static Future<void> playOpen() async {}
+  static Future<void> playCopy() async {}
+  static Future<void> playBadge() async {}
+  static Future<void> playLevelUp() async {}
+  static Future<void> playCheckpoint() async {}
 
-  /// Som de erro / resposta incorreta / bloqueio / falha
-  static Future<void> playError() => play('sounds/error.mp3');
-
-  /// Som triunfante de vitória / encerramento de evento com conquista
-  static Future<void> playVictory() => play('sounds/victory.mp3');
-
-  /// Som de recompensa / baú físico aberto / premiação em dinheiro
-  static Future<void> playReward() => play('sounds/reward.mp3');
-
-  /// Som de desbloqueio de dica ou equipamento tático (bússola / radar)
-  static Future<void> playUnlock() => play('sounds/unlock.mp3');
-
-  /// Som de clique / seleção de abas, filtros e botões
-  static Future<void> playClick() => play('sounds/click.mp3');
-
-  /// Som de ativação da mira holográfica e escaneamento QR
-  static Future<void> playScan() => play('sounds/scanning.mp3');
-
-  /// Som de abertura de baú, gaveta ou modal de código
-  static Future<void> playOpen() => play('sounds/open.mp3');
-
-  /// Som de cópia de chave Pix ou compartilhamento
-  static Future<void> playCopy() => play('sounds/copy.mp3');
-
-  /// Som de distintivo / conquista de explorador ou pódio
-  static Future<void> playBadge() => play('sounds/badge.mp3');
-
-  /// Som de evolução de nível / ganho de XP
-  static Future<void> playLevelUp() => play('sounds/level_up.mp3');
-
-  /// Som de checkpoint ou nova fase liberada
-  static Future<void> playCheckpoint() => play('sounds/checkpoint.mp3');
-
-  /// Alterna o estado de mudo dos efeitos sonoros
   static void toggleMute() {
-    isMuted = !isMuted;
-    if (isMuted) {
-      _player.stop();
-    }
+    toggleAmbientMute();
   }
 
-  /// Libera recursos do player
+  /// Libera recursos dos players
   static Future<void> dispose() async {
     try {
-      await _player.dispose();
-      _initialized = false;
+      await _ambientPlayer.dispose();
+      _ambientInitialized = false;
+      isAmbientPlaying = false;
     } catch (_) {}
   }
 }
