@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:oenigma/core/widgets/hunter_arsenal_sheet.dart';
 
 import '../widgets/card_enigma.dart';
 
@@ -176,7 +177,40 @@ class _LobbyFindEndWinScreenState extends ConsumerState<LobbyFindEndWinScreen>
                               ),
                             ),
                             const Spacer(),
-                            const SizedBox(width: 40), // balance
+                            GestureDetector(
+                              onTap: () {
+                                HunterArsenalSheet.show(
+                                  context,
+                                  eventId: widget.event.id,
+                                  onToolsUpdated: () => setState(() {}),
+                                );
+                              },
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF131D24),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.amareloVale.withValues(alpha: 0.6),
+                                    width: 1.2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.amareloVale.withValues(alpha: 0.2),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                                child: const Center(
+                                  child: FaIcon(
+                                    FontAwesomeIcons.toolbox,
+                                    color: AppColors.amareloVale,
+                                    size: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),

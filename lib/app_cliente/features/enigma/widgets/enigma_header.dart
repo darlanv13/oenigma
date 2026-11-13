@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:oenigma/app_cliente/features/enigma/controllers/enigma_controller.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:oenigma/core/widgets/hunter_arsenal_sheet.dart';
 
 /// Barra superior de expedição: moderna, limpa e sem poluição visual.
 class EnigmaHeader extends StatelessWidget {
@@ -173,6 +174,47 @@ class EnigmaHeader extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Botão de Acesso Rápido ao Arsenal do Caçador
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    HunterArsenalSheet.show(
+                      context,
+                      eventId: controller.event.id,
+                      enigmaId: enigma.id,
+                      activeTools: controller.toolsPurchased,
+                      toolTimes: controller.toolTimes,
+                      onToolsUpdated: () => controller.fetchInitialStatus(context),
+                    );
+                  },
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF131D24),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.amareloVale.withValues(alpha: 0.7),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.amareloVale.withValues(alpha: 0.15),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: FaIcon(
+                        FontAwesomeIcons.toolbox,
+                        color: AppColors.amareloVale,
+                        size: 13,
+                      ),
+                    ),
                   ),
                 ),
               ],

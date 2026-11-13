@@ -14,6 +14,8 @@ import 'package:oenigma/app_cliente/features/event/repositories/event_repository
 import 'package:oenigma/core/models/enigma_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
+import 'package:oenigma/core/services/haptic_proximity_service.dart';
+import 'package:oenigma/core/services/location_shield_service.dart';
 import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/core/widgets/dialogs/completion_dialog.dart';
@@ -543,6 +545,7 @@ class EnigmaController extends ChangeNotifier {
         barrierDismissible: false,
         builder: (_) => CooldownDialog(
           cooldownUntil: targetCooldown,
+          eventId: event.id,
           onCooldownFinished: () {
             _isBlocked = false;
             notifyListeners();
@@ -607,6 +610,7 @@ class EnigmaController extends ChangeNotifier {
 
       _distance = distanceInMeters;
       _isNear = distanceInMeters <= 100;
+      HapticProximityService().updateDistance(distanceInMeters);
       notifyListeners();
     });
   }
@@ -695,18 +699,25 @@ class EnigmaController extends ChangeNotifier {
       double? currentLng;
 
       // Validação Geográfica para o Anti-Fraude
+      bool isMockLocation = false;
       if (action == 'validateCode' || action == 'verify_code' || action == 'scan_enigma') {
-        try {
-          Position position = await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.high,
-            ),
-          );
-          currentLat = position.latitude;
-          currentLng = position.longitude;
-        } catch (_) {
-          throw 'É necessário ativar o GPS para validar o enigma.';
+        final shieldResult = await LocationShieldService().getVerifiedPosition();
+        if (!shieldResult.isSafe) {
+          if (shieldResult.isMocked) {
+            try {
+              _enigmaRepository.callFunction('reportFraud', {
+                'eventId': event.id,
+                'enigmaId': _currentEnigma.id,
+                'reason': 'Fake GPS Detectado no Scan',
+              });
+            } catch (_) {}
+            throw 'Localização simulada detectada! Desative apps de Fake GPS para jogar.';
+          }
+          throw shieldResult.errorMessage ?? 'É necessário ativar o GPS para validar o enigma.';
         }
+        currentLat = shieldResult.position?.latitude;
+        currentLng = shieldResult.position?.longitude;
+        isMockLocation = shieldResult.isMocked;
       }
 
       final result = await _enigmaRepository.callEnigmaFunction(action, {
@@ -718,6 +729,7 @@ class EnigmaController extends ChangeNotifier {
         'hintId': ?hintId,
         'latitude': ?currentLat,
         'longitude': ?currentLng,
+        'isMocked': isMockLocation,
       });
 
       final data = Map<String, dynamic>.from(result.result);
@@ -883,6 +895,7 @@ class EnigmaController extends ChangeNotifier {
 
   @override
   void dispose() {
+    HapticProximityService().stop();
     if (_activeTool != null && _unsyncedSeconds > 0) {
       _syncToolUsageSilently(_activeTool!, _unsyncedSeconds);
       _unsyncedSeconds = 0;

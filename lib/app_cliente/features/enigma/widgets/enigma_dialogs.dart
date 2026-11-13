@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
 import 'package:oenigma/app_cliente/features/enigma/services/decoy_location_service.dart';
 import 'package:oenigma/app_cliente/features/enigma/widgets/compass_widget.dart';
@@ -12,6 +13,7 @@ import 'package:oenigma/app_cliente/features/wallet/screens/wallet_screen.dart';
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:oenigma/core/widgets/hunter_share_card.dart';
 
 /// Central de diálogos e modais para a expedição Enigma (Estilo Indiana Jones / Cores Vale).
 class EnigmaDialogs {
@@ -352,6 +354,32 @@ class EnigmaDialogs {
           ],
         ),
         actions: [
+          OutlinedButton.icon(
+            onPressed: () async {
+              final user = await ParseUser.currentUser() as ParseUser?;
+              final playerName = user?.get<String>('name') ?? user?.get<String>('username') ?? 'Explorador';
+              final referralCode = user != null ? 'ENIGMA-${user.objectId!.substring(0, 6).toUpperCase()}' : null;
+              if (dialogCtx.mounted) {
+                await HunterShareCard.show(
+                  dialogCtx,
+                  playerName: playerName,
+                  eventTitle: 'Baú Conquistado!',
+                  prizeWon: prizeWon,
+                  referralCode: referralCode,
+                );
+              }
+            },
+            icon: const FaIcon(FontAwesomeIcons.shareNodes, size: 13, color: AppColors.amareloVale),
+            label: Text(
+              'COMPARTILHAR',
+              style: GoogleFonts.cinzel(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.amareloVale),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.amareloVale),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            ),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(dialogCtx).pop();
@@ -363,7 +391,7 @@ class EnigmaDialogs {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
             child: Text(
               'RETORNAR AO ACAMPAMENTO',

@@ -558,8 +558,40 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
     let balance = parseMoney(user.get("balance"));
 
     const now = new Date().getTime();
-    if (eventProgress.cooldownUntil && eventProgress.cooldownUntil > now && action !== 'getStatus') {
+    if (eventProgress.cooldownUntil && eventProgress.cooldownUntil > now && action !== 'getStatus' && action !== 'skipCooldown') {
       return { success: false, message: "Aguarde o Cooldown", cooldownUntil: eventProgress.cooldownUntil };
+    }
+
+    if (action === 'skipCooldown') {
+      const skipCost = 1.99;
+      if (balance < skipCost) {
+        throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Saldo insuficiente (R$ 1,99) para pular o tempo de espera.");
+      }
+      const newBal = Number((balance - skipCost).toFixed(2));
+      user.set("balance", newBal);
+      eventProgress.cooldownUntil = null;
+      userEvents[eventId] = eventProgress;
+      user.set("events", userEvents);
+      await user.save(null, { useMasterKey: true });
+
+      try {
+        const Transaction = Parse.Object.extend("Transaction");
+        const tx = new Transaction();
+        tx.set("type", "tool");
+        tx.set("amount", skipCost);
+        tx.set("description", "Pular Penalidade de Cooldown (R$ 1,99)");
+        tx.set("status", "completed");
+        tx.set("user", user);
+        await tx.save(null, { useMasterKey: true });
+      } catch (txErr) {
+        console.error("Erro ao registrar transação de pular cooldown:", txErr);
+      }
+
+      return {
+        success: true,
+        message: "Penalidade de tempo cancelada com sucesso! Continue caçando.",
+        newBalance: newBal
+      };
     }
 
     if (action === 'getStatus') {
@@ -777,6 +809,8 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
          cost = enigma ? (enigma.get("compassPrice") || 15.0) : 15.0;
       } else if (toolType === 'radar') {
          cost = enigma ? (enigma.get("radarPrice") || 10.0) : 10.0;
+      } else if (toolType === 'anti_decoy') {
+         cost = 4.0;
       }
       else throw new Parse.Error(Parse.Error.INVALID_QUERY, "Invalid tool type.");
 
@@ -807,8 +841,22 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
       };
 
     } else if (action === 'validateCode' || action === 'verify_code' || action === 'scan_enigma') {
-      const { latitude, longitude } = request.params;
+      const { latitude, longitude, isMocked } = request.params;
       const guess = code || answer;
+      
+      if (isMocked === true) {
+        try {
+          const FraudLog = Parse.Object.extend("FraudLog");
+          const fraud = new FraudLog();
+          fraud.set("user", user);
+          fraud.set("eventId", eventId);
+          fraud.set("enigmaId", enigmaId);
+          fraud.set("reason", "GPS Falso / Localização Simulada Detectada (Mock Location)");
+          await fraud.save(null, { useMasterKey: true });
+        } catch (_) {}
+
+        throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Dispositivo utilizando localização simulada/Fake GPS. Ação bloqueada pelo sistema de integridade.");
+      }
       
       const Enigma = Parse.Object.extend("Enigma");
       const query = new Parse.Query(Enigma);
@@ -1393,3 +1441,79 @@ Parse.Cloud.define("requestWithdrawal", async (request) => {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao solicitar saque: " + error.message);
   }
 });
+
+// -----------------------------------------------------------------------------
+// SISTEMA DE INDICAÇÃO & CONVITES (Viral Loop Gamificado)
+// -----------------------------------------------------------------------------
+Parse.Cloud.define("applyReferralCode", async (request) => {
+  const { referralCode } = request.params;
+  const user = request.user;
+  if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Usuário não autenticado.");
+  if (!referralCode) throw new Parse.Error(Parse.Error.INVALID_QUERY, "Código de indicação é obrigatório.");
+
+  if (user.get("referredBy")) {
+    throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Você já utilizou um código de indicação anteriormente.");
+  }
+
+  const cleanCode = String(referralCode).trim().toUpperCase();
+  const rawId = cleanCode.startsWith("ENIGMA-") ? cleanCode.replace("ENIGMA-", "") : cleanCode;
+
+  // Busca o usuário que indicou pelo ID ou prefixo do ID
+  const userQuery = new Parse.Query(Parse.User);
+  const allUsers = await userQuery.find({ useMasterKey: true });
+  const referrer = allUsers.find(u => u.id.toUpperCase() === rawId || u.id.toUpperCase().startsWith(rawId));
+
+  if (!referrer) {
+    throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, "Código de indicação não encontrado ou inválido.");
+  }
+
+  if (referrer.id === user.id) {
+    throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Você não pode indicar a si mesmo!");
+  }
+
+  // Bônus de boas-vindas: R$ 2,00 para o novo usuário e R$ 2,00 para quem indicou
+  const bonusAmount = 2.0;
+
+  const currentRefereeBalance = parseMoney(user.get("balance"));
+  user.set("balance", Number((currentRefereeBalance + bonusAmount).toFixed(2)));
+  user.set("referredBy", referrer.id);
+  let refereeXp = user.get("xp") || 0;
+  user.set("xp", refereeXp + 50);
+  await user.save(null, { useMasterKey: true });
+
+  const currentReferrerBalance = parseMoney(referrer.get("balance"));
+  referrer.set("balance", Number((currentReferrerBalance + bonusAmount).toFixed(2)));
+  let referrerXp = referrer.get("xp") || 0;
+  referrer.set("xp", referrerXp + 50);
+  let referralsCount = referrer.get("referralsCount") || 0;
+  referrer.set("referralsCount", referralsCount + 1);
+  await referrer.save(null, { useMasterKey: true });
+
+  try {
+    const Transaction = Parse.Object.extend("Transaction");
+    const tx1 = new Transaction();
+    tx1.set("type", "bonus");
+    tx1.set("amount", bonusAmount);
+    tx1.set("description", `Bônus Convite de Amigo (${cleanCode})`);
+    tx1.set("status", "completed");
+    tx1.set("user", user);
+    await tx1.save(null, { useMasterKey: true });
+
+    const tx2 = new Transaction();
+    tx2.set("type", "bonus");
+    tx2.set("amount", bonusAmount);
+    tx2.set("description", `Bônus por Indicar Amigo (${user.get("name") || "Novo Jogador"})`);
+    tx2.set("status", "completed");
+    tx2.set("user", referrer);
+    await tx2.save(null, { useMasterKey: true });
+  } catch (txErr) {
+    console.error("Erro ao registrar transações de indicação:", txErr);
+  }
+
+  return {
+    success: true,
+    bonusGranted: bonusAmount,
+    message: `Sucesso! Você e seu amigo ganharam R$ ${bonusAmount.toFixed(2)} de saldo bônus!`
+  };
+});
+

@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
@@ -549,7 +550,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           _buildHunterMetricsGrid(balance, eventosJogados, eventosVencidos, xp),
                           const SizedBox(height: 18),
 
-                          // 3. Card de Dados Cadastrais & Segurança (Zero Trust)
+                          // 3. Card de Indicação & Convite de Amigos (Viral Loop Gamificado)
+                          _buildReferralCard(user),
+                          const SizedBox(height: 18),
+
+                          // 4. Card de Dados Cadastrais & Segurança (Zero Trust)
                           _buildAccountSecurityCard(cpf, email, phone),
                           const SizedBox(height: 18),
 
@@ -999,6 +1004,367 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // =========================================================================
+  // CARD DE INDICAÇÃO & CONVITE (VIRAL LOOP GAMIFICADO)
+  // =========================================================================
+  Widget _buildReferralCard(ParseUser user) {
+    final inviteCode = 'ENIGMA-${user.objectId?.substring(0, 6).toUpperCase() ?? "EXPLORER"}';
+    final hasReferredBy = user.get('referredBy') != null;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF131D24),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.4), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.amareloVale.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.5)),
+                    ),
+                    child: const FaIcon(FontAwesomeIcons.gift, color: AppColors.amareloVale, size: 15),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'CONVIDE & GANHE',
+                    style: GoogleFonts.cinzel(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: AppColors.amareloVale.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.5), width: 1),
+                ),
+                child: Text(
+                  '+R\$ 2,00 CADA',
+                  style: GoogleFonts.orbitron(
+                    color: AppColors.amareloVale,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Compartilhe seu código com amigos. Quando eles entrarem no app, vocês dois ganham R\$ 2,00 de saldo e +50 XP de honra!',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.85),
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Caixa do Código com botão de cópia
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0C171F),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF1E3A45), width: 1),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SEU CÓDIGO EXCLUSIVO',
+                      style: GoogleFonts.orbitron(
+                        fontSize: 8.5,
+                        color: const Color(0xFF91A3AE),
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      inviteCode,
+                      style: GoogleFonts.orbitron(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.amareloVale,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: inviteCode));
+                    SoundService.playClick();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Código copiado para a área de transferência!'),
+                        backgroundColor: AppColors.verdeVale,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  icon: const FaIcon(FontAwesomeIcons.copy, size: 12, color: Colors.black),
+                  label: Text(
+                    'COPIAR',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.amareloVale,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Botões: Compartilhar no WhatsApp / Inserir Código de Amigo
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    SoundService.playClick();
+                    final text = '🏆 Venha caçar tesouros reais comigo no app O Enigma! Use meu código $inviteCode e ganhe R\$ 2,00 de saldo inicial: https://darlanv13.github.io/oenigma';
+                    Share.share(text);
+                  },
+                  icon: const FaIcon(FontAwesomeIcons.whatsapp, size: 14, color: Colors.white),
+                  label: Text(
+                    'CONVIDAR AMIGOS',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF25D366),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+              ),
+              if (!hasReferredBy) ...[
+                const SizedBox(width: 10),
+                OutlinedButton(
+                  onPressed: () => _openEnterReferralSheet(user),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.verdeVale),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: Text(
+                    'USAR CÓDIGO',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.verdeVale,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openEnterReferralSheet(ParseUser user) {
+    SoundService.playOpen();
+    final controller = TextEditingController();
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF131D24),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 22,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 22,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'INSERIR CÓDIGO DE AMIGO',
+                        style: GoogleFonts.cinzel(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.amareloVale,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white70),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Digite o código fornecido pelo seu amigo (ex: ENIGMA-123ABC) para resgatar R\$ 2,00 de saldo e +50 XP imediatamente.',
+                    style: GoogleFonts.inter(fontSize: 12.5, color: Colors.white70, height: 1.35),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: controller,
+                    textCapitalization: TextCapitalization.characters,
+                    style: GoogleFonts.orbitron(
+                      color: AppColors.amareloVale,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      letterSpacing: 1.5,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'ENIGMA-XXXXXX',
+                      hintStyle: GoogleFonts.orbitron(color: Colors.white24, fontSize: 14),
+                      filled: true,
+                      fillColor: const Color(0xFF0C171F),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFF1E3A45)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: Color(0xFF1E3A45)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(color: AppColors.amareloVale),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  ElevatedButton(
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
+                            final code = controller.text.trim();
+                            if (code.isEmpty) return;
+                            setSheetState(() => isSubmitting = true);
+                            try {
+                              final func = ParseCloudFunction('applyReferralCode');
+                              final res = await func.execute(parameters: {'referralCode': code});
+                              if (res.success && res.result != null) {
+                                final data = Map<String, dynamic>.from(res.result as Map);
+                                if (data['success'] == true) {
+                                  SoundService.playReward();
+                                  await user.fetch();
+                                  if (mounted) setState(() {});
+                                  if (ctx.mounted) Navigator.of(ctx).pop();
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(data['message'] ?? 'Bônus resgatado com sucesso!'),
+                                        backgroundColor: AppColors.verdeVale,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  }
+                                  return;
+                                }
+                              }
+                              final err = res.error?.message ?? 'Código inválido.';
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(err),
+                                    backgroundColor: AppColors.danger,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Erro: $e'),
+                                    backgroundColor: AppColors.danger,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } finally {
+                              if (ctx.mounted) setSheetState(() => isSubmitting = false);
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.amareloVale,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: isSubmitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                          )
+                        : Text(
+                            'RESGATAR BÔNUS DE R\$ 2,00',
+                            style: GoogleFonts.poppins(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
