@@ -57,7 +57,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         if (response.success && response.results != null) {
           final list = List<ParseObject>.from(response.results!);
           if (_selectedEvent != null) {
-            final idx = list.indexWhere((e) => e.objectId == _selectedEvent!.objectId);
+            final idx = list.indexWhere(
+              (e) => e.objectId == _selectedEvent!.objectId,
+            );
             if (idx != -1) {
               _selectedEvent = list[idx];
             }
@@ -160,7 +162,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             return List<ParseObject>.from(res.results!);
           }
           final qPtr = QueryBuilder<ParseObject>(ParseObject('Phase'))
-            ..whereEqualTo('event', (ParseObject('Event')..objectId = eventId).toPointer())
+            ..whereEqualTo(
+              'event',
+              (ParseObject('Event')..objectId = eventId).toPointer(),
+            )
             ..orderByAscending('order');
           final resPtr = await qPtr.query().timeout(const Duration(seconds: 7));
           if (resPtr.success && resPtr.results != null) {
@@ -183,7 +188,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             return List<ParseObject>.from(res.results!);
           }
           final qPtr = QueryBuilder<ParseObject>(ParseObject('Enigma'))
-            ..whereEqualTo('event', (ParseObject('Event')..objectId = eventId).toPointer())
+            ..whereEqualTo(
+              'event',
+              (ParseObject('Event')..objectId = eventId).toPointer(),
+            )
             ..orderByAscending('order');
           final resPtr = await qPtr.query().timeout(const Duration(seconds: 7));
           if (resPtr.success && resPtr.results != null) {
@@ -201,7 +209,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
           final qEv = QueryBuilder<ParseObject>(ParseObject('Event'))
             ..whereEqualTo('objectId', eventId);
           final resEv = await qEv.query().timeout(const Duration(seconds: 7));
-          if (resEv.success && resEv.results != null && resEv.results!.isNotEmpty) {
+          if (resEv.success &&
+              resEv.results != null &&
+              resEv.results!.isNotEmpty) {
             return resEv.results!.first as ParseObject;
           }
         } catch (e) {
@@ -210,8 +220,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         return null;
       }();
 
-      final results = await Future.wait([phasesFuture, enigmasFuture, eventFuture])
-          .timeout(const Duration(seconds: 10), onTimeout: () => [<ParseObject>[], <ParseObject>[], null]);
+      final results =
+          await Future.wait([phasesFuture, enigmasFuture, eventFuture]).timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => [<ParseObject>[], <ParseObject>[], null],
+          );
 
       final phases = results[0] as List<ParseObject>;
       final enigmas = results[1] as List<ParseObject>;
@@ -219,13 +232,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
       // 4. Carrega Dicas vinculadas aos enigmas deste evento
       List<ParseObject> hints = [];
-      final enigmaIds = enigmas.map((e) => e.objectId).whereType<String>().toList();
+      final enigmaIds = enigmas
+          .map((e) => e.objectId)
+          .whereType<String>()
+          .toList();
       if (enigmaIds.isNotEmpty) {
         try {
           final hintsQuery = QueryBuilder<ParseObject>(ParseObject('Hint'))
             ..whereContainedIn('linkedEnigmaId', enigmaIds)
             ..orderByAscending('createdAt');
-          final hintsRes = await hintsQuery.query().timeout(const Duration(seconds: 7));
+          final hintsRes = await hintsQuery.query().timeout(
+            const Duration(seconds: 7),
+          );
           if (hintsRes.success && hintsRes.results != null) {
             hints = List<ParseObject>.from(hintsRes.results!);
           }
@@ -266,7 +284,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   // =========================================================================
   Widget _buildModalityTag(String eventType, {bool isLarge = false}) {
     final bool isClassic = eventType.toLowerCase() == 'classic';
-    final Color tagColor = isClassic ? AppColors.verdeVale : AppColors.amareloVale;
+    final Color tagColor = isClassic
+        ? AppColors.verdeVale
+        : AppColors.amareloVale;
     final icon = isClassic ? FontAwesomeIcons.trophy : FontAwesomeIcons.boxOpen;
     final String label = isClassic ? 'CLASSIC' : 'FIND & WIN';
     final String ruleDesc = isClassic
@@ -281,10 +301,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       decoration: BoxDecoration(
         color: tagColor.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: tagColor.withValues(alpha: 0.7),
-          width: 1.3,
-        ),
+        border: Border.all(color: tagColor.withValues(alpha: 0.7), width: 1.3),
         boxShadow: [
           BoxShadow(
             color: tagColor.withValues(alpha: 0.12),
@@ -296,11 +313,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FaIcon(
-            icon,
-            size: isLarge ? 13 : 10.5,
-            color: tagColor,
-          ),
+          FaIcon(icon, size: isLarge ? 13 : 10.5, color: tagColor),
           const SizedBox(width: 6),
           Text(
             label,
@@ -343,16 +356,20 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Eventos', FontAwesomeIcons.calendar, showLine: true),
-        const SizedBox(height: 12),
+        _buildSectionTitle(
+          'Eventos',
+          FontAwesomeIcons.calendar,
+          showLine: true,
+        ),
+        const SizedBox(height: 6),
 
-        // Barra de Pesquisa e Filtros
+        // Barra de Pesquisa e Filtros Compacta
         Container(
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
             color: cardColor.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: primaryAmber.withValues(alpha: 0.1)),
           ),
           child: Column(
@@ -360,54 +377,87 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (val) => setState(() {}),
-                      style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.search, color: primaryAmber, size: 20),
-                        suffixIcon: _searchController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, color: Colors.white54, size: 18),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() {});
-                                },
-                              )
-                            : null,
-                        hintText: 'Buscar evento por nome, local ou descrição...',
-                        hintStyle: TextStyle(color: secondaryTextColor.withValues(alpha: 0.6), fontSize: 13),
-                        filled: true,
-                        fillColor: Colors.black.withValues(alpha: 0.3),
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                    child: SizedBox(
+                      height: 34,
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (val) => setState(() {}),
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 12,
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: primaryAmber),
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: primaryAmber,
+                            size: 18,
+                          ),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(
+                                    Icons.clear,
+                                    color: Colors.white54,
+                                    size: 16,
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() {});
+                                  },
+                                )
+                              : null,
+                          hintText:
+                              'Buscar evento por nome, local ou descrição...',
+                          hintStyle: TextStyle(
+                            color: secondaryTextColor.withValues(alpha: 0.6),
+                            fontSize: 12,
+                          ),
+                          filled: true,
+                          fillColor: Colors.black.withValues(alpha: 0.3),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.1),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: primaryAmber),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Text(
                     'Modalidade: ',
-                    style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.inter(
+                      color: secondaryTextColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Todos', _modalityFilter == 'todos', () => setState(() => _modalityFilter = 'todos')),
                   const SizedBox(width: 6),
+                  _buildFilterChip(
+                    'Todos',
+                    _modalityFilter == 'todos',
+                    () => setState(() => _modalityFilter = 'todos'),
+                  ),
+                  const SizedBox(width: 5),
                   _buildFilterChip(
                     'Classic',
                     _modalityFilter == 'classic',
@@ -415,7 +465,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     color: AppColors.verdeVale,
                     icon: FontAwesomeIcons.trophy,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 5),
                   _buildFilterChip(
                     'Find & Win',
                     _modalityFilter == 'find_and_win',
@@ -426,16 +476,39 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   const Spacer(),
                   Text(
                     'Status: ',
-                    style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.inter(
+                      color: secondaryTextColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Todos', _statusFilter == 'todos', () => setState(() => _statusFilter = 'todos')),
                   const SizedBox(width: 6),
-                  _buildFilterChip('Ativo', _statusFilter == 'open', () => setState(() => _statusFilter = 'open'), color: successColor),
-                  const SizedBox(width: 6),
-                  _buildFilterChip('Em breve', _statusFilter == 'em_breve', () => setState(() => _statusFilter = 'em_breve'), color: warningColor),
-                  const SizedBox(width: 6),
-                  _buildFilterChip('Encerrado', _statusFilter == 'encerrado', () => setState(() => _statusFilter = 'encerrado'), color: dangerColor),
+                  _buildFilterChip(
+                    'Todos',
+                    _statusFilter == 'todos',
+                    () => setState(() => _statusFilter = 'todos'),
+                  ),
+                  const SizedBox(width: 5),
+                  _buildFilterChip(
+                    'Ativo',
+                    _statusFilter == 'open',
+                    () => setState(() => _statusFilter = 'open'),
+                    color: successColor,
+                  ),
+                  const SizedBox(width: 5),
+                  _buildFilterChip(
+                    'Em breve',
+                    _statusFilter == 'em_breve',
+                    () => setState(() => _statusFilter = 'em_breve'),
+                    color: warningColor,
+                  ),
+                  const SizedBox(width: 5),
+                  _buildFilterChip(
+                    'Encerrado',
+                    _statusFilter == 'encerrado',
+                    () => setState(() => _statusFilter = 'encerrado'),
+                    color: dangerColor,
+                  ),
                 ],
               ),
             ],
@@ -467,22 +540,30 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
               final search = _searchController.text.trim().toLowerCase();
               if (search.isNotEmpty) {
                 events = events.where((e) {
-                  final title = (e.get<String>('title') ?? e.get<String>('name') ?? '').toLowerCase();
-                  final location = (e.get<String>('location') ?? '').toLowerCase();
-                  final desc = (e.get<String>('description') ?? '').toLowerCase();
-                  return title.contains(search) || location.contains(search) || desc.contains(search);
+                  final title =
+                      (e.get<String>('title') ?? e.get<String>('name') ?? '')
+                          .toLowerCase();
+                  final location = (e.get<String>('location') ?? '')
+                      .toLowerCase();
+                  final desc = (e.get<String>('description') ?? '')
+                      .toLowerCase();
+                  return title.contains(search) ||
+                      location.contains(search) ||
+                      desc.contains(search);
                 }).toList();
               }
 
               // Aplica filtro por modalidade
               if (_modalityFilter == 'classic') {
                 events = events.where((e) {
-                  final t = (e.get<String>('eventType') ?? 'classic').toLowerCase();
+                  final t = (e.get<String>('eventType') ?? 'classic')
+                      .toLowerCase();
                   return t == 'classic';
                 }).toList();
               } else if (_modalityFilter == 'find_and_win') {
                 events = events.where((e) {
-                  final t = (e.get<String>('eventType') ?? 'classic').toLowerCase();
+                  final t = (e.get<String>('eventType') ?? 'classic')
+                      .toLowerCase();
                   return t != 'classic';
                 }).toList();
               }
@@ -491,9 +572,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
               if (_statusFilter != 'todos') {
                 events = events.where((e) {
                   final s = (e.get<String>('status') ?? '').toLowerCase();
-                  if (_statusFilter == 'open') return s == 'open' || s == 'ativo';
+                  if (_statusFilter == 'open')
+                    return s == 'open' || s == 'ativo';
                   if (_statusFilter == 'em_breve') return s == 'em_breve';
-                  if (_statusFilter == 'encerrado') return s == 'encerrado' || s == 'closed';
+                  if (_statusFilter == 'encerrado')
+                    return s == 'encerrado' || s == 'closed';
                   return true;
                 }).toList();
               }
@@ -528,14 +611,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final effectiveColor = color ?? primaryAmber;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: isSelected ? effectiveColor.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(14),
+          color: isSelected
+              ? effectiveColor.withValues(alpha: 0.2)
+              : Colors.black.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? effectiveColor : Colors.white.withValues(alpha: 0.1),
+            color: isSelected
+                ? effectiveColor
+                : Colors.white.withValues(alpha: 0.1),
             width: isSelected ? 1.2 : 1,
           ),
         ),
@@ -543,14 +630,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              FaIcon(icon, size: 10, color: isSelected ? effectiveColor : Colors.white70),
+              FaIcon(
+                icon,
+                size: 9,
+                color: isSelected ? effectiveColor : Colors.white70,
+              ),
               const SizedBox(width: 4),
             ],
             Text(
               label,
               style: GoogleFonts.inter(
                 color: isSelected ? Colors.white : Colors.white70,
-                fontSize: 11,
+                fontSize: 10.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -591,7 +682,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
     return AdminItemCard(
       icon: isClassic ? FontAwesomeIcons.trophy : FontAwesomeIcons.boxOpen,
-      title: event.get<String>('title') ?? event.get<String>('name') ?? 'Sem Nome',
+      title:
+          event.get<String>('title') ?? event.get<String>('name') ?? 'Sem Nome',
       statusText: statusLabel,
       statusColor: statusColor,
       subtitle: subtitleText,
@@ -672,7 +764,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const FaIcon(FontAwesomeIcons.arrowLeft, size: 12, color: primaryAmber),
+                const FaIcon(
+                  FontAwesomeIcons.arrowLeft,
+                  size: 12,
+                  color: primaryAmber,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'VOLTAR PARA TODOS OS EVENTOS',
@@ -687,25 +783,25 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
-        // Event Cockpit Header
+        // Event Cockpit Header Compacto
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: cardColor.withValues(alpha: 0.85),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isClassic
                   ? AppColors.verdeVale.withValues(alpha: 0.35)
                   : AppColors.amareloVale.withValues(alpha: 0.35),
-              width: 1.5,
+              width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -721,63 +817,81 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       children: [
                         Wrap(
                           crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 12,
-                          runSpacing: 8,
+                          spacing: 10,
+                          runSpacing: 6,
                           children: [
                             Text(
-                              event.get<String>('title') ?? event.get<String>('name') ?? 'Sem Nome',
+                              event.get<String>('title') ??
+                                  event.get<String>('name') ??
+                                  'Sem Nome',
                               style: GoogleFonts.poppins(
                                 color: Colors.white,
-                                fontSize: 22,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            _buildModalityTag(eventType, isLarge: true),
+                            _buildModalityTag(eventType),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: statusColor.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: statusColor),
                               ),
                               child: Text(
                                 statusLabel,
                                 style: GoogleFonts.inter(
                                   color: statusColor,
-                                  fontSize: 10,
+                                  fontSize: 9.5,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 6),
                         Wrap(
                           crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 18,
-                          runSpacing: 6,
+                          spacing: 14,
+                          runSpacing: 4,
                           children: [
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const FaIcon(FontAwesomeIcons.locationDot, size: 12, color: AppColors.cinzaMedio),
-                                const SizedBox(width: 6),
+                                const FaIcon(
+                                  FontAwesomeIcons.locationDot,
+                                  size: 11,
+                                  color: AppColors.cinzaMedio,
+                                ),
+                                const SizedBox(width: 5),
                                 Text(
                                   location,
-                                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 13),
+                                  style: GoogleFonts.inter(
+                                    color: AppColors.cinzaMedio,
+                                    fontSize: 11.5,
+                                  ),
                                 ),
                               ],
                             ),
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const FaIcon(FontAwesomeIcons.trophy, size: 12, color: primaryAmber),
-                                const SizedBox(width: 6),
+                                const FaIcon(
+                                  FontAwesomeIcons.trophy,
+                                  size: 11,
+                                  color: primaryAmber,
+                                ),
+                                const SizedBox(width: 5),
                                 Text(
-                                  isClassic ? 'Prêmio Total (1º Colocado): $prize' : 'Prêmio Estimado da Campanha: $prize',
+                                  isClassic
+                                      ? 'Prêmio Total (1º Colocado): $prize'
+                                      : 'Prêmio Estimado da Campanha: $prize',
                                   style: GoogleFonts.inter(
                                     color: primaryAmber,
-                                    fontSize: 13,
+                                    fontSize: 11.5,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -786,7 +900,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             if (description.isNotEmpty)
                               Text(
                                 '• $description',
-                                style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 13),
+                                style: GoogleFonts.inter(
+                                  color: secondaryTextColor,
+                                  fontSize: 11.5,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -796,8 +913,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     ),
                   ),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: 6,
+                    runSpacing: 6,
                     children: [
                       _buildButton(
                         'Editar Evento',
@@ -826,7 +943,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
 
         // Conteúdo do Cockpit
         if (_isLoadingCockpit)
@@ -841,7 +958,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     const SizedBox(height: 16),
                     Text(
                       'Carregando estrutura do evento...',
-                      style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
+                      style: GoogleFonts.inter(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -879,11 +999,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         ),
         child: Column(
           children: [
-            const FaIcon(FontAwesomeIcons.triangleExclamation, color: dangerColor, size: 40),
+            const FaIcon(
+              FontAwesomeIcons.triangleExclamation,
+              color: dangerColor,
+              size: 40,
+            ),
             const SizedBox(height: 16),
             Text(
               'Não foi possível renderizar a estrutura completa deste evento',
-              style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
@@ -967,11 +1095,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildSectionTitle('Fases & Etapas da Caçada', FontAwesomeIcons.layerGroup),
+              _buildSectionTitle(
+                'Fases & Etapas da Caçada',
+                FontAwesomeIcons.layerGroup,
+              ),
               _buildButton(
                 '+ Adicionar Nova Fase',
                 isPrimary: true,
-                onTap: () => _showAddPhaseModal(context, event, () => _loadCockpitData(event.objectId ?? '')),
+                onTap: () => _showAddPhaseModal(
+                  context,
+                  event,
+                  () => _loadCockpitData(event.objectId ?? ''),
+                ),
               ),
             ],
           ),
@@ -988,11 +1123,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
               ),
               child: Column(
                 children: [
-                  const FaIcon(FontAwesomeIcons.layerGroup, color: secondaryTextColor, size: 36),
+                  const FaIcon(
+                    FontAwesomeIcons.layerGroup,
+                    color: secondaryTextColor,
+                    size: 36,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     'Nenhuma fase criada ainda para este evento Classic.',
-                    style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 14),
+                    style: GoogleFonts.inter(
+                      color: secondaryTextColor,
+                      fontSize: 14,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   _buildButton(
@@ -1029,10 +1171,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
           // Enigmas Avulsos (Sem Fase atribuída no Classic)
           if (unassignedEnigmas.isNotEmpty) ...[
             const SizedBox(height: 20),
-            _buildSectionTitle('Enigmas Avulsos (Sem Fase)', FontAwesomeIcons.puzzlePiece, showLine: true),
+            _buildSectionTitle(
+              'Enigmas Avulsos (Sem Fase)',
+              FontAwesomeIcons.puzzlePiece,
+              showLine: true,
+            ),
             const SizedBox(height: 10),
             ...unassignedEnigmas.map((enigma) {
-              final enigmaHints = _cockpitHints.where((h) => h.get<String>('linkedEnigmaId') == enigma.objectId).toList();
+              final enigmaHints = _cockpitHints
+                  .where(
+                    (h) => h.get<String>('linkedEnigmaId') == enigma.objectId,
+                  )
+                  .toList();
               return _buildCockpitEnigmaCard(
                 event,
                 enigma,
@@ -1053,7 +1203,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     List<ParseObject> phaseEnigmas,
   ) {
     final phaseOrder = _safeOrder(phase);
-    final phaseTitle = _safeString(phase, 'title', defaultVal: 'Fase $phaseOrder');
+    final phaseTitle = _safeString(
+      phase,
+      'title',
+      defaultVal: 'Fase $phaseOrder',
+    );
     final phaseStatus = _safeString(phase, 'status', defaultVal: 'bloqueado');
     final isOpen = phaseStatus == 'open' || phaseStatus == 'aberto';
 
@@ -1077,7 +1231,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.3),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
             ),
             child: Row(
               children: [
@@ -1087,7 +1243,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.verdeVale.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.4)),
+                    border: Border.all(
+                      color: AppColors.verdeVale.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Center(
                     child: Text(
@@ -1185,7 +1343,12 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     _buildButton(
                       'Excluir Fase',
                       isDanger: true,
-                      onTap: () => _deletePhase(context, event, phase, () => _loadCockpitData(event.objectId ?? '')),
+                      onTap: () => _deletePhase(
+                        context,
+                        event,
+                        phase,
+                        () => _loadCockpitData(event.objectId ?? ''),
+                      ),
                     ),
                   ],
                 ),
@@ -1216,7 +1379,13 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   )
                 : Column(
                     children: phaseEnigmas.map((enigma) {
-                      final enigmaHints = _cockpitHints.where((h) => h.get<String>('linkedEnigmaId') == enigma.objectId).toList();
+                      final enigmaHints = _cockpitHints
+                          .where(
+                            (h) =>
+                                h.get<String>('linkedEnigmaId') ==
+                                enigma.objectId,
+                          )
+                          .toList();
                       return _buildCockpitEnigmaCard(
                         event,
                         enigma,
@@ -1284,14 +1453,22 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             children: [
               Row(
                 children: [
-                  _buildSectionTitle('Enigmas & Baús do Evento', FontAwesomeIcons.boxOpen),
+                  _buildSectionTitle(
+                    'Enigmas & Baús do Evento',
+                    FontAwesomeIcons.boxOpen,
+                  ),
                   const SizedBox(width: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.amareloVale.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.4)),
+                      border: Border.all(
+                        color: AppColors.amareloVale.withValues(alpha: 0.4),
+                      ),
                     ),
                     child: Text(
                       'Soma Baús: R\$ ${totalBauSum.toStringAsFixed(2)} (${_cockpitEnigmas.length} Enigmas)',
@@ -1329,11 +1506,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
               ),
               child: Column(
                 children: [
-                  const FaIcon(FontAwesomeIcons.boxOpen, color: secondaryTextColor, size: 36),
+                  const FaIcon(
+                    FontAwesomeIcons.boxOpen,
+                    color: secondaryTextColor,
+                    size: 36,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     'Nenhum enigma cadastrado para este evento Find & Win.',
-                    style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 14),
+                    style: GoogleFonts.inter(
+                      color: secondaryTextColor,
+                      fontSize: 14,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   _buildButton(
@@ -1351,7 +1535,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             )
           else ...[
             ..._cockpitEnigmas.map((enigma) {
-              final enigmaHints = _cockpitHints.where((h) => h.get<String>('linkedEnigmaId') == enigma.objectId).toList();
+              final enigmaHints = _cockpitHints
+                  .where(
+                    (h) => h.get<String>('linkedEnigmaId') == enigma.objectId,
+                  )
+                  .toList();
               return _buildCockpitEnigmaCard(
                 event,
                 enigma,
@@ -1376,7 +1564,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     ParseObject? currentPhase,
   }) {
     final order = _safeOrder(enigma);
-    final instruction = _safeString(enigma, 'instruction', defaultVal: _safeString(enigma, 'name', defaultVal: 'Sem instrução'));
+    final instruction = _safeString(
+      enigma,
+      'instruction',
+      defaultVal: _safeString(enigma, 'name', defaultVal: 'Sem instrução'),
+    );
     final type = _safeString(enigma, 'type', defaultVal: 'text');
     final difficulty = _safeString(enigma, 'difficulty', defaultVal: 'Médio');
     final code = _safeString(enigma, 'code', defaultVal: '---');
@@ -1403,7 +1595,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: isClassic
                         ? AppColors.verdeVale.withValues(alpha: 0.18)
@@ -1418,7 +1613,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   child: Text(
                     '#$order',
                     style: GoogleFonts.inter(
-                      color: isClassic ? AppColors.verdeVale : AppColors.amareloVale,
+                      color: isClassic
+                          ? AppColors.verdeVale
+                          : AppColors.amareloVale,
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                     ),
@@ -1446,25 +1643,38 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white10,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               type.toUpperCase(),
-                              style: GoogleFonts.inter(color: primaryAmber, fontSize: 10, fontWeight: FontWeight.bold),
+                              style: GoogleFonts.inter(
+                                color: primaryAmber,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white10,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               'Dif: $difficulty',
-                              style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 10),
+                              style: GoogleFonts.inter(
+                                color: secondaryTextColor,
+                                fontSize: 10,
+                              ),
                             ),
                           ),
                           InkWell(
@@ -1478,7 +1688,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               );
                             },
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white10,
                                 borderRadius: BorderRadius.circular(4),
@@ -1488,26 +1701,46 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                 children: [
                                   Text(
                                     'Cód: $code',
-                                    style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 10),
+                                    style: GoogleFonts.inter(
+                                      color: secondaryTextColor,
+                                      fontSize: 10,
+                                    ),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.copy, size: 10, color: Colors.white54),
+                                  const Icon(
+                                    Icons.copy,
+                                    size: 10,
+                                    color: Colors.white54,
+                                  ),
                                 ],
                               ),
                             ),
                           ),
                           if (!isClassic) ...[
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: AppColors.amareloVale.withValues(alpha: 0.15),
+                                color: AppColors.amareloVale.withValues(
+                                  alpha: 0.15,
+                                ),
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.4)),
+                                border: Border.all(
+                                  color: AppColors.amareloVale.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const FaIcon(FontAwesomeIcons.boxOpen, size: 10, color: AppColors.amareloVale),
+                                  const FaIcon(
+                                    FontAwesomeIcons.boxOpen,
+                                    size: 10,
+                                    color: AppColors.amareloVale,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     'Prêmio Baú: R\$ $prize',
@@ -1522,11 +1755,20 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             ),
                           ] else ...[
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: AppColors.verdeVale.withValues(alpha: 0.15),
+                                color: AppColors.verdeVale.withValues(
+                                  alpha: 0.15,
+                                ),
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.4)),
+                                border: Border.all(
+                                  color: AppColors.verdeVale.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                ),
                               ),
                               child: Text(
                                 'Jornada Classic (Prêmio no Final)',
@@ -1542,17 +1784,29 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             if (hasCompass)
                               const Padding(
                                 padding: EdgeInsets.only(right: 2),
-                                child: FaIcon(FontAwesomeIcons.compass, size: 11, color: primaryAmber),
+                                child: FaIcon(
+                                  FontAwesomeIcons.compass,
+                                  size: 11,
+                                  color: primaryAmber,
+                                ),
                               ),
                             if (hasMap)
                               const Padding(
                                 padding: EdgeInsets.only(right: 2),
-                                child: FaIcon(FontAwesomeIcons.mapLocationDot, size: 11, color: Colors.blueAccent),
+                                child: FaIcon(
+                                  FontAwesomeIcons.mapLocationDot,
+                                  size: 11,
+                                  color: Colors.blueAccent,
+                                ),
                               ),
                             if (hasRadar)
                               const Padding(
                                 padding: EdgeInsets.only(right: 2),
-                                child: FaIcon(FontAwesomeIcons.satelliteDish, size: 11, color: successColor),
+                                child: FaIcon(
+                                  FontAwesomeIcons.satelliteDish,
+                                  size: 11,
+                                  color: successColor,
+                                ),
                               ),
                           ],
                         ],
@@ -1612,7 +1866,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     _buildButton(
                       'Excluir',
                       isDanger: true,
-                      onTap: () => _deleteEnigmaWithCascade(context, enigma, () => _loadCockpitData(event.objectId ?? '')),
+                      onTap: () => _deleteEnigmaWithCascade(
+                        context,
+                        enigma,
+                        () => _loadCockpitData(event.objectId ?? ''),
+                      ),
                     ),
                   ],
                 ),
@@ -1625,8 +1883,12 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.25),
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(14)),
-              border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(14),
+              ),
+              border: Border(
+                top: BorderSide(color: Colors.white.withValues(alpha: 0.05)),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1636,7 +1898,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   children: [
                     Row(
                       children: [
-                        const FaIcon(FontAwesomeIcons.lightbulb, size: 11, color: primaryAmber),
+                        const FaIcon(
+                          FontAwesomeIcons.lightbulb,
+                          size: 11,
+                          color: primaryAmber,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Dicas deste Enigma (${hints.length}):',
@@ -1649,12 +1915,23 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       ],
                     ),
                     InkWell(
-                      onTap: () => _showAddHintModal(context, enigma, () => _loadCockpitData(event.objectId ?? '')),
+                      onTap: () => _showAddHintModal(
+                        context,
+                        enigma,
+                        () => _loadCockpitData(event.objectId ?? ''),
+                      ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         child: Row(
                           children: [
-                            const FaIcon(FontAwesomeIcons.plus, size: 10, color: primaryAmber),
+                            const FaIcon(
+                              FontAwesomeIcons.plus,
+                              size: 10,
+                              color: primaryAmber,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'Adicionar Dica',
@@ -1673,12 +1950,23 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                 if (hints.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   ...hints.map((hint) {
-                    final desc = _safeString(hint, 'description', defaultVal: _safeString(hint, 'title', defaultVal: 'Dica'));
+                    final desc = _safeString(
+                      hint,
+                      'description',
+                      defaultVal: _safeString(
+                        hint,
+                        'title',
+                        defaultVal: 'Dica',
+                      ),
+                    );
                     final priceHint = _safePrice(hint, 'price');
 
                     return Container(
                       margin: const EdgeInsets.only(top: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: cardColor.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(8),
@@ -1688,13 +1976,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                           Expanded(
                             child: Text(
                               '💡 $desc',
-                              style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.black45,
                               borderRadius: BorderRadius.circular(4),
@@ -1710,18 +2004,34 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                           ),
                           const SizedBox(width: 6),
                           InkWell(
-                            onTap: () => _showEditHintModal(context, hint, () => _loadCockpitData(event.objectId ?? '')),
+                            onTap: () => _showEditHintModal(
+                              context,
+                              hint,
+                              () => _loadCockpitData(event.objectId ?? ''),
+                            ),
                             child: const Padding(
                               padding: EdgeInsets.all(4),
-                              child: FaIcon(FontAwesomeIcons.penToSquare, size: 11, color: Colors.blueAccent),
+                              child: FaIcon(
+                                FontAwesomeIcons.penToSquare,
+                                size: 11,
+                                color: Colors.blueAccent,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 4),
                           InkWell(
-                            onTap: () => _deleteHint(context, hint, () => _loadCockpitData(event.objectId ?? '')),
+                            onTap: () => _deleteHint(
+                              context,
+                              hint,
+                              () => _loadCockpitData(event.objectId ?? ''),
+                            ),
                             child: const Padding(
                               padding: EdgeInsets.all(4),
-                              child: FaIcon(FontAwesomeIcons.trash, size: 11, color: dangerColor),
+                              child: FaIcon(
+                                FontAwesomeIcons.trash,
+                                size: 11,
+                                color: dangerColor,
+                              ),
                             ),
                           ),
                         ],
@@ -1740,7 +2050,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   // =========================================================================
   //  7. MODAIS DE DICAS (CRIAR, EDITAR, EXCLUIR)
   // =========================================================================
-  void _showAddHintModal(BuildContext context, ParseObject enigma, VoidCallback onSaved) {
+  void _showAddHintModal(
+    BuildContext context,
+    ParseObject enigma,
+    VoidCallback onSaved,
+  ) {
     final descCtrl = TextEditingController();
     final priceCtrl = TextEditingController(text: '0.50');
 
@@ -1775,15 +2089,16 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     onTap: () async {
                       if (descCtrl.text.trim().isEmpty) return;
 
-                      final res = await ParseCloudFunction('createOrUpdateHint').execute(
-                        parameters: {
-                          'data': {
-                            'description': descCtrl.text.trim(),
-                            'price': _parseMoney(priceCtrl.text.trim()),
-                            'linkedEnigmaId': enigma.objectId,
-                          },
-                        },
-                      );
+                      final res = await ParseCloudFunction('createOrUpdateHint')
+                          .execute(
+                            parameters: {
+                              'data': {
+                                'description': descCtrl.text.trim(),
+                                'price': _parseMoney(priceCtrl.text.trim()),
+                                'linkedEnigmaId': enigma.objectId,
+                              },
+                            },
+                          );
 
                       if (res.success) {
                         if (ctx.mounted) Navigator.pop(ctx);
@@ -1800,9 +2115,17 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     );
   }
 
-  void _showEditHintModal(BuildContext context, ParseObject hint, VoidCallback onSaved) {
-    final descCtrl = TextEditingController(text: hint.get<String>('description') ?? hint.get<String>('title') ?? '');
-    final priceCtrl = TextEditingController(text: hint.get<num>('price')?.toString() ?? '0.50');
+  void _showEditHintModal(
+    BuildContext context,
+    ParseObject hint,
+    VoidCallback onSaved,
+  ) {
+    final descCtrl = TextEditingController(
+      text: hint.get<String>('description') ?? hint.get<String>('title') ?? '',
+    );
+    final priceCtrl = TextEditingController(
+      text: hint.get<num>('price')?.toString() ?? '0.50',
+    );
 
     showDialog(
       context: context,
@@ -1835,15 +2158,16 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     onTap: () async {
                       if (descCtrl.text.trim().isEmpty) return;
 
-                      final res = await ParseCloudFunction('createOrUpdateHint').execute(
-                        parameters: {
-                          'hintId': hint.objectId,
-                          'data': {
-                            'description': descCtrl.text.trim(),
-                            'price': _parseMoney(priceCtrl.text.trim()),
-                          },
-                        },
-                      );
+                      final res = await ParseCloudFunction('createOrUpdateHint')
+                          .execute(
+                            parameters: {
+                              'hintId': hint.objectId,
+                              'data': {
+                                'description': descCtrl.text.trim(),
+                                'price': _parseMoney(priceCtrl.text.trim()),
+                              },
+                            },
+                          );
 
                       if (res.success) {
                         if (ctx.mounted) Navigator.pop(ctx);
@@ -1860,10 +2184,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     );
   }
 
-  Future<void> _deleteHint(BuildContext context, ParseObject hint, VoidCallback onSaved) async {
-    final res = await ParseCloudFunction('deleteHint').execute(
-      parameters: {'hintId': hint.objectId},
-    );
+  Future<void> _deleteHint(
+    BuildContext context,
+    ParseObject hint,
+    VoidCallback onSaved,
+  ) async {
+    final res = await ParseCloudFunction(
+      'deleteHint',
+    ).execute(parameters: {'hintId': hint.objectId});
     if (res.success) {
       onSaved();
     }
@@ -1881,22 +2209,44 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     required VoidCallback onSaved,
   }) {
     final isEdit = enigma != null;
-    final instructionCtrl = TextEditingController(text: isEdit ? (enigma.get<String>('instruction') ?? '') : '');
-    final codeCtrl = TextEditingController(text: isEdit ? _safeString(enigma, 'code') : '');
-    final prizeCtrl = TextEditingController(text: isEdit ? (enigma.get<dynamic>('prize')?.toString() ?? '0') : '0');
-    final orderCtrl = TextEditingController(text: isEdit ? (enigma.get<num>('order')?.toString() ?? '1') : '');
-    final photoUrlCtrl = TextEditingController(text: isEdit ? (enigma.get<String>('imageUrl') ?? '') : '');
-    final audioUrlCtrl = TextEditingController(text: isEdit ? (enigma.get<String>('audioUrl') ?? '') : '');
-    final compassCoordsCtrl = TextEditingController(text: isEdit ? (enigma.get<String>('compassCoords') ?? '') : '');
+    final instructionCtrl = TextEditingController(
+      text: isEdit ? (enigma.get<String>('instruction') ?? '') : '',
+    );
+    final codeCtrl = TextEditingController(
+      text: isEdit ? _safeString(enigma, 'code') : '',
+    );
+    final prizeCtrl = TextEditingController(
+      text: isEdit ? (enigma.get<dynamic>('prize')?.toString() ?? '0') : '0',
+    );
+    final orderCtrl = TextEditingController(
+      text: isEdit ? (enigma.get<num>('order')?.toString() ?? '1') : '',
+    );
+    final photoUrlCtrl = TextEditingController(
+      text: isEdit ? (enigma.get<String>('imageUrl') ?? '') : '',
+    );
+    final audioUrlCtrl = TextEditingController(
+      text: isEdit ? (enigma.get<String>('audioUrl') ?? '') : '',
+    );
+    final compassCoordsCtrl = TextEditingController(
+      text: isEdit ? (enigma.get<String>('compassCoords') ?? '') : '',
+    );
 
     String tipo = isEdit ? (enigma.get<String>('type') ?? 'text') : 'text';
-    String dificuldade = isEdit ? (enigma.get<String>('difficulty') ?? 'Médio') : 'Médio';
+    String dificuldade = isEdit
+        ? (enigma.get<String>('difficulty') ?? 'Médio')
+        : 'Médio';
 
-    bool hasCompass = isEdit ? (enigma.get<bool>('hasCompass') ?? false) : false;
+    bool hasCompass = isEdit
+        ? (enigma.get<bool>('hasCompass') ?? false)
+        : false;
     bool hasMap = isEdit ? (enigma.get<bool>('hasMap') ?? false) : false;
     bool hasRadar = isEdit ? (enigma.get<bool>('hasRadar') ?? false) : false;
-    bool enableToolTimer = isEdit ? (enigma.get<bool>('enableToolTimer') ?? true) : true;
-    bool enableFakeTargets = isEdit ? (enigma.get<bool>('enableFakeTargets') ?? true) : true;
+    bool enableToolTimer = isEdit
+        ? (enigma.get<bool>('enableToolTimer') ?? true)
+        : true;
+    bool enableFakeTargets = isEdit
+        ? (enigma.get<bool>('enableFakeTargets') ?? true)
+        : true;
     bool isSaving = false;
 
     showDialog(
@@ -1907,8 +2257,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             final modalTitle = isEdit
                 ? 'Editar Enigma #${enigma.get<num>('order') ?? 1}'
                 : (isClassic
-                    ? 'Criar Enigma na ${phase?.get<String>('title') ?? "Fase"}'
-                    : 'Criar Enigma (Find & Win)');
+                      ? 'Criar Enigma na ${phase?.get<String>('title') ?? "Fase"}'
+                      : 'Criar Enigma (Find & Win)');
 
             return AdminModal(
               title: modalTitle,
@@ -1926,12 +2276,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       ),
                       child: Row(
                         children: [
-                          const FaIcon(FontAwesomeIcons.circleInfo, color: AppColors.verdeVale, size: 13),
+                          const FaIcon(
+                            FontAwesomeIcons.circleInfo,
+                            color: AppColors.verdeVale,
+                            size: 13,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Modalidade Classic: Este enigma não possui premiação individual em dinheiro. O valor total configurado no evento é entregue exclusivamente ao 1º colocado ao finalizar todas as fases.',
-                              style: GoogleFonts.inter(color: Colors.white, fontSize: 11),
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 11,
+                              ),
                             ),
                           ),
                         ],
@@ -1950,9 +2307,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         child: _buildSelectForm(
                           value: tipo,
                           items: const [
-                            DropdownMenuItem(value: 'text', child: Text('Texto (Charada)')),
-                            DropdownMenuItem(value: 'photo', child: Text('Foto (Imagem)')),
-                            DropdownMenuItem(value: 'audio', child: Text('Áudio (Mídia)')),
+                            DropdownMenuItem(
+                              value: 'text',
+                              child: Text('Texto (Charada)'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'photo',
+                              child: Text('Foto (Imagem)'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'audio',
+                              child: Text('Áudio (Mídia)'),
+                            ),
                           ],
                           onChanged: (val) {
                             if (val != null) setFormState(() => tipo = val);
@@ -1964,13 +2330,26 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         child: _buildSelectForm(
                           value: dificuldade,
                           items: const [
-                            DropdownMenuItem(value: 'Fácil', child: Text('Fácil')),
-                            DropdownMenuItem(value: 'Médio', child: Text('Médio')),
-                            DropdownMenuItem(value: 'Difícil', child: Text('Difícil')),
-                            DropdownMenuItem(value: 'Lendário', child: Text('Lendário')),
+                            DropdownMenuItem(
+                              value: 'Fácil',
+                              child: Text('Fácil'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Médio',
+                              child: Text('Médio'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Difícil',
+                              child: Text('Difícil'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Lendário',
+                              child: Text('Lendário'),
+                            ),
                           ],
                           onChanged: (val) {
-                            if (val != null) setFormState(() => dificuldade = val);
+                            if (val != null)
+                              setFormState(() => dificuldade = val);
                           },
                         ),
                       ),
@@ -2016,10 +2395,17 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 18),
+                          icon: const FaIcon(
+                            FontAwesomeIcons.upload,
+                            color: primaryAmber,
+                            size: 18,
+                          ),
                           tooltip: 'Upload de Imagem',
                           onPressed: () async {
-                            final url = await AdminUploadUtil.pickAndUploadImage(context);
+                            final url =
+                                await AdminUploadUtil.pickAndUploadImage(
+                                  context,
+                                );
                             if (url != null) {
                               setFormState(() => photoUrlCtrl.text = url);
                             }
@@ -2039,10 +2425,17 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 18),
+                          icon: const FaIcon(
+                            FontAwesomeIcons.upload,
+                            color: primaryAmber,
+                            size: 18,
+                          ),
                           tooltip: 'Upload de Áudio',
                           onPressed: () async {
-                            final url = await AdminUploadUtil.pickAndUploadAudio(context);
+                            final url =
+                                await AdminUploadUtil.pickAndUploadAudio(
+                                  context,
+                                );
                             if (url != null) {
                               setFormState(() => audioUrlCtrl.text = url);
                             }
@@ -2054,7 +2447,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   const SizedBox(height: 14),
                   Text(
                     'Ferramentas Disponíveis ao Jogador:',
-                    style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12),
+                    style: GoogleFonts.inter(
+                      color: secondaryTextColor,
+                      fontSize: 12,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Row(
@@ -2064,9 +2460,13 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         selected: hasCompass,
                         selectedColor: primaryAmber,
                         checkmarkColor: darkBackground,
-                        labelStyle: TextStyle(color: hasCompass ? darkBackground : Colors.white, fontSize: 12),
+                        labelStyle: TextStyle(
+                          color: hasCompass ? darkBackground : Colors.white,
+                          fontSize: 12,
+                        ),
                         backgroundColor: cardColor,
-                        onSelected: (val) => setFormState(() => hasCompass = val),
+                        onSelected: (val) =>
+                            setFormState(() => hasCompass = val),
                       ),
                       const SizedBox(width: 8),
                       FilterChip(
@@ -2074,7 +2474,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         selected: hasMap,
                         selectedColor: primaryAmber,
                         checkmarkColor: darkBackground,
-                        labelStyle: TextStyle(color: hasMap ? darkBackground : Colors.white, fontSize: 12),
+                        labelStyle: TextStyle(
+                          color: hasMap ? darkBackground : Colors.white,
+                          fontSize: 12,
+                        ),
                         backgroundColor: cardColor,
                         onSelected: (val) => setFormState(() => hasMap = val),
                       ),
@@ -2084,7 +2487,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         selected: hasRadar,
                         selectedColor: primaryAmber,
                         checkmarkColor: darkBackground,
-                        labelStyle: TextStyle(color: hasRadar ? darkBackground : Colors.white, fontSize: 12),
+                        labelStyle: TextStyle(
+                          color: hasRadar ? darkBackground : Colors.white,
+                          fontSize: 12,
+                        ),
                         backgroundColor: cardColor,
                         onSelected: (val) => setFormState(() => hasRadar = val),
                       ),
@@ -2092,11 +2498,16 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   ),
                   const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: cardColor.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -2114,12 +2525,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                           ),
                           subtitle: Text(
                             'Conta 15 minutos somente com a ferramenta aberta (pausa ao fechar). Desative para uso ilimitado.',
-                            style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 11),
+                            style: GoogleFonts.inter(
+                              color: secondaryTextColor,
+                              fontSize: 11,
+                            ),
                           ),
                           value: enableToolTimer,
-                          onChanged: (val) => setFormState(() => enableToolTimer = val),
+                          onChanged: (val) =>
+                              setFormState(() => enableToolTimer = val),
                         ),
-                        Divider(color: Colors.white.withValues(alpha: 0.06), height: 16),
+                        Divider(
+                          color: Colors.white.withValues(alpha: 0.06),
+                          height: 16,
+                        ),
                         SwitchListTile(
                           dense: true,
                           contentPadding: EdgeInsets.zero,
@@ -2134,10 +2552,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                           ),
                           subtitle: Text(
                             'Exibe 4 anomalias fake no raio de 300m para forçar exploração. Desative para apontar direto à relíquia.',
-                            style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 11),
+                            style: GoogleFonts.inter(
+                              color: secondaryTextColor,
+                              fontSize: 11,
+                            ),
                           ),
                           value: enableFakeTargets,
-                          onChanged: (val) => setFormState(() => enableFakeTargets = val),
+                          onChanged: (val) =>
+                              setFormState(() => enableFakeTargets = val),
                         ),
                       ],
                     ),
@@ -2154,26 +2576,39 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: const FaIcon(FontAwesomeIcons.locationCrosshairs, color: primaryAmber, size: 18),
+                          icon: const FaIcon(
+                            FontAwesomeIcons.locationCrosshairs,
+                            color: primaryAmber,
+                            size: 18,
+                          ),
                           tooltip: 'Capturar Localização Atual via GPS',
                           onPressed: () async {
                             try {
-                              bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-                              if (!serviceEnabled) throw 'Serviço de GPS desativado.';
-                              LocationPermission perm = await Geolocator.checkPermission();
+                              bool serviceEnabled =
+                                  await Geolocator.isLocationServiceEnabled();
+                              if (!serviceEnabled)
+                                throw 'Serviço de GPS desativado.';
+                              LocationPermission perm =
+                                  await Geolocator.checkPermission();
                               if (perm == LocationPermission.denied) {
                                 perm = await Geolocator.requestPermission();
-                                if (perm == LocationPermission.denied) throw 'Permissão negada.';
+                                if (perm == LocationPermission.denied)
+                                  throw 'Permissão negada.';
                               }
                               final pos = await Geolocator.getCurrentPosition(
-                                locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+                                locationSettings: const LocationSettings(
+                                  accuracy: LocationAccuracy.high,
+                                ),
                               );
                               setFormState(() {
-                                compassCoordsCtrl.text = '${pos.latitude}, ${pos.longitude}';
+                                compassCoordsCtrl.text =
+                                    '${pos.latitude}, ${pos.longitude}';
                               });
                             } catch (e) {
                               if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro GPS: $e')));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Erro GPS: $e')),
+                                );
                               }
                             }
                           },
@@ -2187,7 +2622,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     children: [
                       _buildButton(
                         'Cancelar',
-                        onTap: isSaving ? () {} : () => Navigator.pop(dialogCtx),
+                        onTap: isSaving
+                            ? () {}
+                            : () => Navigator.pop(dialogCtx),
                       ),
                       const SizedBox(width: 10),
                       _buildButton(
@@ -2202,7 +2639,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                 if (instruction.isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Por favor, informe a instrução do enigma.'),
+                                      content: Text(
+                                        'Por favor, informe a instrução do enigma.',
+                                      ),
                                       backgroundColor: dangerColor,
                                     ),
                                   );
@@ -2219,57 +2658,98 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                         : '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond.toString().padLeft(3, '0')}';
                                   }
 
-                                  int nextOrder = int.tryParse(orderCtrl.text.trim()) ?? (isEdit ? (enigma.get<num>('order')?.toInt() ?? 1) : 1);
-                                  if (!isEdit && orderCtrl.text.trim().isEmpty) {
-                                    final q = QueryBuilder<ParseObject>(ParseObject('Enigma'));
+                                  int nextOrder =
+                                      int.tryParse(orderCtrl.text.trim()) ??
+                                      (isEdit
+                                          ? (enigma
+                                                    .get<num>('order')
+                                                    ?.toInt() ??
+                                                1)
+                                          : 1);
+                                  if (!isEdit &&
+                                      orderCtrl.text.trim().isEmpty) {
+                                    final q = QueryBuilder<ParseObject>(
+                                      ParseObject('Enigma'),
+                                    );
                                     if (isClassic && phase != null) {
-                                      q.whereEqualTo('phase', (ParseObject('Phase')..objectId = phase.objectId).toPointer());
+                                      q.whereEqualTo(
+                                        'phase',
+                                        (ParseObject('Phase')
+                                              ..objectId = phase.objectId)
+                                            .toPointer(),
+                                      );
                                     } else {
                                       q.whereEqualTo('eventId', event.objectId);
                                     }
                                     q.orderByDescending('order');
                                     q.setLimit(1);
                                     final qRes = await q.query();
-                                    if (qRes.success && qRes.results != null && qRes.results!.isNotEmpty) {
-                                      nextOrder = ((qRes.results!.first as ParseObject).get<num>('order')?.toInt() ?? 0) + 1;
+                                    if (qRes.success &&
+                                        qRes.results != null &&
+                                        qRes.results!.isNotEmpty) {
+                                      nextOrder =
+                                          ((qRes.results!.first as ParseObject)
+                                                  .get<num>('order')
+                                                  ?.toInt() ??
+                                              0) +
+                                          1;
                                     }
                                   }
 
                                   final prizeStr = isClassic
                                       ? '0'
-                                      : (prizeCtrl.text.trim().isEmpty ? '0' : prizeCtrl.text.trim());
+                                      : (prizeCtrl.text.trim().isEmpty
+                                            ? '0'
+                                            : prizeCtrl.text.trim());
 
-                                  final res = await ParseCloudFunction('createOrUpdateEnigma').execute(
-                                    parameters: {
-                                      'eventId': event.objectId,
-                                      if (isEdit) 'enigmaId': enigma.objectId,
-                                      if (isClassic && phase != null) 'phaseId': phase.objectId,
-                                      'data': {
-                                        'instruction': instruction,
-                                        'code': code,
-                                        'order': nextOrder,
-                                        'type': tipo,
-                                        'difficulty': dificuldade,
-                                        'prize': prizeStr,
-                                        'imageUrl': photoUrlCtrl.text.trim(),
-                                        'audioUrl': audioUrlCtrl.text.trim(),
-                                        'hasCompass': hasCompass,
-                                        'hasMap': hasMap,
-                                        'hasRadar': hasRadar,
-                                        'enableToolTimer': enableToolTimer,
-                                        'enableFakeTargets': enableFakeTargets,
-                                        'compassCoords': compassCoordsCtrl.text.trim(),
-                                        if (!isEdit) 'status': 'open',
-                                      },
-                                    },
-                                  );
+                                  final res =
+                                      await ParseCloudFunction(
+                                        'createOrUpdateEnigma',
+                                      ).execute(
+                                        parameters: {
+                                          'eventId': event.objectId,
+                                          if (isEdit)
+                                            'enigmaId': enigma.objectId,
+                                          if (isClassic && phase != null)
+                                            'phaseId': phase.objectId,
+                                          'data': {
+                                            'instruction': instruction,
+                                            'code': code,
+                                            'order': nextOrder,
+                                            'type': tipo,
+                                            'difficulty': dificuldade,
+                                            'prize': prizeStr,
+                                            'imageUrl': photoUrlCtrl.text
+                                                .trim(),
+                                            'audioUrl': audioUrlCtrl.text
+                                                .trim(),
+                                            'hasCompass': hasCompass,
+                                            'hasMap': hasMap,
+                                            'hasRadar': hasRadar,
+                                            'enableToolTimer': enableToolTimer,
+                                            'enableFakeTargets':
+                                                enableFakeTargets,
+                                            'compassCoords': compassCoordsCtrl
+                                                .text
+                                                .trim(),
+                                            if (!isEdit) 'status': 'open',
+                                          },
+                                        },
+                                      );
 
                                   if (res.success) {
-                                    if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                                    if (dialogCtx.mounted)
+                                      Navigator.pop(dialogCtx);
                                     if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
-                                          content: Text(isEdit ? 'Enigma atualizado com sucesso!' : 'Enigma criado com sucesso!'),
+                                          content: Text(
+                                            isEdit
+                                                ? 'Enigma atualizado com sucesso!'
+                                                : 'Enigma criado com sucesso!',
+                                          ),
                                           backgroundColor: successColor,
                                         ),
                                       );
@@ -2278,9 +2758,13 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                   } else {
                                     setFormState(() => isSaving = false);
                                     if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
                                         SnackBar(
-                                          content: Text('Erro ao salvar enigma: ${res.error?.message ?? "Falha na operação"}'),
+                                          content: Text(
+                                            'Erro ao salvar enigma: ${res.error?.message ?? "Falha na operação"}',
+                                          ),
                                           backgroundColor: dangerColor,
                                         ),
                                       );
@@ -2291,7 +2775,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('Erro ao salvar enigma: $e'),
+                                        content: Text(
+                                          'Erro ao salvar enigma: $e',
+                                        ),
                                         backgroundColor: dangerColor,
                                       ),
                                     );
@@ -2327,7 +2813,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       builder: (ctx) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
           child: Container(
             width: 360,
             height: 680,
@@ -2351,7 +2840,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   backgroundColor: AppColors.sidebarBackground,
                   title: Text(
                     'Prévia do Jogador',
-                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   centerTitle: true,
                   leading: IconButton(
@@ -2368,25 +2860,38 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: primaryAmber.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               type.toUpperCase(),
-                              style: GoogleFonts.inter(color: primaryAmber, fontSize: 10, fontWeight: FontWeight.bold),
+                              style: GoogleFonts.inter(
+                                color: primaryAmber,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white10,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               'Dif: $difficulty',
-                              style: GoogleFonts.inter(color: Colors.white70, fontSize: 10),
+                              style: GoogleFonts.inter(
+                                color: Colors.white70,
+                                fontSize: 10,
+                              ),
                             ),
                           ),
                         ],
@@ -2399,11 +2904,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             imageUrl,
                             height: 180,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              height: 100,
-                              color: Colors.white10,
-                              child: const Center(child: Text('Erro ao carregar imagem')),
-                            ),
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  height: 100,
+                                  color: Colors.white10,
+                                  child: const Center(
+                                    child: Text('Erro ao carregar imagem'),
+                                  ),
+                                ),
                           ),
                         ),
                         const SizedBox(height: 14),
@@ -2418,29 +2926,51 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         child: MarkdownBody(
                           data: instruction,
                           styleSheet: MarkdownStyleSheet(
-                            p: GoogleFonts.inter(color: Colors.white, fontSize: 14, height: 1.5),
-                            strong: GoogleFonts.inter(color: primaryAmber, fontWeight: FontWeight.bold),
+                            p: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 14,
+                              height: 1.5,
+                            ),
+                            strong: GoogleFonts.inter(
+                              color: primaryAmber,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 20),
                       Text(
                         'Ferramentas Disponíveis na Caçada:',
-                        style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 11),
+                        style: GoogleFonts.inter(
+                          color: secondaryTextColor,
+                          fontSize: 11,
+                        ),
                       ),
                       const SizedBox(height: 10),
                       if (hasCompass)
-                        _buildPreviewToolButton(FontAwesomeIcons.compass, 'Bússola Magnética'),
+                        _buildPreviewToolButton(
+                          FontAwesomeIcons.compass,
+                          'Bússola Magnética',
+                        ),
                       if (hasMap)
-                        _buildPreviewToolButton(FontAwesomeIcons.mapLocationDot, 'Mapa e Raio de Busca'),
+                        _buildPreviewToolButton(
+                          FontAwesomeIcons.mapLocationDot,
+                          'Mapa e Raio de Busca',
+                        ),
                       if (hasRadar)
-                        _buildPreviewToolButton(FontAwesomeIcons.satelliteDish, 'Radar de Proximidade'),
+                        _buildPreviewToolButton(
+                          FontAwesomeIcons.satelliteDish,
+                          'Radar de Proximidade',
+                        ),
                       if (!hasCompass && !hasMap && !hasRadar)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Text(
                             'Nenhuma ferramenta ativa para este enigma.',
-                            style: GoogleFonts.inter(color: Colors.white38, fontSize: 12),
+                            style: GoogleFonts.inter(
+                              color: Colors.white38,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                     ],
@@ -2467,7 +2997,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         children: [
           FaIcon(icon, color: primaryAmber, size: 14),
           const SizedBox(width: 10),
-          Text(label, style: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -2505,11 +3042,17 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
               const SizedBox(height: 16),
               Text(
                 'Código Hash / Resposta:',
-                style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12),
+                style: GoogleFonts.inter(
+                  color: secondaryTextColor,
+                  fontSize: 12,
+                ),
               ),
               const SizedBox(height: 4),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black45,
                   borderRadius: BorderRadius.circular(8),
@@ -2536,7 +3079,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       Clipboard.setData(ClipboardData(text: code));
                       Navigator.pop(ctx);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Código copiado para a área de transferência!')),
+                        const SnackBar(
+                          content: Text(
+                            'Código copiado para a área de transferência!',
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -2565,7 +3112,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => const Center(child: CircularProgressIndicator(color: primaryAmber)),
+      builder: (ctx) =>
+          const Center(child: CircularProgressIndicator(color: primaryAmber)),
     );
 
     try {
@@ -2582,8 +3130,15 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       queryOrder.setLimit(1);
       final resOrder = await queryOrder.query();
       int nextOrder = 1;
-      if (resOrder.success && resOrder.results != null && resOrder.results!.isNotEmpty) {
-        nextOrder = ((resOrder.results!.first as ParseObject).get<num>('order')?.toInt() ?? 0) + 1;
+      if (resOrder.success &&
+          resOrder.results != null &&
+          resOrder.results!.isNotEmpty) {
+        nextOrder =
+            ((resOrder.results!.first as ParseObject)
+                    .get<num>('order')
+                    ?.toInt() ??
+                0) +
+            1;
       }
 
       final resNew = await ParseCloudFunction('createOrUpdateEnigma').execute(
@@ -2591,12 +3146,15 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
           'eventId': event.objectId,
           if (isClassic && phase != null) 'phaseId': phase.objectId,
           'data': {
-            'instruction': '${enigma.get<String>("instruction") ?? "Enigma"} (Cópia)',
+            'instruction':
+                '${enigma.get<String>("instruction") ?? "Enigma"} (Cópia)',
             'code': generatedHash,
             'order': nextOrder,
             'type': enigma.get<String>('type'),
             'difficulty': enigma.get<String>('difficulty'),
-            'prize': isClassic ? '0' : (enigma.get<dynamic>('prize')?.toString() ?? '0'),
+            'prize': isClassic
+                ? '0'
+                : (enigma.get<dynamic>('prize')?.toString() ?? '0'),
             'status': 'open',
             'hasCompass': enigma.get<bool>('hasCompass') ?? false,
             'compassCoords': enigma.get<String>('compassCoords') ?? '',
@@ -2611,7 +3169,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       if (resNew.success && resNew.result != null) {
         String newEnigmaId = resNew.result is ParseObject
             ? (resNew.result as ParseObject).objectId!
-            : (resNew.result is Map ? (resNew.result['enigmaId'] ?? resNew.result['objectId'] ?? '') : '');
+            : (resNew.result is Map
+                  ? (resNew.result['enigmaId'] ??
+                        resNew.result['objectId'] ??
+                        '')
+                  : '');
 
         if (newEnigmaId.isNotEmpty) {
           final hintsQ = QueryBuilder<ParseObject>(ParseObject('Hint'))
@@ -2644,7 +3206,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao duplicar enigma: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao duplicar enigma: $e')));
       }
     }
   }
@@ -2669,7 +3233,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -2688,9 +3255,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
           await (h as ParseObject).delete();
         }
       }
-      await ParseCloudFunction('deleteEnigma').execute(
-        parameters: {'enigmaId': enigma.objectId},
-      );
+      await ParseCloudFunction(
+        'deleteEnigma',
+      ).execute(parameters: {'enigmaId': enigma.objectId});
       onRefresh();
     }
   }
@@ -2698,7 +3265,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
   // =========================================================================
   //  9. MODAIS DE FASE (CRIAR, EDITAR, EXCLUIR, VINCULAR, MOVER)
   // =========================================================================
-  void _showAddPhaseModal(BuildContext context, ParseObject event, VoidCallback onRefresh) async {
+  void _showAddPhaseModal(
+    BuildContext context,
+    ParseObject event,
+    VoidCallback onRefresh,
+  ) async {
     final nextOrder = _cockpitPhases.length + 1;
     final titleCtrl = TextEditingController(text: 'Fase $nextOrder');
 
@@ -2713,7 +3284,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildInputForm(controller: titleCtrl, hint: 'Título da Fase (Ex: Fase 1)'),
+              _buildInputForm(
+                controller: titleCtrl,
+                hint: 'Título da Fase (Ex: Fase 1)',
+              ),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -2726,16 +3300,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     onTap: () async {
                       if (titleCtrl.text.trim().isEmpty) return;
 
-                      final res = await ParseCloudFunction('createOrUpdatePhase').execute(
-                        parameters: {
-                          'eventId': event.objectId,
-                          'data': {
-                            'title': titleCtrl.text.trim(),
-                            'order': nextOrder,
-                            'status': nextOrder == 1 ? 'open' : 'bloqueado',
-                          },
-                        },
-                      );
+                      final res =
+                          await ParseCloudFunction(
+                            'createOrUpdatePhase',
+                          ).execute(
+                            parameters: {
+                              'eventId': event.objectId,
+                              'data': {
+                                'title': titleCtrl.text.trim(),
+                                'order': nextOrder,
+                                'status': nextOrder == 1 ? 'open' : 'bloqueado',
+                              },
+                            },
+                          );
 
                       if (res.success) {
                         if (ctx.mounted) Navigator.pop(ctx);
@@ -2744,7 +3321,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         if (ctx.mounted) {
                           ScaffoldMessenger.of(ctx).showSnackBar(
                             SnackBar(
-                              content: Text('Erro ao criar fase: ${res.error?.message ?? "Falha na operação"}'),
+                              content: Text(
+                                'Erro ao criar fase: ${res.error?.message ?? "Falha na operação"}',
+                              ),
                               backgroundColor: dangerColor,
                             ),
                           );
@@ -2768,7 +3347,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     VoidCallback onRefresh,
   ) {
     final phaseOrder = phase.get<num>('order') ?? 1;
-    final titleCtrl = TextEditingController(text: phase.get<String>('title') ?? 'Fase $phaseOrder');
+    final titleCtrl = TextEditingController(
+      text: phase.get<String>('title') ?? 'Fase $phaseOrder',
+    );
     final orderCtrl = TextEditingController(text: phaseOrder.toString());
     String status = phase.get<String>('status') ?? 'bloqueado';
 
@@ -2783,21 +3364,33 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildInputForm(controller: titleCtrl, hint: 'Título da Fase'),
+                  _buildInputForm(
+                    controller: titleCtrl,
+                    hint: 'Título da Fase',
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       SizedBox(
                         width: 90,
-                        child: _buildInputForm(controller: orderCtrl, hint: 'Ordem'),
+                        child: _buildInputForm(
+                          controller: orderCtrl,
+                          hint: 'Ordem',
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildSelectForm(
                           value: status,
                           items: const [
-                            DropdownMenuItem(value: 'open', child: Text('Aberta / Inicial')),
-                            DropdownMenuItem(value: 'bloqueado', child: Text('Bloqueada (Sequencial)')),
+                            DropdownMenuItem(
+                              value: 'open',
+                              child: Text('Aberta / Inicial'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'bloqueado',
+                              child: Text('Bloqueada (Sequencial)'),
+                            ),
                           ],
                           onChanged: (val) {
                             if (val != null) setModalState(() => status = val);
@@ -2810,7 +3403,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      _buildButton('Cancelar', onTap: () => Navigator.pop(dialogCtx)),
+                      _buildButton(
+                        'Cancelar',
+                        onTap: () => Navigator.pop(dialogCtx),
+                      ),
                       const SizedBox(width: 8),
                       _buildButton(
                         'Salvar Fase',
@@ -2818,17 +3414,22 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         onTap: () async {
                           if (titleCtrl.text.trim().isEmpty) return;
 
-                          final res = await ParseCloudFunction('createOrUpdatePhase').execute(
-                            parameters: {
-                              'eventId': event.objectId,
-                              'phaseId': phase.objectId,
-                              'data': {
-                                'title': titleCtrl.text.trim(),
-                                'order': int.tryParse(orderCtrl.text.trim()) ?? phaseOrder,
-                                'status': status,
-                              },
-                            },
-                          );
+                          final res =
+                              await ParseCloudFunction(
+                                'createOrUpdatePhase',
+                              ).execute(
+                                parameters: {
+                                  'eventId': event.objectId,
+                                  'phaseId': phase.objectId,
+                                  'data': {
+                                    'title': titleCtrl.text.trim(),
+                                    'order':
+                                        int.tryParse(orderCtrl.text.trim()) ??
+                                        phaseOrder,
+                                    'status': status,
+                                  },
+                                },
+                              );
 
                           if (res.success) {
                             if (dialogCtx.mounted) Navigator.pop(dialogCtx);
@@ -2837,7 +3438,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             if (dialogCtx.mounted) {
                               ScaffoldMessenger.of(dialogCtx).showSnackBar(
                                 SnackBar(
-                                  content: Text('Erro ao salvar fase: ${res.error?.message ?? "Falha na operação"}'),
+                                  content: Text(
+                                    'Erro ao salvar fase: ${res.error?.message ?? "Falha na operação"}',
+                                  ),
                                   backgroundColor: dangerColor,
                                 ),
                               );
@@ -2867,7 +3470,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: sidebarBackground,
-        title: Text('Excluir $title?', style: GoogleFonts.orbitron(color: primaryAmber)),
+        title: Text(
+          'Excluir $title?',
+          style: GoogleFonts.orbitron(color: primaryAmber),
+        ),
         content: Text(
           'A exclusão desta fase removerá também todos os enigmas e dicas vinculados a ela. Deseja prosseguir?',
           style: GoogleFonts.inter(color: secondaryTextColor),
@@ -2875,7 +3481,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -2887,10 +3496,7 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
     if (confirm == true) {
       final res = await ParseCloudFunction('deletePhase').execute(
-        parameters: {
-          'eventId': event.objectId,
-          'phaseId': phase.objectId,
-        },
+        parameters: {'eventId': event.objectId, 'phaseId': phase.objectId},
       );
       if (res.success) {
         onRefresh();
@@ -2914,14 +3520,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         }).toList();
 
         return AdminModal(
-          title: 'Vincular Enigma Existente à ${targetPhase.get<String>('title') ?? "Fase"}',
+          title:
+              'Vincular Enigma Existente à ${targetPhase.get<String>('title') ?? "Fase"}',
           maxWidth: 650,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Selecione um enigma deste evento para vincular a esta fase:',
-                style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 13),
+                style: GoogleFonts.inter(
+                  color: secondaryTextColor,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 14),
               if (available.isEmpty)
@@ -2935,7 +3545,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   child: Center(
                     child: Text(
                       'Todos os enigmas deste evento já estão vinculados a esta fase ou nenhum enigma foi cadastrado.',
-                      style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 13),
+                      style: GoogleFonts.inter(
+                        color: secondaryTextColor,
+                        fontSize: 13,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -2948,12 +3561,20 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     itemBuilder: (context, index) {
                       final enigma = available[index];
                       final currentPhaseId = _getEnigmaPhaseId(enigma);
-                      final hasPhase = currentPhaseId != null && currentPhaseId.isNotEmpty;
+                      final hasPhase =
+                          currentPhaseId != null && currentPhaseId.isNotEmpty;
                       final currentPhaseObj = hasPhase
-                          ? _cockpitPhases.cast<ParseObject?>().firstWhere((p) => p?.objectId == currentPhaseId, orElse: () => null)
+                          ? _cockpitPhases.cast<ParseObject?>().firstWhere(
+                              (p) => p?.objectId == currentPhaseId,
+                              orElse: () => null,
+                            )
                           : null;
                       final currentPhaseTitle = currentPhaseObj != null
-                          ? _safeString(currentPhaseObj, 'title', defaultVal: 'Fase ${_safeOrder(currentPhaseObj)}')
+                          ? _safeString(
+                              currentPhaseObj,
+                              'title',
+                              defaultVal: 'Fase ${_safeOrder(currentPhaseObj)}',
+                            )
                           : (hasPhase ? 'Outra Fase' : 'Sem Fase (Avulso)');
 
                       return Container(
@@ -2962,7 +3583,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         decoration: BoxDecoration(
                           color: cardColor.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: primaryAmber.withValues(alpha: 0.08)),
+                          border: Border.all(
+                            color: primaryAmber.withValues(alpha: 0.08),
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -2971,8 +3594,13 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    enigma.get<String>('instruction') ?? 'Sem instrução',
-                                    style: GoogleFonts.inter(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                    enigma.get<String>('instruction') ??
+                                        'Sem instrução',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -2980,15 +3608,26 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                   Row(
                                     children: [
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
                                         decoration: BoxDecoration(
-                                          color: hasPhase ? primaryAmber.withValues(alpha: 0.15) : Colors.white10,
-                                          borderRadius: BorderRadius.circular(4),
+                                          color: hasPhase
+                                              ? primaryAmber.withValues(
+                                                  alpha: 0.15,
+                                                )
+                                              : Colors.white10,
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                         child: Text(
                                           currentPhaseTitle,
                                           style: GoogleFonts.inter(
-                                            color: hasPhase ? primaryAmber : secondaryTextColor,
+                                            color: hasPhase
+                                                ? primaryAmber
+                                                : secondaryTextColor,
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -2997,7 +3636,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                                       const SizedBox(width: 8),
                                       Text(
                                         'Tipo: ${enigma.get<String>('type')} · Cód: ${enigma.get<String>('code') ?? "---"}',
-                                        style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 11),
+                                        style: GoogleFonts.inter(
+                                          color: secondaryTextColor,
+                                          fontSize: 11,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -3008,26 +3650,32 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                               'Vincular',
                               isPrimary: true,
                               onTap: () async {
-                                final existingInPhase = _cockpitEnigmas.where((e) {
+                                final existingInPhase = _cockpitEnigmas.where((
+                                  e,
+                                ) {
                                   final pid = _getEnigmaPhaseId(e);
                                   return pid == targetPhase.objectId;
                                 }).length;
                                 final int nextOrder = existingInPhase + 1;
 
-                                final res = await ParseCloudFunction('createOrUpdateEnigma').execute(
-                                  parameters: {
-                                    'enigmaId': enigma.objectId,
-                                    'eventId': event.objectId,
-                                    'phaseId': targetPhase.objectId,
-                                    'data': {
-                                      'order': nextOrder,
-                                      'prize': '0',
-                                    },
-                                  },
-                                );
+                                final res =
+                                    await ParseCloudFunction(
+                                      'createOrUpdateEnigma',
+                                    ).execute(
+                                      parameters: {
+                                        'enigmaId': enigma.objectId,
+                                        'eventId': event.objectId,
+                                        'phaseId': targetPhase.objectId,
+                                        'data': {
+                                          'order': nextOrder,
+                                          'prize': '0',
+                                        },
+                                      },
+                                    );
 
                                 if (res.success) {
-                                  if (context.mounted) Navigator.of(context).pop();
+                                  if (context.mounted)
+                                    Navigator.of(context).pop();
                                   onRefresh();
                                 }
                               },
@@ -3042,7 +3690,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  _buildButton('Fechar', onTap: () => Navigator.of(context).pop()),
+                  _buildButton(
+                    'Fechar',
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
                 ],
               ),
             ],
@@ -3059,7 +3710,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     ParseObject enigma,
     VoidCallback onRefresh,
   ) {
-    final otherPhases = _cockpitPhases.where((p) => p.objectId != currentPhase.objectId).toList();
+    final otherPhases = _cockpitPhases
+        .where((p) => p.objectId != currentPhase.objectId)
+        .toList();
 
     showDialog(
       context: context,
@@ -3072,14 +3725,21 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             children: [
               Text(
                 enigma.get<String>('instruction') ?? 'Enigma',
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 14),
               Text(
                 'Selecione a fase de destino:',
-                style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12),
+                style: GoogleFonts.inter(
+                  color: secondaryTextColor,
+                  fontSize: 12,
+                ),
               ),
               const SizedBox(height: 8),
               if (otherPhases.isEmpty)
@@ -3087,7 +3747,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
                     'Não há outras fases cadastradas neste evento.',
-                    style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 13),
+                    style: GoogleFonts.inter(
+                      color: secondaryTextColor,
+                      fontSize: 13,
+                    ),
                   ),
                 )
               else
@@ -3101,9 +3764,17 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       tileColor: cardColor.withValues(alpha: 0.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
-                        side: BorderSide(color: primaryAmber.withValues(alpha: 0.1)),
+                        side: BorderSide(
+                          color: primaryAmber.withValues(alpha: 0.1),
+                        ),
                       ),
-                      title: Text(pTitle, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                      title: Text(
+                        pTitle,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
                       trailing: _buildButton(
                         'Mover para cá',
                         isPrimary: true,
@@ -3114,17 +3785,17 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                           }).length;
                           final nextOrder = existingInPhase + 1;
 
-                          final res = await ParseCloudFunction('createOrUpdateEnigma').execute(
-                            parameters: {
-                              'enigmaId': enigma.objectId,
-                              'eventId': event.objectId,
-                              'phaseId': targetP.objectId,
-                              'data': {
-                                'order': nextOrder,
-                                'prize': '0',
-                              },
-                            },
-                          );
+                          final res =
+                              await ParseCloudFunction(
+                                'createOrUpdateEnigma',
+                              ).execute(
+                                parameters: {
+                                  'enigmaId': enigma.objectId,
+                                  'eventId': event.objectId,
+                                  'phaseId': targetP.objectId,
+                                  'data': {'order': nextOrder, 'prize': '0'},
+                                },
+                              );
                           if (res.success) {
                             if (context.mounted) Navigator.of(context).pop();
                             onRefresh();
@@ -3149,20 +3820,24 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                 ),
                 subtitle: Text(
                   'O enigma continuará no evento, mas sem fase atribuída.',
-                  style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 11),
+                  style: GoogleFonts.inter(
+                    color: secondaryTextColor,
+                    fontSize: 11,
+                  ),
                 ),
                 trailing: _buildButton(
                   'Desvincular',
                   isDanger: true,
                   onTap: () async {
-                    final res = await ParseCloudFunction('createOrUpdateEnigma').execute(
-                      parameters: {
-                        'enigmaId': enigma.objectId,
-                        'eventId': event.objectId,
-                        'phaseId': '',
-                        'data': {'prize': '0'},
-                      },
-                    );
+                    final res = await ParseCloudFunction('createOrUpdateEnigma')
+                        .execute(
+                          parameters: {
+                            'enigmaId': enigma.objectId,
+                            'eventId': event.objectId,
+                            'phaseId': '',
+                            'data': {'prize': '0'},
+                          },
+                        );
                     if (res.success) {
                       if (context.mounted) Navigator.of(context).pop();
                       onRefresh();
@@ -3174,7 +3849,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  _buildButton('Cancelar', onTap: () => Navigator.of(context).pop()),
+                  _buildButton(
+                    'Cancelar',
+                    onTap: () => Navigator.of(context).pop(),
+                  ),
                 ],
               ),
             ],
@@ -3205,34 +3883,54 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     // 1. Regras do Evento (sem emojis, texto curto e objetivo)
     if (isClassic) {
       buffer.writeln('REGRAS DO EVENTO (MODALIDADE CLASSIC):');
-      buffer.writeln('- Expedição sequencial por fases no mundo real com enigmas de texto, áudio e localização.');
-      buffer.writeln('- Decifre cada enigma e valide o código ou QR Code no local físico para avançar.');
+      buffer.writeln(
+        '- Expedição sequencial por fases no mundo real com enigmas de texto, áudio e localização.',
+      );
+      buffer.writeln(
+        '- Decifre cada enigma e valide o código ou QR Code no local físico para avançar.',
+      );
     } else {
       buffer.writeln('REGRAS DO EVENTO (MODALIDADE FIND & WIN):');
-      buffer.writeln('- Caçada simultânea com baús de relíquias distribuídos pelo mapa da região.');
-      buffer.writeln('- O primeiro explorador a localizar e escanear o QR Code de um baú garante o prêmio.');
+      buffer.writeln(
+        '- Caçada simultânea com baús de relíquias distribuídos pelo mapa da região.',
+      );
+      buffer.writeln(
+        '- O primeiro explorador a localizar e escanear o QR Code de um baú garante o prêmio.',
+      );
     }
 
     // 2. Estrutura (padrão: 5 fases e 3 enigmas)
     buffer.writeln('\nESTRUTURA:');
     if (isClassic) {
-      buffer.writeln('- $phaseCount fases sequenciais e $enigmaCount enigmas desafiadores no total.');
+      buffer.writeln(
+        '- $phaseCount fases sequenciais e $enigmaCount enigmas desafiadores no total.',
+      );
     } else {
-      buffer.writeln('- $enigmaCount baús ativos simultaneamente no mapa da caçada.');
+      buffer.writeln(
+        '- $enigmaCount baús ativos simultaneamente no mapa da caçada.',
+      );
     }
 
     // 3. Ferramentas Disponíveis
     buffer.writeln('\nFERRAMENTAS DISPONÍVEIS:');
-    buffer.writeln('- Bússola 360°, Radar Sonar de Proximidade, Mapa do Perímetro e Pistas Adicionais.');
+    buffer.writeln(
+      '- Bússola 360°, Radar Sonar de Proximidade, Mapa do Perímetro e Pistas Adicionais.',
+    );
 
     // 4. Premiação e Segurança
     buffer.writeln('\nPREMIAÇÃO E SEGURANÇA:');
     if (isObjeto) {
-      buffer.writeln('- Entrega de "$prizeLabel" presencial mediante documento oficial e termo de entrega.');
+      buffer.writeln(
+        '- Entrega de "$prizeLabel" presencial mediante documento oficial e termo de entrega.',
+      );
     } else {
-      buffer.writeln('- Valor de "$prizeLabel" creditado na carteira do app com resgate via Pix.');
+      buffer.writeln(
+        '- Valor de "$prizeLabel" creditado na carteira do app com resgate via Pix.',
+      );
     }
-    buffer.writeln('- Auditoria anti-fraude: Fake GPS ou velocidade acima de 120 km/h acarreta desclassificação.');
+    buffer.writeln(
+      '- Auditoria anti-fraude: Fake GPS ou velocidade acima de 120 km/h acarreta desclassificação.',
+    );
 
     return buffer.toString();
   }
@@ -3252,7 +3950,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     String prizeType = 'dinheiro'; // 'dinheiro' ou 'objeto'
 
     int getPhaseCount() => int.tryParse(fasesCountController.text.trim()) ?? 5;
-    int getEnigmaCount() => int.tryParse(enigmasCountController.text.trim()) ?? 3;
+    int getEnigmaCount() =>
+        int.tryParse(enigmasCountController.text.trim()) ?? 3;
 
     // A área de descrição inicia pré-preenchida com o padrão 5 fases e 3 enigmas
     final descricaoController = TextEditingController(
@@ -3306,9 +4005,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         child: _buildSelectForm(
                           value: status,
                           items: const [
-                            DropdownMenuItem(value: 'open', child: Text('Ativo')),
-                            DropdownMenuItem(value: 'em_breve', child: Text('Em breve')),
-                            DropdownMenuItem(value: 'encerrado', child: Text('Encerrado')),
+                            DropdownMenuItem(
+                              value: 'open',
+                              child: Text('Ativo'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'em_breve',
+                              child: Text('Em breve'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'encerrado',
+                              child: Text('Encerrado'),
+                            ),
                           ],
                           onChanged: (val) {
                             if (val != null) setModalState(() => status = val);
@@ -3396,7 +4104,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             controller: fasesCountController,
                             hint: 'Fases (5)',
                             keyboardType: TextInputType.number,
-                            onChanged: (_) => setModalState(updateTemplateDescription),
+                            onChanged: (_) =>
+                                setModalState(updateTemplateDescription),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -3406,7 +4115,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             controller: enigmasCountController,
                             hint: 'Enigmas (3)',
                             keyboardType: TextInputType.number,
-                            onChanged: (_) => setModalState(updateTemplateDescription),
+                            onChanged: (_) =>
+                                setModalState(updateTemplateDescription),
                           ),
                         ),
                       ] else ...[
@@ -3416,7 +4126,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             controller: enigmasCountController,
                             hint: 'Baús (3)',
                             keyboardType: TextInputType.number,
-                            onChanged: (_) => setModalState(updateTemplateDescription),
+                            onChanged: (_) =>
+                                setModalState(updateTemplateDescription),
                           ),
                         ),
                       ],
@@ -3434,12 +4145,21 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 16),
+                          icon: const FaIcon(
+                            FontAwesomeIcons.upload,
+                            color: primaryAmber,
+                            size: 16,
+                          ),
                           tooltip: 'Upload de Foto do Prêmio',
                           onPressed: () async {
-                            final url = await AdminUploadUtil.pickAndUploadImage(context);
+                            final url =
+                                await AdminUploadUtil.pickAndUploadImage(
+                                  context,
+                                );
                             if (url != null) {
-                              setModalState(() => prizeImageUrlController.text = url);
+                              setModalState(
+                                () => prizeImageUrlController.text = url,
+                              );
                             }
                           },
                         ),
@@ -3453,7 +4173,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     children: [
                       Row(
                         children: [
-                          const FaIcon(FontAwesomeIcons.fileLines, size: 11, color: primaryAmber),
+                          const FaIcon(
+                            FontAwesomeIcons.fileLines,
+                            size: 11,
+                            color: primaryAmber,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             'REGRAS E DIRETRIZES DA CAÇADA',
@@ -3472,16 +4196,25 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         },
                         borderRadius: BorderRadius.circular(6),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: primaryAmber.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: primaryAmber.withValues(alpha: 0.35)),
+                            border: Border.all(
+                              color: primaryAmber.withValues(alpha: 0.35),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const FaIcon(FontAwesomeIcons.arrowsRotate, size: 9, color: primaryAmber),
+                              const FaIcon(
+                                FontAwesomeIcons.arrowsRotate,
+                                size: 9,
+                                color: primaryAmber,
+                              ),
                               const SizedBox(width: 5),
                               Text(
                                 'Atualizar Texto',
@@ -3509,18 +4242,33 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       _buildModalityTag(eventType, isLarge: false),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.12),
+                          color:
+                              (prizeType == 'objeto'
+                                      ? primaryAmber
+                                      : successColor)
+                                  .withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.5),
+                            color:
+                                (prizeType == 'objeto'
+                                        ? primaryAmber
+                                        : successColor)
+                                    .withValues(alpha: 0.5),
                           ),
                         ),
                         child: Text(
-                          prizeType == 'objeto' ? 'OBJETO FÍSICO' : 'EM DINHEIRO (PIX)',
+                          prizeType == 'objeto'
+                              ? 'OBJETO FÍSICO'
+                              : 'EM DINHEIRO (PIX)',
                           style: TextStyle(
-                            color: prizeType == 'objeto' ? primaryAmber : successColor,
+                            color: prizeType == 'objeto'
+                                ? primaryAmber
+                                : successColor,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.4,
@@ -3545,49 +4293,73 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
                           if (prizeType == 'objeto') {
                             prizePoolVal = '0';
-                            prizeVal = prizeInput.isNotEmpty ? prizeInput : 'Prêmio Especial';
+                            prizeVal = prizeInput.isNotEmpty
+                                ? prizeInput
+                                : 'Prêmio Especial';
                           } else {
                             final numVal = _parseMoney(prizeInput);
                             prizePoolVal = numVal.toString();
-                            prizeVal = prizeInput.startsWith('R\$') ? prizeInput : (prizeInput.isNotEmpty ? 'R\$ $prizeInput' : 'R\$ 0,00');
+                            prizeVal = prizeInput.startsWith('R\$')
+                                ? prizeInput
+                                : (prizeInput.isNotEmpty
+                                      ? 'R\$ $prizeInput'
+                                      : 'R\$ 0,00');
                           }
 
-                          final resEvent = await ParseCloudFunction('createOrUpdateEvent').execute(
-                            parameters: {
-                              'data': {
-                                'title': nomeController.text.trim(),
-                                'name': nomeController.text.trim(),
-                                'description': descricaoController.text.trim(),
-                                'location': localController.text.trim(),
-                                'prize': prizeVal,
-                                'prizePool': prizePoolVal,
-                                'prizeType': prizeType,
-                                if (prizeImageUrlController.text.trim().isNotEmpty)
-                                  'prizeImageUrl': prizeImageUrlController.text.trim(),
-                                'status': status,
-                                'eventType': eventType,
-                              },
-                            },
-                          );
+                          final resEvent =
+                              await ParseCloudFunction(
+                                'createOrUpdateEvent',
+                              ).execute(
+                                parameters: {
+                                  'data': {
+                                    'title': nomeController.text.trim(),
+                                    'name': nomeController.text.trim(),
+                                    'description': descricaoController.text
+                                        .trim(),
+                                    'location': localController.text.trim(),
+                                    'prize': prizeVal,
+                                    'prizePool': prizePoolVal,
+                                    'prizeType': prizeType,
+                                    if (prizeImageUrlController.text
+                                        .trim()
+                                        .isNotEmpty)
+                                      'prizeImageUrl': prizeImageUrlController
+                                          .text
+                                          .trim(),
+                                    'status': status,
+                                    'eventType': eventType,
+                                  },
+                                },
+                              );
 
                           if (!resEvent.success) {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Erro: ${resEvent.error?.message}')),
+                                SnackBar(
+                                  content: Text(
+                                    'Erro: ${resEvent.error?.message}',
+                                  ),
+                                ),
                               );
                             }
                             return;
                           }
 
-                          if (resEvent.success && resEvent.result != null && eventType == 'classic') {
+                          if (resEvent.success &&
+                              resEvent.result != null &&
+                              eventType == 'classic') {
                             String newEventId = resEvent.result is ParseObject
                                 ? (resEvent.result as ParseObject).objectId!
                                 : (resEvent.result is Map
-                                    ? (resEvent.result['eventId'] ?? resEvent.result['objectId'] ?? '')
-                                    : '');
+                                      ? (resEvent.result['eventId'] ??
+                                            resEvent.result['objectId'] ??
+                                            '')
+                                      : '');
 
                             if (newEventId.isNotEmpty) {
-                              await ParseCloudFunction('createOrUpdatePhase').execute(
+                              await ParseCloudFunction(
+                                'createOrUpdatePhase',
+                              ).execute(
                                 parameters: {
                                   'eventId': newEventId,
                                   'data': {
@@ -3637,8 +4409,12 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final rawPrizePool = event.get<dynamic>('prizePool')?.toString();
 
     // Detecta se é objeto físico ou prêmio em dinheiro
-    String prizeType = event.get<String>('prizeType') ??
-        ((prizeImageUrlController.text.trim().isNotEmpty || (rawPrize != null && rawPrize.isNotEmpty && !RegExp(r'^[0-9.,R$ ]+$').hasMatch(rawPrize)))
+    String prizeType =
+        event.get<String>('prizeType') ??
+        ((prizeImageUrlController.text.trim().isNotEmpty ||
+                (rawPrize != null &&
+                    rawPrize.isNotEmpty &&
+                    !RegExp(r'^[0-9.,R$ ]+$').hasMatch(rawPrize)))
             ? 'objeto'
             : 'dinheiro');
 
@@ -3647,11 +4423,15 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     if (prizeType == 'objeto') {
       if (rawPrize != null && rawPrize.trim().isNotEmpty && rawPrize != '0') {
         initialPrizeText = rawPrize.trim();
-      } else if (rawPrizePool != null && rawPrizePool.trim().isNotEmpty && rawPrizePool != '0') {
+      } else if (rawPrizePool != null &&
+          rawPrizePool.trim().isNotEmpty &&
+          rawPrizePool != '0') {
         initialPrizeText = rawPrizePool.trim();
       }
     } else {
-      if (rawPrizePool != null && rawPrizePool.trim().isNotEmpty && rawPrizePool != '0') {
+      if (rawPrizePool != null &&
+          rawPrizePool.trim().isNotEmpty &&
+          rawPrizePool != '0') {
         initialPrizeText = rawPrizePool.trim();
       } else if (rawPrize != null && rawPrize.trim().isNotEmpty) {
         initialPrizeText = rawPrize.trim();
@@ -3661,7 +4441,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     final premioController = TextEditingController(text: initialPrizeText);
 
     int getPhaseCount() => int.tryParse(fasesCountController.text.trim()) ?? 5;
-    int getEnigmaCount() => int.tryParse(enigmasCountController.text.trim()) ?? 3;
+    int getEnigmaCount() =>
+        int.tryParse(enigmasCountController.text.trim()) ?? 3;
 
     // Se estiver vazio, pré-preenche com as regras completas padrão 5 fases e 3 enigmas
     if (descricaoController.text.trim().isEmpty) {
@@ -3715,9 +4496,18 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         child: _buildSelectForm(
                           value: status,
                           items: const [
-                            DropdownMenuItem(value: 'open', child: Text('Ativo')),
-                            DropdownMenuItem(value: 'em_breve', child: Text('Em breve')),
-                            DropdownMenuItem(value: 'encerrado', child: Text('Encerrado')),
+                            DropdownMenuItem(
+                              value: 'open',
+                              child: Text('Ativo'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'em_breve',
+                              child: Text('Em breve'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'encerrado',
+                              child: Text('Encerrado'),
+                            ),
                           ],
                           onChanged: (val) {
                             if (val != null) setModalState(() => status = val);
@@ -3733,8 +4523,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         child: _buildSelectForm(
                           value: eventType,
                           items: const [
-                            DropdownMenuItem(value: 'classic', child: Text('Modalidade Classic (Fases)')),
-                            DropdownMenuItem(value: 'find_and_win', child: Text('Modalidade Find & Win (Baús)')),
+                            DropdownMenuItem(
+                              value: 'classic',
+                              child: Text('Modalidade Classic (Fases)'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'find_and_win',
+                              child: Text('Modalidade Find & Win (Baús)'),
+                            ),
                           ],
                           onChanged: (val) {
                             if (val != null) {
@@ -3758,8 +4554,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         child: _buildSelectForm(
                           value: prizeType,
                           items: const [
-                            DropdownMenuItem(value: 'dinheiro', child: Text('Prêmio em Dinheiro (Pix)')),
-                            DropdownMenuItem(value: 'objeto', child: Text('Objeto Físico (Produto)')),
+                            DropdownMenuItem(
+                              value: 'dinheiro',
+                              child: Text('Prêmio em Dinheiro (Pix)'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'objeto',
+                              child: Text('Objeto Físico (Produto)'),
+                            ),
                           ],
                           onChanged: (val) {
                             if (val != null) {
@@ -3793,7 +4595,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             controller: fasesCountController,
                             hint: 'Fases (5)',
                             keyboardType: TextInputType.number,
-                            onChanged: (_) => setModalState(updateTemplateDescription),
+                            onChanged: (_) =>
+                                setModalState(updateTemplateDescription),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -3803,7 +4606,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             controller: enigmasCountController,
                             hint: 'Enigmas (3)',
                             keyboardType: TextInputType.number,
-                            onChanged: (_) => setModalState(updateTemplateDescription),
+                            onChanged: (_) =>
+                                setModalState(updateTemplateDescription),
                           ),
                         ),
                       ] else ...[
@@ -3813,7 +4617,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                             controller: enigmasCountController,
                             hint: 'Baús (3)',
                             keyboardType: TextInputType.number,
-                            onChanged: (_) => setModalState(updateTemplateDescription),
+                            onChanged: (_) =>
+                                setModalState(updateTemplateDescription),
                           ),
                         ),
                       ],
@@ -3831,12 +4636,21 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: const FaIcon(FontAwesomeIcons.upload, color: primaryAmber, size: 16),
+                          icon: const FaIcon(
+                            FontAwesomeIcons.upload,
+                            color: primaryAmber,
+                            size: 16,
+                          ),
                           tooltip: 'Upload de Imagem do Prêmio',
                           onPressed: () async {
-                            final url = await AdminUploadUtil.pickAndUploadImage(context);
+                            final url =
+                                await AdminUploadUtil.pickAndUploadImage(
+                                  context,
+                                );
                             if (url != null) {
-                              setModalState(() => prizeImageUrlController.text = url);
+                              setModalState(
+                                () => prizeImageUrlController.text = url,
+                              );
                             }
                           },
                         ),
@@ -3850,7 +4664,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                     children: [
                       Row(
                         children: [
-                          const FaIcon(FontAwesomeIcons.fileLines, size: 11, color: primaryAmber),
+                          const FaIcon(
+                            FontAwesomeIcons.fileLines,
+                            size: 11,
+                            color: primaryAmber,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             'REGRAS E DIRETRIZES DA CAÇADA',
@@ -3869,16 +4687,25 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                         },
                         borderRadius: BorderRadius.circular(6),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: primaryAmber.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: primaryAmber.withValues(alpha: 0.35)),
+                            border: Border.all(
+                              color: primaryAmber.withValues(alpha: 0.35),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const FaIcon(FontAwesomeIcons.arrowsRotate, size: 9, color: primaryAmber),
+                              const FaIcon(
+                                FontAwesomeIcons.arrowsRotate,
+                                size: 9,
+                                color: primaryAmber,
+                              ),
                               const SizedBox(width: 5),
                               Text(
                                 'Atualizar Texto',
@@ -3906,18 +4733,33 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                       _buildModalityTag(eventType, isLarge: false),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.12),
+                          color:
+                              (prizeType == 'objeto'
+                                      ? primaryAmber
+                                      : successColor)
+                                  .withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: (prizeType == 'objeto' ? primaryAmber : successColor).withValues(alpha: 0.5),
+                            color:
+                                (prizeType == 'objeto'
+                                        ? primaryAmber
+                                        : successColor)
+                                    .withValues(alpha: 0.5),
                           ),
                         ),
                         child: Text(
-                          prizeType == 'objeto' ? 'OBJETO FÍSICO' : 'EM DINHEIRO (PIX)',
+                          prizeType == 'objeto'
+                              ? 'OBJETO FÍSICO'
+                              : 'EM DINHEIRO (PIX)',
                           style: TextStyle(
-                            color: prizeType == 'objeto' ? primaryAmber : successColor,
+                            color: prizeType == 'objeto'
+                                ? primaryAmber
+                                : successColor,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 0.4,
@@ -3940,35 +4782,51 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
                           if (prizeType == 'objeto') {
                             prizePoolVal = '0';
-                            prizeVal = prizeInput.isNotEmpty ? prizeInput : 'Prêmio Especial';
+                            prizeVal = prizeInput.isNotEmpty
+                                ? prizeInput
+                                : 'Prêmio Especial';
                           } else {
                             final numVal = _parseMoney(prizeInput);
                             prizePoolVal = numVal.toString();
-                            prizeVal = prizeInput.startsWith('R\$') ? prizeInput : (prizeInput.isNotEmpty ? 'R\$ $prizeInput' : 'R\$ 0,00');
+                            prizeVal = prizeInput.startsWith('R\$')
+                                ? prizeInput
+                                : (prizeInput.isNotEmpty
+                                      ? 'R\$ $prizeInput'
+                                      : 'R\$ 0,00');
                           }
 
-                          final resEvent = await ParseCloudFunction('createOrUpdateEvent').execute(
-                            parameters: {
-                              'eventId': event.objectId,
-                              'data': {
-                                'title': nomeController.text.trim(),
-                                'name': nomeController.text.trim(),
-                                'description': descricaoController.text.trim(),
-                                'location': localController.text.trim(),
-                                'prize': prizeVal,
-                                'prizePool': prizePoolVal,
-                                'prizeType': prizeType,
-                                'prizeImageUrl': prizeImageUrlController.text.trim(),
-                                'status': status,
-                                'eventType': eventType,
-                              },
-                            },
-                          );
+                          final resEvent =
+                              await ParseCloudFunction(
+                                'createOrUpdateEvent',
+                              ).execute(
+                                parameters: {
+                                  'eventId': event.objectId,
+                                  'data': {
+                                    'title': nomeController.text.trim(),
+                                    'name': nomeController.text.trim(),
+                                    'description': descricaoController.text
+                                        .trim(),
+                                    'location': localController.text.trim(),
+                                    'prize': prizeVal,
+                                    'prizePool': prizePoolVal,
+                                    'prizeType': prizeType,
+                                    'prizeImageUrl': prizeImageUrlController
+                                        .text
+                                        .trim(),
+                                    'status': status,
+                                    'eventType': eventType,
+                                  },
+                                },
+                              );
 
                           if (!resEvent.success) {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Erro: ${resEvent.error?.message}')),
+                                SnackBar(
+                                  content: Text(
+                                    'Erro: ${resEvent.error?.message}',
+                                  ),
+                                ),
                               );
                             }
                             return;
@@ -4004,11 +4862,15 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         ..whereEqualTo('eventId', event.objectId);
       final response = await query.query();
 
-      if (!response.success || response.results == null || response.results!.isEmpty) {
+      if (!response.success ||
+          response.results == null ||
+          response.results!.isEmpty) {
         if (context.mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Nenhum enigma encontrado para exportar.')),
+            const SnackBar(
+              content: Text('Nenhum enigma encontrado para exportar.'),
+            ),
           );
         }
         return;
@@ -4024,7 +4886,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             return [
               pw.Header(
                 level: 0,
-                child: pw.Text('QR Codes - ${event.get<String>("title") ?? "Evento"}'),
+                child: pw.Text(
+                  'QR Codes - ${event.get<String>("title") ?? "Evento"}',
+                ),
               ),
               pw.Wrap(
                 spacing: 20,
@@ -4045,7 +4909,14 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
                           height: 120,
                         ),
                         pw.SizedBox(height: 8),
-                        pw.Text(name, textAlign: pw.TextAlign.center, style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                        pw.Text(
+                          name,
+                          textAlign: pw.TextAlign.center,
+                          style: pw.TextStyle(
+                            fontSize: 10,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
                         pw.Text(code, style: const pw.TextStyle(fontSize: 8)),
                       ],
                     ),
@@ -4061,23 +4932,33 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       final blob = html.Blob([bytes], 'application/pdf');
       final url = html.Url.createObjectUrlFromBlob(blob);
       html.AnchorElement(href: url)
-        ..setAttribute('download', 'QRCodes_${event.get<String>("title") ?? "Evento"}.pdf')
+        ..setAttribute(
+          'download',
+          'QRCodes_${event.get<String>("title") ?? "Evento"}.pdf',
+        )
         ..click();
       html.Url.revokeObjectUrl(url);
 
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Exportação concluída!')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Exportação concluída!')));
       }
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao exportar: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao exportar: $e')));
       }
     }
   }
 
-  Future<void> _publishAllEnigmas(BuildContext context, ParseObject event) async {
+  Future<void> _publishAllEnigmas(
+    BuildContext context,
+    ParseObject event,
+  ) async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -4089,7 +4970,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         ..whereEqualTo('eventId', event.objectId);
       final response = await query.query();
 
-      if (!response.success || response.results == null || response.results!.isEmpty) {
+      if (!response.success ||
+          response.results == null ||
+          response.results!.isEmpty) {
         if (context.mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -4127,7 +5010,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao publicar: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao publicar: $e')));
       }
     }
   }
@@ -4146,7 +5031,9 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
             'title': '${event.get<String>("title") ?? "Evento"} (Cópia)',
             'description': event.get<String>('description') ?? '',
             'location': event.get<String>('location') ?? '',
-            'prizePool': _parseMoney(event.get<dynamic>('prizePool')?.toString() ?? '0').toString(),
+            'prizePool': _parseMoney(
+              event.get<dynamic>('prizePool')?.toString() ?? '0',
+            ).toString(),
             'status': 'em_breve',
             'eventType': event.get<String>('eventType') ?? 'classic',
           },
@@ -4159,7 +5046,11 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
       final newEventId = resEvent.result is ParseObject
           ? (resEvent.result as ParseObject).objectId!
-          : (resEvent.result is Map ? (resEvent.result['eventId'] ?? resEvent.result['objectId'] ?? '') : '');
+          : (resEvent.result is Map
+                ? (resEvent.result['eventId'] ??
+                      resEvent.result['objectId'] ??
+                      '')
+                : '');
 
       if (newEventId.isEmpty) throw 'ID do novo evento inválido.';
 
@@ -4198,37 +5089,45 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
           final generatedHash =
               '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond.toString().padLeft(3, '0')}';
 
-          final resNewEnigma = await ParseCloudFunction('createOrUpdateEnigma').execute(
-            parameters: {
-              'eventId': newEventId,
-              'data': {
-                'instruction': enigmaObj.get<String>('instruction'),
-                'code': generatedHash,
-                'order': enigmaObj.get<num>('order'),
-                'type': enigmaObj.get<String>('type'),
-                'difficulty': enigmaObj.get<String>('difficulty'),
-                'prize': enigmaObj.get<dynamic>('prize')?.toString() ?? '0',
-                'status': 'bloqueado',
-                'hasCompass': enigmaObj.get<bool>('hasCompass') ?? false,
-                'compassCoords': enigmaObj.get<String>('compassCoords') ?? '',
-                'compassPrice': enigmaObj.get<num>('compassPrice')?.toDouble() ?? 15.0,
-                'compassDuration': enigmaObj.get<num>('compassDuration')?.toInt() ?? 0,
-                'hasRadar': enigmaObj.get<bool>('hasRadar') ?? false,
-                'hasMap': enigmaObj.get<bool>('hasMap') ?? false,
-                'radarPrice': enigmaObj.get<num>('radarPrice')?.toDouble() ?? 2.99,
-                'mapPrice': enigmaObj.get<num>('mapPrice')?.toDouble() ?? 4.99,
-                'imageUrl': enigmaObj.get<String>('imageUrl') ?? '',
-                'audioUrl': enigmaObj.get<String>('audioUrl') ?? '',
-              },
-            },
-          );
+          final resNewEnigma = await ParseCloudFunction('createOrUpdateEnigma')
+              .execute(
+                parameters: {
+                  'eventId': newEventId,
+                  'data': {
+                    'instruction': enigmaObj.get<String>('instruction'),
+                    'code': generatedHash,
+                    'order': enigmaObj.get<num>('order'),
+                    'type': enigmaObj.get<String>('type'),
+                    'difficulty': enigmaObj.get<String>('difficulty'),
+                    'prize': enigmaObj.get<dynamic>('prize')?.toString() ?? '0',
+                    'status': 'bloqueado',
+                    'hasCompass': enigmaObj.get<bool>('hasCompass') ?? false,
+                    'compassCoords':
+                        enigmaObj.get<String>('compassCoords') ?? '',
+                    'compassPrice':
+                        enigmaObj.get<num>('compassPrice')?.toDouble() ?? 15.0,
+                    'compassDuration':
+                        enigmaObj.get<num>('compassDuration')?.toInt() ?? 0,
+                    'hasRadar': enigmaObj.get<bool>('hasRadar') ?? false,
+                    'hasMap': enigmaObj.get<bool>('hasMap') ?? false,
+                    'radarPrice':
+                        enigmaObj.get<num>('radarPrice')?.toDouble() ?? 2.99,
+                    'mapPrice':
+                        enigmaObj.get<num>('mapPrice')?.toDouble() ?? 4.99,
+                    'imageUrl': enigmaObj.get<String>('imageUrl') ?? '',
+                    'audioUrl': enigmaObj.get<String>('audioUrl') ?? '',
+                  },
+                },
+              );
 
           if (resNewEnigma.success && resNewEnigma.result != null) {
             String newEnigmaId = resNewEnigma.result is ParseObject
                 ? (resNewEnigma.result as ParseObject).objectId!
                 : (resNewEnigma.result is Map
-                    ? (resNewEnigma.result['enigmaId'] ?? resNewEnigma.result['objectId'] ?? '')
-                    : '');
+                      ? (resNewEnigma.result['enigmaId'] ??
+                            resNewEnigma.result['objectId'] ??
+                            '')
+                      : '');
             if (newEnigmaId.isNotEmpty) {
               final queryHints = QueryBuilder<ParseObject>(ParseObject('Hint'))
                 ..whereEqualTo('linkedEnigmaId', enigmaObj.objectId);
@@ -4258,24 +5157,34 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Evento duplicado com sucesso!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Evento duplicado com sucesso!')),
+        );
         _loadEvents();
       }
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao duplicar evento: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao duplicar evento: $e')));
       }
     }
   }
 
   Future<void> _deleteEvent(ParseObject event) async {
-    final title = event.get<String>('title') ?? event.get<String>('name') ?? 'este evento';
+    final title =
+        event.get<String>('title') ??
+        event.get<String>('name') ??
+        'este evento';
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: sidebarBackground,
-        title: Text('Excluir $title?', style: GoogleFonts.orbitron(color: primaryAmber)),
+        title: Text(
+          'Excluir $title?',
+          style: GoogleFonts.orbitron(color: primaryAmber),
+        ),
         content: Text(
           'Deseja excluir permanentemente este evento e todas as suas fases, enigmas e dicas vinculadas? Esta ação é irreversível.',
           style: GoogleFonts.inter(color: secondaryTextColor),
@@ -4283,20 +5192,26 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Excluir Tudo', style: TextStyle(color: dangerColor)),
+            child: const Text(
+              'Excluir Tudo',
+              style: TextStyle(color: dangerColor),
+            ),
           ),
         ],
       ),
     );
 
     if (confirm == true) {
-      final res = await ParseCloudFunction('deleteEvent').execute(
-        parameters: {'eventId': event.objectId},
-      );
+      final res = await ParseCloudFunction(
+        'deleteEvent',
+      ).execute(parameters: {'eventId': event.objectId});
       if (res.success) {
         if (_selectedEvent?.objectId == event.objectId) {
           setState(() => _selectedEvent = null);
@@ -4325,25 +5240,29 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
     return double.tryParse(clean) ?? 0.0;
   }
 
-  Widget _buildSectionTitle(String title, dynamic icon, {bool showLine = false}) {
+  Widget _buildSectionTitle(
+    String title,
+    dynamic icon, {
+    bool showLine = false,
+  }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisSize: showLine ? MainAxisSize.max : MainAxisSize.min,
         children: [
-          FaIcon(icon, color: primaryAmber, size: 14),
-          const SizedBox(width: 10),
+          FaIcon(icon, color: primaryAmber, size: 12),
+          const SizedBox(width: 8),
           Text(
             title.toUpperCase(),
             style: GoogleFonts.orbitron(
               color: primaryAmber,
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
-              letterSpacing: 1,
+              letterSpacing: 0.8,
             ),
           ),
           if (showLine) ...[
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Container(
                 height: 1,
@@ -4369,7 +5288,8 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       title: 'Nenhum evento encontrado',
       statusText: '',
       statusColor: Colors.transparent,
-      subtitle: 'Nenhum evento corresponde aos filtros selecionados. Clique em "Novo Evento" para criar um.',
+      subtitle:
+          'Nenhum evento corresponde aos filtros selecionados. Clique em "Novo Evento" para criar um.',
     );
   }
 
@@ -4439,19 +5359,19 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: borderColor),
         ),
         child: Text(
           text.toUpperCase(),
           style: GoogleFonts.inter(
             color: textColorStr,
-            fontSize: 10,
+            fontSize: 9.5,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.3,
           ),
@@ -4475,7 +5395,10 @@ class _AdminEventsScreenState extends State<AdminEventsScreen> {
       style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: secondaryTextColor.withValues(alpha: 0.5), fontSize: 13),
+        hintStyle: TextStyle(
+          color: secondaryTextColor.withValues(alpha: 0.5),
+          fontSize: 13,
+        ),
         filled: true,
         fillColor: cardColor.withValues(alpha: 0.8),
         contentPadding: const EdgeInsets.symmetric(

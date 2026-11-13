@@ -43,7 +43,11 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
     }
   }
 
-  Future<void> _toggleBanUser(String userId, String userName, bool currentBanned) async {
+  Future<void> _toggleBanUser(
+    String userId,
+    String userName,
+    bool currentBanned,
+  ) async {
     final willBan = !currentBanned;
     final confirm = await showDialog<bool>(
       context: context,
@@ -51,7 +55,9 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
         backgroundColor: const Color(0xFF131D24),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: willBan ? Colors.redAccent : AppColors.verdeVale),
+          side: BorderSide(
+            color: willBan ? Colors.redAccent : AppColors.verdeVale,
+          ),
         ),
         title: Row(
           children: [
@@ -63,7 +69,11 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
             const SizedBox(width: 10),
             Text(
               willBan ? 'Banir Usuário?' : 'Remover Banimento?',
-              style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
           ],
         ),
@@ -76,7 +86,10 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text('CANCELAR', style: GoogleFonts.poppins(color: Colors.white60)),
+            child: Text(
+              'CANCELAR',
+              style: GoogleFonts.poppins(color: Colors.white60),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -84,7 +97,10 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
               backgroundColor: willBan ? Colors.redAccent : AppColors.verdeVale,
               foregroundColor: Colors.white,
             ),
-            child: Text(willBan ? 'SIM, BANIR' : 'REATIVAR', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            child: Text(
+              willBan ? 'SIM, BANIR' : 'REATIVAR',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -94,24 +110,27 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
 
     setState(() => _isProcessing = true);
     try {
-      final response = await ParseCloudFunction('toggleBanUser').execute(parameters: {
-        'userId': userId,
-        'isBanned': willBan,
-      });
+      final response = await ParseCloudFunction(
+        'toggleBanUser',
+      ).execute(parameters: {'userId': userId, 'isBanned': willBan});
 
-      if (response.success) {
+      if (response.success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(willBan ? 'Caçador banido com sucesso.' : 'Acesso reativado.'),
+            content: Text(
+              willBan ? 'Caçador banido com sucesso.' : 'Acesso reativado.',
+            ),
             backgroundColor: willBan ? Colors.redAccent : AppColors.verdeVale,
           ),
         );
         _loadLogs();
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro: $e'), backgroundColor: Colors.redAccent),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
@@ -122,7 +141,7 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
+        // Header Compacto
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -131,41 +150,75 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
               children: [
                 Row(
                   children: [
-                    const FaIcon(FontAwesomeIcons.shieldHalved, color: Colors.redAccent, size: 22),
-                    const SizedBox(width: 12),
+                    const FaIcon(
+                      FontAwesomeIcons.shieldHalved,
+                      color: Colors.redAccent,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
                     Text(
                       'Segurança & Anti-Fraude (Zero Trust)',
                       style: GoogleFonts.poppins(
-                        fontSize: 24,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   'Monitoramento de tentativas de GPS falso, Impossible Travel e integridade das caçadas',
-                  style: GoogleFonts.inter(fontSize: 13, color: AppColors.cinzaMedio),
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: AppColors.cinzaMedio,
+                  ),
                 ),
               ],
             ),
-            IconButton(
-              icon: const FaIcon(FontAwesomeIcons.rotateRight, color: Colors.white),
-              onPressed: _loadLogs,
+            Container(
+              height: 32,
+              width: 32,
+              decoration: BoxDecoration(
+                color: AppColors.darkCardColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: const FaIcon(
+                  FontAwesomeIcons.rotateRight,
+                  color: Colors.white,
+                  size: 12,
+                ),
+                tooltip: 'Atualizar logs',
+                onPressed: _loadLogs,
+              ),
             ),
           ],
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
 
         // KPIs
         FutureBuilder<List<dynamic>>(
           future: _logsFuture,
           builder: (context, snapshot) {
             final logs = snapshot.data ?? _allLogs;
-            final mockCount = logs.where((l) => (l['reason'] ?? '').toString().contains('Mock') || (l['reason'] ?? '').toString().contains('Fake')).length;
-            final speedCount = logs.where((l) => (l['reason'] ?? '').toString().contains('Impossible') || (l['speedKmH'] != null)).length;
+            final mockCount = logs
+                .where(
+                  (l) =>
+                      (l['reason'] ?? '').toString().contains('Mock') ||
+                      (l['reason'] ?? '').toString().contains('Fake'),
+                )
+                .length;
+            final speedCount = logs
+                .where(
+                  (l) =>
+                      (l['reason'] ?? '').toString().contains('Impossible') ||
+                      (l['speedKmH'] != null),
+                )
+                .length;
 
             return Row(
               children: [
@@ -177,7 +230,7 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
                     color: Colors.orangeAccent,
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _buildSecurityKpi(
                     title: 'FAKE GPS BLOQUEADOS',
@@ -186,7 +239,7 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
                     color: Colors.redAccent,
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _buildSecurityKpi(
                     title: 'IMPOSSIBLE TRAVEL',
@@ -200,40 +253,56 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
           },
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
 
         // Tabela de Logs
         Expanded(
           child: FutureBuilder<List<dynamic>>(
             future: _logsFuture,
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting && _allLogs.isEmpty) {
-                return const Center(child: CircularProgressIndicator(color: AppColors.amareloVale));
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  _allLogs.isEmpty) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.amareloVale,
+                  ),
+                );
               }
 
               final logs = snapshot.data ?? _allLogs;
               if (logs.isEmpty) {
                 return Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(40),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: AppColors.darkCardColor,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.white10),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const FaIcon(FontAwesomeIcons.circleCheck, color: AppColors.verdeVale, size: 48),
-                      const SizedBox(height: 16),
+                      const FaIcon(
+                        FontAwesomeIcons.circleCheck,
+                        color: AppColors.verdeVale,
+                        size: 36,
+                      ),
+                      const SizedBox(height: 12),
                       Text(
                         'Nenhum incidente de fraude detectado!',
-                        style: GoogleFonts.poppins(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
                         'O ecossistema está operando em conformidade com as regras de integridade física.',
-                        style: GoogleFonts.inter(color: Colors.white54, fontSize: 13),
+                        style: GoogleFonts.inter(
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -243,73 +312,110 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
               return Container(
                 decoration: BoxDecoration(
                   color: AppColors.darkCardColor,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.white10),
                 ),
                 child: ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   itemCount: logs.length,
-                  separatorBuilder: (_, __) => const Divider(color: Colors.white10, height: 1),
+                  separatorBuilder: (_, __) =>
+                      const Divider(color: Colors.white10, height: 1),
                   itemBuilder: (context, index) {
                     final item = logs[index];
                     final user = item['user'] as Map?;
-                    final userName = user != null ? (user['name'] ?? 'Explorador') : 'Desconhecido';
+                    final userName = user != null
+                        ? (user['name'] ?? 'Explorador')
+                        : 'Desconhecido';
                     final userEmail = user != null ? (user['email'] ?? '') : '';
                     final userId = user != null ? user['objectId'] : null;
-                    final isBanned = user != null ? (user['isBanned'] == true) : false;
-                    final reason = (item['reason'] ?? 'Atividade Suspeita').toString();
+                    final isBanned = user != null
+                        ? (user['isBanned'] == true)
+                        : false;
+                    final reason = (item['reason'] ?? 'Atividade Suspeita')
+                        .toString();
                     final speed = item['speedKmH'];
                     final createdAt = item['createdAt'];
-                    final dateStr = createdAt != null ? createdAt.toString().split('T').first : '-';
+                    final dateStr = createdAt != null
+                        ? createdAt.toString().split('T').first
+                        : '-';
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(10),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.redAccent.withValues(alpha: 0.15),
-                              border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
+                              border: Border.all(
+                                color: Colors.redAccent.withValues(alpha: 0.5),
+                              ),
                             ),
-                            child: const FaIcon(FontAwesomeIcons.ban, color: Colors.redAccent, size: 14),
+                            child: const FaIcon(
+                              FontAwesomeIcons.ban,
+                              color: Colors.redAccent,
+                              size: 11,
+                            ),
                           ),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 10),
                           Expanded(
                             flex: 3,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Row(
                                   children: [
-                                    Text(
-                                      userName,
-                                      style: GoogleFonts.poppins(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
+                                    Flexible(
+                                      child: Text(
+                                        userName,
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12.5,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                     if (isBanned) ...[
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: 6),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 5,
+                                          vertical: 1,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: Colors.redAccent,
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                         child: Text(
                                           'BANIDO',
-                                          style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
+                                          style: GoogleFonts.inter(
+                                            fontSize: 8.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ],
                                 ),
                                 Text(
-                                  userEmail.isNotEmpty ? userEmail : 'ID: $userId',
-                                  style: GoogleFonts.inter(color: Colors.white54, fontSize: 11),
+                                  userEmail.isNotEmpty
+                                      ? userEmail
+                                      : 'ID: $userId',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white54,
+                                    fontSize: 10.5,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
@@ -318,48 +424,70 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
                             flex: 4,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
                                   reason,
                                   style: GoogleFonts.poppins(
                                     color: Colors.amberAccent,
-                                    fontSize: 12.5,
+                                    fontSize: 11.5,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 if (speed != null)
                                   Text(
                                     'Velocidade registrada: ${(speed as num).toStringAsFixed(1)} km/h',
-                                    style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 11),
+                                    style: GoogleFonts.inter(
+                                      color: Colors.redAccent,
+                                      fontSize: 10.5,
+                                    ),
                                   ),
                               ],
                             ),
                           ),
                           Text(
                             dateStr,
-                            style: GoogleFonts.inter(color: Colors.white54, fontSize: 12),
+                            style: GoogleFonts.inter(
+                              color: Colors.white54,
+                              fontSize: 11,
+                            ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 10),
                           if (userId != null)
                             ElevatedButton.icon(
-                              onPressed: _isProcessing ? null : () => _toggleBanUser(userId, userName, isBanned),
+                              onPressed: _isProcessing
+                                  ? null
+                                  : () => _toggleBanUser(
+                                      userId,
+                                      userName,
+                                      isBanned,
+                                    ),
                               icon: FaIcon(
-                                isBanned ? FontAwesomeIcons.userCheck : FontAwesomeIcons.userSlash,
-                                size: 11,
+                                isBanned
+                                    ? FontAwesomeIcons.userCheck
+                                    : FontAwesomeIcons.userSlash,
+                                size: 10,
                                 color: isBanned ? Colors.white : Colors.black,
                               ),
                               label: Text(
                                 isBanned ? 'REATIVAR' : 'BANIR',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 11,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                   color: isBanned ? Colors.white : Colors.black,
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: isBanned ? AppColors.verdeVale : Colors.redAccent,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                backgroundColor: isBanned
+                                    ? AppColors.verdeVale
+                                    : Colors.redAccent,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 9,
+                                  vertical: 5,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
                               ),
                             ),
                         ],
@@ -382,39 +510,40 @@ class _AdminSecurityScreenState extends State<AdminSecurityScreen> {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: FaIcon(icon, color: color, size: 18),
+            child: FaIcon(icon, color: color, size: 12),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 title,
                 style: GoogleFonts.orbitron(
-                  fontSize: 10,
+                  fontSize: 9.5,
                   color: AppColors.cinzaMedio,
-                  letterSpacing: 0.6,
+                  letterSpacing: 0.5,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 value,
                 style: GoogleFonts.orbitron(
-                  fontSize: 20,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),

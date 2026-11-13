@@ -858,7 +858,7 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
         children: [
           // 1. BANNER DO GATEWAY ATIVO PRINCIPAL
           _buildActiveGatewayBanner(defaultGateway),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
           // 2. FILTROS E CONTAGEM
           Row(
@@ -869,12 +869,12 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
                 style: GoogleFonts.inter(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontSize: 12,
                   letterSpacing: 0.5,
                 ),
               ),
               Wrap(
-                spacing: 8,
+                spacing: 6,
                 children: [
                   _buildFilterChip('Todos', 'todos'),
                   _buildFilterChip('Ativos', 'ativos'),
@@ -884,7 +884,7 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 10),
 
           // 3. GRID DE CARDS DOS GATEWAYS
           LayoutBuilder(
@@ -896,9 +896,9 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
                 itemCount: filteredGateways.length,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: isWide ? 2 : 1,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  mainAxisExtent: 260,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  mainAxisExtent: 220,
                 ),
                 itemBuilder: (context, index) {
                   return _buildGatewayCard(filteredGateways[index]);
@@ -914,69 +914,70 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
   Widget _buildActiveGatewayBanner(GatewayItem defaultGateway) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.sidebarBackground,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.4), width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.4), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: defaultGateway.brandColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(color: defaultGateway.brandColor.withValues(alpha: 0.5)),
             ),
-            child: FaIcon(defaultGateway.icon, color: defaultGateway.brandColor, size: 32),
+            child: FaIcon(defaultGateway.icon, color: defaultGateway.brandColor, size: 22),
           ),
-          const SizedBox(width: 18),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppColors.amareloVale.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.amareloVale),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const FaIcon(FontAwesomeIcons.star, color: AppColors.amareloVale, size: 10),
-                          const SizedBox(width: 5),
+                          const FaIcon(FontAwesomeIcons.star, color: AppColors.amareloVale, size: 9),
+                          const SizedBox(width: 4),
                           Text(
                             'GATEWAY PRINCIPAL EM OPERAÇÃO',
                             style: GoogleFonts.inter(
                               color: AppColors.amareloVale,
-                              fontSize: 10.5,
+                              fontSize: 9.5,
                               fontWeight: FontWeight.bold,
-                              letterSpacing: 0.6,
+                              letterSpacing: 0.4,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: defaultGateway.environment == 'production'
                             ? Colors.greenAccent.withValues(alpha: 0.12)
                             : Colors.amberAccent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: defaultGateway.environment == 'production'
                               ? Colors.greenAccent
@@ -989,37 +990,42 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
                           color: defaultGateway.environment == 'production'
                               ? Colors.greenAccent
                               : Colors.amberAccent,
-                          fontSize: 10,
+                          fontSize: 9,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   defaultGateway.name,
                   style: GoogleFonts.poppins(
                     color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 1),
                 Text(
                   'Todas as cobranças Pix geradas pelo App Cliente estão sendo direcionadas para este provedor.',
-                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 13),
+                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 11),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 10),
           ElevatedButton.icon(
-            icon: const FaIcon(FontAwesomeIcons.gear, size: 14),
+            icon: const FaIcon(FontAwesomeIcons.gear, size: 12),
             label: const Text('Configurar'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.verdeVale,
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              textStyle: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () => _showConfigureModal(defaultGateway),
           ),
@@ -1032,13 +1038,13 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
     final isSelected = _selectedFilter == key;
     return InkWell(
       onTap: () => setState(() => _selectedFilter = key),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.verdeVale.withValues(alpha: 0.2) : AppColors.darkCardColor,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? AppColors.verdeVale : Colors.white12,
           ),
@@ -1047,7 +1053,7 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
           label,
           style: GoogleFonts.inter(
             color: isSelected ? Colors.white : AppColors.cinzaMedio,
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -1059,21 +1065,21 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
     final bool hasConfiguredKeys = item.keys.values.any((val) => val.isNotEmpty);
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.sidebarBackground,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: item.isDefault
               ? AppColors.amareloVale.withValues(alpha: 0.6)
               : (item.isActive ? AppColors.verdeVale.withValues(alpha: 0.3) : Colors.white10),
-          width: item.isDefault ? 1.8 : 1.2,
+          width: item.isDefault ? 1.5 : 1.0,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.35),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -1086,43 +1092,46 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: item.brandColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: item.brandColor.withValues(alpha: 0.4)),
                 ),
-                child: FaIcon(item.icon, color: item.brandColor, size: 24),
+                child: FaIcon(item.icon, color: item.brandColor, size: 16),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Text(
-                          item.name,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                        Flexible(
+                          child: Text(
+                            item.name,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (item.isDefault) ...[
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                             decoration: BoxDecoration(
                               color: AppColors.amareloVale.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: AppColors.amareloVale),
                             ),
                             child: Text(
                               'PRINCIPAL',
                               style: GoogleFonts.inter(
                                 color: AppColors.amareloVale,
-                                fontSize: 9.5,
+                                fontSize: 8.5,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -1130,46 +1139,49 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
                         ],
                       ],
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 2),
                     Text(
                       item.subtitle,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
                         color: AppColors.cinzaMedio,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                     ),
                   ],
                 ),
               ),
-              Switch(
-                value: item.isActive,
-                activeThumbColor: AppColors.verdeVale,
-                onChanged: (val) => _toggleActive(item, val),
+              Transform.scale(
+                scale: 0.8,
+                child: Switch(
+                  value: item.isActive,
+                  activeThumbColor: AppColors.verdeVale,
+                  onChanged: (val) => _toggleActive(item, val),
+                ),
               ),
             ],
           ),
 
           // Métodos Suportados
           Wrap(
-            spacing: 6,
-            runSpacing: 4,
+            spacing: 5,
+            runSpacing: 3,
             children: item.supportedMethods.map((m) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: Colors.white10),
                 ),
                 child: Text(
                   m,
                   style: GoogleFonts.poppins(
                     color: Colors.white70,
-                    fontSize: 9.5,
+                    fontSize: 8.5,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.4,
                   ),
                 ),
               );
@@ -1181,32 +1193,32 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
             children: [
               Icon(
                 hasConfiguredKeys ? Icons.check_circle_rounded : Icons.pending_rounded,
-                size: 14,
+                size: 13,
                 color: hasConfiguredKeys ? AppColors.verdeVale : Colors.amberAccent,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Text(
-                hasConfiguredKeys ? 'Credenciais Configuradas' : 'Configuração Pendente',
+                hasConfiguredKeys ? 'Configurado' : 'Pendente',
                 style: GoogleFonts.inter(
                   color: hasConfiguredKeys ? AppColors.verdeVale : Colors.amberAccent,
-                  fontSize: 11.5,
+                  fontSize: 10.5,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
                   color: item.environment == 'production'
                       ? Colors.green.withValues(alpha: 0.15)
                       : Colors.orange.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   item.environment.toUpperCase(),
                   style: GoogleFonts.inter(
                     color: item.environment == 'production' ? Colors.greenAccent : Colors.orangeAccent,
-                    fontSize: 10,
+                    fontSize: 9,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1219,28 +1231,35 @@ class _AdminGatewaysScreenState extends State<AdminGatewaysScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  icon: const FaIcon(FontAwesomeIcons.sliders, size: 12),
+                  icon: const FaIcon(FontAwesomeIcons.sliders, size: 10),
                   label: const Text('Configurar API'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white,
                     side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    minimumSize: const Size(0, 32),
+                    textStyle: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.w600),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () => _showConfigureModal(item),
                 ),
               ),
               if (!item.isDefault) ...[
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton.icon(
-                    icon: const FaIcon(FontAwesomeIcons.check, size: 12),
+                    icon: const FaIcon(FontAwesomeIcons.check, size: 10),
                     label: const Text('Tornar Principal'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.amareloVale,
                       foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      minimumSize: const Size(0, 32),
+                      textStyle: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.w700),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     onPressed: () => _setAsDefault(item),
                   ),

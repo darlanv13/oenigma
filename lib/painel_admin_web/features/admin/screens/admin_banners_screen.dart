@@ -221,18 +221,18 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
   }) {
     return Row(
       children: [
-        FaIcon(icon, color: AppColors.verdeVale, size: 16),
-        const SizedBox(width: 10),
+        FaIcon(icon, color: AppColors.verdeVale, size: 14),
+        const SizedBox(width: 8),
         Text(
           title.toUpperCase(),
           style: GoogleFonts.orbitron(
             color: AppColors.verdeVale,
-            fontSize: 15,
+            fontSize: 13,
             fontWeight: FontWeight.w700,
-            letterSpacing: 1,
+            letterSpacing: 0.8,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Expanded(
           child: Container(
             height: 1,
@@ -246,20 +246,20 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         ElevatedButton.icon(
           onPressed: onAddNew,
-          icon: const FaIcon(FontAwesomeIcons.plus, size: 12),
+          icon: const FaIcon(FontAwesomeIcons.plus, size: 11),
           label: const Text('NOVO BANNER'),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.verdeVale,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
             ),
             textStyle: GoogleFonts.poppins(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -329,16 +329,16 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
     final isImage = banner.isImageOnly;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.12)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -347,16 +347,16 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
         children: [
           // Visual Mini Preview Box
           Container(
-            width: 80,
-            height: 52,
+            width: 60,
+            height: 38,
             decoration: BoxDecoration(
               gradient: isImage ? null : banner.gradient,
               color: isImage ? AppColors.darkBackground : null,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
               child: isImage && banner.imageUrl.isNotEmpty
                   ? Image.network(
                       banner.imageUrl,
@@ -366,7 +366,7 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                             child: FaIcon(
                               FontAwesomeIcons.image,
                               color: Colors.white38,
-                              size: 18,
+                              size: 14,
                             ),
                           ),
                     )
@@ -379,17 +379,18 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                             ) ??
                             FontAwesomeIcons.image,
                         color: Colors.white.withValues(alpha: 0.7),
-                        size: 20,
+                        size: 14,
                       ),
                     ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
 
           // Content info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
@@ -402,24 +403,24 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                                   : 'Banner de Imagem'),
                         style: GoogleFonts.poppins(
                           color: Colors.white,
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     // Type Badge
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
+                        horizontal: 6,
+                        vertical: 1,
                       ),
                       decoration: BoxDecoration(
                         color: isImage
                             ? Colors.purple.withValues(alpha: 0.25)
                             : AppColors.verdeVale.withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: isImage
                               ? Colors.purple.withValues(alpha: 0.5)
@@ -432,42 +433,42 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                           color: isImage
                               ? Colors.purpleAccent
                               : AppColors.amareloVale,
-                          fontSize: 9,
+                          fontSize: 8.5,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                     // Status Badge
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
+                        horizontal: 6,
+                        vertical: 1,
                       ),
                       decoration: BoxDecoration(
                         color: statusColor.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: statusColor),
                       ),
                       child: Text(
                         statusLabel,
                         style: GoogleFonts.inter(
                           color: statusColor,
-                          fontSize: 9,
+                          fontSize: 8.5,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   '${banner.description.isNotEmpty ? "${banner.description} · " : ""}'
                   'Ordem: ${banner.order}'
                   '${banner.actionUrl.isNotEmpty ? " · Ação: ${banner.actionUrl}" : ""}',
                   style: GoogleFonts.inter(
                     color: AppColors.cinzaMedio,
-                    fontSize: 12,
+                    fontSize: 11,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -485,14 +486,14 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
                 isPrimary: true,
                 onTap: () => _showAddEditBannerModal(context, banner: banner),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _buildButton(
                 banner.isActive ? 'Desativar' : 'Ativar',
                 isDanger: banner.isActive,
                 isSuccess: !banner.isActive,
                 onTap: () => _toggleBannerStatus(banner, !banner.isActive),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _buildButton(
                 'Excluir',
                 isDanger: true,
@@ -508,17 +509,17 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
   Widget _buildAddButton(String text, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.verdeVale.withValues(alpha: 0.06),
           border: Border.all(
             color: AppColors.verdeVale.withValues(alpha: 0.3),
-            width: 1.5,
+            width: 1.2,
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -568,21 +569,21 @@ class _AdminBannersScreenState extends State<AdminBannersScreen> {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor),
         ),
         child: Text(
           text.toUpperCase(),
           style: GoogleFonts.inter(
             color: textColorStr,
-            fontSize: 10,
+            fontSize: 9.5,
             fontWeight: FontWeight.w700,
-            letterSpacing: 0.4,
+            letterSpacing: 0.3,
           ),
         ),
       ),

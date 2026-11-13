@@ -23,6 +23,7 @@ class AdminApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
+        visualDensity: VisualDensity.compact,
         primaryColor: AppColors.verdeVale,
         scaffoldBackgroundColor: AppColors.darkBackground,
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
@@ -39,7 +40,7 @@ class AdminApp extends StatelessWidget {
           elevation: 0,
           titleTextStyle: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
-            fontSize: 18,
+            fontSize: 16,
             color: Colors.white,
           ),
         ),
@@ -51,13 +52,13 @@ class AdminApp extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.verdeVale,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(10),
             ),
             textStyle: GoogleFonts.poppins(
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
             ),
           ),
         ),

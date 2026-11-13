@@ -95,7 +95,7 @@ class _AdminToolsScreenState extends State<AdminToolsScreen> {
                 itemCount: hints.length,
                 itemBuilder: (context, index) {
                   final hint = hints[index];
-                  final hintId = hint.objectId!;
+                  final hintId = hint.objectId ?? '';
                   final title = hint.get<String>('title') ?? 'Sem Título';
                   final description = hint.get<String>('description') ?? '';
                   final type = hint.get<String>('type') ?? 'text';

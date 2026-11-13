@@ -59,14 +59,15 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 8,
           children: [
-            Expanded(
-              child: _buildSectionTitle(
-                'Todos os Enigmas',
-                FontAwesomeIcons.puzzlePiece,
-              ),
+            _buildSectionTitle(
+              'Todos os Enigmas',
+              FontAwesomeIcons.puzzlePiece,
             ),
             _buildFilterDropdowns(),
           ],
@@ -101,12 +102,16 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                 if (_selectedFilterPhase != 'Todos') {
                   if (_selectedFilterPhase == 'sem_fase') {
                     enigmas = enigmas.where((e) {
-                      final pid = e.get<String>('phaseId') ?? e.get<ParseObject>('phase')?.objectId;
+                      final pid =
+                          e.get<String>('phaseId') ??
+                          e.get<ParseObject>('phase')?.objectId;
                       return pid == null || pid.isEmpty;
                     }).toList();
                   } else {
                     enigmas = enigmas.where((e) {
-                      final pid = e.get<String>('phaseId') ?? e.get<ParseObject>('phase')?.objectId;
+                      final pid =
+                          e.get<String>('phaseId') ??
+                          e.get<ParseObject>('phase')?.objectId;
                       return pid == _selectedFilterPhase;
                     }).toList();
                   }
@@ -132,7 +137,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
             },
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         _buildAddButton('Novo Enigma', () => _showEnigmaModal(context)),
       ],
     );
@@ -143,7 +148,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
       children: [
         Container(
           width: 150,
-          margin: const EdgeInsets.only(bottom: 14, right: 8),
+          margin: const EdgeInsets.only(bottom: 8, right: 8),
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             color: cardColor.withValues(alpha: 0.8),
@@ -196,7 +201,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
         if (_filterPhases.isNotEmpty)
           Container(
             width: 140,
-            margin: const EdgeInsets.only(bottom: 14, right: 8),
+            margin: const EdgeInsets.only(bottom: 8, right: 8),
             padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
               color: cardColor.withValues(alpha: 0.8),
@@ -207,10 +212,16 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
               child: DropdownButton<String>(
                 value: _selectedFilterPhase,
                 dropdownColor: sidebarBackground,
-                style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 12),
+                style: GoogleFonts.inter(
+                  color: primaryAmberLight,
+                  fontSize: 12,
+                ),
                 isExpanded: true,
                 items: [
-                  const DropdownMenuItem(value: 'Todos', child: Text('Todas as Fases')),
+                  const DropdownMenuItem(
+                    value: 'Todos',
+                    child: Text('Todas as Fases'),
+                  ),
                   ..._filterPhases.map((p) {
                     final pOrder = p.get<num>('order') ?? 1;
                     final pTitle = p.get<String>('title') ?? 'Fase $pOrder';
@@ -219,7 +230,10 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                       child: Text('Fase $pOrder: $pTitle'),
                     );
                   }),
-                  const DropdownMenuItem(value: 'sem_fase', child: Text('Sem Fase')),
+                  const DropdownMenuItem(
+                    value: 'sem_fase',
+                    child: Text('Sem Fase'),
+                  ),
                 ],
                 onChanged: (val) {
                   if (val != null) setState(() => _selectedFilterPhase = val);
@@ -229,7 +243,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
           ),
         Container(
           width: 130,
-          margin: const EdgeInsets.only(bottom: 14),
+          margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             color: cardColor.withValues(alpha: 0.8),
@@ -260,31 +274,31 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
 
   Widget _buildSectionTitle(String title, dynamic icon) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          FaIcon(icon as dynamic, color: primaryAmber, size: 14),
-          const SizedBox(width: 10),
+          FaIcon(icon as dynamic, color: primaryAmber, size: 12),
+          const SizedBox(width: 8),
           Text(
             title.toUpperCase(),
             style: GoogleFonts.orbitron(
               color: primaryAmber,
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
-              letterSpacing: 1,
+              letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Container(
-              height: 1,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    primaryAmber.withValues(alpha: 0.15),
-                    Colors.transparent,
-                  ],
-                ),
+          const SizedBox(width: 8),
+          Container(
+            width: 40,
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  primaryAmber.withValues(alpha: 0.15),
+                  Colors.transparent,
+                ],
               ),
             ),
           ),
@@ -337,7 +351,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     final eventType = eventObj?.get<String>('eventType') ?? 'find_and_win';
     final isClassic = eventType == 'classic';
     final phaseObj = enigma.get<ParseObject>('phase');
-    final phaseOrder = phaseObj?.get<num>('order') ?? enigma.get<num>('phaseOrder');
+    final phaseOrder =
+        phaseObj?.get<num>('order') ?? enigma.get<num>('phaseOrder');
     final dif = enigma.get<String>('difficulty') ?? 'Médio';
     final prize = enigma.get<dynamic>('prize')?.toString() ?? 'R\$ 0,00';
 
@@ -360,27 +375,27 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
           isPrimary: false,
           onTap: () => _showPreviewModal(context, enigma),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         if (isClassic) ...[
           _buildButton(
             'Mudar Fase',
             isPrimary: false,
             onTap: () => _showChangeEnigmaPhaseModal(context, enigma),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
         ],
         _buildButton(
           'Duplicar',
           isPrimary: false,
           onTap: () => _duplicateEnigma(context, enigma),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         _buildButton(
           'Editar',
           isWarning: true,
           onTap: () => _showEnigmaModal(context, enigma: enigma),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         _buildButton(
           'Excluir',
           isDanger: true,
@@ -390,8 +405,10 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
     );
   }
 
-
-  void _showChangeEnigmaPhaseModal(BuildContext context, ParseObject enigma) async {
+  void _showChangeEnigmaPhaseModal(
+    BuildContext context,
+    ParseObject enigma,
+  ) async {
     final eventId = enigma.get<String>('eventId');
     if (eventId == null || eventId.isEmpty) return;
 
@@ -399,9 +416,13 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
       ..whereEqualTo('eventId', eventId)
       ..orderByAscending('order');
     final res = await q.query();
-    final phases = (res.success && res.results != null) ? res.results as List<ParseObject> : <ParseObject>[];
+    final phases = (res.success && res.results != null)
+        ? res.results as List<ParseObject>
+        : <ParseObject>[];
 
-    String? currentPhaseId = enigma.get<String>('phaseId') ?? enigma.get<ParseObject>('phase')?.objectId;
+    String? currentPhaseId =
+        enigma.get<String>('phaseId') ??
+        enigma.get<ParseObject>('phase')?.objectId;
     String selectedPhase = currentPhaseId ?? 'none';
 
     if (!context.mounted) return;
@@ -419,20 +440,30 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                 children: [
                   Text(
                     enigma.get<String>('instruction') ?? 'Enigma',
-                    style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Selecione a fase de destino:',
-                    style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 12),
+                    style: GoogleFonts.inter(
+                      color: secondaryTextColor,
+                      fontSize: 12,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   _buildSelectForm(
                     value: selectedPhase,
                     items: [
-                      const DropdownMenuItem(value: 'none', child: Text('Sem Fase (Avulso)')),
+                      const DropdownMenuItem(
+                        value: 'none',
+                        child: Text('Sem Fase (Avulso)'),
+                      ),
                       ...phases.map((p) {
                         final pOrder = p.get<num>('order') ?? 1;
                         final pTitle = p.get<String>('title') ?? 'Fase $pOrder';
@@ -443,7 +474,8 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                       }),
                     ],
                     onChanged: (val) {
-                      if (val != null) setDialogState(() => selectedPhase = val);
+                      if (val != null)
+                        setDialogState(() => selectedPhase = val);
                     },
                   ),
                   const SizedBox(height: 20),
@@ -459,38 +491,59 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                         'Salvar',
                         isPrimary: true,
                         onTap: () async {
-                          final targetPhaseId = selectedPhase == 'none' ? '' : selectedPhase;
+                          final targetPhaseId = selectedPhase == 'none'
+                              ? ''
+                              : selectedPhase;
 
                           int nextOrder = 1;
                           if (targetPhaseId.isNotEmpty) {
-                            final countQuery = QueryBuilder<ParseObject>(ParseObject('Enigma'))
-                              ..whereEqualTo('phase', (ParseObject('Phase')..objectId = targetPhaseId).toPointer());
+                            final countQuery =
+                                QueryBuilder<ParseObject>(ParseObject('Enigma'))
+                                  ..whereEqualTo(
+                                    'phase',
+                                    (ParseObject(
+                                      'Phase',
+                                    )..objectId = targetPhaseId).toPointer(),
+                                  );
                             final cRes = await countQuery.count();
                             nextOrder = (cRes.success ? cRes.count : 0) + 1;
                           }
 
-                          final updateRes = await ParseCloudFunction('createOrUpdateEnigma').execute(
-                            parameters: {
-                              'enigmaId': enigma.objectId,
-                              'eventId': eventId,
-                              'phaseId': targetPhaseId,
-                              'data': {
-                                if (targetPhaseId.isNotEmpty) 'order': nextOrder,
-                                'prize': 0.0,
-                              },
-                            },
-                          );
+                          final updateRes =
+                              await ParseCloudFunction(
+                                'createOrUpdateEnigma',
+                              ).execute(
+                                parameters: {
+                                  'enigmaId': enigma.objectId,
+                                  'eventId': eventId,
+                                  'phaseId': targetPhaseId,
+                                  'data': {
+                                    if (targetPhaseId.isNotEmpty)
+                                      'order': nextOrder,
+                                    'prize': 0.0,
+                                  },
+                                },
+                              );
 
                           if (updateRes.success) {
-                            if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
+                            if (dialogCtx.mounted)
+                              Navigator.of(dialogCtx).pop();
                             _loadData();
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Fase do enigma atualizada com sucesso!')),
+                              const SnackBar(
+                                content: Text(
+                                  'Fase do enigma atualizada com sucesso!',
+                                ),
+                              ),
                             );
                           } else {
                             if (dialogCtx.mounted) {
                               ScaffoldMessenger.of(dialogCtx).showSnackBar(
-                                SnackBar(content: Text('Erro: ${updateRes.error?.message}')),
+                                SnackBar(
+                                  content: Text(
+                                    'Erro: ${updateRes.error?.message}',
+                                  ),
+                                ),
                               );
                             }
                           }
@@ -727,17 +780,17 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
   Widget _buildAddButton(String text, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           border: Border.all(
             color: primaryAmber.withValues(alpha: 0.15),
             width: 1.5,
             style: BorderStyle.none,
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: CustomPaint(
           painter: _DashedBorderPainter(),
@@ -747,14 +800,14 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
               const FaIcon(
                 FontAwesomeIcons.circlePlus,
                 color: primaryAmber,
-                size: 14,
+                size: 13,
               ),
               const SizedBox(width: 8),
               Text(
                 text,
                 style: GoogleFonts.inter(
                   color: secondaryTextColor,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -792,7 +845,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(30),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(30),
@@ -802,7 +855,7 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
           text.toUpperCase(),
           style: GoogleFonts.inter(
             color: textColorStr,
-            fontSize: 10,
+            fontSize: 9.5,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.3,
           ),
@@ -821,30 +874,57 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
 
     final isEdit = enigma != null;
 
-    final nomeController = TextEditingController(text: isEdit ? enigma.get<String>('instruction') : '');
-    final premioController = TextEditingController(text: isEdit ? (enigma.get<dynamic>('prize')?.toString() ?? '') : '');
-    final compassCoordsCtrl = TextEditingController(text: isEdit ? (enigma.get<String>('compassCoords') ?? '') : '');
+    final nomeController = TextEditingController(
+      text: isEdit ? enigma.get<String>('instruction') : '',
+    );
+    final premioController = TextEditingController(
+      text: isEdit ? (enigma.get<dynamic>('prize')?.toString() ?? '') : '',
+    );
+    final compassCoordsCtrl = TextEditingController(
+      text: isEdit ? (enigma.get<String>('compassCoords') ?? '') : '',
+    );
     final firstHintCtrl = TextEditingController();
     final firstHintPriceCtrl = TextEditingController(text: '0.50');
-    final photoUrlCtrl = TextEditingController(text: isEdit ? (enigma.get<String>('imageUrl') ?? '') : '');
-    final audioUrlCtrl = TextEditingController(text: isEdit ? (enigma.get<String>('audioUrl') ?? '') : '');
-    
+    final photoUrlCtrl = TextEditingController(
+      text: isEdit ? (enigma.get<String>('imageUrl') ?? '') : '',
+    );
+    final audioUrlCtrl = TextEditingController(
+      text: isEdit ? (enigma.get<String>('audioUrl') ?? '') : '',
+    );
+
     String tipo = isEdit ? (enigma.get<String>('type') ?? 'text') : 'text';
-    String dificuldade = isEdit ? (enigma.get<String>('difficulty') ?? 'Médio') : 'Médio';
-    String eventId = isEdit ? (enigma.get<String>('eventId') ?? _events.first.objectId!) : _events.first.objectId!;
-    
+    String dificuldade = isEdit
+        ? (enigma.get<String>('difficulty') ?? 'Médio')
+        : 'Médio';
+    String eventId = isEdit
+        ? (enigma.get<String>('eventId') ?? _events.first.objectId!)
+        : _events.first.objectId!;
+
     bool hasRadar = isEdit ? (enigma.get<bool>('hasRadar') ?? false) : false;
     bool hasMap = isEdit ? (enigma.get<bool>('hasMap') ?? false) : false;
-    bool hasCompass = isEdit ? (enigma.get<bool>('hasCompass') ?? false) : false;
-    bool enableToolTimer = isEdit ? (enigma.get<bool>('enableToolTimer') ?? true) : true;
-    bool enableFakeTargets = isEdit ? (enigma.get<bool>('enableFakeTargets') ?? true) : true;
-    
-    double radarPrice = isEdit ? (enigma.get<num>('radarPrice')?.toDouble() ?? 2.99) : 2.99;
-    double mapPrice = isEdit ? (enigma.get<num>('mapPrice')?.toDouble() ?? 4.99) : 4.99;
-    double compassPrice = isEdit ? (enigma.get<num>('compassPrice')?.toDouble() ?? 1.99) : 1.99;
+    bool hasCompass = isEdit
+        ? (enigma.get<bool>('hasCompass') ?? false)
+        : false;
+    bool enableToolTimer = isEdit
+        ? (enigma.get<bool>('enableToolTimer') ?? true)
+        : true;
+    bool enableFakeTargets = isEdit
+        ? (enigma.get<bool>('enableFakeTargets') ?? true)
+        : true;
+
+    double radarPrice = isEdit
+        ? (enigma.get<num>('radarPrice')?.toDouble() ?? 2.99)
+        : 2.99;
+    double mapPrice = isEdit
+        ? (enigma.get<num>('mapPrice')?.toDouble() ?? 4.99)
+        : 4.99;
+    double compassPrice = isEdit
+        ? (enigma.get<num>('compassPrice')?.toDouble() ?? 1.99)
+        : 1.99;
 
     String? selectedPhaseId = isEdit
-        ? (enigma.get<String>('phaseId') ?? enigma.get<ParseObject>('phase')?.objectId)
+        ? (enigma.get<String>('phaseId') ??
+              enigma.get<ParseObject>('phase')?.objectId)
         : null;
     List<ParseObject> phasesList = [];
     bool isLoadingPhases = false;
@@ -857,9 +937,12 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
           builder: (context, setModalState) {
             ParseObject? selectedEventObj;
             try {
-              selectedEventObj = _events.firstWhere((e) => e.objectId == eventId);
+              selectedEventObj = _events.firstWhere(
+                (e) => e.objectId == eventId,
+              );
             } catch (_) {}
-            final bool isClassic = selectedEventObj?.get<String>('eventType') == 'classic';
+            final bool isClassic =
+                selectedEventObj?.get<String>('eventType') == 'classic';
 
             Future<void> fetchPhases(String evId) async {
               setModalState(() => isLoadingPhases = true);
@@ -869,8 +952,11 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
               final res = await q.query();
               if (res.success && res.results != null) {
                 phasesList = res.results as List<ParseObject>;
-                if (selectedPhaseId == null || !phasesList.any((p) => p.objectId == selectedPhaseId)) {
-                  selectedPhaseId = phasesList.isNotEmpty ? phasesList.first.objectId : null;
+                if (selectedPhaseId == null ||
+                    !phasesList.any((p) => p.objectId == selectedPhaseId)) {
+                  selectedPhaseId = phasesList.isNotEmpty
+                      ? phasesList.first.objectId
+                      : null;
                 }
               } else {
                 phasesList = [];
@@ -955,15 +1041,23 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                       Expanded(
                         child: isClassic
                             ? Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
                                 decoration: BoxDecoration(
                                   color: cardColor.withValues(alpha: 0.8),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: primaryAmber.withValues(alpha: 0.15)),
+                                  border: Border.all(
+                                    color: primaryAmber.withValues(alpha: 0.15),
+                                  ),
                                 ),
                                 child: Text(
                                   'Prêmio: No Evento',
-                                  style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 13),
+                                  style: GoogleFonts.inter(
+                                    color: secondaryTextColor,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               )
                             : _buildInputForm(
@@ -1017,11 +1111,16 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                   ),
                   const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: cardColor.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -1039,12 +1138,19 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                           ),
                           subtitle: Text(
                             'Desconta 15 minutos somente com a ferramenta aberta (pausa ao fechar). Se desativado, o uso é ilimitado.',
-                            style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 11),
+                            style: GoogleFonts.inter(
+                              color: secondaryTextColor,
+                              fontSize: 11,
+                            ),
                           ),
                           value: enableToolTimer,
-                          onChanged: (val) => setModalState(() => enableToolTimer = val),
+                          onChanged: (val) =>
+                              setModalState(() => enableToolTimer = val),
                         ),
-                        Divider(color: Colors.white.withValues(alpha: 0.06), height: 16),
+                        Divider(
+                          color: Colors.white.withValues(alpha: 0.06),
+                          height: 16,
+                        ),
                         SwitchListTile(
                           dense: true,
                           contentPadding: EdgeInsets.zero,
@@ -1059,10 +1165,14 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                           ),
                           subtitle: Text(
                             'Gera 4 ecos falsos em torno do tesouro para exigir exploração física. Se desativado, aponta direto para a relíquia.',
-                            style: GoogleFonts.inter(color: secondaryTextColor, fontSize: 11),
+                            style: GoogleFonts.inter(
+                              color: secondaryTextColor,
+                              fontSize: 11,
+                            ),
                           ),
                           value: enableFakeTargets,
-                          onChanged: (val) => setModalState(() => enableFakeTargets = val),
+                          onChanged: (val) =>
+                              setModalState(() => enableFakeTargets = val),
                         ),
                       ],
                     ),
@@ -1266,7 +1376,9 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                     if (isLoadingPhases)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                        child: Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
                       )
                     else if (phasesList.isEmpty)
                       Container(
@@ -1274,32 +1386,44 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                         decoration: BoxDecoration(
                           color: dangerColor.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: dangerColor.withValues(alpha: 0.2)),
+                          border: Border.all(
+                            color: dangerColor.withValues(alpha: 0.2),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const FaIcon(FontAwesomeIcons.circleExclamation, color: dangerColor, size: 14),
+                            const FaIcon(
+                              FontAwesomeIcons.circleExclamation,
+                              color: dangerColor,
+                              size: 14,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Este evento Classic ainda não possui fases. Crie a Fase 1 para vincular este enigma.',
-                                style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
                             _buildButton(
                               '+ Criar Fase 1',
                               isPrimary: true,
                               onTap: () async {
-                                final res = await ParseCloudFunction('createOrUpdatePhase').execute(
-                                  parameters: {
-                                    'eventId': eventId,
-                                    'data': {
-                                      'title': 'Fase 1',
-                                      'order': 1,
-                                      'status': 'open',
-                                    },
-                                  },
-                                );
+                                final res =
+                                    await ParseCloudFunction(
+                                      'createOrUpdatePhase',
+                                    ).execute(
+                                      parameters: {
+                                        'eventId': eventId,
+                                        'data': {
+                                          'title': 'Fase 1',
+                                          'order': 1,
+                                          'status': 'open',
+                                        },
+                                      },
+                                    );
                                 if (res.success) {
                                   await fetchPhases(eventId);
                                 }
@@ -1313,14 +1437,16 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                         value: selectedPhaseId ?? phasesList.first.objectId!,
                         items: phasesList.map((p) {
                           final pOrder = p.get<num>('order') ?? 1;
-                          final pTitle = p.get<String>('title') ?? 'Fase $pOrder';
+                          final pTitle =
+                              p.get<String>('title') ?? 'Fase $pOrder';
                           return DropdownMenuItem(
                             value: p.objectId!,
                             child: Text('Fase $pOrder: $pTitle'),
                           );
                         }).toList(),
                         onChanged: (val) {
-                          if (val != null) setModalState(() => selectedPhaseId = val);
+                          if (val != null)
+                            setModalState(() => selectedPhaseId = val);
                         },
                       ),
                     const SizedBox(height: 12),
@@ -1329,23 +1455,34 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                       decoration: BoxDecoration(
                         color: primaryAmber.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: primaryAmber.withValues(alpha: 0.2)),
+                        border: Border.all(
+                          color: primaryAmber.withValues(alpha: 0.2),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          const FaIcon(FontAwesomeIcons.circleInfo, color: primaryAmber, size: 14),
+                          const FaIcon(
+                            FontAwesomeIcons.circleInfo,
+                            color: primaryAmber,
+                            size: 14,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               'Modalidade Classic: O enigma não concede prêmio individual em dinheiro. O valor total configurado no evento é entregue exclusivamente ao 1º jogador a concluir todas as fases.',
-                              style: GoogleFonts.inter(color: primaryAmberLight, fontSize: 12, height: 1.4),
+                              style: GoogleFonts.inter(
+                                color: primaryAmberLight,
+                                fontSize: 12,
+                                height: 1.4,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
                   ],
-                  if (isEdit && (enigma!.get<String>('code') ?? '').isNotEmpty) ...[
+                  if (isEdit &&
+                      (enigma!.get<String>('code') ?? '').isNotEmpty) ...[
                     const SizedBox(height: 16),
                     _buildSectionTitle(
                       'Código Hash (QR Code)',
@@ -1408,11 +1545,16 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                     const SizedBox(height: 16),
                     _buildSectionTitle('Dicas', FontAwesomeIcons.lightbulb),
                     FutureBuilder<ParseResponse>(
-                      future: (QueryBuilder<ParseObject>(
-                        ParseObject('Hint'),
-                      )..whereEqualTo('linkedEnigmaId', enigma!.objectId)).query(),
+                      future:
+                          (QueryBuilder<ParseObject>(ParseObject('Hint'))
+                                ..whereEqualTo(
+                                  'linkedEnigmaId',
+                                  enigma!.objectId,
+                                ))
+                              .query(),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const Center(
                             child: Padding(
                               padding: EdgeInsets.all(8),
@@ -1577,7 +1719,9 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                             final regex = RegExp(
                               r'^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$',
                             );
-                            if (!regex.hasMatch(compassCoordsCtrl.text.trim())) {
+                            if (!regex.hasMatch(
+                              compassCoordsCtrl.text.trim(),
+                            )) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
@@ -1593,7 +1737,9 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                               '${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}${DateTime.now().microsecond.toString().padLeft(3, '0')}';
 
                           // Check current max order for this event to auto-increment
-                          int nextOrder = isEdit ? (enigma!.get<num>('order')?.toInt() ?? 1) : 1;
+                          int nextOrder = isEdit
+                              ? (enigma!.get<num>('order')?.toInt() ?? 1)
+                              : 1;
                           if (!isEdit) {
                             final queryOrder =
                                 QueryBuilder<ParseObject>(ParseObject('Enigma'))
@@ -1612,10 +1758,14 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                             }
                           }
 
-                          if (isClassic && (selectedPhaseId == null || selectedPhaseId!.isEmpty)) {
+                          if (isClassic &&
+                              (selectedPhaseId == null ||
+                                  selectedPhaseId!.isEmpty)) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Selecione ou crie uma Fase para o enigma no evento Classic.'),
+                                content: Text(
+                                  'Selecione ou crie uma Fase para o enigma no evento Classic.',
+                                ),
                                 backgroundColor: dangerColor,
                               ),
                             );
@@ -1629,9 +1779,11 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                                 parameters: {
                                   'eventId': eventId,
                                   if (isEdit) 'enigmaId': enigma!.objectId,
-                                  if (isClassic && selectedPhaseId != null) 'phaseId': selectedPhaseId,
+                                  if (isClassic && selectedPhaseId != null)
+                                    'phaseId': selectedPhaseId,
                                   'data': {
-                                    'instruction': nomeController.text.trim(), // Assuming name maps to instruction
+                                    'instruction': nomeController.text
+                                        .trim(), // Assuming name maps to instruction
                                     if (!isEdit) 'code': generatedHash,
                                     'order': nextOrder,
                                     'type': tipo,
@@ -1639,17 +1791,19 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                                     'prize': isClassic
                                         ? '0'
                                         : (num.tryParse(
-                                              premioController.text
-                                                  .trim()
-                                                  .replaceAll('.', '')
-                                                  .replaceAll(',', '.')
-                                                  .replaceAll(
-                                                    RegExp(r'[^0-9.]'),
-                                                    '',
-                                                  ),
-                                            ) ??
-                                            0).toString(),
-                                    if (isClassic && selectedPhaseId != null) 'phaseId': selectedPhaseId,
+                                                    premioController.text
+                                                        .trim()
+                                                        .replaceAll('.', '')
+                                                        .replaceAll(',', '.')
+                                                        .replaceAll(
+                                                          RegExp(r'[^0-9.]'),
+                                                          '',
+                                                        ),
+                                                  ) ??
+                                                  0)
+                                              .toString(),
+                                    if (isClassic && selectedPhaseId != null)
+                                      'phaseId': selectedPhaseId,
                                     if (!isEdit) 'status': 'open',
                                     'hasCompass': hasCompass,
                                     'compassCoords': compassCoordsCtrl.text
@@ -1672,13 +1826,16 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
                                 },
                               );
 
-                          if (!isEdit && enigmaRes.success &&
+                          if (!isEdit &&
+                              enigmaRes.success &&
                               enigmaRes.result != null &&
                               firstHintCtrl.text.trim().isNotEmpty) {
                             String newEnigmaId = enigmaRes.result is ParseObject
                                 ? (enigmaRes.result as ParseObject).objectId!
                                 : (enigmaRes.result is Map
-                                      ? (enigmaRes.result['enigmaId'] ?? enigmaRes.result['objectId'] ?? '')
+                                      ? (enigmaRes.result['enigmaId'] ??
+                                            enigmaRes.result['objectId'] ??
+                                            '')
                                       : '');
 
                             if (newEnigmaId.isNotEmpty) {
@@ -1732,11 +1889,17 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.white)),
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Excluir', style: TextStyle(color: Color(0xFFE53935))),
+              child: const Text(
+                'Excluir',
+                style: TextStyle(color: Color(0xFFE53935)),
+              ),
             ),
           ],
         );
@@ -1747,21 +1910,18 @@ class _AdminEnigmasScreenState extends State<AdminEnigmasScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(color: primaryAmber),
-        ),
+        builder: (context) =>
+            const Center(child: CircularProgressIndicator(color: primaryAmber)),
       );
-      
-      final res = await ParseCloudFunction('deleteEnigma').execute(
-        parameters: {
-          'enigmaId': enigma.objectId,
-        }
-      );
-      
+
+      final res = await ParseCloudFunction(
+        'deleteEnigma',
+      ).execute(parameters: {'enigmaId': enigma.objectId});
+
       if (context.mounted) {
         Navigator.of(context).pop(); // close progress dialog
         if (res.success) {
-           _loadData();
+          _loadData();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Erro ao excluir: ${res.error?.message}')),

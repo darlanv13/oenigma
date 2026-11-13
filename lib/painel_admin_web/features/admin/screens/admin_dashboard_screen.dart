@@ -96,10 +96,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
   Widget _buildDashboardContent(Map<String, dynamic> data) {
     final pendingWithdrawalsCount =
-        (data['pendingWithdrawalsCount'] as int?) ?? 0;
+        (data['pendingWithdrawalsCount'] as num?)?.toInt() ?? 0;
     final pendingWithdrawalsAmount =
-        (data['pendingWithdrawalsAmount'] as double?) ?? 0.0;
-    final activeEvents = (data['activeEvents'] as int?) ?? 0;
+        (data['pendingWithdrawalsAmount'] as num?)?.toDouble() ?? 0.0;
+    final activeEvents = (data['activeEvents'] as num?)?.toInt() ?? 0;
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -108,7 +108,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         children: [
           // 1. Top HUD / Header com Status do Jogo e Refresh
           _buildTopHud(data),
-          const SizedBox(height: 20),
+          const SizedBox(height: 10),
 
           // 2. Alertas Críticos Operacionais
           if (pendingWithdrawalsCount > 0)
@@ -134,23 +134,23 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
           // 3. Barra de Ações Rápidas
           _buildQuickActionBar(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 10),
 
           // 4. Grade de KPIs Principais
           _buildKpiGrid(data),
-          const SizedBox(height: 30),
+          const SizedBox(height: 12),
 
           // 5. Monitor de Caçadas Ativas & Eventos
           _buildEventsMonitor(data),
-          const SizedBox(height: 30),
+          const SizedBox(height: 12),
 
           // 6. Raio-X dos Enigmas e Arsenal Tático
           _buildEnigmasArsenalSection(data),
-          const SizedBox(height: 30),
+          const SizedBox(height: 12),
 
           // 7. Painéis Duplos: Atividades Recentes e Caçadores
           _buildBottomTwinPanels(data),
-          const SizedBox(height: 40),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -160,14 +160,19 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   // 1. TOP HUD / CABEÇALHO TÁTICO
   // =========================================================================
   Widget _buildTopHud(Map<String, dynamic> data) {
-    final DateTime lastUpdated =
-        data['lastUpdated'] is DateTime ? data['lastUpdated'] : DateTime.now();
+    DateTime lastUpdated = DateTime.now();
+    if (data['lastUpdated'] is DateTime) {
+      lastUpdated = data['lastUpdated'] as DateTime;
+    } else if (data['lastUpdated'] != null) {
+      final parsed = DateTime.tryParse(data['lastUpdated'].toString());
+      if (parsed != null) lastUpdated = parsed;
+    }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: AppColors.verdeVale.withValues(alpha: 0.15),
         ),
@@ -185,8 +190,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
                   color: AppColors.verdeVale.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
@@ -198,11 +203,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   child: FaIcon(
                     FontAwesomeIcons.chessRook,
                     color: AppColors.verdeVale,
-                    size: 18,
+                    size: 14,
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -212,18 +217,18 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                         'CENTRO DE COMANDO',
                         style: GoogleFonts.orbitron(
                           color: Colors.white,
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: 1,
+                          letterSpacing: 0.8,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: AppColors.amareloVale.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(4),
                           border: Border.all(
                             color: AppColors.amareloVale.withValues(alpha: 0.3),
                           ),
@@ -232,19 +237,19 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           'TEMPO REAL',
                           style: GoogleFonts.poppins(
                             color: AppColors.amareloVale,
-                            fontSize: 10,
+                            fontSize: 9,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     'Monitoramento operacional do ecossistema O Enigma • Atualizado às ${DateFormat('HH:mm:ss').format(lastUpdated)}',
                     style: GoogleFonts.poppins(
                       color: AppColors.cinzaMedio,
-                      fontSize: 12,
+                      fontSize: 11,
                     ),
                   ),
                 ],
@@ -255,12 +260,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             onTap: () {
               ref.invalidate(adminDashboardProvider);
             },
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.verdeVale.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: AppColors.verdeVale.withValues(alpha: 0.25),
                 ),
@@ -270,14 +275,14 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   const FaIcon(
                     FontAwesomeIcons.rotate,
                     color: AppColors.verdeVale,
-                    size: 13,
+                    size: 11,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Text(
                     'Recarregar Dados',
                     style: GoogleFonts.poppins(
                       color: Colors.white,
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -302,24 +307,24 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     required VoidCallback onAction,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 18),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: FaIcon(icon, color: color, size: 16),
+            child: FaIcon(icon, color: color, size: 13),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -329,33 +334,33 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    fontSize: 13,
                   ),
                 ),
                 Text(
                   message,
                   style: GoogleFonts.poppins(
                     color: AppColors.cinzaMedio,
-                    fontSize: 12,
+                    fontSize: 11,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           ElevatedButton(
             onPressed: onAction,
             style: ElevatedButton.styleFrom(
               backgroundColor: color,
               foregroundColor:
                   color == AppColors.amareloVale ? Colors.black : Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               textStyle: GoogleFonts.poppins(
                 fontWeight: FontWeight.w700,
-                fontSize: 12,
+                fontSize: 11,
               ),
             ),
             child: Text(actionLabel),
@@ -377,24 +382,24 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             const FaIcon(
               FontAwesomeIcons.bolt,
               color: AppColors.amareloVale,
-              size: 13,
+              size: 11,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Text(
               'AÇÕES RÁPIDAS DE GESTÃO',
               style: GoogleFonts.orbitron(
                 color: AppColors.amareloVale,
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 1,
+                letterSpacing: 0.8,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Wrap(
-          spacing: 12,
-          runSpacing: 10,
+          spacing: 8,
+          runSpacing: 6,
           children: [
             _buildQuickActionButton(
               icon: FontAwesomeIcons.plus,
@@ -439,12 +444,12 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: AppColors.darkCardColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: AppColors.verdeVale.withValues(alpha: 0.15),
           ),
@@ -452,13 +457,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            FaIcon(icon, color: AppColors.verdeVale, size: 13),
-            const SizedBox(width: 8),
+            FaIcon(icon, color: AppColors.verdeVale, size: 11),
+            const SizedBox(width: 6),
             Text(
               label,
               style: GoogleFonts.poppins(
                 color: Colors.white,
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -474,21 +479,21 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   Widget _buildKpiGrid(Map<String, dynamic> data) {
     final totalPlayers = data['totalPlayers']?.toString() ?? '0';
     final totalUsersBalance =
-        (data['totalUsersBalance'] as double?) ?? 0.0;
+        (data['totalUsersBalance'] as num?)?.toDouble() ?? 0.0;
     final activeEvents = data['activeEvents']?.toString() ?? '0';
     final totalEvents = data['totalEvents']?.toString() ?? '0';
     final totalEnigmas = data['totalEnigmas']?.toString() ?? '0';
     final activeEnigmas = data['activeEnigmas']?.toString() ?? '0';
     final totalPrizePool =
-        (data['totalPrizePool'] as double?) ?? 0.0;
+        (data['totalPrizePool'] as num?)?.toDouble() ?? 0.0;
     final totalDepositedAmount =
-        (data['totalDepositedAmount'] as double?) ?? 0.0;
+        (data['totalDepositedAmount'] as num?)?.toDouble() ?? 0.0;
     final totalDepositsCount =
         data['totalDepositsCount']?.toString() ?? '0';
     final pendingWithdrawalsCount =
-        (data['pendingWithdrawalsCount'] as int?) ?? 0;
+        (data['pendingWithdrawalsCount'] as num?)?.toInt() ?? 0;
     final pendingWithdrawalsAmount =
-        (data['pendingWithdrawalsAmount'] as double?) ?? 0.0;
+        (data['pendingWithdrawalsAmount'] as num?)?.toDouble() ?? 0.0;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -505,9 +510,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           crossAxisCount: crossAxisCount,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 18,
-          mainAxisSpacing: 18,
-          childAspectRatio: constraints.maxWidth > 1200 ? 2.1 : 2.0,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: constraints.maxWidth > 1200 ? 2.3 : 2.1,
           children: [
             _buildKpiCard(
               title: 'CAÇADORES REGISTRADOS',
@@ -585,20 +590,20 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.darkCardColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: color.withValues(alpha: 0.18),
           ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -613,17 +618,17 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   title,
                   style: GoogleFonts.orbitron(
                     color: AppColors.cinzaMedio,
-                    fontSize: 11,
+                    fontSize: 9.5,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: 0.8,
+                    letterSpacing: 0.6,
                   ),
                 ),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(4),
                     border: Border.all(
                       color: color.withValues(alpha: 0.25),
                     ),
@@ -632,7 +637,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     badgeText,
                     style: GoogleFonts.poppins(
                       color: color,
-                      fontSize: 10,
+                      fontSize: 9,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -642,17 +647,17 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             Row(
               children: [
                 Container(
-                  width: 36,
-                  height: 36,
+                  width: 28,
+                  height: 28,
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
-                    child: FaIcon(icon, color: color, size: 16),
+                    child: FaIcon(icon, color: color, size: 12),
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     value,
@@ -660,7 +665,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.orbitron(
                       color: Colors.white,
-                      fontSize: 22,
+                      fontSize: 16,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -673,7 +678,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
                 color: AppColors.cinzaMedio,
-                fontSize: 11,
+                fontSize: 10,
               ),
             ),
           ],
@@ -689,10 +694,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     final recentEvents = (data['recentEvents'] as List<dynamic>?) ?? [];
 
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: AppColors.verdeVale.withValues(alpha: 0.15),
         ),
@@ -708,16 +713,16 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   const FaIcon(
                     FontAwesomeIcons.compass,
                     color: AppColors.verdeVale,
-                    size: 16,
+                    size: 13,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Text(
                     'STATUS DAS CAÇADAS & EVENTOS ATIVOS',
                     style: GoogleFonts.orbitron(
                       color: Colors.white,
-                      fontSize: 14,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
+                      letterSpacing: 0.8,
                     ),
                   ),
                 ],
@@ -730,45 +735,45 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       'Gerenciar Todos os Eventos',
                       style: GoogleFonts.poppins(
                         color: AppColors.amareloVale,
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     const FaIcon(
                       FontAwesomeIcons.arrowRight,
                       color: AppColors.amareloVale,
-                      size: 11,
+                      size: 10,
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 10),
           if (recentEvents.isEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 36),
+              padding: const EdgeInsets.symmetric(vertical: 24),
               alignment: Alignment.center,
               child: Column(
                 children: [
                   FaIcon(
                     FontAwesomeIcons.mapLocationDot,
                     color: AppColors.cinzaMedio.withValues(alpha: 0.4),
-                    size: 44,
+                    size: 32,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Text(
                     'Nenhum evento registrado no sistema',
                     style: GoogleFonts.poppins(
                       color: AppColors.cinzaMedio,
-                      fontSize: 14,
+                      fontSize: 12,
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
                   ElevatedButton.icon(
                     onPressed: () => widget.onNavigateTab?.call(1),
-                    icon: const FaIcon(FontAwesomeIcons.plus, size: 12),
+                    icon: const FaIcon(FontAwesomeIcons.plus, size: 11),
                     label: const Text('Criar Primeira Caçada'),
                   ),
                 ],
@@ -783,9 +788,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: isWide ? 2 : 1,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    mainAxisExtent: 140,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    mainAxisExtent: 95,
                   ),
                   itemCount: recentEvents.length,
                   itemBuilder: (context, index) {
@@ -806,15 +811,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     final prize = ev['prize']?.toString() ?? 'R\$ 0,00';
     final eventType = ev['eventType']?.toString() ?? 'classic';
     final isOpen = ev['isOpen'] == true;
-    final playerCount = (ev['playerCount'] as int?) ?? 0;
+    final playerCount = (ev['playerCount'] as num?)?.toInt() ?? 0;
 
     final isFindAndWin = eventType.toLowerCase() == 'find_and_win';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.sidebarBackground,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: isOpen
               ? AppColors.verdeVale.withValues(alpha: 0.35)
@@ -824,13 +829,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       child: Row(
         children: [
           Container(
-            width: 50,
-            height: 50,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: isFindAndWin
                   ? AppColors.amareloVale.withValues(alpha: 0.15)
                   : AppColors.verdeVale.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isFindAndWin
                     ? AppColors.amareloVale.withValues(alpha: 0.3)
@@ -844,11 +849,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     : FontAwesomeIcons.layerGroup,
                 color:
                     isFindAndWin ? AppColors.amareloVale : AppColors.verdeVale,
-                size: 20,
+                size: 14,
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -858,7 +863,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                          horizontal: 5, vertical: 2),
                       decoration: BoxDecoration(
                         color: isFindAndWin
                             ? AppColors.amareloVale.withValues(alpha: 0.15)
@@ -871,15 +876,15 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                           color: isFindAndWin
                               ? AppColors.amareloVale
                               : AppColors.verdeVale,
-                          fontSize: 9,
+                          fontSize: 8.5,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                          horizontal: 5, vertical: 2),
                       decoration: BoxDecoration(
                         color: isOpen
                             ? AppColors.success.withValues(alpha: 0.2)
@@ -890,8 +895,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            width: 5,
-                            height: 5,
+                            width: 4,
+                            height: 4,
                             decoration: BoxDecoration(
                               color: isOpen ? Colors.greenAccent : Colors.grey,
                               shape: BoxShape.circle,
@@ -902,7 +907,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                             isOpen ? 'ABERTO' : 'FECHADO',
                             style: GoogleFonts.poppins(
                               color: isOpen ? Colors.greenAccent : Colors.grey,
-                              fontSize: 9,
+                              fontSize: 8.5,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -911,45 +916,45 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Text(
                   name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Row(
                   children: [
                     const FaIcon(
                       FontAwesomeIcons.locationDot,
                       color: AppColors.cinzaMedio,
-                      size: 10,
+                      size: 9,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       location,
                       style: GoogleFonts.poppins(
                         color: AppColors.cinzaMedio,
-                        fontSize: 11,
+                        fontSize: 10,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     const FaIcon(
                       FontAwesomeIcons.userGroup,
                       color: AppColors.cinzaMedio,
-                      size: 10,
+                      size: 9,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       '$playerCount inscritos',
                       style: GoogleFonts.poppins(
                         color: AppColors.cinzaMedio,
-                        fontSize: 11,
+                        fontSize: 10,
                       ),
                     ),
                   ],
@@ -957,7 +962,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -966,27 +971,27 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 'Prêmio',
                 style: GoogleFonts.poppins(
                   color: AppColors.cinzaMedio,
-                  fontSize: 10,
+                  fontSize: 9,
                 ),
               ),
               Text(
                 prize,
                 style: GoogleFonts.orbitron(
                   color: AppColors.amareloVale,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               InkWell(
                 onTap: () => widget.onNavigateTab?.call(1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppColors.verdeVale.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                     border: Border.all(
                       color: AppColors.verdeVale.withValues(alpha: 0.3),
                     ),
@@ -995,7 +1000,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                     'Gerenciar',
                     style: GoogleFonts.poppins(
                       color: Colors.white,
-                      fontSize: 10,
+                      fontSize: 9.5,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1014,165 +1019,171 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
   Widget _buildEnigmasArsenalSection(Map<String, dynamic> data) {
     final difficultyCounts =
         (data['difficultyCounts'] as Map<String, dynamic>?) ?? {};
-    final facil = (difficultyCounts['FÁCIL'] as int?) ?? 0;
-    final media = (difficultyCounts['MÉDIA'] as int?) ?? 0;
-    final dificil = (difficultyCounts['DIFÍCIL'] as int?) ?? 0;
+    final facil = (difficultyCounts['FÁCIL'] as num?)?.toInt() ?? 0;
+    final media = (difficultyCounts['MÉDIA'] as num?)?.toInt() ?? 0;
+    final dificil = (difficultyCounts['DIFÍCIL'] as num?)?.toInt() ?? 0;
     final totalDiff = facil + media + dificil;
 
-    final withCompass = (data['withCompass'] as int?) ?? 0;
-    final withRadar = (data['withRadar'] as int?) ?? 0;
-    final withMap = (data['withMap'] as int?) ?? 0;
-    final withAudio = (data['withAudio'] as int?) ?? 0;
-    final withGps = (data['withGps'] as int?) ?? 0;
-    final totalHints = (data['totalHints'] as int?) ?? 0;
+    final withCompass = (data['withCompass'] as num?)?.toInt() ?? 0;
+    final withRadar = (data['withRadar'] as num?)?.toInt() ?? 0;
+    final withMap = (data['withMap'] as num?)?.toInt() ?? 0;
+    final withAudio = (data['withAudio'] as num?)?.toInt() ?? 0;
+    final withGps = (data['withGps'] as num?)?.toInt() ?? 0;
+    final totalHints = (data['totalHints'] as num?)?.toInt() ?? 0;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 900;
+        final panelA = Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.darkCardColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppColors.verdeVale.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const FaIcon(
+                    FontAwesomeIcons.brain,
+                    color: AppColors.amareloVale,
+                    size: 13,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'GRAU DE DIFICULDADE DOS ENIGMAS',
+                    style: GoogleFonts.orbitron(
+                      color: Colors.white,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _buildDifficultyBar(
+                label: 'Fácil',
+                count: facil,
+                total: totalDiff,
+                color: Colors.greenAccent,
+              ),
+              const SizedBox(height: 8),
+              _buildDifficultyBar(
+                label: 'Média',
+                count: media,
+                total: totalDiff,
+                color: AppColors.amareloVale,
+              ),
+              const SizedBox(height: 8),
+              _buildDifficultyBar(
+                label: 'Difícil',
+                count: dificil,
+                total: totalDiff,
+                color: AppColors.danger,
+              ),
+            ],
+          ),
+        );
+
+        final panelB = Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.darkCardColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppColors.verdeVale.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const FaIcon(
+                    FontAwesomeIcons.screwdriverWrench,
+                    color: AppColors.verdeVale,
+                    size: 13,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'ARSENAL TÁTICO HABILITADO NO JOGO',
+                    style: GoogleFonts.orbitron(
+                      color: Colors.white,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  _buildArsenalChip(
+                    icon: FontAwesomeIcons.compass,
+                    label: 'Bússola Digital',
+                    count: withCompass,
+                    color: AppColors.amareloVale,
+                  ),
+                  _buildArsenalChip(
+                    icon: FontAwesomeIcons.satelliteDish,
+                    label: 'Radar Tático',
+                    count: withRadar,
+                    color: AppColors.verdeVale,
+                  ),
+                  _buildArsenalChip(
+                    icon: FontAwesomeIcons.mapLocation,
+                    label: 'Raio de Mapa GPS',
+                    count: withMap,
+                    color: Colors.cyanAccent,
+                  ),
+                  _buildArsenalChip(
+                    icon: FontAwesomeIcons.volumeHigh,
+                    label: 'Pistas em Áudio',
+                    count: withAudio,
+                    color: Colors.purpleAccent,
+                  ),
+                  _buildArsenalChip(
+                    icon: FontAwesomeIcons.locationCrosshairs,
+                    label: 'Coordenadas Fixas',
+                    count: withGps,
+                    color: Colors.orangeAccent,
+                  ),
+                  _buildArsenalChip(
+                    icon: FontAwesomeIcons.lightbulb,
+                    label: 'Pistas / Dicas',
+                    count: totalHints,
+                    color: Colors.amberAccent,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+
+        if (!isWide) {
+          return Column(
+            children: [
+              panelA,
+              const SizedBox(height: 10),
+              panelB,
+            ],
+          );
+        }
+
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Painel A: Distribuição de Dificuldade
-            Expanded(
-              flex: isWide ? 1 : 1,
-              child: Container(
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: AppColors.darkCardColor,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: AppColors.verdeVale.withValues(alpha: 0.15),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const FaIcon(
-                          FontAwesomeIcons.brain,
-                          color: AppColors.amareloVale,
-                          size: 15,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'GRAU DE DIFICULDADE DOS ENIGMAS',
-                          style: GoogleFonts.orbitron(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    _buildDifficultyBar(
-                      label: 'Fácil',
-                      count: facil,
-                      total: totalDiff,
-                      color: Colors.greenAccent,
-                    ),
-                    const SizedBox(height: 14),
-                    _buildDifficultyBar(
-                      label: 'Média',
-                      count: media,
-                      total: totalDiff,
-                      color: AppColors.amareloVale,
-                    ),
-                    const SizedBox(height: 14),
-                    _buildDifficultyBar(
-                      label: 'Difícil',
-                      count: dificil,
-                      total: totalDiff,
-                      color: AppColors.danger,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 18),
-            // Painel B: Arsenal Tático dos Enigmas
-            Expanded(
-              flex: isWide ? 1 : 1,
-              child: Container(
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: AppColors.darkCardColor,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: AppColors.verdeVale.withValues(alpha: 0.15),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const FaIcon(
-                          FontAwesomeIcons.screwdriverWrench,
-                          color: AppColors.verdeVale,
-                          size: 15,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'ARSENAL TÁTICO HABILITADO NO JOGO',
-                          style: GoogleFonts.orbitron(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        _buildArsenalChip(
-                          icon: FontAwesomeIcons.compass,
-                          label: 'Bússola Digital',
-                          count: withCompass,
-                          color: AppColors.amareloVale,
-                        ),
-                        _buildArsenalChip(
-                          icon: FontAwesomeIcons.satelliteDish,
-                          label: 'Radar Tático',
-                          count: withRadar,
-                          color: AppColors.verdeVale,
-                        ),
-                        _buildArsenalChip(
-                          icon: FontAwesomeIcons.mapLocation,
-                          label: 'Raio de Mapa GPS',
-                          count: withMap,
-                          color: Colors.cyanAccent,
-                        ),
-                        _buildArsenalChip(
-                          icon: FontAwesomeIcons.volumeHigh,
-                          label: 'Pistas em Áudio',
-                          count: withAudio,
-                          color: Colors.purpleAccent,
-                        ),
-                        _buildArsenalChip(
-                          icon: FontAwesomeIcons.locationCrosshairs,
-                          label: 'Coordenadas Fixas',
-                          count: withGps,
-                          color: Colors.orangeAccent,
-                        ),
-                        _buildArsenalChip(
-                          icon: FontAwesomeIcons.lightbulb,
-                          label: 'Pistas / Dicas',
-                          count: totalHints,
-                          color: Colors.amberAccent,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            Expanded(child: panelA),
+            const SizedBox(width: 10),
+            Expanded(child: panelB),
           ],
         );
       },
@@ -1196,7 +1207,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               label,
               style: GoogleFonts.poppins(
                 color: Colors.white,
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -1204,18 +1215,18 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               '$count (${(percentage * 100).toStringAsFixed(0)}%)',
               style: GoogleFonts.orbitron(
                 color: color,
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         ClipRRect(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: percentage,
-            minHeight: 8,
+            minHeight: 5,
             backgroundColor: AppColors.sidebarBackground,
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
@@ -1231,37 +1242,37 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.sidebarBackground,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FaIcon(icon, color: color, size: 14),
-          const SizedBox(width: 8),
+          FaIcon(icon, color: color, size: 11),
+          const SizedBox(width: 6),
           Text(
             label,
             style: GoogleFonts.poppins(
               color: Colors.white,
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               '$count',
               style: GoogleFonts.orbitron(
                 color: color,
-                fontSize: 10,
+                fontSize: 9.5,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -1282,170 +1293,176 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 900;
+        final panel1 = Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.darkCardColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppColors.verdeVale.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const FaIcon(
+                        FontAwesomeIcons.clockRotateLeft,
+                        color: AppColors.verdeVale,
+                        size: 13,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'MOVIMENTAÇÕES RECENTES',
+                        style: GoogleFonts.orbitron(
+                          color: Colors.white,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                  InkWell(
+                    onTap: () => widget.onNavigateTab?.call(4),
+                    child: Text(
+                      'Ver Finanças',
+                      style: GoogleFonts.poppins(
+                        color: AppColors.amareloVale,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              if (recentActivity.isEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Nenhuma movimentação registrada recentemente.',
+                    style: GoogleFonts.poppins(
+                      color: AppColors.cinzaMedio,
+                      fontSize: 11,
+                    ),
+                  ),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: recentActivity.length,
+                  separatorBuilder: (context, i) =>
+                      const Divider(color: Colors.white10, height: 8),
+                  itemBuilder: (context, index) {
+                    final item =
+                        recentActivity[index] as Map<String, dynamic>;
+                    return _buildActivityItem(item);
+                  },
+                ),
+            ],
+          ),
+        );
+
+        final panel2 = Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.darkCardColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: AppColors.verdeVale.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const FaIcon(
+                        FontAwesomeIcons.rankingStar,
+                        color: AppColors.amareloVale,
+                        size: 13,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'CAÇADORES EM DESTAQUE',
+                        style: GoogleFonts.orbitron(
+                          color: Colors.white,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                  InkWell(
+                    onTap: () => widget.onNavigateTab?.call(5),
+                    child: Text(
+                      'Ver Base de Usuários',
+                      style: GoogleFonts.poppins(
+                        color: AppColors.amareloVale,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              if (topPlayers.isEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Nenhum jogador cadastrado ainda.',
+                    style: GoogleFonts.poppins(
+                      color: AppColors.cinzaMedio,
+                      fontSize: 11,
+                    ),
+                  ),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: topPlayers.length,
+                  separatorBuilder: (context, i) =>
+                      const Divider(color: Colors.white10, height: 8),
+                  itemBuilder: (context, index) {
+                    final player =
+                        topPlayers[index] as Map<String, dynamic>;
+                    return _buildPlayerItem(player, index + 1);
+                  },
+                ),
+            ],
+          ),
+        );
+
+        if (!isWide) {
+          return Column(
+            children: [
+              panel1,
+              const SizedBox(height: 10),
+              panel2,
+            ],
+          );
+        }
+
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Painel 1: Transações & Atividade Recente
-            Expanded(
-              flex: isWide ? 1 : 1,
-              child: Container(
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: AppColors.darkCardColor,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: AppColors.verdeVale.withValues(alpha: 0.15),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const FaIcon(
-                              FontAwesomeIcons.clockRotateLeft,
-                              color: AppColors.verdeVale,
-                              size: 15,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              'MOVIMENTAÇÕES RECENTES',
-                              style: GoogleFonts.orbitron(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                          ],
-                        ),
-                        InkWell(
-                          onTap: () => widget.onNavigateTab?.call(4),
-                          child: Text(
-                            'Ver Finanças',
-                            style: GoogleFonts.poppins(
-                              color: AppColors.amareloVale,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    if (recentActivity.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 24),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'Nenhuma movimentação registrada recentemente.',
-                          style: GoogleFonts.poppins(
-                            color: AppColors.cinzaMedio,
-                            fontSize: 12,
-                          ),
-                        ),
-                      )
-                    else
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: recentActivity.length,
-                        separatorBuilder: (context, i) =>
-                            const Divider(color: Colors.white10, height: 16),
-                        itemBuilder: (context, index) {
-                          final item =
-                              recentActivity[index] as Map<String, dynamic>;
-                          return _buildActivityItem(item);
-                        },
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 18),
-            // Painel 2: Caçadores em Destaque
-            Expanded(
-              flex: isWide ? 1 : 1,
-              child: Container(
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  color: AppColors.darkCardColor,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: AppColors.verdeVale.withValues(alpha: 0.15),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const FaIcon(
-                              FontAwesomeIcons.rankingStar,
-                              color: AppColors.amareloVale,
-                              size: 15,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              'CAÇADORES EM DESTAQUE',
-                              style: GoogleFonts.orbitron(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                          ],
-                        ),
-                        InkWell(
-                          onTap: () => widget.onNavigateTab?.call(5),
-                          child: Text(
-                            'Ver Base de Usuários',
-                            style: GoogleFonts.poppins(
-                              color: AppColors.amareloVale,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    if (topPlayers.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 24),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'Nenhum jogador cadastrado ainda.',
-                          style: GoogleFonts.poppins(
-                            color: AppColors.cinzaMedio,
-                            fontSize: 12,
-                          ),
-                        ),
-                      )
-                    else
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: topPlayers.length,
-                        separatorBuilder: (context, i) =>
-                            const Divider(color: Colors.white10, height: 16),
-                        itemBuilder: (context, index) {
-                          final player =
-                              topPlayers[index] as Map<String, dynamic>;
-                          return _buildPlayerItem(player, index + 1);
-                        },
-                      ),
-                  ],
-                ),
-              ),
-            ),
+            Expanded(child: panel1),
+            const SizedBox(width: 10),
+            Expanded(child: panel2),
           ],
         );
       },
@@ -1454,13 +1471,17 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
 
   Widget _buildActivityItem(Map<String, dynamic> item) {
     final type = item['type']?.toString().toLowerCase() ?? 'deposit';
-    final amount = (item['amount'] as double?) ?? 0.0;
+    final amount = (item['amount'] as num?)?.toDouble() ?? 0.0;
     final userName = item['userName']?.toString() ?? 'Jogador';
     final status = item['status']?.toString().toLowerCase() ?? 'completed';
     final description = item['description']?.toString() ?? 'Transação';
-    final DateTime createdAt = item['createdAt'] is DateTime
-        ? item['createdAt']
-        : DateTime.now();
+    DateTime createdAt = DateTime.now();
+    if (item['createdAt'] is DateTime) {
+      createdAt = item['createdAt'] as DateTime;
+    } else if (item['createdAt'] != null) {
+      final parsed = DateTime.tryParse(item['createdAt'].toString());
+      if (parsed != null) createdAt = parsed;
+    }
 
     final isWithdrawal = type == 'withdrawal';
     final isApproved = status == 'approved' || status == 'completed';
@@ -1468,8 +1489,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     return Row(
       children: [
         Container(
-          width: 36,
-          height: 36,
+          width: 28,
+          height: 28,
           decoration: BoxDecoration(
             color: isWithdrawal
                 ? AppColors.amareloVale.withValues(alpha: 0.15)
@@ -1483,11 +1504,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   : FontAwesomeIcons.arrowUp,
               color:
                   isWithdrawal ? AppColors.amareloVale : AppColors.verdeVale,
-              size: 14,
+              size: 11,
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1498,7 +1519,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
                   color: Colors.white,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1508,13 +1529,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
                   color: AppColors.cinzaMedio,
-                  fontSize: 11,
+                  fontSize: 10,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -1524,7 +1545,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 color: isWithdrawal
                     ? AppColors.amareloVale
                     : Colors.greenAccent,
-                fontSize: 12,
+                fontSize: 11.5,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -1542,7 +1563,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   color: isApproved
                       ? Colors.greenAccent
                       : AppColors.amareloVale,
-                  fontSize: 9,
+                  fontSize: 8.5,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1562,8 +1583,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     return Row(
       children: [
         Container(
-          width: 28,
-          height: 28,
+          width: 24,
+          height: 24,
           decoration: BoxDecoration(
             color: rank == 1
                 ? AppColors.amareloVale.withValues(alpha: 0.2)
@@ -1580,13 +1601,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               '#$rank',
               style: GoogleFonts.orbitron(
                 color: rank == 1 ? AppColors.amareloVale : Colors.white,
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1600,13 +1621,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
                         color: Colors.white,
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                   if (isAdmin) ...[
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 4, vertical: 1),
@@ -1633,13 +1654,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(
                     color: AppColors.cinzaMedio,
-                    fontSize: 11,
+                    fontSize: 10,
                   ),
                 ),
             ],
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -1647,14 +1668,14 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               'Saldo',
               style: GoogleFonts.poppins(
                 color: AppColors.cinzaMedio,
-                fontSize: 10,
+                fontSize: 9,
               ),
             ),
             Text(
               _currencyFormat.format(balance),
               style: GoogleFonts.orbitron(
                 color: Colors.white,
-                fontSize: 12,
+                fontSize: 11.5,
                 fontWeight: FontWeight.w700,
               ),
             ),

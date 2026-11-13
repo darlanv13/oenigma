@@ -77,49 +77,99 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Barra Superior Compacta de Busca e Ações
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Gestão de Usuários',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            Expanded(
+              child: SizedBox(
+                height: 36,
+                child: TextField(
+                  controller: _searchController,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: 'Buscar por Nome, Email, CPF ou Telefone...',
+                    hintStyle: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Colors.grey,
+                      size: 18,
+                    ),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Colors.grey,
+                              size: 16,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              _filterUsers();
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: cardColor,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
               ),
             ),
-            IconButton(
-              icon: const FaIcon(
-                FontAwesomeIcons.rotateRight,
-                color: Colors.white,
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
               ),
-              onPressed: () {
-                setState(() {
-                  _searchController.clear();
-                  _usersFuture = _fetchUsers();
-                });
-              },
+              child: Text(
+                '${_filteredUsers.length} usuários',
+                style: const TextStyle(
+                  color: secondaryTextColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              height: 36,
+              width: 36,
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: const FaIcon(
+                  FontAwesomeIcons.rotateRight,
+                  color: Colors.white,
+                  size: 13,
+                ),
+                tooltip: 'Atualizar lista',
+                onPressed: () {
+                  setState(() {
+                    _searchController.clear();
+                    _usersFuture = _fetchUsers();
+                  });
+                },
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _searchController,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            hintText: 'Buscar por Nome, Email, CPF ou Telefone...',
-            hintStyle: const TextStyle(color: Colors.grey),
-            prefixIcon: const Icon(Icons.search, color: Colors.grey),
-            filled: true,
-            fillColor: cardColor,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 0),
-          ),
-        ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 10),
         Expanded(
           child: FutureBuilder<List<dynamic>>(
             future: _usersFuture,
@@ -158,32 +208,46 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               }
 
               return ListView.builder(
-                itemCount:
-                    _searchController.text.isEmpty && _filteredUsers.length > 5
-                    ? 5
-                    : _filteredUsers.length,
+                itemCount: _filteredUsers.length,
                 itemBuilder: (context, index) {
                   final user = _filteredUsers[index];
-                  final objectId = user['objectId'] as String;
+                  final objectId = (user['objectId'] ?? '').toString();
                   final name =
-                      user['name'] ?? user['displayName'] ?? 'Sem Nome';
-                  final email = user['email'] ?? 'Sem Email';
-                  final cpf = user['cpf'] ?? '';
-                  final phone = user['phone'] ?? '';
+                      (user['name'] ?? user['displayName'] ?? 'Sem Nome').toString();
+                  final email = (user['email'] ?? 'Sem Email').toString();
+                  final cpf = (user['cpf'] ?? '').toString();
+                  final phone = (user['phone'] ?? '').toString();
                   final photoURL = user['photoURL'] as String?;
-                  final isAdmin = user['isAdmin'] ?? false;
-                  final isBanned = user['isBanned'] ?? false;
-                  final role = user['role'] ?? 'player';
-                  final referralsCount = (user['referralsCount'] as num?)?.toInt() ?? 0;
+                  final isAdmin = user['isAdmin'] == true || user['isAdmin'] == 1 || user['isAdmin'] == 'true';
+                  final isBanned = user['isBanned'] == true || user['isBanned'] == 1 || user['isBanned'] == 'true';
+                  final role = (user['role'] ?? 'player').toString();
+                  final referralsCount =
+                      (user['referralsCount'] as num?)?.toInt() ?? 0;
                   final xp = (user['xp'] as num?)?.toInt() ?? 0;
                   final league = (user['league'] ?? 'Bronze').toString();
-                  final walletBalance = (user['walletBalance'] as num?)?.toDouble() ?? 0.0;
+                  final walletBalance =
+                      (user['walletBalance'] as num?)?.toDouble() ?? 0.0;
 
-                  return Card(
-                    color: cardColor,
-                    margin: const EdgeInsets.only(bottom: 12),
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isBanned
+                            ? Colors.redAccent.withValues(alpha: 0.3)
+                            : Colors.white.withValues(alpha: 0.06),
+                      ),
+                    ),
                     child: ListTile(
+                      dense: true,
+                      visualDensity: VisualDensity.compact,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 2,
+                      ),
                       leading: CircleAvatar(
+                        radius: 15,
                         backgroundColor: isAdmin
                             ? Colors.blueAccent
                             : primaryAmber,
@@ -192,39 +256,152 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             : null,
                         child: photoURL == null
                             ? Text(
-                                name[0].toUpperCase(),
-                                style: const TextStyle(color: Colors.black),
+                                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               )
                             : null,
                       ),
-                      title: Text(
-                        name,
-                        style: TextStyle(
-                          color: isBanned ? Colors.grey : Colors.white,
-                          decoration: isBanned
-                              ? TextDecoration.lineThrough
-                              : null,
-                        ),
+                      title: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isBanned ? Colors.grey : Colors.white,
+                                decoration: isBanned
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isAdmin) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.blueAccent.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'Admin',
+                                style: TextStyle(
+                                  color: Colors.blueAccent,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (role == 'creator') ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: primaryAmber.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'Creator',
+                                style: TextStyle(
+                                  color: primaryAmber,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (isBanned) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'Banido',
+                                style: TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const SizedBox(height: 1),
                           Text(
-                            '$email${isAdmin ? " • Admin" : ""}${role == "creator" ? " • Creator" : ""}${isBanned ? " • Banido" : ""}',
-                            style: const TextStyle(color: secondaryTextColor),
+                            email,
+                            style: const TextStyle(
+                              color: secondaryTextColor,
+                              fontSize: 11,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Wrap(
-                            spacing: 10,
-                            runSpacing: 4,
+                            spacing: 8,
+                            runSpacing: 2,
                             children: [
                               if (cpf.toString().isNotEmpty)
-                                Text('CPF: $cpf', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                                Text(
+                                  'CPF: $cpf',
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 10,
+                                  ),
+                                ),
                               if (phone.toString().isNotEmpty)
-                                Text('Tel: $phone', style: const TextStyle(color: Colors.grey, fontSize: 11)),
-                              Text('Saldo: R\$ ${walletBalance.toStringAsFixed(2)}', style: const TextStyle(color: AppColors.verdeVale, fontSize: 11, fontWeight: FontWeight.bold)),
-                              Text('🏆 Liga $league ($xp XP)', style: const TextStyle(color: AppColors.amareloVale, fontSize: 11)),
-                              Text('👥 $referralsCount ${referralsCount == 1 ? "indicação" : "indicações"}', style: const TextStyle(color: Colors.cyanAccent, fontSize: 11)),
+                                Text(
+                                  'Tel: $phone',
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              Text(
+                                'Saldo: R\$ ${walletBalance.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  color: AppColors.verdeVale,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                '🏆 Liga $league ($xp XP)',
+                                style: const TextStyle(
+                                  color: AppColors.amareloVale,
+                                  fontSize: 10,
+                                ),
+                              ),
+                              Text(
+                                '👥 $referralsCount ${referralsCount == 1 ? "indicação" : "indicações"}',
+                                style: const TextStyle(
+                                  color: Colors.cyanAccent,
+                                  fontSize: 10,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -233,9 +410,15 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints.tightFor(
+                              width: 30,
+                              height: 30,
+                            ),
                             icon: const FaIcon(
                               FontAwesomeIcons.wallet,
                               color: Colors.greenAccent,
+                              size: 13,
                             ),
                             onPressed: () {
                               // Action to view/edit wallet
@@ -243,6 +426,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             tooltip: 'Ver Carteira',
                           ),
                           IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints.tightFor(
+                              width: 30,
+                              height: 30,
+                            ),
                             icon: FaIcon(
                               role == 'creator'
                                   ? FontAwesomeIcons.camera
@@ -250,13 +438,13 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               color: role == 'creator'
                                   ? primaryAmber
                                   : Colors.grey,
+                              size: 13,
                             ),
                             onPressed: () async {
                               final newRole = role == 'creator'
                                   ? 'player'
                                   : 'creator';
                               try {
-                                // Simplified update mechanism. Ideally, use a cloud function dedicated to updating roles
                                 final response =
                                     await ParseCloudFunction(
                                       'updateUserRole',
@@ -266,9 +454,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                         'role': newRole,
                                       },
                                     );
-                                if (!response.success) {
-                                  // Fallback to basic object update if the function doesn't exist, though modifying users might require Master Key
-                                }
+                                if (!response.success) {}
                                 setState(() {
                                   _usersFuture = _fetchUsers();
                                 });
@@ -300,11 +486,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                 : 'Tornar Creator',
                           ),
                           IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints.tightFor(
+                              width: 30,
+                              height: 30,
+                            ),
                             icon: FaIcon(
                               isAdmin
                                   ? FontAwesomeIcons.userShield
                                   : FontAwesomeIcons.solidUser,
                               color: isAdmin ? Colors.blueAccent : Colors.grey,
+                              size: 13,
                             ),
                             onPressed: () async {
                               final functionName = isAdmin
@@ -346,11 +538,17 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                             tooltip: isAdmin ? 'Revogar Admin' : 'Tornar Admin',
                           ),
                           IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints.tightFor(
+                              width: 30,
+                              height: 30,
+                            ),
                             icon: FaIcon(
                               isBanned
                                   ? FontAwesomeIcons.check
                                   : FontAwesomeIcons.ban,
                               color: isBanned ? Colors.green : Colors.redAccent,
+                              size: 13,
                             ),
                             onPressed: () async {
                               try {

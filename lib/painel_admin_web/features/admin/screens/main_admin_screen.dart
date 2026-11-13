@@ -71,7 +71,10 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                 _buildHeader(),
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
                     child: _screens[_selectedIndex],
                   ),
                 ),
@@ -85,29 +88,37 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
 
   Widget _buildSidebar() {
     return Container(
-      width: 260,
+      width: 215,
       color: sidebarBackground,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       child: Column(
         children: [
           _buildLogo(),
-          const SizedBox(height: 32),
+          const SizedBox(height: 14),
           _buildMenuItem(0, FontAwesomeIcons.chartPie, 'Dashboard'),
-          const SizedBox(height: 6),
+          const SizedBox(height: 3),
           _buildMenuItem(1, FontAwesomeIcons.calendarCheck, 'Eventos'),
-          const SizedBox(height: 6),
+          const SizedBox(height: 3),
           _buildMenuItem(2, FontAwesomeIcons.image, 'Banners'),
-          const SizedBox(height: 6),
+          const SizedBox(height: 3),
           _buildMenuItem(3, FontAwesomeIcons.creditCard, 'Gateways'),
-          const SizedBox(height: 6),
-          _buildMenuItem(4, FontAwesomeIcons.moneyBillTransfer, 'Saques & Depósitos'),
-          const SizedBox(height: 6),
+          const SizedBox(height: 3),
+          _buildMenuItem(
+            4,
+            FontAwesomeIcons.moneyBillTransfer,
+            'Saques & Depósitos',
+          ),
+          const SizedBox(height: 3),
           _buildMenuItem(5, FontAwesomeIcons.users, 'Caçadores'),
-          const SizedBox(height: 6),
-          _buildMenuItem(6, FontAwesomeIcons.shieldHalved, 'Segurança & Fraudes'),
+          const SizedBox(height: 3),
+          _buildMenuItem(
+            6,
+            FontAwesomeIcons.shieldHalved,
+            'Segurança & Fraudes',
+          ),
           const Spacer(),
           _buildLogoutButton(),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _buildFooter(),
         ],
       ),
@@ -116,7 +127,7 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
 
   Widget _buildLogo() {
     return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: OEnigmaAdminLogo(
         size: LogoSize.compact,
         isVertical: false,
@@ -133,30 +144,34 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
           _selectedIndex = index;
         });
       },
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 150),
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.verdeVale.withValues(alpha: 0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          color: isActive
+              ? AppColors.verdeVale.withValues(alpha: 0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isActive ? AppColors.verdeVale.withValues(alpha: 0.3) : Colors.transparent,
+            color: isActive
+                ? AppColors.verdeVale.withValues(alpha: 0.3)
+                : Colors.transparent,
             width: 1,
           ),
         ),
         child: Row(
           children: [
             SizedBox(
-              width: 20,
+              width: 18,
               child: FaIcon(
                 icon,
                 color: isActive ? AppColors.amareloVale : AppColors.cinzaMedio,
-                size: 16,
+                size: 14,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 label,
@@ -164,16 +179,16 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
                   color: isActive ? Colors.white : AppColors.cinzaMedio,
-                  fontSize: 14,
+                  fontSize: 12.5,
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
             ),
             if (isActive) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Container(
-                width: 6,
-                height: 6,
+                width: 5,
+                height: 5,
                 decoration: const BoxDecoration(
                   color: AppColors.verdeVale,
                   shape: BoxShape.circle,
@@ -193,29 +208,27 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
           onTap: () async {
             await ref.read(authRepositoryProvider).signOut();
           },
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
             child: Row(
               children: [
                 SizedBox(
-                  width: 20,
+                  width: 18,
                   child: FaIcon(
                     FontAwesomeIcons.rightFromBracket,
                     color: AppColors.cinzaMedio,
-                    size: 15,
+                    size: 13,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Text(
                   'Sair',
                   style: GoogleFonts.poppins(
                     color: AppColors.cinzaMedio,
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -230,12 +243,10 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
   Widget _buildFooter() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(
-            color: AppColors.verdeVale.withValues(alpha: 0.1),
-          ),
+          top: BorderSide(color: AppColors.verdeVale.withValues(alpha: 0.1)),
         ),
       ),
       child: Text(
@@ -243,7 +254,7 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
         textAlign: TextAlign.center,
         style: GoogleFonts.poppins(
           color: AppColors.cinzaMedio.withValues(alpha: 0.6),
-          fontSize: 11,
+          fontSize: 10,
         ),
       ),
     );
@@ -251,7 +262,7 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -266,16 +277,16 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
             _titles[_selectedIndex],
             style: GoogleFonts.poppins(
               color: Colors.white,
-              fontSize: 24,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
+              letterSpacing: 0.4,
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: AppColors.verdeVale.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: AppColors.verdeVale.withValues(alpha: 0.25),
               ),
@@ -283,19 +294,19 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
             child: Row(
               children: [
                 Container(
-                  width: 8,
-                  height: 8,
+                  width: 6,
+                  height: 6,
                   decoration: const BoxDecoration(
                     color: successColor,
                     shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Text(
                   'Painel Conectado',
                   style: GoogleFonts.poppins(
                     color: AppColors.verdeVale,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

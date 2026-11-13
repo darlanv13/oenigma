@@ -296,11 +296,11 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildHeader(),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
         _buildKpisRow(),
-        const SizedBox(height: 24),
+        const SizedBox(height: 10),
         _buildTabsAndSearch(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
         Expanded(
           child: _isLoading
               ? const Center(child: CircularProgressIndicator(color: AppColors.verdeVale))
@@ -320,34 +320,34 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: AppColors.verdeVale.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: const FaIcon(
                     FontAwesomeIcons.moneyBillTransfer,
                     color: AppColors.verdeVale,
-                    size: 18,
+                    size: 14,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Text(
                   'GESTÃO DE SAQUES & DEPÓSITOS',
                   style: GoogleFonts.poppins(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
-                    letterSpacing: 0.8,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               'Auditoria, aprovação de saques Pix, controle de depósitos e conciliação financeira',
               style: GoogleFonts.inter(
-                fontSize: 13,
+                fontSize: 11,
                 color: AppColors.cinzaMedio,
               ),
             ),
@@ -356,26 +356,28 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
         Row(
           children: [
             OutlinedButton.icon(
-              icon: const FaIcon(FontAwesomeIcons.arrowsRotate, size: 13),
+              icon: const FaIcon(FontAwesomeIcons.arrowsRotate, size: 11),
               label: const Text('Atualizar'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.cinzaMedio,
                 side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                textStyle: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: _loadAllFinancialData,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             ElevatedButton.icon(
-              icon: const FaIcon(FontAwesomeIcons.filePdf, size: 14),
+              icon: const FaIcon(FontAwesomeIcons.filePdf, size: 12),
               label: const Text('Exportar Relatório PDF'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.amareloVale,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                textStyle: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () => _exportFinancialReport(context),
             ),
@@ -389,53 +391,76 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
   // CARDS DE KPIS
   // ==========================================
   Widget _buildKpisRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildKpiCard(
-            title: 'TOTAL DEPOSITADO',
-            value: 'R\$ ${_totalDeposited.toStringAsFixed(2).replaceAll('.', ',')}',
-            icon: FontAwesomeIcons.circleArrowDown,
-            iconColor: AppColors.verdeVale,
-            badgeText: 'Entradas Aprovadas',
-            badgeColor: AppColors.verdeVale,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildKpiCard(
-            title: 'TOTAL SACADO (PAGO)',
-            value: 'R\$ ${_totalWithdrawn.toStringAsFixed(2).replaceAll('.', ',')}',
-            icon: FontAwesomeIcons.circleArrowUp,
-            iconColor: const Color(0xFF3B82F6),
-            badgeText: 'Saídas Concluídas',
-            badgeColor: const Color(0xFF3B82F6),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildKpiCard(
-            title: 'SAQUES PENDENTES',
-            value: 'R\$ ${_totalPendingWithdrawalsAmount.toStringAsFixed(2).replaceAll('.', ',')}',
-            icon: FontAwesomeIcons.triangleExclamation,
-            iconColor: AppColors.amareloVale,
-            badgeText: '$_pendingWithdrawalsCount aguardando',
-            badgeColor: _pendingWithdrawalsCount > 0 ? AppColors.amareloVale : AppColors.cinzaMedio,
-            isHighlighted: _pendingWithdrawalsCount > 0,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildKpiCard(
-            title: 'SALDO EM CUSTÓDIA',
-            value: 'R\$ ${_totalUsersBalance.toStringAsFixed(2).replaceAll('.', ',')}',
-            icon: FontAwesomeIcons.vault,
-            iconColor: const Color(0xFFA855F7),
-            badgeText: 'Carteiras de Jogadores',
-            badgeColor: const Color(0xFFA855F7),
-          ),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final card1 = _buildKpiCard(
+          title: 'TOTAL DEPOSITADO',
+          value: 'R\$ ${_totalDeposited.toStringAsFixed(2).replaceAll('.', ',')}',
+          icon: FontAwesomeIcons.circleArrowDown,
+          iconColor: AppColors.verdeVale,
+          badgeText: 'Entradas Aprovadas',
+          badgeColor: AppColors.verdeVale,
+        );
+        final card2 = _buildKpiCard(
+          title: 'TOTAL SACADO (PAGO)',
+          value: 'R\$ ${_totalWithdrawn.toStringAsFixed(2).replaceAll('.', ',')}',
+          icon: FontAwesomeIcons.circleArrowUp,
+          iconColor: const Color(0xFF3B82F6),
+          badgeText: 'Saídas Concluídas',
+          badgeColor: const Color(0xFF3B82F6),
+        );
+        final card3 = _buildKpiCard(
+          title: 'SAQUES PENDENTES',
+          value: 'R\$ ${_totalPendingWithdrawalsAmount.toStringAsFixed(2).replaceAll('.', ',')}',
+          icon: FontAwesomeIcons.triangleExclamation,
+          iconColor: AppColors.amareloVale,
+          badgeText: '$_pendingWithdrawalsCount aguardando',
+          badgeColor: _pendingWithdrawalsCount > 0 ? AppColors.amareloVale : AppColors.cinzaMedio,
+          isHighlighted: _pendingWithdrawalsCount > 0,
+        );
+        final card4 = _buildKpiCard(
+          title: 'SALDO EM CUSTÓDIA',
+          value: 'R\$ ${_totalUsersBalance.toStringAsFixed(2).replaceAll('.', ',')}',
+          icon: FontAwesomeIcons.vault,
+          iconColor: const Color(0xFFA855F7),
+          badgeText: 'Carteiras de Jogadores',
+          badgeColor: const Color(0xFFA855F7),
+        );
+
+        if (constraints.maxWidth < 850) {
+          return Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(child: card1),
+                  const SizedBox(width: 8),
+                  Expanded(child: card2),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: card3),
+                  const SizedBox(width: 8),
+                  Expanded(child: card4),
+                ],
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: card1),
+            const SizedBox(width: 10),
+            Expanded(child: card2),
+            const SizedBox(width: 10),
+            Expanded(child: card3),
+            const SizedBox(width: 10),
+            Expanded(child: card4),
+          ],
+        );
+      },
     );
   }
 
@@ -449,10 +474,10 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
     bool isHighlighted = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: isHighlighted
               ? AppColors.amareloVale.withValues(alpha: 0.6)
@@ -464,57 +489,67 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
             color: isHighlighted
                 ? AppColors.amareloVale.withValues(alpha: 0.1)
                 : Colors.black.withValues(alpha: 0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  color: AppColors.cinzaMedio,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1,
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: AppColors.cinzaMedio,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
                 ),
               ),
+              const SizedBox(width: 4),
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
                   color: iconColor.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: FaIcon(icon, color: iconColor, size: 14),
+                child: FaIcon(icon, color: iconColor, size: 11),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: GoogleFonts.poppins(
-              color: isHighlighted ? AppColors.amareloVale : Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: GoogleFonts.poppins(
+                color: isHighlighted ? AppColors.amareloVale : Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 4),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
               color: badgeColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               badgeText,
               style: GoogleFonts.inter(
                 color: badgeColor,
-                fontSize: 11,
+                fontSize: 9.5,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -532,10 +567,10 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
       children: [
         // Botões de Abas
         Container(
-          padding: const EdgeInsets.all(4),
+          padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
             color: AppColors.darkCardColor,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
           child: Row(
@@ -546,13 +581,13 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
                 icon: FontAwesomeIcons.moneyBillWave,
                 badgeCount: _pendingWithdrawalsCount,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 3),
               _buildTabButton(
                 index: 1,
                 label: 'Depósitos & Entradas',
                 icon: FontAwesomeIcons.circleArrowDown,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 3),
               _buildTabButton(
                 index: 2,
                 label: 'Extrato Geral',
@@ -564,18 +599,18 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
         const Spacer(),
         // Campo de Pesquisa
         SizedBox(
-          width: 280,
-          height: 42,
+          width: 250,
+          height: 34,
           child: TextField(
             controller: _searchController,
-            style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
+            style: GoogleFonts.inter(color: Colors.white, fontSize: 12),
             decoration: InputDecoration(
               hintText: 'Buscar jogador, email, pix, id...',
-              hintStyle: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 12),
-              prefixIcon: const Icon(Icons.search, color: AppColors.cinzaMedio, size: 18),
+              hintStyle: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 11),
+              prefixIcon: const Icon(Icons.search, color: AppColors.cinzaMedio, size: 16),
               suffixIcon: _searchQuery.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.close, color: AppColors.cinzaMedio, size: 16),
+                      icon: const Icon(Icons.close, color: AppColors.cinzaMedio, size: 14),
                       onPressed: () {
                         setState(() {
                           _searchController.clear();
@@ -586,17 +621,18 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
                   : null,
               filled: true,
               fillColor: AppColors.darkCardColor,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: AppColors.verdeVale),
               ),
             ),
@@ -618,13 +654,13 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
     final isSelected = _selectedTab == index;
     return InkWell(
       onTap: () => setState(() => _selectedTab = index),
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(8),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.verdeVale.withValues(alpha: 0.18) : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected ? AppColors.verdeVale.withValues(alpha: 0.5) : Colors.transparent,
           ),
@@ -633,20 +669,20 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
           children: [
             FaIcon(
               icon,
-              size: 13,
+              size: 11,
               color: isSelected ? AppColors.verdeVale : AppColors.cinzaMedio,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Text(
               label,
               style: GoogleFonts.inter(
-                fontSize: 13,
+                fontSize: 11.5,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected ? Colors.white : AppColors.cinzaMedio,
               ),
             ),
             if (badgeCount > 0) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
@@ -707,13 +743,13 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         Expanded(
           child: list.isEmpty
               ? _buildEmptyState('Nenhuma solicitação de saque encontrada.')
               : ListView.separated(
                   itemCount: list.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  separatorBuilder: (context, index) => const SizedBox(height: 6),
                   itemBuilder: (context, index) => _buildWithdrawalCard(list[index]),
                 ),
         ),
@@ -735,7 +771,7 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
 
     final createdAt = w.createdAt;
     final dateStr = createdAt != null
-        ? '${createdAt.day.toString().padLeft(2, '0')}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.year} às ${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}'
+        ? '${createdAt.day.toString().padLeft(2, '0')}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.year} ${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}'
         : '-';
 
     Color statusColor;
@@ -756,10 +792,10 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: status == 'pending'
               ? AppColors.amareloVale.withValues(alpha: 0.35)
@@ -771,91 +807,104 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
         children: [
           // Avatar do Jogador
           CircleAvatar(
-            radius: 22,
+            radius: 14,
             backgroundColor: AppColors.verdeVale.withValues(alpha: 0.2),
             child: Text(
               userName.isNotEmpty ? userName.substring(0, 1).toUpperCase() : 'J',
               style: GoogleFonts.poppins(
                 color: AppColors.verdeVale,
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: 11,
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           // Informações do Jogador e da Chave Pix
           Expanded(
             flex: 4,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
-                    Text(
-                      userName,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
+                    Flexible(
+                      child: Text(
+                        userName,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         'UID: $userId',
-                        style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 10),
+                        style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 9.5),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Text(
                   userEmail,
-                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 12),
+                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 11),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 // Box Chave Pix com Cópia Rápida
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0D1821),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const FaIcon(FontAwesomeIcons.pix, color: Color(0xFF32BCAD), size: 12),
-                          const SizedBox(width: 6),
-                          Text(
-                            '$pixKeyType: ',
-                            style: GoogleFonts.inter(
-                              color: AppColors.cinzaMedio,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0D1821),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const FaIcon(FontAwesomeIcons.pix, color: Color(0xFF32BCAD), size: 10),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$pixKeyType: ',
+                              style: GoogleFonts.inter(
+                                color: AppColors.cinzaMedio,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                          SelectableText(
-                            pixKey,
-                            style: GoogleFonts.robotoMono(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
+                            Flexible(
+                              child: SelectableText(
+                                pixKey,
+                                style: GoogleFonts.robotoMono(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     IconButton(
-                      icon: const FaIcon(FontAwesomeIcons.copy, size: 13, color: AppColors.amareloVale),
+                      icon: const FaIcon(FontAwesomeIcons.copy, size: 11, color: AppColors.amareloVale),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints.tightFor(width: 24, height: 24),
                       tooltip: 'Copiar Chave Pix',
                       onPressed: () {
                         Clipboard.setData(ClipboardData(text: pixKey));
@@ -873,50 +922,51 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           // Valor e Data
           Expanded(
             flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'R\$ ${amount.toStringAsFixed(2).replaceAll('.', ',')}',
                   style: GoogleFonts.poppins(
                     color: AppColors.amareloVale,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Row(
                   children: [
-                    FaIcon(statusIcon, color: statusColor, size: 11),
-                    const SizedBox(width: 6),
+                    FaIcon(statusIcon, color: statusColor, size: 10),
+                    const SizedBox(width: 4),
                     Text(
                       statusLabel,
                       style: GoogleFonts.inter(
                         color: statusColor,
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   'Solicitado: $dateStr',
-                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 11),
+                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 10),
                 ),
                 if (receipt != null && receipt.isNotEmpty)
                   Text(
                     'Comprovante: $receipt',
-                    style: GoogleFonts.inter(color: AppColors.verdeVale, fontSize: 11),
+                    style: GoogleFonts.inter(color: AppColors.verdeVale, fontSize: 10),
                   ),
                 if (rejectionReason != null && rejectionReason.isNotEmpty)
                   Text(
                     'Motivo: $rejectionReason',
-                    style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 11),
+                    style: GoogleFonts.inter(color: Colors.redAccent, fontSize: 10),
                   ),
               ],
             ),
@@ -924,53 +974,56 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
           // Ações Administrativas
           if (status == 'pending') ...[
             ElevatedButton.icon(
-              icon: const FaIcon(FontAwesomeIcons.bolt, size: 12),
+              icon: const FaIcon(FontAwesomeIcons.bolt, size: 10),
               label: const Text('Pagar Pix (API)'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.amareloVale,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                textStyle: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.w700),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () => _showAutoPayoutModal(w, userName, amount, pixKey, pixKeyType, userId),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             ElevatedButton.icon(
-              icon: const FaIcon(FontAwesomeIcons.check, size: 12),
+              icon: const FaIcon(FontAwesomeIcons.check, size: 10),
               label: const Text('Aprovar Manual'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.verdeVale,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                textStyle: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.w700),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () => _showApproveWithdrawalModal(w, userName, amount, pixKey, pixKeyType, userId),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             OutlinedButton.icon(
-              icon: const FaIcon(FontAwesomeIcons.xmark, size: 12),
+              icon: const FaIcon(FontAwesomeIcons.xmark, size: 10),
               label: const Text('Rejeitar'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.redAccent,
                 side: const BorderSide(color: Colors.redAccent),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+                textStyle: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.w600),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () => _showRejectWithdrawalModal(w, userName, amount, userId),
             ),
           ] else ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: statusColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: statusColor.withValues(alpha: 0.3)),
               ),
               child: Text(
                 status == 'completed' ? 'Finalizado' : 'Estornado',
-                style: GoogleFonts.inter(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -1002,13 +1055,13 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         Expanded(
           child: list.isEmpty
               ? _buildEmptyState('Nenhum depósito registrado no momento.')
               : ListView.separated(
                   itemCount: list.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  separatorBuilder: (context, index) => const SizedBox(height: 6),
                   itemBuilder: (context, index) => _buildDepositCard(list[index]),
                 ),
         ),
@@ -1028,7 +1081,7 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
 
     final createdAt = d.createdAt;
     final dateStr = createdAt != null
-        ? '${createdAt.day.toString().padLeft(2, '0')}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.year} às ${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}'
+        ? '${createdAt.day.toString().padLeft(2, '0')}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.year} ${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}'
         : '-';
 
     Color statusColor;
@@ -1045,10 +1098,10 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: status == 'pending'
               ? AppColors.amareloVale.withValues(alpha: 0.3)
@@ -1058,56 +1111,62 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
               color: AppColors.verdeVale.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: const FaIcon(FontAwesomeIcons.circleArrowDown, color: AppColors.verdeVale, size: 20),
+            child: const FaIcon(FontAwesomeIcons.circleArrowDown, color: AppColors.verdeVale, size: 14),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           // Info Jogador e Gateway
           Expanded(
             flex: 4,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
-                    Text(
-                      userName,
-                      style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                    Flexible(
+                      child: Text(
+                        userName,
+                        style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         gateway,
-                        style: GoogleFonts.inter(color: AppColors.amareloVale, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: GoogleFonts.inter(color: AppColors.amareloVale, fontSize: 9.5, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   userEmail.isNotEmpty ? '$userEmail • $description' : description,
-                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 12),
+                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 11),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 3),
                 Row(
                   children: [
                     Text(
                       'ID: $id',
-                      style: GoogleFonts.robotoMono(color: AppColors.cinzaMedio, fontSize: 11),
+                      style: GoogleFonts.robotoMono(color: AppColors.cinzaMedio, fontSize: 10),
                     ),
                     IconButton(
-                      icon: const FaIcon(FontAwesomeIcons.copy, size: 11, color: AppColors.cinzaMedio),
+                      icon: const FaIcon(FontAwesomeIcons.copy, size: 10, color: AppColors.cinzaMedio),
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                      constraints: const BoxConstraints.tightFor(width: 20, height: 20),
                       tooltip: 'Copiar ID',
                       onPressed: () {
                         Clipboard.setData(ClipboardData(text: id));
@@ -1121,40 +1180,41 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           // Valor e Data
           Expanded(
             flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '+ R\$ ${amount.toStringAsFixed(2).replaceAll('.', ',')}',
                   style: GoogleFonts.poppins(
                     color: AppColors.verdeVale,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Row(
                   children: [
                     Container(
-                      width: 8,
-                      height: 8,
+                      width: 6,
+                      height: 6,
                       decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     Text(
                       statusLabel,
-                      style: GoogleFonts.inter(color: statusColor, fontSize: 11, fontWeight: FontWeight.w700),
+                      style: GoogleFonts.inter(color: statusColor, fontSize: 10, fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   dateStr,
-                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 11),
+                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 10),
                 ),
               ],
             ),
@@ -1162,39 +1222,41 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
           // Ação para Aprovar Manualmente caso webhook tenha falhado
           if (status == 'pending') ...[
             ElevatedButton.icon(
-              icon: const FaIcon(FontAwesomeIcons.circleCheck, size: 12),
+              icon: const FaIcon(FontAwesomeIcons.circleCheck, size: 10),
               label: const Text('Aprovar Manual'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.amareloVale,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                textStyle: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.w700),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () => _showApproveDepositManualModal(d, userName, amount),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             OutlinedButton.icon(
-              icon: const FaIcon(FontAwesomeIcons.xmark, size: 12),
+              icon: const FaIcon(FontAwesomeIcons.xmark, size: 10),
               label: const Text('Cancelar'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.redAccent,
                 side: const BorderSide(color: Colors.redAccent),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+                textStyle: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.w600),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               onPressed: () => _executeCancelDeposit(d.objectId!),
             ),
-          ]
-          else
+          ] else
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: statusColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 statusLabel,
-                style: GoogleFonts.inter(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold),
               ),
             ),
         ],
@@ -1214,27 +1276,27 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              _buildFilterPill('Todas as Movimentações (${_allTransactions.length})', 'all', _statementFilter, (v) => setState(() => _statementFilter = v)),
-              const SizedBox(width: 8),
+              _buildFilterPill('Todas (${_allTransactions.length})', 'all', _statementFilter, (v) => setState(() => _statementFilter = v)),
+              const SizedBox(width: 6),
               _buildFilterPill('Depósitos', 'deposit', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: AppColors.verdeVale),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               _buildFilterPill('Saques', 'withdrawal', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: const Color(0xFF3B82F6)),
-              const SizedBox(width: 8),
-              _buildFilterPill('Arsenal / Ferramentas', 'tool', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: Colors.amberAccent),
-              const SizedBox(width: 8),
-              _buildFilterPill('Bônus de Convites', 'bonus', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: Colors.purpleAccent),
-              const SizedBox(width: 8),
-              _buildFilterPill('Prêmios Concedidos', 'reward', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: AppColors.amareloVale),
+              const SizedBox(width: 6),
+              _buildFilterPill('Arsenal', 'tool', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: Colors.amberAccent),
+              const SizedBox(width: 6),
+              _buildFilterPill('Bônus', 'bonus', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: Colors.purpleAccent),
+              const SizedBox(width: 6),
+              _buildFilterPill('Prêmios', 'reward', _statementFilter, (v) => setState(() => _statementFilter = v), highlightColor: AppColors.amareloVale),
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         Expanded(
           child: list.isEmpty
               ? _buildEmptyState('Nenhuma movimentação registrada no extrato.')
               : ListView.separated(
                   itemCount: list.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 10),
+                  separatorBuilder: (context, index) => const SizedBox(height: 5),
                   itemBuilder: (context, index) {
                     final tx = list[index];
                     final type = tx.get<String>('type') ?? 'deposit';
@@ -1270,56 +1332,60 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
                         : '-';
 
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: AppColors.darkCardColor,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                       ),
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(10),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: 0.15),
                               shape: BoxShape.circle,
                             ),
-                            child: FaIcon(icon, color: color, size: 14),
+                            child: FaIcon(icon, color: color, size: 11),
                           ),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
                                   desc,
-                                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12.5),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 2),
+                                const SizedBox(height: 1),
                                 Text(
                                   'Jogador: $userName • $dateStr',
-                                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 12),
+                                  style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 10.5),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
                           ),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 '${isIncome ? '+' : '-'} R\$ ${amount.toStringAsFixed(2).replaceAll('.', ',')}',
                                 style: GoogleFonts.poppins(
                                   color: color,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13.5,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 1),
                               Text(
                                 status.toUpperCase(),
                                 style: GoogleFonts.inter(
                                   color: status == 'approved' || status == 'completed' ? AppColors.verdeVale : AppColors.cinzaMedio,
-                                  fontSize: 10,
+                                  fontSize: 9.5,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -2081,13 +2147,13 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
     final color = highlightColor ?? AppColors.verdeVale;
     return InkWell(
       onTap: () => onSelect(value),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected ? color.withValues(alpha: 0.18) : AppColors.darkCardColor,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? color.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.08),
           ),
@@ -2096,7 +2162,7 @@ class _AdminFinanceScreenState extends State<AdminFinanceScreen> {
           label,
           style: GoogleFonts.inter(
             color: isSelected ? Colors.white : AppColors.cinzaMedio,
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),

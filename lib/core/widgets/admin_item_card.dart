@@ -28,18 +28,16 @@ class AdminItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget card = Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppColors.verdeVale.withValues(alpha: 0.12),
-        ),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.12)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -47,8 +45,8 @@ class AdminItemCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: AppColors.verdeVale.withValues(alpha: 0.12),
               shape: BoxShape.circle,
@@ -57,17 +55,14 @@ class AdminItemCard extends StatelessWidget {
               ),
             ),
             child: Center(
-              child: FaIcon(
-                icon,
-                color: AppColors.verdeVale,
-                size: 18,
-              ),
+              child: FaIcon(icon, color: AppColors.verdeVale, size: 13),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
@@ -76,23 +71,26 @@ class AdminItemCard extends StatelessWidget {
                         title,
                         style: GoogleFonts.poppins(
                           color: Colors.white,
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (tagWidget != null) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       tagWidget!,
                     ],
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     if (statusText.isNotEmpty)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: statusColor,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           statusText,
@@ -105,20 +103,18 @@ class AdminItemCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: GoogleFonts.inter(
                     color: AppColors.cinzaMedio,
-                    fontSize: 12,
+                    fontSize: 11,
                   ),
                 ),
               ],
             ),
           ),
-          Row(
-            children: actions,
-          ),
+          Row(children: actions),
         ],
       ),
     );
@@ -126,7 +122,7 @@ class AdminItemCard extends StatelessWidget {
     if (onTap != null) {
       return InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(10),
         child: card,
       );
     }
