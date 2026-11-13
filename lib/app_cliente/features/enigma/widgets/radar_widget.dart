@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_compass/flutter_compass.dart';
@@ -129,39 +130,69 @@ class _RadarWidgetState extends State<RadarWidget>
 
   Future<void> _initSensors() async {
     try {
-      final hasPermission = await Geolocator.checkPermission();
+      LocationPermission hasPermission = await Geolocator.checkPermission();
+      if (hasPermission == LocationPermission.denied) {
+        hasPermission = await Geolocator.requestPermission();
+      }
       if (hasPermission == LocationPermission.always ||
           hasPermission == LocationPermission.whileInUse) {
-        final pos = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-          ),
-        );
-        if (mounted) {
-          setState(() {
-            _currentPosition = pos;
-            _updateCalculations();
-          });
-        }
-
-        _positionSubscription = Geolocator.getPositionStream(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            distanceFilter: 3,
-          ),
-        ).listen((pos) {
+        try {
+          final pos = await Geolocator.getCurrentPosition(
+            locationSettings: LocationSettings(
+              accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+              timeLimit: const Duration(seconds: 15),
+            ),
+          );
           if (mounted) {
             setState(() {
               _currentPosition = pos;
               _updateCalculations();
             });
           }
-        });
+        } catch (_) {
+          if (kIsWeb) {
+            try {
+              final pos = await Geolocator.getCurrentPosition(
+                locationSettings: const LocationSettings(
+                  accuracy: LocationAccuracy.low,
+                  timeLimit: Duration(seconds: 15),
+                ),
+              );
+              if (mounted) {
+                setState(() {
+                  _currentPosition = pos;
+                  _updateCalculations();
+                });
+              }
+            } catch (_) {}
+          }
+        }
+
+        _positionSubscription?.cancel();
+        _positionSubscription = Geolocator.getPositionStream(
+          locationSettings: LocationSettings(
+            accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+            distanceFilter: kIsWeb ? 0 : 3,
+          ),
+        ).listen(
+          (pos) {
+            if (mounted) {
+              setState(() {
+                _currentPosition = pos;
+                _updateCalculations();
+              });
+            }
+          },
+          onError: (e) {
+            debugPrint("Radar location stream error: $e");
+          },
+        );
       }
     } catch (_) {}
 
     // Bússola para radar orientado à direção do explorador
     try {
+      _compassSubscription?.cancel();
       _compassSubscription = FlutterCompass.events?.listen((event) {
         if (mounted && event.heading != null) {
           setState(() {

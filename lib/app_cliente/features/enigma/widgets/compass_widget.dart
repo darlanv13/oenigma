@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_compass/flutter_compass.dart';
@@ -47,6 +48,8 @@ class _CompassWidgetState extends State<CompassWidget>
   double _currentHeading = 0.0;
   Position? _currentPosition;
   bool _hasPermissions = false;
+  StreamSubscription<Position>? _positionSubscription;
+  StreamSubscription<CompassEvent>? _compassSubscription;
 
   late int _remainingSeconds;
   Timer? _countdownTimer;
@@ -86,31 +89,73 @@ class _CompassWidgetState extends State<CompassWidget>
   }
 
   Future<void> _initSensors() async {
-    LocationPermission permission = await Geolocator.checkPermission();
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
 
-    if (permission == LocationPermission.whileInUse ||
-        permission == LocationPermission.always) {
-      if (mounted) setState(() => _hasPermissions = true);
+      if (permission == LocationPermission.whileInUse ||
+          permission == LocationPermission.always) {
+        if (mounted) setState(() => _hasPermissions = true);
 
-      Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 1,
-        ),
-      ).listen((Position position) {
-        if (mounted) setState(() => _currentPosition = position);
-      });
-
-      FlutterCompass.events?.listen((CompassEvent event) {
-        if (mounted && event.heading != null) {
-          setState(() => _currentHeading = event.heading!);
+        // Obter posição inicial imediatamente
+        try {
+          final pos = await Geolocator.getCurrentPosition(
+            locationSettings: LocationSettings(
+              accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+              timeLimit: const Duration(seconds: 15),
+            ),
+          );
+          if (mounted) setState(() => _currentPosition = pos);
+        } catch (_) {
+          if (kIsWeb) {
+            try {
+              final pos = await Geolocator.getCurrentPosition(
+                locationSettings: const LocationSettings(
+                  accuracy: LocationAccuracy.low,
+                  timeLimit: Duration(seconds: 15),
+                ),
+              );
+              if (mounted) setState(() => _currentPosition = pos);
+            } catch (_) {}
+          }
         }
-      });
+
+        _positionSubscription?.cancel();
+        _positionSubscription = Geolocator.getPositionStream(
+          locationSettings: LocationSettings(
+            accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+            distanceFilter: kIsWeb ? 0 : 1,
+          ),
+        ).listen(
+          (Position position) {
+            if (mounted) setState(() => _currentPosition = position);
+          },
+          onError: (e) {
+            debugPrint("Compass GPS stream error: $e");
+          },
+        );
+
+        _compassSubscription?.cancel();
+        _compassSubscription = FlutterCompass.events?.listen((CompassEvent event) {
+          if (mounted && event.heading != null) {
+            setState(() => _currentHeading = event.heading!);
+          }
+        });
+      } else {
+        if (mounted) setState(() => _hasPermissions = false);
+      }
+    } catch (e) {
+      debugPrint("Compass sensor init error: $e");
+      if (mounted) setState(() => _hasPermissions = false);
     }
   }
 
   @override
   void dispose() {
+    _positionSubscription?.cancel();
+    _compassSubscription?.cancel();
     _scannerController.dispose();
     _countdownTimer?.cancel();
     super.dispose();
@@ -160,9 +205,25 @@ class _CompassWidgetState extends State<CompassWidget>
             ),
             const SizedBox(height: 6),
             Text(
-              'Ative o GPS para sincronizar a bússola dourada com a relíquia.',
+              kIsWeb
+                  ? 'Autorize a localização no navegador para sincronizar a bússola com a relíquia.'
+                  : 'Ative o GPS para sincronizar a bússola dourada com a relíquia.',
               style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 14),
+            ElevatedButton.icon(
+              onPressed: _initSensors,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.verdeVale,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: const FaIcon(FontAwesomeIcons.locationCrosshairs, size: 14),
+              label: Text(
+                'AUTORIZAR LOCALIZAÇÃO',
+                style: GoogleFonts.cinzel(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
             ),
           ],
         ),

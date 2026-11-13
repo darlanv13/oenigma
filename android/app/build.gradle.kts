@@ -21,7 +21,7 @@ val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY")
 
 android {
     namespace = "com.example.oenigma"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

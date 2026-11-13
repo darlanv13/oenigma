@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -169,12 +170,17 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
 
   Future<void> _checkPermissions() async {
     try {
-      final permission = await Geolocator.checkPermission();
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
       if (permission == LocationPermission.always ||
           permission == LocationPermission.whileInUse) {
-        setState(() {
-          _hasLocationPermission = true;
-        });
+        if (mounted) {
+          setState(() {
+            _hasLocationPermission = true;
+          });
+        }
         _getCurrentLocation();
         _startLocationUpdates();
       }
@@ -184,8 +190,9 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
   Future<void> _getCurrentLocation() async {
     try {
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
+        locationSettings: LocationSettings(
+          accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 15),
         ),
       );
       if (mounted) {
@@ -193,14 +200,31 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
           _currentPosition = pos;
         });
       }
-    } catch (_) {}
+    } catch (_) {
+      if (kIsWeb) {
+        try {
+          final pos = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.low,
+              timeLimit: Duration(seconds: 15),
+            ),
+          );
+          if (mounted) {
+            setState(() {
+              _currentPosition = pos;
+            });
+          }
+        } catch (_) {}
+      }
+    }
   }
 
   void _startLocationUpdates() {
+    _positionSubscription?.cancel();
     _positionSubscription = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 3,
+      locationSettings: LocationSettings(
+        accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+        distanceFilter: kIsWeb ? 0 : 3,
       ),
     ).listen((pos) {
       if (mounted) {
@@ -208,6 +232,8 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
           _currentPosition = pos;
         });
       }
+    }, onError: (e) {
+      debugPrint("Map location stream error: $e");
     });
   }
 
@@ -508,13 +534,21 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
                   ),
                   const SizedBox(height: 8),
 
-                  // Centralizar na Posição do Explorador
+                  // Centralizar na Posição do Explorador / Ativar Localização
                   if (_hasLocationPermission) ...[
                     _buildMapActionButton(
                       icon: FontAwesomeIcons.locationCrosshairs,
                       tooltip: 'Minha Posição',
                       color: AppColors.verdeVale,
                       onTap: _recenterUser,
+                    ),
+                    const SizedBox(height: 8),
+                  ] else ...[
+                    _buildMapActionButton(
+                      icon: FontAwesomeIcons.locationArrow,
+                      tooltip: 'Ativar Localização',
+                      color: AppColors.amareloVale,
+                      onTap: _checkPermissions,
                     ),
                     const SizedBox(height: 8),
                   ],

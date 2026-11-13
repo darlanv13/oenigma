@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
@@ -35,6 +36,8 @@ class EnigmaController extends ChangeNotifier {
   StreamSubscription<Position>? _locationSubscription;
   bool _isNear = false;
   double? _distance;
+  bool _hasGpsPermission = true;
+  String? _gpsStatusMessage;
   bool _isBlocked = false;
   Timer? _statusPollTimer;
 
@@ -74,6 +77,8 @@ class EnigmaController extends ChangeNotifier {
   bool get isLoadingHints => _isLoadingHints;
   bool get isNear => _isNear;
   double? get distance => _distance;
+  bool get hasGpsPermission => _hasGpsPermission;
+  String? get gpsStatusMessage => _gpsStatusMessage;
   bool get isBlocked => _isBlocked;
   bool get hasCompass => _hasCompass;
   bool get hasMap => _hasMap;
@@ -569,64 +574,159 @@ class EnigmaController extends ChangeNotifier {
     }
   }
 
-  /// Inicializa o listener de GPS para cálculo de distância e anti-fraude
-  Future<void> initializeGpsListener(BuildContext context) async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      await Geolocator.openLocationSettings();
+  void _processPosition(Position currentLocation, [BuildContext? context]) {
+    if (_currentEnigma.location == null) return;
+
+    if (currentLocation.isMocked) {
+      _distance = null;
+      _isNear = false;
+      notifyListeners();
+
+      if (context != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⚠️ Fake GPS detectado!'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+      try {
+        _enigmaRepository.callFunction('reportFraud', {
+          'eventId': event.id,
+          'enigmaId': _currentEnigma.id,
+          'reason': 'Fake GPS Detectado',
+        });
+      } catch (_) {}
       return;
     }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
-    }
-    if (permission == LocationPermission.deniedForever) return;
+    final distanceInMeters = Geolocator.distanceBetween(
+      currentLocation.latitude,
+      currentLocation.longitude,
+      _currentEnigma.location!.latitude,
+      _currentEnigma.location!.longitude,
+    );
 
-    _locationSubscription = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 1,
-      ),
-    ).listen((Position currentLocation) {
-      if (_currentEnigma.location == null) return;
+    _distance = distanceInMeters;
+    _isNear = distanceInMeters <= 100;
+    _hasGpsPermission = true;
+    _gpsStatusMessage = null;
+    HapticProximityService().updateDistance(distanceInMeters);
+    notifyListeners();
+  }
 
-      if (currentLocation.isMocked) {
-        _distance = null;
-        _isNear = false;
+  /// Inicializa o listener de GPS para cálculo de distância e anti-fraude
+  Future<void> initializeGpsListener(BuildContext context) async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _hasGpsPermission = false;
+        _gpsStatusMessage = kIsWeb
+            ? 'Ative a localização no navegador / sistema operacional.'
+            : 'O GPS está desativado. Ative a localização.';
         notifyListeners();
 
+        if (!kIsWeb) {
+          await Geolocator.openLocationSettings();
+        } else if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('⚠️ $_gpsStatusMessage'),
+              backgroundColor: AppColors.amareloVale,
+            ),
+          );
+        }
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          _hasGpsPermission = false;
+          _gpsStatusMessage = kIsWeb
+              ? 'Permissão de localização não concedida. Toque para autorizar.'
+              : 'Permissão de localização negada.';
+          notifyListeners();
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(kIsWeb
+                    ? '⚠️ Permissão de localização necessária. Autorize o acesso no navegador para rastrear o enigma.'
+                    : '⚠️ Permissão de localização é necessária para localizar o enigma.'),
+                backgroundColor: AppColors.amareloVale,
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        _hasGpsPermission = false;
+        _gpsStatusMessage = kIsWeb
+            ? 'Localização bloqueada no navegador. Permita no cadeado da URL.'
+            : 'Permissão negada permanentemente nas configurações.';
+        notifyListeners();
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('⚠️ Fake GPS detectado!'),
+            SnackBar(
+              content: Text(kIsWeb
+                  ? '⚠️ Permissão bloqueada no navegador. Clique no ícone de cadeado / configurações do site na barra de endereços para permitir.'
+                  : '⚠️ Permissão de localização negada permanentemente. Habilite nas configurações do sistema.'),
               backgroundColor: AppColors.danger,
             ),
           );
         }
-        try {
-          _enigmaRepository.callFunction('reportFraud', {
-            'eventId': event.id,
-            'enigmaId': _currentEnigma.id,
-            'reason': 'Fake GPS Detectado',
-          });
-        } catch (_) {}
         return;
       }
 
-      final distanceInMeters = Geolocator.distanceBetween(
-        currentLocation.latitude,
-        currentLocation.longitude,
-        _currentEnigma.location!.latitude,
-        _currentEnigma.location!.longitude,
-      );
-
-      _distance = distanceInMeters;
-      _isNear = distanceInMeters <= 100;
-      HapticProximityService().updateDistance(distanceInMeters);
+      _hasGpsPermission = true;
+      _gpsStatusMessage = null;
       notifyListeners();
-    });
+
+      // 1. Obter fix inicial imediatamente (evita ficar aguardando watchPosition)
+      try {
+        final initialPos = await Geolocator.getCurrentPosition(
+          locationSettings: LocationSettings(
+            accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+            timeLimit: Duration(seconds: kIsWeb ? 20 : 12),
+          ),
+        );
+        _processPosition(initialPos, context.mounted ? context : null);
+      } catch (e) {
+        debugPrint('⚠️ Erro ao obter posição inicial no controller: $e');
+        if (kIsWeb) {
+          try {
+            final fallbackPos = await Geolocator.getCurrentPosition(
+              locationSettings: const LocationSettings(
+                accuracy: LocationAccuracy.low,
+                timeLimit: Duration(seconds: 15),
+              ),
+            );
+            _processPosition(fallbackPos, context.mounted ? context : null);
+          } catch (_) {}
+        }
+      }
+
+      // 2. Iniciar o stream contínuo de atualizações
+      _locationSubscription?.cancel();
+      _locationSubscription = Geolocator.getPositionStream(
+        locationSettings: LocationSettings(
+          accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+          distanceFilter: kIsWeb ? 0 : 1,
+        ),
+      ).listen(
+        (Position currentLocation) {
+          _processPosition(currentLocation, context.mounted ? context : null);
+        },
+        onError: (e) {
+          debugPrint('⚠️ Erro no stream de localização: $e');
+        },
+      );
+    } catch (e) {
+      debugPrint('⚠️ Erro ao inicializar GPS Listener: $e');
+    }
   }
 
   /// Compra de ferramentas (bússola ou mapa)

@@ -39,10 +39,12 @@ class LocationShieldService {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        return const LocationShieldResult(
+        return LocationShieldResult(
           isMocked: false,
           status: LocationShieldStatus.serviceDisabled,
-          errorMessage: 'O GPS do dispositivo está desativado. Ative a localização para continuar.',
+          errorMessage: kIsWeb
+              ? 'Acesso à localização desabilitado no navegador. Verifique se o site usa HTTPS e se a localização está ativa.'
+              : 'O GPS do dispositivo está desativado. Ative a localização para continuar.',
         );
       }
 
@@ -50,28 +52,47 @@ class LocationShieldService {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          return const LocationShieldResult(
+          return LocationShieldResult(
             isMocked: false,
             status: LocationShieldStatus.permissionDenied,
-            errorMessage: 'Permissão de localização negada.',
+            errorMessage: kIsWeb
+                ? 'Permissão de localização necessária. Autorize o acesso quando solicitado pelo navegador.'
+                : 'Permissão de localização negada.',
           );
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        return const LocationShieldResult(
+        return LocationShieldResult(
           isMocked: false,
           status: LocationShieldStatus.permissionDenied,
-          errorMessage: 'Permissão de localização permanentemente negada. Habilite nas configurações do sistema.',
+          errorMessage: kIsWeb
+              ? 'Permissão de localização bloqueada no navegador. Clique no ícone de cadeado ou configurações do site na barra de endereços para permitir.'
+              : 'Permissão de localização permanentemente negada. Habilite nas configurações do sistema.',
         );
       }
 
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 12),
-        ),
-      );
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          locationSettings: LocationSettings(
+            accuracy: kIsWeb ? LocationAccuracy.medium : LocationAccuracy.high,
+            timeLimit: Duration(seconds: kIsWeb ? 25 : 12),
+          ),
+        );
+      } catch (posError) {
+        if (kIsWeb) {
+          // Fallback para precisão baixa/média no navegador caso a primeira tentativa falhe
+          position = await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.low,
+              timeLimit: Duration(seconds: 20),
+            ),
+          );
+        } else {
+          rethrow;
+        }
+      }
 
       // Verificação de Mock Location (Fake GPS)
       if (position.isMocked) {
@@ -90,10 +111,12 @@ class LocationShieldService {
         status: LocationShieldStatus.ok,
       );
     } on TimeoutException {
-      return const LocationShieldResult(
+      return LocationShieldResult(
         isMocked: false,
         status: LocationShieldStatus.timeout,
-        errorMessage: 'Tempo limite ao calibrar satélites GPS. Tente novamente a céu aberto.',
+        errorMessage: kIsWeb
+            ? 'Tempo limite ao obter localização do navegador. Recarregue a página e autorize o acesso.'
+            : 'Tempo limite ao calibrar satélites GPS. Tente novamente a céu aberto.',
       );
     } catch (e) {
       return LocationShieldResult(

@@ -387,36 +387,55 @@ class EnigmaTacticalArea extends StatelessWidget {
         // Texto Informativo / Aviso de Proximidade
         if (isGpsEnigma && !controller.isNear) ...[
           Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.amareloVale.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.35)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const FaIcon(
-                    FontAwesomeIcons.triangleExclamation,
-                    color: AppColors.amareloVale,
-                    size: 11,
+            child: InkWell(
+              onTap: (!controller.hasGpsPermission || controller.distance == null)
+                  ? () => controller.initializeGpsListener(context)
+                  : null,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: (!controller.hasGpsPermission)
+                      ? AppColors.danger.withValues(alpha: 0.15)
+                      : AppColors.amareloVale.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: (!controller.hasGpsPermission)
+                        ? AppColors.danger.withValues(alpha: 0.5)
+                        : AppColors.amareloVale.withValues(alpha: 0.35),
                   ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      controller.distance != null
-                          ? 'Aproxime-se a menos de 100m (Faltam ${controller.distance!.toInt()}m)'
-                          : 'Buscando coordenadas GPS do templo...',
-                      style: GoogleFonts.cinzel(
-                        color: AppColors.amareloVale,
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FaIcon(
+                      (!controller.hasGpsPermission)
+                          ? FontAwesomeIcons.locationCrosshairs
+                          : FontAwesomeIcons.triangleExclamation,
+                      color: (!controller.hasGpsPermission)
+                          ? AppColors.danger
+                          : AppColors.amareloVale,
+                      size: 11,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        controller.distance != null
+                            ? 'Aproxime-se a menos de 100m (Faltam ${controller.distance!.toInt()}m)'
+                            : (controller.gpsStatusMessage ??
+                                'Buscando coordenadas GPS... (Toque para atualizar)'),
+                        style: GoogleFonts.cinzel(
+                          color: (!controller.hasGpsPermission)
+                              ? AppColors.danger
+                              : AppColors.amareloVale,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
