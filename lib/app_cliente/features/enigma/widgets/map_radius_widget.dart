@@ -11,9 +11,8 @@ import 'package:oenigma/app_cliente/features/enigma/services/decoy_location_serv
 import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
-/// Mapa de Perímetro da Expedição Antiga (Estilo Indiana Jones / Cores Vale).
-/// Apresenta o raio de 300 metros, até 5 alvos (1 real + 4 decoys) e contagem ativa.
-/// Otimizado para carregamento instantâneo no Web, Android e iOS.
+/// Mapa de Perímetro da Expedição: Visão cartográfica tática e raio de 300m.
+/// Foco visual no instrumento, sem poluição de texto e com timer no canto inferior direito.
 class MapRadiusWidget extends StatefulWidget {
   final double destinationLatitude;
   final double destinationLongitude;
@@ -49,13 +48,11 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
   MapType _currentMapType = MapType.normal;
   Position? _currentPosition;
   StreamSubscription<Position>? _positionSubscription;
-  bool _isMapReady = false;
 
   late int _remainingSeconds;
   Timer? _countdownTimer;
   int _selectedTargetIndex = 0;
 
-  // Estilo escuro com tons de pedra de templo e esmeralda Vale
   static const String _darkMapStyle = '''
   [
     { "elementType": "geometry", "stylers": [{"color": "#11181d"}] },
@@ -117,9 +114,7 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
     });
   }
 
-  /// Inicialização instantânea não bloqueante da localização
   Future<void> _initLocationFast() async {
-    // 1. Pega última posição em cache para não esperar pelo GPS
     try {
       final lastKnown = await Geolocator.getLastKnownPosition();
       if (lastKnown != null && mounted) {
@@ -127,7 +122,6 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
       }
     } catch (_) {}
 
-    // 2. Escuta stream de posição
     try {
       LocationPermission perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
@@ -245,7 +239,7 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
     }
     final activeTarget = targets[_selectedTargetIndex];
 
-    double distance = 150.0;
+    double distance = 120.0;
     if (_currentPosition != null) {
       distance = Geolocator.distanceBetween(
         _currentPosition!.latitude,
@@ -255,7 +249,6 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
       );
     }
 
-    // Altura padrão idêntica para todas as ferramentas
     final double frameHeight = widget.isCompact ? 390.0 : 540.0;
 
     return Container(
@@ -278,299 +271,304 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Column(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // 1. CABEÇALHO LIMPO (Apenas Título e Botão Expandir - Sem Timer no Topo)
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // 1. HUD SUPERIOR UNIFICADO
-                  _buildHeaderHud(),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0C242C),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFF007D8A).withValues(alpha: 0.5),
+                            width: 1,
+                          ),
+                        ),
+                        child: const FaIcon(
+                          FontAwesomeIcons.mapLocationDot,
+                          color: Color(0xFF00A4B4),
+                          size: 11,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'MAPA DA EXPEDIÇÃO',
+                        style: GoogleFonts.cinzel(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
 
-                  // 2. SELETOR DE ALVOS (Sinais 1 a 5)
-                  if (targets.length > 1)
-                    _buildTargetSelector(targets)
-                  else
-                    const SizedBox(height: 4),
+                  // Botão Expandir
+                  if (widget.onExpand != null)
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        SoundService.playClick();
+                        widget.onExpand!();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF18252E),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(0xFF1E3A45),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const FaIcon(
+                              FontAwesomeIcons.expand,
+                              color: Color(0xFF00A4B4),
+                              size: 10,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              'EXPANDIR',
+                              style: GoogleFonts.cinzel(
+                                color: const Color(0xFF00A4B4),
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
 
-                  // 3. MAPA EXPEDIÇÃO (com carregamento instantâneo)
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Stack(
-                        children: [
-                          // Grade de placeholder instantânea para evitar tela preta no Web
-                          Positioned.fill(
-                            child: Container(
-                              color: const Color(0xFF0A1215),
-                              child: Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const CircularProgressIndicator(
-                                      color: Color(0xFF00A4B4),
-                                      strokeWidth: 2,
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      'SINCRONIZANDO MAPA DO CÓDICE...',
-                                      style: GoogleFonts.cinzel(
-                                        color: AppColors.cinzaMedio,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.8,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+              // 2. SELETOR DE ALVOS (Se houver múltiplos)
+              if (targets.length > 1)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: List.generate(targets.length, (idx) {
+                      final isSel = idx == _selectedTargetIndex;
+                      final t = targets[idx];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            SoundService.playClick();
+                            setState(() => _selectedTargetIndex = idx);
+                            _recenterTarget(LatLng(t.latitude, t.longitude));
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                            decoration: BoxDecoration(
+                              color: isSel ? const Color(0xFF00A4B4) : const Color(0xFF0C1417),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isSel
+                                    ? const Color(0xFF00A4B4)
+                                    : Colors.white.withValues(alpha: 0.15),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              'Sinal ${idx + 1}',
+                              style: GoogleFonts.cinzel(
+                                color: isSel ? Colors.black : Colors.white70,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                           ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
 
-                          // Google Map com estilo escuro
-                          GoogleMap(
-                            initialCameraPosition: CameraPosition(
-                              target: _obfuscatedCenter,
-                              zoom: 16.0,
-                            ),
-                            mapType: _currentMapType,
-                            myLocationEnabled: true,
-                            myLocationButtonEnabled: false,
-                            zoomControlsEnabled: false,
-                            compassEnabled: true,
-                            markers: _buildMarkers(),
-                            circles: _buildCircles(),
-                            style: _darkMapStyle,
-                            onMapCreated: (controller) {
-                              _mapController = controller;
-                              if (mounted) setState(() => _isMapReady = true);
-                            },
-                          ),
-
-                          // Controles Flutuantes do Mapa (Centralizar Alvo, Usuário, Satélite)
-                          Positioned(
-                            top: 8,
-                            right: 8,
+              // 3. MAPA DA EXPEDIÇÃO (HERO PRINCIPAL COM CONTROLES FLUTUANTES)
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Stack(
+                    children: [
+                      // Placeholder instantâneo
+                      Positioned.fill(
+                        child: Container(
+                          color: const Color(0xFF0A1215),
+                          child: Center(
                             child: Column(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                _buildMapFloatingButton(
-                                  icon: FontAwesomeIcons.layerGroup,
-                                  onTap: _toggleMapType,
-                                  tooltip: 'Camada de Satélite',
+                                const CircularProgressIndicator(
+                                  color: Color(0xFF00A4B4),
+                                  strokeWidth: 2,
                                 ),
-                                const SizedBox(height: 6),
-                                _buildMapFloatingButton(
-                                  icon: FontAwesomeIcons.crosshairs,
-                                  onTap: () => _recenterTarget(
-                                    LatLng(activeTarget.latitude, activeTarget.longitude),
+                                const SizedBox(height: 10),
+                                Text(
+                                  'CARREGANDO MAPA...',
+                                  style: GoogleFonts.cinzel(
+                                    color: AppColors.cinzaMedio,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.8,
                                   ),
-                                  tooltip: 'Centralizar Alvo',
-                                ),
-                                const SizedBox(height: 6),
-                                _buildMapFloatingButton(
-                                  icon: FontAwesomeIcons.locationArrow,
-                                  onTap: _recenterUser,
-                                  tooltip: 'Minha Posição',
                                 ),
                               ],
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+
+                      // Google Maps
+                      GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: _obfuscatedCenter,
+                          zoom: 16.0,
+                        ),
+                        mapType: _currentMapType,
+                        myLocationEnabled: true,
+                        myLocationButtonEnabled: false,
+                        zoomControlsEnabled: false,
+                        compassEnabled: true,
+                        markers: _buildMarkers(),
+                        circles: _buildCircles(),
+                        style: _darkMapStyle,
+                        onMapCreated: (controller) => _mapController = controller,
+                      ),
+
+                      // Controles Flutuantes do Mapa
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Column(
+                          children: [
+                            _buildMapFloatingButton(
+                              icon: FontAwesomeIcons.layerGroup,
+                              onTap: _toggleMapType,
+                            ),
+                            const SizedBox(height: 6),
+                            _buildMapFloatingButton(
+                              icon: FontAwesomeIcons.crosshairs,
+                              onTap: () => _recenterTarget(
+                                LatLng(activeTarget.latitude, activeTarget.longitude),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            _buildMapFloatingButton(
+                              icon: FontAwesomeIcons.locationArrow,
+                              onTap: _recenterUser,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              // 4. BARRA INFERIOR (Distância na Esquerda, Raio no Centro, TIMER NO CANTO DIREITO)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Canto Esquerdo: Distância até o alvo
+                  Row(
+                    children: [
+                      const FaIcon(
+                        FontAwesomeIcons.circleDot,
+                        color: Color(0xFF00A4B4),
+                        size: 11,
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        '${distance.toInt()} M',
+                        style: GoogleFonts.orbitron(
+                          color: const Color(0xFF00A4B4),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
 
-                  const SizedBox(height: 8),
+                  // Centro: Raio de 300m
+                  Row(
+                    children: [
+                      const FaIcon(
+                        FontAwesomeIcons.circleNodes,
+                        color: AppColors.amareloVale,
+                        size: 10,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        'RAIO 300M',
+                        style: GoogleFonts.cinzel(
+                          color: AppColors.amareloVale,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ],
+                  ),
 
-                  // 4. TELEMETRIA INFERIOR UNIFICADA
-                  _buildFooterTelemetry(distance),
+                  // CANTO DIREITO NA PARTE DE BAIXO: O TIMER DA FERRAMENTA
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1708),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFF3A522).withValues(alpha: 0.5),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FaIcon(
+                          widget.enableToolTimer
+                              ? FontAwesomeIcons.hourglassHalf
+                              : FontAwesomeIcons.infinity,
+                          color: const Color(0xFFF3A522),
+                          size: 10,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          widget.enableToolTimer
+                              ? _formatTime(_remainingSeconds)
+                              : 'ILIMITADO',
+                          style: GoogleFonts.orbitron(
+                            color: const Color(0xFFF3A522),
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ===========================================================================
-  // 1. HEADER HUD
-  // ===========================================================================
-  Widget _buildHeaderHud() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0C242C),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: const Color(0xFF007D8A).withValues(alpha: 0.5),
-                  width: 1,
-                ),
-              ),
-              child: const FaIcon(
-                FontAwesomeIcons.mapLocationDot,
-                color: Color(0xFF00A4B4),
-                size: 11,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'MAPA DA EXPEDIÇÃO',
-              style: GoogleFonts.cinzel(
-                color: Colors.white,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ],
-        ),
-
-        // Timer
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1708),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFF3A522).withValues(alpha: 0.4),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FaIcon(
-                widget.enableToolTimer
-                    ? FontAwesomeIcons.hourglassHalf
-                    : FontAwesomeIcons.infinity,
-                color: const Color(0xFFF3A522),
-                size: 9.5,
-              ),
-              const SizedBox(width: 5),
-              Text(
-                widget.enableToolTimer
-                    ? _formatTime(_remainingSeconds)
-                    : 'ILIMITADO',
-                style: GoogleFonts.orbitron(
-                  color: const Color(0xFFF3A522),
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
               ),
             ],
           ),
         ),
-
-        // Botão Expandir
-        if (widget.onExpand != null)
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              SoundService.playClick();
-              widget.onExpand!();
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF18252E),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: const Color(0xFF1E3A45),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const FaIcon(
-                    FontAwesomeIcons.expand,
-                    color: Color(0xFF00A4B4),
-                    size: 10,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'EXPANDIR',
-                    style: GoogleFonts.cinzel(
-                      color: const Color(0xFF00A4B4),
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
-          const SizedBox(width: 20),
-      ],
-    );
-  }
-
-  // ===========================================================================
-  // 2. SELETOR DE ALVOS
-  // ===========================================================================
-  Widget _buildTargetSelector(List<DecoyTarget> targets) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(targets.length, (idx) {
-          final isSel = idx == _selectedTargetIndex;
-          final t = targets[idx];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                SoundService.playClick();
-                setState(() => _selectedTargetIndex = idx);
-                _recenterTarget(LatLng(t.latitude, t.longitude));
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-                decoration: BoxDecoration(
-                  color: isSel ? const Color(0xFF00A4B4) : const Color(0xFF0C1417),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSel
-                        ? const Color(0xFF00A4B4)
-                        : Colors.white.withValues(alpha: 0.15),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    FaIcon(
-                      FontAwesomeIcons.locationPin,
-                      size: 8.5,
-                      color: isSel ? Colors.black : const Color(0xFF00A4B4),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Sinal ${idx + 1}',
-                      style: GoogleFonts.cinzel(
-                        color: isSel ? Colors.black : Colors.white70,
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }),
       ),
     );
   }
@@ -578,7 +576,6 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
   Widget _buildMapFloatingButton({
     required dynamic icon,
     required VoidCallback onTap,
-    required String tooltip,
   }) {
     return GestureDetector(
       onTap: () {
@@ -609,76 +606,6 @@ class _MapRadiusWidgetState extends State<MapRadiusWidget>
             color: const Color(0xFF00A4B4),
           ),
         ),
-      ),
-    );
-  }
-
-  // ===========================================================================
-  // 4. TELEMETRIA INFERIOR
-  // ===========================================================================
-  Widget _buildFooterTelemetry(double distance) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0C1417),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFF1E3A45),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              const FaIcon(
-                FontAwesomeIcons.circleDot,
-                color: Color(0xFF00A4B4),
-                size: 11,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '${distance.toInt()} M',
-                style: GoogleFonts.orbitron(
-                  color: const Color(0xFF00A4B4),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-
-          Row(
-            children: [
-              const FaIcon(
-                FontAwesomeIcons.circleNodes,
-                color: AppColors.amareloVale,
-                size: 10,
-              ),
-              const SizedBox(width: 5),
-              Text(
-                'RAIO 300M',
-                style: GoogleFonts.cinzel(
-                  color: AppColors.amareloVale,
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.6,
-                ),
-              ),
-            ],
-          ),
-
-          Text(
-            _isMapReady ? 'SATÉLITE ON' : 'CARREGANDO',
-            style: GoogleFonts.cinzel(
-              color: _isMapReady ? AppColors.verdeVale : AppColors.cinzaMedio,
-              fontSize: 9.5,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
       ),
     );
   }

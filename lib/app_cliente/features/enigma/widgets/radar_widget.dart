@@ -12,9 +12,8 @@ import 'package:oenigma/app_cliente/features/enigma/services/decoy_location_serv
 import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
-/// Ferramenta Mística de Radar: Sonar de varredura 360° com detecção de proximidade,
-/// eco luminoso dos 5 alvos e contagem ativa.
-/// Otimizada para carregamento instantâneo no Web, Android e iOS.
+/// Radar Sonar 360°: Varredura contínua de eco com detecção de proximidade.
+/// Foco visual no instrumento, sem poluição de texto e com timer no canto inferior direito.
 class RadarWidget extends StatefulWidget {
   final double? targetLatitude;
   final double? targetLongitude;
@@ -123,7 +122,6 @@ class _RadarWidgetState extends State<RadarWidget>
 
   /// Inicialização instantânea não bloqueante
   Future<void> _initSensorsFast() async {
-    // 1. Tenta recuperar a última posição em cache (< 20ms)
     try {
       final lastKnown = await Geolocator.getLastKnownPosition();
       if (lastKnown != null && mounted) {
@@ -134,7 +132,6 @@ class _RadarWidgetState extends State<RadarWidget>
       }
     } catch (_) {}
 
-    // 2. Verifica permissão de forma assíncrona
     try {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -251,9 +248,8 @@ class _RadarWidgetState extends State<RadarWidget>
         widget.initialDistance ??
         140.0;
 
-    // Altura padrão idêntica para todas as ferramentas
     final double frameHeight = widget.isCompact ? 390.0 : 540.0;
-    final double radarSize = widget.isCompact ? 210.0 : 280.0;
+    final double radarSize = widget.isCompact ? 220.0 : 300.0;
 
     return Container(
       height: frameHeight,
@@ -275,404 +271,314 @@ class _RadarWidgetState extends State<RadarWidget>
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            // Brilho esmeralda de fundo sutil
-            Positioned(
-              top: -40,
-              right: -40,
-              child: Container(
-                width: 160,
-                height: 160,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF007D8A).withValues(alpha: 0.12),
-                ),
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Column(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // 1. CABEÇALHO LIMPO (Apenas Título e Botão Expandir - Sem Timer no Topo)
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // 1. HUD SUPERIOR UNIFICADO
-                  _buildHeaderHud(),
-
-                  // 2. SELETOR DE ALVOS (Sinais 1 a 5)
-                  if (targets.length > 1)
-                    _buildTargetSelector(targets)
-                  else
-                    const SizedBox(height: 4),
-
-                  // 3. DISPLAY DO SONAR (210px / 280px)
-                  Expanded(
-                    child: Center(
-                      child: Container(
-                        width: radarSize,
-                        height: radarSize,
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: const Color(0xFF0A1215),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF00A4B4).withValues(alpha: 0.25),
-                              blurRadius: 16,
-                            ),
-                          ],
+                          color: const Color(0xFF0C242C),
+                          borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: const Color(0xFF007D8A).withValues(alpha: 0.6),
-                            width: 2.2,
+                            color: const Color(0xFF007D8A).withValues(alpha: 0.5),
+                            width: 1,
                           ),
                         ),
-                        child: Stack(
-                          alignment: Alignment.center,
+                        child: const FaIcon(
+                          FontAwesomeIcons.satelliteDish,
+                          color: Color(0xFF00A4B4),
+                          size: 11,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'RADAR SONAR 360°',
+                        style: GoogleFonts.cinzel(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Botão Expandir
+                  if (widget.onExpand != null)
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        SoundService.playClick();
+                        widget.onExpand!();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF18252E),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: const Color(0xFF1E3A45),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Grade estática do radar (60fps cacheada)
-                            RepaintBoundary(
-                              child: CustomPaint(
-                                size: Size(radarSize, radarSize),
-                                painter: const _RadarStaticGridPainter(),
-                              ),
+                            const FaIcon(
+                              FontAwesomeIcons.expand,
+                              color: Color(0xFF00A4B4),
+                              size: 10,
                             ),
-
-                            // Feixe dinâmico e ecos dos alvos
-                            AnimatedBuilder(
-                              animation: _sweepController,
-                              builder: (context, _) {
-                                return CustomPaint(
-                                  size: Size(radarSize, radarSize),
-                                  painter: _RadarDynamicSweepPainter(
-                                    sweepValue: _sweepController.value,
-                                    pulseValue: _pulseController.value,
-                                    selectedRange: _selectedRange,
-                                    targets: targets,
-                                    targetDistances: _targetDistances,
-                                    targetBearings: _targetBearings,
-                                    deviceHeading: _deviceHeading,
-                                    selectedIndex: _selectedTargetIndex,
-                                  ),
-                                );
-                              },
-                            ),
-
-                            // Centro do Operador
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Color(0xFF00A4B4),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Color(0xFF00A4B4),
-                                    blurRadius: 6,
-                                  ),
-                                ],
+                            const SizedBox(width: 5),
+                            Text(
+                              'EXPANDIR',
+                              style: GoogleFonts.cinzel(
+                                color: const Color(0xFF00A4B4),
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  ),
-
-                  // 4. TELEMETRIA INFERIOR UNIFICADA & SELETOR DE ALCANCE
-                  _buildFooterTelemetry(currentTargetDistance),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  // ===========================================================================
-  // 1. HEADER HUD
-  // ===========================================================================
-  Widget _buildHeaderHud() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0C242C),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: const Color(0xFF007D8A).withValues(alpha: 0.5),
-                  width: 1,
-                ),
-              ),
-              child: const FaIcon(
-                FontAwesomeIcons.satelliteDish,
-                color: Color(0xFF00A4B4),
-                size: 11,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'RADAR SONAR 360°',
-              style: GoogleFonts.cinzel(
-                color: Colors.white,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ],
-        ),
-
-        // Timer
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1708),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFF3A522).withValues(alpha: 0.4),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FaIcon(
-                widget.enableToolTimer
-                    ? FontAwesomeIcons.hourglassHalf
-                    : FontAwesomeIcons.infinity,
-                color: const Color(0xFFF3A522),
-                size: 9.5,
-              ),
-              const SizedBox(width: 5),
-              Text(
-                widget.enableToolTimer
-                    ? _formatTime(_remainingSeconds)
-                    : 'ILIMITADO',
-                style: GoogleFonts.orbitron(
-                  color: const Color(0xFFF3A522),
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Botão Expandir
-        if (widget.onExpand != null)
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              SoundService.playClick();
-              widget.onExpand!();
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF18252E),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: const Color(0xFF1E3A45),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const FaIcon(
-                    FontAwesomeIcons.expand,
-                    color: Color(0xFF00A4B4),
-                    size: 10,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'EXPANDIR',
-                    style: GoogleFonts.cinzel(
-                      color: const Color(0xFF00A4B4),
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
-          const SizedBox(width: 20),
-      ],
-    );
-  }
-
-  // ===========================================================================
-  // 2. SELETOR DE SINAIS
-  // ===========================================================================
-  Widget _buildTargetSelector(List<DecoyTarget> targets) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(targets.length, (idx) {
-          final isSel = idx == _selectedTargetIndex;
-          final dist = _targetDistances[idx];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                SoundService.playClick();
-                setState(() => _selectedTargetIndex = idx);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
-                decoration: BoxDecoration(
-                  color: isSel ? const Color(0xFF00A4B4) : const Color(0xFF0C1417),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSel
-                        ? const Color(0xFF00A4B4)
-                        : Colors.white.withValues(alpha: 0.15),
-                    width: 1,
+              // 2. SELETOR DE ALVOS (Se houver múltiplos)
+              if (targets.length > 1)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: List.generate(targets.length, (idx) {
+                      final isSel = idx == _selectedTargetIndex;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            SoundService.playClick();
+                            setState(() => _selectedTargetIndex = idx);
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                            decoration: BoxDecoration(
+                              color: isSel ? const Color(0xFF00A4B4) : const Color(0xFF0C1417),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isSel
+                                    ? const Color(0xFF00A4B4)
+                                    : Colors.white.withValues(alpha: 0.15),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              'Sinal ${idx + 1}',
+                              style: GoogleFonts.cinzel(
+                                color: isSel ? Colors.black : Colors.white70,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    FaIcon(
-                      FontAwesomeIcons.circleDot,
-                      size: 8.5,
-                      color: isSel ? Colors.black : const Color(0xFF00A4B4),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      dist != null ? 'Sinal ${idx + 1} (${dist.toInt()}m)' : 'Sinal ${idx + 1}',
-                      style: GoogleFonts.cinzel(
-                        color: isSel ? Colors.black : Colors.white70,
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
 
-  // ===========================================================================
-  // 4. TELEMETRIA INFERIOR & SELETOR DE ALCANCE
-  // ===========================================================================
-  Widget _buildFooterTelemetry(double currentDist) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0C1417),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFF1E3A45),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Distância do Alvo Ativo
-          Row(
-            children: [
-              const FaIcon(
-                FontAwesomeIcons.bullseye,
-                color: Color(0xFF00A4B4),
-                size: 11,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '${currentDist.toInt()} M',
-                style: GoogleFonts.orbitron(
-                  color: const Color(0xFF00A4B4),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-
-          // Seletor de Alcance Rápido (100m, 250m, 500m)
-          Row(
-            children: [100.0, 250.0, 500.0].map((range) {
-              final isSel = _selectedRange == range;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() => _selectedRange = range);
-                  },
+              // 3. DISPLAY DO SONAR (HERO PRINCIPAL)
+              Expanded(
+                child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    width: radarSize,
+                    height: radarSize,
                     decoration: BoxDecoration(
-                      color: isSel
-                          ? const Color(0xFF007D8A).withValues(alpha: 0.5)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(6),
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF0A1215),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF00A4B4).withValues(alpha: 0.25),
+                          blurRadius: 18,
+                        ),
+                      ],
                       border: Border.all(
-                        color: isSel ? const Color(0xFF00A4B4) : Colors.white12,
-                        width: 1,
+                        color: const Color(0xFF007D8A).withValues(alpha: 0.6),
+                        width: 2.2,
                       ),
                     ),
-                    child: Text(
-                      '${range.toInt()}m',
-                      style: GoogleFonts.orbitron(
-                        fontSize: 9,
-                        fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
-                        color: isSel ? Colors.white : AppColors.cinzaMedio,
-                      ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Grade estática do radar (60fps)
+                        RepaintBoundary(
+                          child: CustomPaint(
+                            size: Size(radarSize, radarSize),
+                            painter: const _RadarStaticGridPainter(),
+                          ),
+                        ),
+
+                        // Feixe dinâmico e ecos dos alvos
+                        AnimatedBuilder(
+                          animation: _sweepController,
+                          builder: (context, _) {
+                            return CustomPaint(
+                              size: Size(radarSize, radarSize),
+                              painter: _RadarDynamicSweepPainter(
+                                sweepValue: _sweepController.value,
+                                pulseValue: _pulseController.value,
+                                selectedRange: _selectedRange,
+                                targets: targets,
+                                targetDistances: _targetDistances,
+                                targetBearings: _targetBearings,
+                                deviceHeading: _deviceHeading,
+                                selectedIndex: _selectedTargetIndex,
+                              ),
+                            );
+                          },
+                        ),
+
+                        // Centro do Operador
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFF00A4B4),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFF00A4B4),
+                                blurRadius: 6,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-
-          // Status de Varredura
-          Row(
-            children: [
-              Container(
-                width: 6,
-                height: 6,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.verdeVale,
-                ),
               ),
-              const SizedBox(width: 5),
-              Text(
-                'VARRENDO',
-                style: GoogleFonts.cinzel(
-                  color: AppColors.verdeVale,
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w800,
-                ),
+
+              // 4. BARRA INFERIOR (Distância na Esquerda, Alcance no Centro, TIMER NO CANTO DIREITO)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Canto Esquerdo: Distância até o alvo
+                  Row(
+                    children: [
+                      const FaIcon(
+                        FontAwesomeIcons.bullseye,
+                        color: Color(0xFF00A4B4),
+                        size: 12,
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        '${currentTargetDistance.toInt()} M',
+                        style: GoogleFonts.orbitron(
+                          color: const Color(0xFF00A4B4),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Centro: Seletor de Alcance Rápido (100m, 250m, 500m)
+                  Row(
+                    children: [100.0, 250.0, 500.0].map((range) {
+                      final isSel = _selectedRange == range;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _selectedRange = range);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isSel
+                                  ? const Color(0xFF007D8A).withValues(alpha: 0.55)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: isSel ? const Color(0xFF00A4B4) : Colors.white12,
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              '${range.toInt()}m',
+                              style: GoogleFonts.orbitron(
+                                fontSize: 9.5,
+                                fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
+                                color: isSel ? Colors.white : AppColors.cinzaMedio,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+
+                  // CANTO DIREITO NA PARTE DE BAIXO: O TIMER DA FERRAMENTA
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1708),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFF3A522).withValues(alpha: 0.5),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FaIcon(
+                          widget.enableToolTimer
+                              ? FontAwesomeIcons.hourglassHalf
+                              : FontAwesomeIcons.infinity,
+                          color: const Color(0xFFF3A522),
+                          size: 10,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          widget.enableToolTimer
+                              ? _formatTime(_remainingSeconds)
+                              : 'ILIMITADO',
+                          style: GoogleFonts.orbitron(
+                            color: const Color(0xFFF3A522),
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
 // =============================================================================
-// PAINTER 1: GRADE ESTÁTICA DO RADAR (CACHEADA)
+// PAINTER 1: GRADE ESTÁTICA DO RADAR
 // =============================================================================
 class _RadarStaticGridPainter extends CustomPainter {
   const _RadarStaticGridPainter();
