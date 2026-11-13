@@ -85,9 +85,9 @@ class PlayerDetailModal extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.darkBackground,
+        color: const Color(0xFF131D24),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border.all(color: rankColor.withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(color: rankColor.withValues(alpha: 0.4), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: rankColor.withValues(alpha: 0.2),
@@ -129,8 +129,8 @@ class PlayerDetailModal extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   _getRankTitle(),
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
+                  style: GoogleFonts.cinzel(
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.8,
                     color: rankColor,
@@ -156,7 +156,7 @@ class PlayerDetailModal extends StatelessWidget {
             ),
             child: CircleAvatar(
               radius: 44,
-              backgroundColor: AppColors.darkCardColor,
+              backgroundColor: const Color(0xFF0B1115),
               backgroundImage: player.photoURL != null ? NetworkImage(player.photoURL!) : null,
               child: player.photoURL == null
                   ? FaIcon(
@@ -172,10 +172,11 @@ class PlayerDetailModal extends StatelessWidget {
           // Player Name
           Text(
             player.name,
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+            style: GoogleFonts.cinzel(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
               color: Colors.white,
+              letterSpacing: 0.6,
             ),
             textAlign: TextAlign.center,
           ),
@@ -198,9 +199,9 @@ class PlayerDetailModal extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.darkCardColor,
+              color: const Color(0xFF0B1115),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,18 +210,19 @@ class PlayerDetailModal extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Progresso no Desafio',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                      'PROGRESSO NA EXPEDIÇÃO',
+                      style: GoogleFonts.cinzel(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.cinzaMedio,
+                        letterSpacing: 0.6,
                       ),
                     ),
                     Text(
                       '${player.progressPercent}%',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                      style: GoogleFonts.orbitron(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
                         color: rankColor,
                       ),
                     ),
@@ -231,7 +233,7 @@ class PlayerDetailModal extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
                     value: player.progress,
-                    minHeight: 10,
+                    minHeight: 8,
                     backgroundColor: Colors.white.withValues(alpha: 0.08),
                     valueColor: AlwaysStoppedAnimation<Color>(rankColor),
                   ),
@@ -316,10 +318,10 @@ class PlayerDetailModal extends StatelessWidget {
               ),
               child: Text(
                 'FECHAR',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w700,
+                style: GoogleFonts.cinzel(
+                  fontWeight: FontWeight.w800,
                   fontSize: 13,
-                  letterSpacing: 0.8,
+                  letterSpacing: 1.0,
                 ),
               ),
             ),
@@ -338,32 +340,33 @@ class PlayerDetailModal extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
+        color: const Color(0xFF0B1115),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          FaIcon(icon, size: 14, color: AppColors.cinzaMedio),
+          FaIcon(icon, size: 14, color: AppColors.amareloVale),
           const SizedBox(height: 8),
           Text(
             value,
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
+            style: GoogleFonts.orbitron(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
               color: valueColor,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 11,
+            label.toUpperCase(),
+            style: GoogleFonts.cinzel(
+              fontSize: 9.5,
               color: AppColors.cinzaMedio,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

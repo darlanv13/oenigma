@@ -38,15 +38,15 @@ class PhaseCard extends StatelessWidget {
       transform: Matrix4.diagonal3Values(scale, scale, 1.0),
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
+        color: const Color(0xFF131D24),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isActive
               ? AppColors.verdeVale
               : (isCompleted
-                  ? AppColors.verdeVale.withValues(alpha: 0.35)
-                  : Colors.white.withValues(alpha: 0.08)),
-          width: isActive ? 1.5 : 1,
+                  ? AppColors.verdeVale.withValues(alpha: 0.4)
+                  : const Color(0xFF1E3A45)),
+          width: isActive ? 1.5 : 1.2,
         ),
         boxShadow: isActive
             ? [
@@ -58,9 +58,9 @@ class PhaseCard extends StatelessWidget {
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withValues(alpha: 0.35),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
               ],
       ),
@@ -160,14 +160,14 @@ class PhaseCard extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'NÍVEL ${phase.order}',
-                              style: GoogleFonts.poppins(
+                              'CÂMARA ${phase.order}',
+                              style: GoogleFonts.cinzel(
                                 color: isLocked
                                     ? AppColors.cinzaMedio
                                     : (isActive
                                           ? AppColors.verdeVale
                                           : Colors.white),
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.8,
                               ),
@@ -201,14 +201,46 @@ class PhaseCard extends StatelessWidget {
     int completed = isCompleted ? total : (isActive ? currentEnigma - 1 : 0);
     double progress = total == 0 ? 0 : completed / total;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: LinearProgressIndicator(
-        value: progress,
-        backgroundColor: Colors.white.withValues(alpha: 0.08),
-        color: isCompleted ? AppColors.verdeVale : AppColors.amareloVale,
-        minHeight: 6,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: progress,
+            backgroundColor: Colors.white.withValues(alpha: 0.08),
+            color: isCompleted ? AppColors.verdeVale : AppColors.amareloVale,
+            minHeight: 6,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              isCompleted ? 'DESVENDADA' : (isActive ? 'EM PROGRESSO' : 'BLOQUEADA'),
+              style: GoogleFonts.cinzel(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: isCompleted
+                    ? AppColors.verdeVale
+                    : (isActive ? AppColors.amareloVale : AppColors.cinzaMedio),
+                letterSpacing: 0.5,
+              ),
+            ),
+            Text(
+              '$completed / $total ENIGMAS',
+              style: GoogleFonts.orbitron(
+                fontSize: 9.5,
+                fontWeight: FontWeight.bold,
+                color: isCompleted
+                    ? AppColors.verdeVale
+                    : (isActive ? AppColors.amareloVale : AppColors.cinzaMedio),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

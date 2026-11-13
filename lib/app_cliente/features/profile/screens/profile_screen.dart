@@ -135,7 +135,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 bottom: MediaQuery.of(context).viewInsets.bottom + 28,
               ),
               decoration: const BoxDecoration(
-                color: Color(0xFF101B22),
+                color: Color(0xFF131D24),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 border: Border(
                   top: BorderSide(color: Color(0xFF1E3A45), width: 1.5),
@@ -175,11 +175,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           const SizedBox(width: 12),
                           Text(
                             'EDITAR PERFIL',
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.cinzel(
                               color: Colors.white,
                               fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
                             ),
                           ),
                         ],
@@ -196,7 +196,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   // Campo: Nome Completo
                   Text(
                     'NOME COMPLETO',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.cinzel(
                       color: AppColors.cinzaMedio,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -215,7 +215,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   // Campo: Telefone
                   Text(
                     'TELEFONE / WHATSAPP',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.cinzel(
                       color: AppColors.cinzaMedio,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -252,6 +252,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ? null
                           : () async {
                               setModalState(() => isSaving = true);
+                              HapticFeedback.lightImpact();
                               SoundService.playClick();
 
                               user.set('name', nameController.text.trim());
@@ -308,9 +309,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             )
                           : Text(
                               'SALVAR ALTERAÇÕES',
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.cinzel(
                                 fontWeight: FontWeight.w800,
-                                fontSize: 13.5,
+                                fontSize: 13,
                                 letterSpacing: 0.8,
                               ),
                             ),
@@ -364,6 +365,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _confirmSignOut(BuildContext context, WidgetRef ref) {
+    HapticFeedback.lightImpact();
     SoundService.playClick();
     showDialog(
       context: context,
@@ -390,9 +392,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(width: 12),
             Text(
               'Sair da Conta',
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.cinzel(
                 color: Colors.white,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w900,
                 fontSize: 18,
               ),
             ),
@@ -412,7 +414,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
               'CANCELAR',
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.cinzel(
                 color: AppColors.cinzaMedio,
                 fontWeight: FontWeight.w700,
                 fontSize: 12.5,
@@ -428,12 +430,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             onPressed: () async {
               Navigator.of(ctx).pop();
+              HapticFeedback.lightImpact();
               SoundService.playClick();
               await ref.read(authRepositoryProvider).signOut();
             },
             child: Text(
               'CONFIRMAR SAÍDA',
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.cinzel(
                 fontWeight: FontWeight.w800,
                 fontSize: 12,
                 letterSpacing: 0.6,
@@ -450,56 +453,107 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Bar elegante e integrada
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Navigator.canPop(context)
-                      ? GestureDetector(
-                          onTap: () {
-                            SoundService.playClick();
-                            Navigator.of(context).pop();
-                          },
-                          child: Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF131D24),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
-                            ),
-                            child: const Center(
-                              child: FaIcon(FontAwesomeIcons.chevronLeft, color: Colors.white, size: 14),
-                            ),
-                          ),
-                        )
-                      : const SizedBox(width: 42),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const FaIcon(FontAwesomeIcons.idBadge, color: AppColors.verdeVale, size: 16),
-                      const SizedBox(width: 8),
-                      Text(
-                        'PERFIL DO CAÇADOR',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 42),
-                ],
+      backgroundColor: const Color(0xFF0B1115),
+      body: Stack(
+        children: [
+          // Luzes ambientais suaves (Padrão Enigma)
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.verdeVale.withValues(alpha: 0.10),
               ),
             ),
+          ),
+          Positioned(
+            bottom: 80,
+            left: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.amareloVale.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: Column(
+              children: [
+                // Top Bar elegante e integrada Enigma Style
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Navigator.canPop(context)
+                          ? GestureDetector(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                SoundService.playClick();
+                                Navigator.of(context).pop();
+                              },
+                              child: Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF131D24),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                    width: 1.2,
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: FaIcon(
+                                    FontAwesomeIcons.chevronLeft,
+                                    color: Colors.white,
+                                    size: 13,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : const SizedBox(width: 38),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.verdeVale.withValues(alpha: 0.15),
+                              border: Border.all(
+                                color: AppColors.verdeVale.withValues(alpha: 0.4),
+                                width: 1,
+                              ),
+                            ),
+                            child: const FaIcon(
+                              FontAwesomeIcons.idBadge,
+                              color: AppColors.verdeVale,
+                              size: 12,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'PERFIL DO CAÇADOR',
+                            style: GoogleFonts.cinzel(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 38),
+                    ],
+                  ),
+                ),
 
             Expanded(
               child: authState.when(
@@ -580,6 +634,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ],
         ),
+      ),
+        ],
       ),
     );
   }
@@ -741,11 +797,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 // Nome do Caçador
                 Text(
                   name,
-                  style: GoogleFonts.poppins(
-                    fontSize: 21,
+                  style: GoogleFonts.cinzel(
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
-                    letterSpacing: -0.2,
+                    letterSpacing: 0.5,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
@@ -774,9 +830,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           const SizedBox(width: 6),
                           Text(
                             'LIGA $league',
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.cinzel(
                               color: const Color(0xFF00A4B4),
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w900,
                               fontSize: 10.5,
                               letterSpacing: 0.8,
                             ),
@@ -802,9 +858,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           const SizedBox(width: 6),
                           Text(
                             'NÍVEL $level',
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.cinzel(
                               color: AppColors.amareloVale,
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w900,
                               fontSize: 10.5,
                               letterSpacing: 0.8,
                             ),
@@ -825,19 +881,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       children: [
                         Text(
                           'PROGRESSO DO NÍVEL',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.cinzel(
                             color: AppColors.cinzaMedio,
                             fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
                             letterSpacing: 0.8,
                           ),
                         ),
                         Text(
                           '$currentLevelProgressXp / 500 XP',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.orbitron(
                             color: const Color(0xFFCFD8DC),
                             fontSize: 11,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
@@ -981,11 +1037,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               Text(
                 title,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.cinzel(
                   color: const Color(0xFF91A3AE),
                   fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.7,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
                 ),
               ),
             ],
@@ -995,11 +1051,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.orbitron(
               color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.3,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -1018,7 +1073,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFF131D24),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.4), width: 1.2),
         boxShadow: [
           BoxShadow(
@@ -1123,6 +1178,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 ElevatedButton.icon(
                   onPressed: () {
+                    HapticFeedback.lightImpact();
                     Clipboard.setData(ClipboardData(text: inviteCode));
                     SoundService.playClick();
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -1136,9 +1192,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   icon: const FaIcon(FontAwesomeIcons.copy, size: 12, color: Colors.black),
                   label: Text(
                     'COPIAR',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.cinzel(
                       fontSize: 11,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w900,
                       color: Colors.black,
                     ),
                   ),
@@ -1160,6 +1216,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
+                    HapticFeedback.lightImpact();
                     SoundService.playClick();
                     final text = '🏆 Venha caçar tesouros reais comigo no app O Enigma! Use meu código $inviteCode e ganhe R\$ 2,00 de saldo inicial: https://darlanv13.github.io/oenigma';
                     Share.share(text);
@@ -1167,9 +1224,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   icon: const FaIcon(FontAwesomeIcons.whatsapp, size: 14, color: Colors.white),
                   label: Text(
                     'CONVIDAR AMIGOS',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.cinzel(
                       fontSize: 11,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w900,
                       color: Colors.white,
                     ),
                   ),
@@ -1191,9 +1248,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   child: Text(
                     'USAR CÓDIGO',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.cinzel(
                       fontSize: 11,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                       color: AppColors.verdeVale,
                     ),
                   ),
@@ -1351,11 +1408,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           )
                         : Text(
                             'RESGATAR BÔNUS DE R\$ 2,00',
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.cinzel(
                               color: Colors.black,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13,
-                              letterSpacing: 0.5,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12.5,
+                              letterSpacing: 0.8,
                             ),
                           ),
                   ),
@@ -1377,15 +1434,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFF131D24),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: const Color(0xFF1E3A45),
-          width: 1.3,
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 12,
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 14,
             offset: const Offset(0, 4),
           ),
         ],
@@ -1409,11 +1466,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(width: 10),
                   Text(
                     'DADOS & SEGURANÇA',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.cinzel(
                       color: Colors.white,
                       fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.6,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.8,
                     ),
                   ),
                 ],
@@ -1432,10 +1489,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     const SizedBox(width: 4),
                     Text(
                       'ATIVO',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.cinzel(
                         color: const Color(0xFF4CAF50),
                         fontSize: 9.5,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w900,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -1509,10 +1566,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             children: [
               Text(
                 label,
-                style: GoogleFonts.inter(
+                style: GoogleFonts.cinzel(
                   color: const Color(0xFF91A3AE),
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
                   letterSpacing: 0.6,
                 ),
               ),
@@ -1539,16 +1596,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             child: Text(
               trailingBadge,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.cinzel(
                 color: const Color(0xFF91A3AE),
-                fontSize: 9.5,
-                fontWeight: FontWeight.w700,
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
         if (canCopy && value.isNotEmpty && value != 'Não cadastrado')
           GestureDetector(
             onTap: () {
+              HapticFeedback.lightImpact();
               Clipboard.setData(ClipboardData(text: value));
               SoundService.playClick();
               ScaffoldMessenger.of(context).showSnackBar(
@@ -1583,7 +1641,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: BoxDecoration(
         color: const Color(0xFF131D24),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: const Color(0xFF1E3A45),
           width: 1.2,
@@ -1615,18 +1673,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Som Ambiente de Mistério',
-                    style: GoogleFonts.poppins(
+                    'SOM AMBIENTE',
+                    style: GoogleFonts.cinzel(
                       color: Colors.white,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     SoundService.isAmbientMuted
-                        ? 'Trilha de suspense silenciada'
-                        : 'Música de suspense e mistério ativada',
+                        ? 'Trilha de mistério silenciada'
+                        : 'Música de suspense ativada',
                     style: GoogleFonts.inter(
                       color: const Color(0xFF91A3AE),
                       fontSize: 11,
@@ -1641,6 +1700,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             activeTrackColor: AppColors.verdeVale.withValues(alpha: 0.6),
             activeThumbColor: AppColors.verdeVale,
             onChanged: (enabled) {
+              HapticFeedback.lightImpact();
               setState(() {
                 SoundService.toggleAmbientMute();
               });
@@ -1659,7 +1719,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       children: [
         // Botão Primário: Editar Perfil
         GestureDetector(
-          onTap: () => _showEditProfileModal(user),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            _showEditProfileModal(user);
+          },
           child: Container(
             width: double.infinity,
             height: 52,
@@ -1681,10 +1744,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(width: 9),
                 Text(
                   'EDITAR DADOS PESSOAIS',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.cinzel(
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
-                    fontSize: 13,
+                    fontSize: 12.5,
                     letterSpacing: 0.8,
                   ),
                 ),
@@ -1696,7 +1759,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
         // Botão Secundário: Sair da Conta
         GestureDetector(
-          onTap: () => _confirmSignOut(context, ref),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            _confirmSignOut(context, ref);
+          },
           child: Container(
             width: double.infinity,
             height: 48,
@@ -1715,10 +1781,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(width: 8),
                 Text(
                   'SAIR DA CONTA',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w700,
+                  style: GoogleFonts.cinzel(
+                    fontWeight: FontWeight.w800,
                     color: AppColors.danger,
-                    fontSize: 12.5,
+                    fontSize: 12,
                     letterSpacing: 0.8,
                   ),
                 ),

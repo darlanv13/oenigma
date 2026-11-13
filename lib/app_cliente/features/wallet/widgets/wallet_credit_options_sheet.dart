@@ -78,11 +78,9 @@ class _CreditOptionsSheetState extends State<CreditOptionsSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
+        color: const Color(0xFF131D24),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
-        ),
+        border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
       ),
       padding: EdgeInsets.fromLTRB(24, 20, 24, 24 + bottomInset),
       child: SingleChildScrollView(
@@ -104,11 +102,11 @@ class _CreditOptionsSheetState extends State<CreditOptionsSheet> {
             Text(
               "ADICIONAR SALDO",
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
+              style: GoogleFonts.cinzel(
                 color: Colors.white,
                 fontSize: 18,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
               ),
             ),
             const SizedBox(height: 6),
@@ -133,13 +131,13 @@ class _CreditOptionsSheetState extends State<CreditOptionsSheet> {
               itemBuilder: (context, index) {
                 return ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.verdeVale.withValues(alpha: 0.12),
+                    backgroundColor: const Color(0xFF0B1115),
                     foregroundColor: AppColors.verdeVale,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                       side: BorderSide(
-                        color: AppColors.verdeVale.withValues(alpha: 0.4),
+                        color: AppColors.verdeVale.withValues(alpha: 0.5),
                         width: 1.2,
                       ),
                     ),
@@ -147,9 +145,9 @@ class _CreditOptionsSheetState extends State<CreditOptionsSheet> {
                   onPressed: () => _openPayment(amounts[index]),
                   child: Text(
                     "R\$ ${amounts[index].toStringAsFixed(0)}",
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
+                    style: GoogleFonts.orbitron(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
                     ),
                   ),
                 );
@@ -188,16 +186,16 @@ class _CreditOptionsSheetState extends State<CreditOptionsSheet> {
                       controller: _customAmountController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       autofocus: true,
-                      style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.orbitron(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                       decoration: InputDecoration(
                         prefixText: 'R\$ ',
-                        prefixStyle: GoogleFonts.poppins(color: AppColors.amareloVale, fontSize: 18, fontWeight: FontWeight.bold),
+                        prefixStyle: GoogleFonts.orbitron(color: AppColors.amareloVale, fontSize: 18, fontWeight: FontWeight.bold),
                         hintText: '0,00',
-                        hintStyle: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.3)),
+                        hintStyle: GoogleFonts.orbitron(color: Colors.white.withValues(alpha: 0.3)),
                         filled: true,
                         fillColor: Colors.black.withValues(alpha: 0.25),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF1E3A45))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF1E3A45))),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.verdeVale)),
                       ),
                     ),
@@ -219,7 +217,7 @@ class _CreditOptionsSheetState extends State<CreditOptionsSheet> {
                       onPressed: _submitCustomAmount,
                       child: Text(
                         'CONTINUAR COM ESTE VALOR',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 13),
+                        style: GoogleFonts.cinzel(fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: 0.8),
                       ),
                     ),
                   ],
@@ -363,11 +361,9 @@ class _PaymentBottomSheetState extends ConsumerState<PaymentBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
+        color: const Color(0xFF131D24),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
-        ),
+        border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -403,7 +399,7 @@ class _PaymentBottomSheetState extends ConsumerState<PaymentBottomSheet> {
         const SizedBox(height: 16),
         Text(
           "Gerando Cobrança Pix...",
-          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold),
+          style: GoogleFonts.cinzel(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
         ),
         const SizedBox(height: 6),
         Text(
@@ -425,7 +421,7 @@ class _PaymentBottomSheetState extends ConsumerState<PaymentBottomSheet> {
         const SizedBox(height: 16),
         Text(
           "Erro ao gerar Pix",
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.cinzel(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.w800,
@@ -448,7 +444,7 @@ class _PaymentBottomSheetState extends ConsumerState<PaymentBottomSheet> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             ),
             onPressed: () => Navigator.pop(context),
-            child: const Text("FECHAR", style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text("FECHAR", style: GoogleFonts.cinzel(fontWeight: FontWeight.bold, letterSpacing: 1.0)),
           ),
         ),
       ],
@@ -460,17 +456,17 @@ class _PaymentBottomSheetState extends ConsumerState<PaymentBottomSheet> {
       children: [
         Text(
           "PAGAMENTO VIA PIX",
-          style: GoogleFonts.inter(
+          style: GoogleFonts.cinzel(
             color: AppColors.cinzaMedio,
             fontSize: 12,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
             letterSpacing: 1.5,
           ),
         ),
         const SizedBox(height: 6),
         Text(
           "R\$ ${widget.amount.toStringAsFixed(2).replaceAll('.', ',')}",
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.orbitron(
             color: AppColors.amareloVale,
             fontSize: 32,
             fontWeight: FontWeight.w900,
@@ -542,9 +538,9 @@ class _PaymentBottomSheetState extends ConsumerState<PaymentBottomSheet> {
           ),
           child: ElevatedButton.icon(
             icon: const FaIcon(FontAwesomeIcons.copy, color: Colors.white, size: 16),
-            label: const Text(
+            label: Text(
               "COPIAR CÓDIGO PIX (COPIA E COLA)",
-              style: TextStyle(
+              style: GoogleFonts.cinzel(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.8,
@@ -612,10 +608,11 @@ class _PaymentBottomSheetState extends ConsumerState<PaymentBottomSheet> {
         const SizedBox(height: 16),
         Text(
           "PAGAMENTO CONFIRMADO!",
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.cinzel(
             color: Colors.white,
             fontSize: 18,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.0,
           ),
         ),
         const SizedBox(height: 8),
@@ -638,9 +635,9 @@ class _PaymentBottomSheetState extends ConsumerState<PaymentBottomSheet> {
               Navigator.pop(context);
               widget.onPaymentSuccess?.call();
             },
-            child: const Text(
+            child: Text(
               "CONCLUIR",
-              style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1.0),
+              style: GoogleFonts.cinzel(fontWeight: FontWeight.bold, letterSpacing: 1.0),
             ),
           ),
         ),

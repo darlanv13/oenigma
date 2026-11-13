@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oenigma/app_cliente/features/auth/providers/auth_provider.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
@@ -75,51 +76,102 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: Text(
-          'Recuperar Acesso',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Center(
-          child: GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
+      backgroundColor: const Color(0xFF0B1115),
+      body: Stack(
+        children: [
+          // Luzes ambientais suaves (Padrão Enigma)
+          Positioned(
+            top: -50,
+            right: -50,
             child: Container(
-              width: 36,
-              height: 36,
+              width: 240,
+              height: 240,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.06),
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-              ),
-              child: const Center(
-                child: FaIcon(FontAwesomeIcons.chevronLeft, color: Colors.white, size: 14),
+                color: AppColors.verdeVale.withValues(alpha: 0.10),
               ),
             ),
           ),
-        ),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 32),
-              _buildRecoveryForm(),
-              const SizedBox(height: 24),
-            ],
+          Positioned(
+            bottom: 80,
+            left: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.amareloVale.withValues(alpha: 0.08),
+              ),
+            ),
           ),
-        ),
+
+          SafeArea(
+            child: Column(
+              children: [
+                // Top Bar customizada
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Navigator.canPop(context)
+                          ? GestureDetector(
+                              onTap: () {
+                                SoundService.playClick();
+                                Navigator.of(context).pop();
+                              },
+                              child: Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF131D24),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                    width: 1.2,
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: FaIcon(FontAwesomeIcons.chevronLeft, color: Colors.white, size: 13),
+                                ),
+                              ),
+                            )
+                          : const SizedBox(width: 38),
+                      Text(
+                        'RECUPERAR ACESSO',
+                        style: GoogleFonts.cinzel(
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          fontSize: 16,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(width: 38),
+                    ],
+                  ),
+                ),
+
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildHeader(),
+                          const SizedBox(height: 28),
+                          _buildRecoveryForm(),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -131,7 +183,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.verdeVale.withValues(alpha: 0.15),
+            color: const Color(0xFF131D24),
             boxShadow: [
               BoxShadow(
                 color: AppColors.verdeVale.withValues(alpha: 0.25),
@@ -139,14 +191,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 spreadRadius: 4,
               ),
             ],
-            border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.35), width: 1.5),
+            border: Border.all(color: const Color(0xFF1E3A45), width: 1.5),
           ),
           child: const FaIcon(FontAwesomeIcons.userShield, color: AppColors.verdeVale, size: 40),
         ),
         const SizedBox(height: 18),
         Text(
           'CÓDIGO PERDIDO?',
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.cinzel(
             fontSize: 22,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.5,
@@ -175,12 +227,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     return Container(
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+        color: const Color(0xFF131D24),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Colors.black.withValues(alpha: 0.35),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -230,7 +282,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                       ],
               ),
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleResetPassword,
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                        HapticFeedback.lightImpact();
+                        _handleResetPassword();
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   foregroundColor: Colors.white,
@@ -253,8 +310,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         children: [
                           Text(
                             "ENVIAR INSTRUÇÕES",
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
+                            style: GoogleFonts.cinzel(
+                              fontSize: 13,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.8,
                             ),
@@ -269,7 +326,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
             const SizedBox(height: 20),
             Center(
               child: GestureDetector(
-                onTap: _isLoading ? null : () => Navigator.of(context).pop(),
+                onTap: _isLoading
+                    ? null
+                    : () {
+                        HapticFeedback.lightImpact();
+                        SoundService.playClick();
+                        Navigator.of(context).pop();
+                      },
                 child: Text(
                   "Voltar para o Login",
                   style: GoogleFonts.inter(
@@ -293,7 +356,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         const SizedBox(width: 8),
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.cinzel(
             color: Colors.white,
             fontSize: 11,
             fontWeight: FontWeight.w800,
@@ -317,32 +380,32 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       validator: validator,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      style: GoogleFonts.inter(
+      style: GoogleFonts.orbitron(
         color: Colors.white,
-        fontWeight: FontWeight.w600,
-        fontSize: 15,
+        fontWeight: FontWeight.bold,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.05),
+        fillColor: const Color(0xFF0C171F),
         hintText: hintText,
-        hintStyle: GoogleFonts.inter(
-          color: AppColors.cinzaMedio,
-          fontSize: 14,
+        hintStyle: GoogleFonts.orbitron(
+          color: Colors.white24,
+          fontSize: 13,
         ),
         prefixIcon: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14.0),
-          child: FaIcon(icon, color: AppColors.cinzaMedio, size: 16),
+          child: FaIcon(icon, color: AppColors.cinzaMedio, size: 15),
         ),
         prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          borderSide: const BorderSide(color: Color(0xFF1E3A45)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          borderSide: const BorderSide(color: Color(0xFF1E3A45)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),

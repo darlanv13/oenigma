@@ -30,12 +30,12 @@ class RankingEventSelector extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
+        color: const Color(0xFF131D24),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
+            color: Colors.black.withValues(alpha: 0.35),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -45,7 +45,7 @@ class RankingEventSelector extends StatelessWidget {
         child: DropdownButton<String>(
           value: selectedEventId,
           isExpanded: true,
-          dropdownColor: AppColors.darkBackground,
+          dropdownColor: const Color(0xFF131D24),
           borderRadius: BorderRadius.circular(20),
           icon: Container(
             padding: const EdgeInsets.all(6),
@@ -86,19 +86,20 @@ class RankingEventSelector extends StatelessWidget {
                       children: [
                         Text(
                           event.name,
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.cinzel(
                             color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13.5,
+                            letterSpacing: 0.5,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           'Prêmio: ${event.prize}',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.orbitron(
                             color: AppColors.amareloVale,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
@@ -144,19 +145,20 @@ class RankingEventSelector extends StatelessWidget {
                         children: [
                           Text(
                             event.name,
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.cinzel(
                               color: isSelected ? AppColors.verdeVale : Colors.white,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                              fontSize: 12.5,
+                              letterSpacing: 0.5,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             'Prêmio: ${event.prize}',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.orbitron(
                               color: AppColors.amareloVale,
                               fontSize: 10,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],

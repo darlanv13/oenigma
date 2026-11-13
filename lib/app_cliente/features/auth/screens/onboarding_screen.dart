@@ -27,8 +27,8 @@ class OnboardingScreen extends StatelessWidget {
       height: 140,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: iconColor.withValues(alpha: 0.15),
-        border: Border.all(color: iconColor.withValues(alpha: 0.35), width: 2),
+        color: const Color(0xFF131D24),
+        border: Border.all(color: const Color(0xFF1E3A45), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: iconColor.withValues(alpha: 0.25),
@@ -40,7 +40,7 @@ class OnboardingScreen extends StatelessWidget {
       child: Center(
         child: FaIcon(
           icon,
-          size: 60,
+          size: 56,
           color: iconColor,
         ),
       ),
@@ -49,12 +49,13 @@ class OnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bodyStyle = GoogleFonts.inter(fontSize: 15.0, color: AppColors.cinzaMedio, height: 1.5);
+    final bodyStyle = GoogleFonts.inter(fontSize: 14.5, color: AppColors.cinzaMedio, height: 1.5);
     final pageDecoration = PageDecoration(
-      titleTextStyle: GoogleFonts.poppins(
-        fontSize: 24.0,
-        fontWeight: FontWeight.w800,
+      titleTextStyle: GoogleFonts.cinzel(
+        fontSize: 22.0,
+        fontWeight: FontWeight.w900,
         color: Colors.white,
+        letterSpacing: 0.8,
       ),
       bodyTextStyle: bodyStyle,
       bodyPadding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 20.0),
@@ -63,100 +64,132 @@ class OnboardingScreen extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: IntroductionScreen(
-        globalBackgroundColor: Colors.transparent,
-        pages: [
-          PageViewModel(
-            title: "Bem-vindo ao O Enigma!",
-            body:
-                "A maior caçada ao tesouro digital da sua cidade. Prepare-se para desvendar mistérios e ganhar prêmios reais via Pix.",
-            image: Center(
-              child: _buildIconBadge(
-                FontAwesomeIcons.compass,
-                AppColors.verdeVale,
+      backgroundColor: const Color(0xFF0B1115),
+      body: Stack(
+        children: [
+          // Luzes ambientais suaves (Padrão Enigma)
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.verdeVale.withValues(alpha: 0.10),
               ),
             ),
-            decoration: pageDecoration,
           ),
-          PageViewModel(
-            title: "Escolha um Evento",
-            body:
-                "Acesse a tela inicial e entre no evento ativo. Fique de olho na contagem regressiva para largar na frente!",
-            image: Center(
-              child: _buildIconBadge(
-                FontAwesomeIcons.calendarDays,
-                AppColors.amareloVale,
+          Positioned(
+            bottom: 80,
+            left: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.amareloVale.withValues(alpha: 0.08),
               ),
             ),
-            decoration: pageDecoration,
           ),
-          PageViewModel(
-            title: "Siga as Pistas",
-            body:
-                "Cada enigma te levará a um local diferente. Use as ferramentas de Mapa e Bússola caso precise de uma ajudinha extra.",
-            image: Center(
-              child: _buildIconBadge(
-                FontAwesomeIcons.locationDot,
-                AppColors.verdeVale,
+
+          SafeArea(
+            child: IntroductionScreen(
+              globalBackgroundColor: Colors.transparent,
+              pages: [
+                PageViewModel(
+                  title: "Bem-vindo ao O Enigma!",
+                  body:
+                      "A maior caçada ao tesouro digital da sua cidade. Prepare-se para desvendar mistérios e ganhar prêmios reais via Pix.",
+                  image: Center(
+                    child: _buildIconBadge(
+                      FontAwesomeIcons.compass,
+                      AppColors.verdeVale,
+                    ),
+                  ),
+                  decoration: pageDecoration,
+                ),
+                PageViewModel(
+                  title: "Escolha um Evento",
+                  body:
+                      "Acesse a tela inicial e entre no evento ativo. Fique de olho na contagem regressiva para largar na frente!",
+                  image: Center(
+                    child: _buildIconBadge(
+                      FontAwesomeIcons.calendarDays,
+                      AppColors.amareloVale,
+                    ),
+                  ),
+                  decoration: pageDecoration,
+                ),
+                PageViewModel(
+                  title: "Siga as Pistas",
+                  body:
+                      "Cada enigma te levará a um local diferente. Use as ferramentas de Mapa e Bússola caso precise de uma ajudinha extra.",
+                  image: Center(
+                    child: _buildIconBadge(
+                      FontAwesomeIcons.locationDot,
+                      AppColors.verdeVale,
+                    ),
+                  ),
+                  decoration: pageDecoration,
+                ),
+                PageViewModel(
+                  title: "Escaneie e Ganhe",
+                  body:
+                      "Encontrou o local correto? Escaneie o QR Code escondido. O primeiro a completar todas as fases leva a bolada na carteira!",
+                  image: Center(
+                    child: _buildIconBadge(
+                      FontAwesomeIcons.qrcode,
+                      AppColors.amareloVale,
+                    ),
+                  ),
+                  decoration: pageDecoration,
+                ),
+              ],
+              onDone: () => _onIntroEnd(context),
+              onSkip: () => _onIntroEnd(context),
+              showSkipButton: true,
+              skipOrBackFlex: 0,
+              nextFlex: 0,
+              showBackButton: false,
+              back: const FaIcon(FontAwesomeIcons.arrowLeft, color: AppColors.verdeVale),
+              skip: Text(
+                'PULAR',
+                style: GoogleFonts.cinzel(fontWeight: FontWeight.w800, color: AppColors.cinzaMedio, letterSpacing: 0.8),
+              ),
+              next: const FaIcon(FontAwesomeIcons.arrowRight, color: AppColors.verdeVale, size: 18),
+              done: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: AppColors.gradienteVerdeVale,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.verdeVale.withValues(alpha: 0.35),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  'COMEÇAR',
+                  style: GoogleFonts.cinzel(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 13, letterSpacing: 0.8),
+                ),
+              ),
+              curve: Curves.fastLinearToSlowEaseIn,
+              controlsMargin: const EdgeInsets.all(16),
+              dotsDecorator: const DotsDecorator(
+                size: Size(8.0, 8.0),
+                color: Colors.white24,
+                activeSize: Size(22.0, 8.0),
+                activeColor: AppColors.verdeVale,
+                activeShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(25.0)),
+                ),
               ),
             ),
-            decoration: pageDecoration,
-          ),
-          PageViewModel(
-            title: "Escaneie e Ganhe",
-            body:
-                "Encontrou o local correto? Escaneie o QR Code escondido. O primeiro a completar todas as fases leva a bolada na carteira!",
-            image: Center(
-              child: _buildIconBadge(
-                FontAwesomeIcons.qrcode,
-                AppColors.amareloVale,
-              ),
-            ),
-            decoration: pageDecoration,
           ),
         ],
-        onDone: () => _onIntroEnd(context),
-        onSkip: () => _onIntroEnd(context),
-        showSkipButton: true,
-        skipOrBackFlex: 0,
-        nextFlex: 0,
-        showBackButton: false,
-        back: const FaIcon(FontAwesomeIcons.arrowLeft, color: AppColors.verdeVale),
-        skip: Text(
-          'Pular',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.cinzaMedio),
-        ),
-        next: const FaIcon(FontAwesomeIcons.arrowRight, color: AppColors.verdeVale, size: 18),
-        done: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-          decoration: BoxDecoration(
-            gradient: AppColors.gradienteVerdeVale,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.verdeVale.withValues(alpha: 0.35),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Text(
-            'Começar',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 13),
-          ),
-        ),
-        curve: Curves.fastLinearToSlowEaseIn,
-        controlsMargin: const EdgeInsets.all(16),
-        dotsDecorator: const DotsDecorator(
-          size: Size(8.0, 8.0),
-          color: Colors.white24,
-          activeSize: Size(22.0, 8.0),
-          activeColor: AppColors.verdeVale,
-          activeShape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(25.0)),
-          ),
-        ),
       ),
     );
   }

@@ -243,10 +243,10 @@ class _PodiumPlace extends StatelessWidget {
                           ],
                           Text(
                             "$placeº",
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.orbitron(
                               color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
                             ),
                           ),
                         ],
@@ -260,10 +260,11 @@ class _PodiumPlace extends StatelessWidget {
               // Player Name
               Text(
                 player.name.split(' ').first,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w700,
+                style: GoogleFonts.cinzel(
+                  fontWeight: FontWeight.w800,
                   color: Colors.white,
                   fontSize: 13,
+                  letterSpacing: 0.5,
                 ),
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
@@ -304,7 +305,7 @@ class _PodiumPlace extends StatelessWidget {
                       bottom: 4,
                       child: Text(
                         '$place',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.orbitron(
                           fontSize: isFirstPlace ? 64 : 48,
                           fontWeight: FontWeight.w900,
                           color: Colors.white.withValues(alpha: 0.04),
@@ -318,18 +319,19 @@ class _PodiumPlace extends StatelessWidget {
                       children: [
                         Text(
                           '${player.phasesCompleted}',
-                          style: GoogleFonts.poppins(
-                            fontSize: isFirstPlace ? 24 : 20,
-                            fontWeight: FontWeight.w800,
+                          style: GoogleFonts.orbitron(
+                            fontSize: isFirstPlace ? 22 : 18,
+                            fontWeight: FontWeight.bold,
                             color: accentColor,
                           ),
                         ),
                         Text(
-                          'Fases',
-                          style: GoogleFonts.inter(
-                            fontSize: 11,
+                          'FASES',
+                          style: GoogleFonts.cinzel(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
                             color: AppColors.cinzaMedio,
-                            fontWeight: FontWeight.w500,
                           ),
                         ),
                         const SizedBox(height: 4),

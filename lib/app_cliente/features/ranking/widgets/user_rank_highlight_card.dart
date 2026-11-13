@@ -28,9 +28,9 @@ class UserRankHighlightCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.darkCardColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          color: const Color(0xFF131D24),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
         ),
         child: Row(
           children: [
@@ -79,12 +79,12 @@ class UserRankHighlightCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.darkCardColor,
+          color: const Color(0xFF131D24),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.25)),
+          border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: AppColors.verdeVale.withValues(alpha: 0.08),
+              color: Colors.black.withValues(alpha: 0.35),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -239,10 +239,11 @@ class UserRankHighlightCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             player.name,
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.cinzel(
                               color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -263,13 +264,13 @@ class UserRankHighlightCard extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            '#${player.position}º Lugar',
-                            style: GoogleFonts.poppins(
+                            '#${player.position}º LUGAR',
+                            style: GoogleFonts.orbitron(
                               color: player.position <= 3
                                   ? AppColors.amareloVale
                                   : AppColors.verdeVale,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),

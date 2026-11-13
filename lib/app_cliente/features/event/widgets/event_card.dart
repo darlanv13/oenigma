@@ -164,11 +164,11 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                               event.prize,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                fontSize: 22,
+                              style: GoogleFonts.cinzel(
+                                fontSize: 19,
                                 fontWeight: FontWeight.w900,
                                 color: const Color(0xFFF3A522),
-                                letterSpacing: -0.3,
+                                letterSpacing: 0.5,
                               ),
                             ),
                           ),
@@ -197,11 +197,12 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                                   displayTitle,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 19,
+                                  style: GoogleFonts.cinzel(
+                                    fontSize: 16.5,
                                     fontWeight: FontWeight.w800,
                                     color: Colors.white,
-                                    height: 1.15,
+                                    height: 1.2,
+                                    letterSpacing: 0.6,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
@@ -256,10 +257,11 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                                       const SizedBox(width: 5.5),
                                       Text(
                                         'Dificuldade: $displayDifficulty',
-                                        style: GoogleFonts.inter(
+                                        style: GoogleFonts.cinzel(
                                           color: const Color(0xFFCFD8DC),
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w600,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.5,
                                         ),
                                       ),
                                     ],
@@ -304,9 +306,9 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
                               event.price == 0
                                   ? 'ENTRADA GRÁTIS'
                                   : 'INSCRIÇÃO: R\$ ${event.price.toStringAsFixed(2).replaceAll('.', ',')}',
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.cinzel(
                                 color: Colors.white,
-                                fontSize: 13,
+                                fontSize: 12.5,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 0.8,
                               ),
@@ -354,11 +356,11 @@ class _EventCardState extends State<EventCard> with SingleTickerProviderStateMix
           const SizedBox(width: 5),
           Text(
             label,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.cinzel(
               color: const Color(0xFF00A4B4),
-              fontSize: 10,
+              fontSize: 9.5,
               fontWeight: FontWeight.w800,
-              letterSpacing: 0.7,
+              letterSpacing: 0.8,
             ),
           ),
         ],

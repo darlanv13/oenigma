@@ -92,11 +92,11 @@ class _EnigmaCityAppState extends State<EnigmaCityApp> with WidgetsBindingObserv
           elevation: 0,
           centerTitle: true,
           iconTheme: const IconThemeData(color: Colors.white),
-          titleTextStyle: GoogleFonts.poppins(
-            fontSize: 20,
+          titleTextStyle: GoogleFonts.cinzel(
+            fontSize: 18,
             fontWeight: FontWeight.w800,
             color: Colors.white,
-            letterSpacing: 0.5,
+            letterSpacing: 0.8,
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -108,10 +108,10 @@ class _EnigmaCityAppState extends State<EnigmaCityApp> with WidgetsBindingObserv
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            textStyle: GoogleFonts.poppins(
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-              letterSpacing: 0.5,
+            textStyle: GoogleFonts.cinzel(
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+              letterSpacing: 0.8,
             ),
           ),
         ),

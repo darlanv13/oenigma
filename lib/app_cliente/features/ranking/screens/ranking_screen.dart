@@ -300,13 +300,39 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
         : (_currentRanking.isNotEmpty ? _currentRanking.first.phasesCompleted : null);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF0B1115),
       body: Stack(
         children: [
+          // Luzes ambientais suaves e discretas de fundo (Padrão Enigma)
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.verdeVale.withValues(alpha: 0.10),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 80,
+            left: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.amareloVale.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+
           // Refresh indicator for pulling to reload ranking data
           RefreshIndicator(
-            color: AppColors.verdeVale,
-            backgroundColor: AppColors.darkCardColor,
+            color: AppColors.amareloVale,
+            backgroundColor: const Color(0xFF131D24),
             onRefresh: () async {
               SoundService.playScan();
               ref.invalidate(homeEventsProvider);
@@ -318,10 +344,10 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                 parent: BouncingScrollPhysics(),
               ),
               slivers: [
-                // Modern App Bar
+                // Modern App Bar Enigma Style
                 SliverAppBar(
                   automaticallyImplyLeading: false,
-                  backgroundColor: AppColors.darkBackground.withValues(alpha: 0.85),
+                  backgroundColor: const Color(0xFF0B1115).withValues(alpha: 0.90),
                   elevation: 0,
                   pinned: true,
                   title: Row(
@@ -331,21 +357,25 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.amareloVale.withValues(alpha: 0.15),
+                          border: Border.all(
+                            color: AppColors.amareloVale.withValues(alpha: 0.4),
+                            width: 1,
+                          ),
                         ),
                         child: const FaIcon(
                           FontAwesomeIcons.trophy,
-                          size: 15,
+                          size: 13,
                           color: AppColors.amareloVale,
                         ),
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        'Ranking dos Exploradores',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700,
+                        'RANKING DOS EXPLORADORES',
+                        style: GoogleFonts.cinzel(
+                          fontWeight: FontWeight.w900,
                           color: Colors.white,
-                          fontSize: 18,
-                          letterSpacing: 0.3,
+                          fontSize: 15,
+                          letterSpacing: 0.8,
                         ),
                       ),
                     ],
@@ -375,11 +405,11 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                       children: [
                         // Event Selector
                         Text(
-                          'SELECIONE O EVENTO',
-                          style: GoogleFonts.inter(
+                          'SELECIONE A EXPEDIÇÃO',
+                          style: GoogleFonts.cinzel(
                             color: AppColors.cinzaMedio,
                             fontSize: 11,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
                             letterSpacing: 1.0,
                           ),
                         ),
@@ -424,12 +454,12 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: AppColors.darkCardColor,
+                            color: const Color(0xFF131D24),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                            border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.25),
+                                color: Colors.black.withValues(alpha: 0.35),
                                 blurRadius: 10,
                                 offset: const Offset(0, 2),
                               ),
@@ -452,10 +482,11 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
                               child: Container(
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  color: AppColors.darkCardColor,
+                                  color: const Color(0xFF131D24),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.08),
+                                    color: const Color(0xFF1E3A45),
+                                    width: 1.2,
                                   ),
                                 ),
                                 child: TextField(
@@ -785,12 +816,13 @@ class _RankingScreenState extends ConsumerState<RankingScreen> {
               ),
               const SizedBox(width: 6),
               Text(
-                title,
+                title.toUpperCase(),
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w700,
+                style: GoogleFonts.cinzel(
+                  fontWeight: FontWeight.w800,
                   color: isSelected ? Colors.white : AppColors.cinzaMedio,
-                  fontSize: 12,
+                  fontSize: 10.5,
+                  letterSpacing: 0.6,
                 ),
               ),
             ],

@@ -27,17 +27,17 @@ class HomeProfileCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(24),
+        color: const Color(0xFF131D24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.verdeVale.withValues(alpha: 0.25),
+          color: const Color(0xFF1E3A45),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.35),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -52,18 +52,38 @@ class HomeProfileCard extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.verdeVale.withValues(alpha: 0.15),
+                  color: const Color(0xFF0B1115),
                   border: Border.all(
-                    color: AppColors.verdeVale,
+                    color: AppColors.verdeVale.withValues(alpha: 0.6),
                     width: 1.5,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.verdeVale.withValues(alpha: 0.15),
+                      blurRadius: 8,
+                    ),
+                  ],
                 ),
-                child: const Center(
-                  child: FaIcon(
-                    FontAwesomeIcons.solidUser,
-                    color: AppColors.verdeVale,
-                    size: 18,
-                  ),
+                child: Center(
+                  child: wallet.photoURL != null && wallet.photoURL!.isNotEmpty
+                      ? ClipOval(
+                          child: Image.network(
+                            wallet.photoURL!,
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const FaIcon(
+                              FontAwesomeIcons.solidUser,
+                              color: AppColors.verdeVale,
+                              size: 16,
+                            ),
+                          ),
+                        )
+                      : const FaIcon(
+                          FontAwesomeIcons.solidUser,
+                          color: AppColors.verdeVale,
+                          size: 16,
+                        ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -72,19 +92,22 @@ class HomeProfileCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Olá,',
-                    style: GoogleFonts.inter(
+                    'CAÇADOR',
+                    style: GoogleFonts.cinzel(
                       color: AppColors.cinzaMedio,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.8,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     firstName.isNotEmpty ? firstName : 'Visitante!',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.cinzel(
                       color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
                     ),
                   ),
                 ],
@@ -101,7 +124,7 @@ class HomeProfileCard extends StatelessWidget {
               Container(
                 height: 28,
                 width: 1,
-                color: Colors.white12,
+                color: const Color(0xFF1E3A45),
                 margin: const EdgeInsets.symmetric(horizontal: 14),
               ),
               _buildStatColumn(
@@ -124,19 +147,19 @@ class HomeProfileCard extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: GoogleFonts.inter(
+          style: GoogleFonts.cinzel(
             color: AppColors.cinzaMedio,
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
+            fontSize: 9.5,
+            fontWeight: FontWeight.w700,
             letterSpacing: 0.8,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Text(
           value,
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.orbitron(
             color: isBalance ? AppColors.amareloVale : Colors.white,
-            fontSize: 15,
+            fontSize: 14,
             fontWeight: FontWeight.w700,
           ),
         ),

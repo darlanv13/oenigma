@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -7,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:oenigma/core/models/event_model.dart';
 import 'package:oenigma/core/models/enigma_model.dart';
+import 'package:oenigma/core/services/sound_service.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/core/widgets/hunter_arsenal_sheet.dart';
 
@@ -106,10 +108,38 @@ class _LobbyFindEndWinScreenState extends ConsumerState<LobbyFindEndWinScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: StreamBuilder<List<EnigmaModel>>(
-        stream: _enigmasStream,
-        builder: (context, snapshot) {
+      backgroundColor: const Color(0xFF0B1115),
+      body: Stack(
+        children: [
+          // Luzes ambientais suaves e discretas de fundo (Padrão Enigma)
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.verdeVale.withValues(alpha: 0.10),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 80,
+            left: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.amareloVale.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+
+          StreamBuilder<List<EnigmaModel>>(
+            stream: _enigmasStream,
+            builder: (context, snapshot) {
           final enigmas = snapshot.data ?? [];
           final visibleEnigmas = enigmas.where((e) {
             if (e.status != 'closed') return true;
@@ -166,9 +196,9 @@ class _LobbyFindEndWinScreenState extends ConsumerState<LobbyFindEndWinScreen>
                                   const SizedBox(width: 6),
                                   Text(
                                     'ACHE & GANHE',
-                                    style: GoogleFonts.poppins(
+                                    style: GoogleFonts.cinzel(
                                       color: AppColors.amareloVale,
-                                      fontSize: 11,
+                                      fontSize: 10.5,
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: 1.2,
                                     ),
@@ -311,11 +341,11 @@ class _LobbyFindEndWinScreenState extends ConsumerState<LobbyFindEndWinScreen>
                             const SizedBox(width: 10),
                             Text(
                               'ENIGMAS DISPONÍVEIS',
-                              style: GoogleFonts.poppins(
-                                color: Colors.white.withValues(alpha: 0.9),
+                              style: GoogleFonts.cinzel(
+                                color: Colors.white,
                                 fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.5,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -508,6 +538,8 @@ class _LobbyFindEndWinScreenState extends ConsumerState<LobbyFindEndWinScreen>
           );
         },
       ),
+        ],
+      ),
     );
   }
 }
@@ -516,7 +548,7 @@ class _LobbyFindEndWinScreenState extends ConsumerState<LobbyFindEndWinScreen>
 // COMPONENTES PRIVADOS
 // ===========================================================================
 
-/// Botão de voltar estilizado com glow suave
+/// Botão de voltar estilizado com glow suave (Padrão Enigma)
 class _BackButton extends StatelessWidget {
   final VoidCallback onTap;
   const _BackButton({required this.onTap});
@@ -524,26 +556,27 @@ class _BackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        SoundService.playClick();
+        onTap();
+      },
       child: Container(
-        width: 42,
-        height: 42,
+        width: 38,
+        height: 38,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: 0.05),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.verdeVale.withValues(alpha: 0.08),
-              blurRadius: 12,
-            ),
-          ],
+          color: const Color(0xFF131D24),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.12),
+            width: 1.2,
+          ),
         ),
         child: const Center(
           child: FaIcon(
             FontAwesomeIcons.chevronLeft,
             color: Colors.white,
-            size: 14,
+            size: 13,
           ),
         ),
       ),
@@ -618,15 +651,15 @@ class _RadarHero extends StatelessWidget {
             height: 72,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.darkCardColor,
+              color: const Color(0xFF131D24),
               border: Border.all(
-                color: AppColors.verdeVale.withValues(alpha: 0.4),
-                width: 2,
+                color: AppColors.verdeVale.withValues(alpha: 0.5),
+                width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.verdeVale.withValues(alpha: 0.2),
-                  blurRadius: 20,
+                  blurRadius: 16,
                   spreadRadius: 2,
                 ),
               ],
@@ -636,10 +669,10 @@ class _RadarHero extends StatelessWidget {
               children: [
                 Text(
                   '$closedCount',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.orbitron(
                     color: AppColors.verdeVale,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
                     height: 1,
                   ),
                 ),
@@ -651,10 +684,10 @@ class _RadarHero extends StatelessWidget {
                 ),
                 Text(
                   '$totalCount',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                  style: GoogleFonts.orbitron(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
                     height: 1,
                   ),
                 ),
@@ -669,11 +702,11 @@ class _RadarHero extends StatelessWidget {
               children: [
                 Text(
                   'ENIGMAS',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.cinzel(
                     color: Colors.white,
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 4,
+                    letterSpacing: 3,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -867,11 +900,19 @@ class _StatChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.darkCardColor.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(14),
+          color: const Color(0xFF131D24),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: iconColor.withValues(alpha: 0.12),
+            color: const Color(0xFF1E3A45),
+            width: 1.2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -879,10 +920,11 @@ class _StatChip extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               label,
-              style: GoogleFonts.inter(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
+              style: GoogleFonts.cinzel(
+                color: Colors.white,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
               ),
               textAlign: TextAlign.center,
               maxLines: 1,

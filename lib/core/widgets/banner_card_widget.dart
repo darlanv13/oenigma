@@ -41,21 +41,22 @@ class BannerCardWidget extends StatelessWidget {
         width: width ?? MediaQuery.of(context).size.width,
         margin: margin,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24.0),
+          borderRadius: BorderRadius.circular(20.0),
+          border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
           boxShadow: showShadow
               ? [
                   BoxShadow(
                     color: banner.isImageOnly
-                        ? Colors.black.withValues(alpha: 0.25)
+                        ? Colors.black.withValues(alpha: 0.35)
                         : banner.startColor.withValues(alpha: 0.28),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
                   ),
                 ]
               : null,
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24.0),
+          borderRadius: BorderRadius.circular(20.0),
           child: banner.isImageOnly
               ? _buildImageOnlyBanner(context)
               : _buildCardBanner(context),
@@ -264,11 +265,11 @@ class BannerCardWidget extends StatelessWidget {
                       ],
                       Text(
                         banner.tagText.toUpperCase(),
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.cinzel(
                           color: AppColors.amareloVale,
                           fontSize: 9,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2,
+                          letterSpacing: 1.0,
                         ),
                       ),
                     ],
@@ -283,10 +284,11 @@ class BannerCardWidget extends StatelessWidget {
                   ),
                   child: Text(
                     banner.title,
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.cinzel(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 16.5,
                       fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
                       height: 1.2,
                     ),
                     maxLines: 1,

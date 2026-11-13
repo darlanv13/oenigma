@@ -66,53 +66,102 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        leading: Navigator.canPop(context)
-            ? GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: Center(
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.06),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-                    ),
-                    child: const Center(
-                      child: FaIcon(FontAwesomeIcons.chevronLeft, color: Colors.white, size: 14),
+      backgroundColor: const Color(0xFF0B1115),
+      body: Stack(
+        children: [
+          // Luzes ambientais suaves (Padrão Enigma)
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.verdeVale.withValues(alpha: 0.10),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 80,
+            left: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.amareloVale.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: Column(
+              children: [
+                // Top Bar customizada
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Navigator.canPop(context)
+                          ? GestureDetector(
+                              onTap: () {
+                                SoundService.playClick();
+                                Navigator.of(context).pop();
+                              },
+                              child: Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF131D24),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                    width: 1.2,
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: FaIcon(FontAwesomeIcons.chevronLeft, color: Colors.white, size: 13),
+                                ),
+                              ),
+                            )
+                          : const SizedBox(width: 38),
+                      Text(
+                        'ACESSAR',
+                        style: GoogleFonts.cinzel(
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          fontSize: 16,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(width: 38),
+                    ],
+                  ),
+                ),
+
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildHeader(),
+                          const SizedBox(height: 28),
+                          _buildLoginForm(),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              )
-            : null,
-        title: Text(
-          'Acessar',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            fontSize: 18,
+              ],
+            ),
           ),
-        ),
-        centerTitle: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 32),
-              _buildLoginForm(),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -124,7 +173,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.verdeVale.withValues(alpha: 0.15),
+            color: const Color(0xFF131D24),
             boxShadow: [
               BoxShadow(
                 color: AppColors.verdeVale.withValues(alpha: 0.25),
@@ -132,14 +181,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 spreadRadius: 4,
               ),
             ],
-            border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.35), width: 1.5),
+            border: Border.all(color: const Color(0xFF1E3A45), width: 1.5),
           ),
           child: const FaIcon(FontAwesomeIcons.compass, color: AppColors.verdeVale, size: 44),
         ),
         const SizedBox(height: 18),
         Text(
           'ENIGMA CITY',
-          style: GoogleFonts.poppins(
+          style: GoogleFonts.cinzel(
             fontSize: 26,
             fontWeight: FontWeight.w900,
             letterSpacing: 2,
@@ -156,11 +205,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
           child: Text(
             'CAÇA AO TESOURO URBANO',
-            style: GoogleFonts.inter(
+            style: GoogleFonts.cinzel(
               fontSize: 10,
               letterSpacing: 2.0,
               color: AppColors.amareloVale,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ),
@@ -172,14 +221,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final defaultPinTheme = PinTheme(
       width: 50,
       height: 58,
-      textStyle: GoogleFonts.poppins(
+      textStyle: GoogleFonts.orbitron(
         fontSize: 22,
         color: Colors.white,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.bold,
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        color: const Color(0xFF0C171F),
+        border: Border.all(color: const Color(0xFF1E3A45)),
         borderRadius: BorderRadius.circular(14),
       ),
     );
@@ -187,12 +236,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Container(
       padding: const EdgeInsets.all(26),
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1),
+        color: const Color(0xFF131D24),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Colors.black.withValues(alpha: 0.35),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -262,6 +311,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 onPressed: _isLoading
                     ? null
                     : () {
+                        HapticFeedback.lightImpact();
+                        SoundService.playClick();
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => const ForgotPasswordScreen(),
@@ -294,7 +345,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
               ),
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                        HapticFeedback.lightImpact();
+                        _handleLogin();
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   foregroundColor: Colors.white,
@@ -317,8 +373,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         children: [
                           Text(
                             "INICIAR SESSÃO",
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
+                            style: GoogleFonts.cinzel(
+                              fontSize: 13,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 1.0,
                             ),
@@ -341,6 +397,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onTap: _isLoading
                        ? null
                       : () {
+                          HapticFeedback.lightImpact();
+                          SoundService.playClick();
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => const SignUpScreen(),
@@ -371,7 +429,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         const SizedBox(width: 8),
         Text(
           label,
-          style: GoogleFonts.inter(
+          style: GoogleFonts.cinzel(
             color: Colors.white,
             fontSize: 11,
             fontWeight: FontWeight.w800,
@@ -395,32 +453,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       validator: validator,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      style: GoogleFonts.inter(
+      style: GoogleFonts.orbitron(
         color: Colors.white,
-        fontWeight: FontWeight.w600,
-        fontSize: 15,
+        fontWeight: FontWeight.bold,
+        fontSize: 14,
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.05),
+        fillColor: const Color(0xFF0C171F),
         hintText: hintText,
-        hintStyle: GoogleFonts.inter(
-          color: AppColors.cinzaMedio,
-          fontSize: 14,
+        hintStyle: GoogleFonts.orbitron(
+          color: Colors.white24,
+          fontSize: 13,
         ),
         prefixIcon: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14.0),
-          child: FaIcon(icon, color: AppColors.cinzaMedio, size: 16),
+          child: FaIcon(icon, color: AppColors.cinzaMedio, size: 15),
         ),
         prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          borderSide: const BorderSide(color: Color(0xFF1E3A45)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          borderSide: const BorderSide(color: Color(0xFF1E3A45)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),

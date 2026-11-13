@@ -50,29 +50,29 @@ class RankingList extends ConsumerWidget {
                     ? const LinearGradient(
                         colors: [
                           Color(0xFF00383E),
-                          Color(0xFF142023),
+                          Color(0xFF131D24),
                         ],
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                       )
                     : null,
-                color: isCurrentUser ? null : AppColors.darkCardColor,
+                color: isCurrentUser ? null : const Color(0xFF131D24),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: isCurrentUser
                       ? AppColors.verdeVale
                       : (isTop10
-                          ? AppColors.verdeVale.withValues(alpha: 0.3)
-                          : Colors.white.withValues(alpha: 0.08)),
-                  width: isCurrentUser ? 1.5 : 1.0,
+                          ? AppColors.verdeVale.withValues(alpha: 0.35)
+                          : const Color(0xFF1E3A45)),
+                  width: isCurrentUser ? 1.5 : 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: isCurrentUser
                         ? AppColors.verdeVale.withValues(alpha: 0.25)
-                        : Colors.black.withValues(alpha: 0.2),
+                        : Colors.black.withValues(alpha: 0.3),
                     blurRadius: isCurrentUser ? 12 : 8,
-                    offset: const Offset(0, 2),
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -93,12 +93,12 @@ class RankingList extends ConsumerWidget {
                     child: Center(
                       child: Text(
                         "${player.position}º",
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.orbitron(
                           color: isCurrentUser
                               ? AppColors.verdeVale
                               : (isTop10 ? Colors.white : AppColors.cinzaMedio),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
                       ),
                     ),
@@ -148,7 +148,7 @@ class RankingList extends ConsumerWidget {
                             ),
                             child: Text(
                               'VOCÊ',
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.cinzel(
                                 color: Colors.white,
                                 fontSize: 7,
                                 fontWeight: FontWeight.w900,
@@ -170,10 +170,11 @@ class RankingList extends ConsumerWidget {
                             Flexible(
                               child: Text(
                                 player.name,
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
+                                style: GoogleFonts.cinzel(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13.5,
                                   color: Colors.white,
+                                  letterSpacing: 0.5,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -194,10 +195,11 @@ class RankingList extends ConsumerWidget {
                                 ),
                                 child: Text(
                                   'TOP 10',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 9,
+                                  style: GoogleFonts.cinzel(
+                                    fontSize: 8.5,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.verdeVale,
+                                    letterSpacing: 0.6,
                                   ),
                                 ),
                               ),
@@ -228,10 +230,9 @@ class RankingList extends ConsumerWidget {
                             const SizedBox(width: 10),
                             Text(
                               player.formattedCompletionTime,
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.orbitron(
                                 color: AppColors.cinzaMedio,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 9.5,
                               ),
                             ),
                           ],
@@ -247,20 +248,21 @@ class RankingList extends ConsumerWidget {
                     children: [
                       Text(
                         '${player.phasesCompleted}',
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.orbitron(
                           color: isCurrentUser
                               ? AppColors.verdeVale
                               : (isTop10 ? Colors.white : AppColors.cinzaMedio),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
                         ),
                       ),
                       Text(
-                        'Fases',
-                        style: GoogleFonts.inter(
+                        'FASES',
+                        style: GoogleFonts.cinzel(
                           color: AppColors.cinzaMedio,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],

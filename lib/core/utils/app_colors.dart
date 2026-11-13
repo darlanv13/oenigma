@@ -32,10 +32,11 @@ class AppColors {
   static const Color scaffoldBackground = Color(0xFFF4F7F8);
   static const Color cardBackground = Color(0xFFFFFFFF);
 
-  // --- Dark Mode / Painel Administrativo ---
-  static const Color darkBackground = Color(0xFF0D1416);
-  static const Color sidebarBackground = Color(0xFF080D0E);
-  static const Color darkCardColor = Color(0xFF142023);
+  // --- Dark Mode / Identidade Visual O Enigma ---
+  static const Color darkBackground = Color(0xFF0B1115);
+  static const Color sidebarBackground = Color(0xFF070C0F);
+  static const Color darkCardColor = Color(0xFF131D24);
+  static const Color darkCardBorder = Color(0xFF1E3A45);
 
   // --- Feedback & Status ---
   static const Color danger = Color(0xFFE53935);

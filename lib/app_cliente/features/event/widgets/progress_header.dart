@@ -20,14 +20,14 @@ class ProgressHeader extends StatelessWidget {
         : 0.0;
 
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        color: const Color(0xFF131D24),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
+            color: Colors.black.withValues(alpha: 0.35),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -41,24 +41,24 @@ class ProgressHeader extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.verdeVale.withValues(alpha: 0.15),
+                  color: AppColors.amareloVale.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.3)),
+                  border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.4)),
                 ),
                 child: const FaIcon(
                   FontAwesomeIcons.route,
-                  color: AppColors.verdeVale,
-                  size: 14,
+                  color: AppColors.amareloVale,
+                  size: 13,
                 ),
               ),
               const SizedBox(width: 10),
               Text(
                 'STATUS DA CAÇADA',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.cinzel(
                   fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.cinzaMedio,
-                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.amareloVale,
+                  letterSpacing: 1.0,
                 ),
               ),
             ],
@@ -101,19 +101,20 @@ class ProgressHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Fases Concluídas',
-                style: GoogleFonts.inter(
+                'FASES CONCLUÍDAS',
+                style: GoogleFonts.cinzel(
                   color: AppColors.cinzaMedio,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
                 ),
               ),
               Text(
                 '$completedPhases / $totalPhases',
-                style: GoogleFonts.poppins(
+                style: GoogleFonts.orbitron(
                   color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],

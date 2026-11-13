@@ -137,16 +137,16 @@ class _CardEnigmaState extends State<CardEnigma> {
         duration: const Duration(milliseconds: 150),
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.darkCardColor,
+            color: const Color(0xFF131D24),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: statusColor.withValues(alpha: 0.35),
+              color: const Color(0xFF1E3A45),
               width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.35),
-                blurRadius: 12,
+                blurRadius: 14,
                 offset: const Offset(0, 4),
               ),
             ],
@@ -177,9 +177,10 @@ class _CardEnigmaState extends State<CardEnigma> {
                       height: 42,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: statusColor.withValues(alpha: 0.1),
+                        color: const Color(0xFF0B1115),
                         border: Border.all(
-                          color: statusColor.withValues(alpha: 0.2),
+                          color: statusColor.withValues(alpha: 0.35),
+                          width: 1.2,
                         ),
                       ),
                       child: Center(
@@ -203,10 +204,11 @@ class _CardEnigmaState extends State<CardEnigma> {
                               Flexible(
                                 child: Text(
                                   widget.enigma.title,
-                                  style: GoogleFonts.poppins(
+                                  style: GoogleFonts.cinzel(
                                     color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 13.5,
+                                    letterSpacing: 0.6,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -224,10 +226,10 @@ class _CardEnigmaState extends State<CardEnigma> {
                                 ),
                                 child: Text(
                                   isTemporarilyBlocked ? 'CONCLUÍDO' : 'DISPONÍVEL',
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.cinzel(
                                     color: statusColor,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
+                                    fontSize: 8.5,
+                                    fontWeight: FontWeight.w800,
                                     letterSpacing: 0.5,
                                   ),
                                 ),
@@ -261,10 +263,10 @@ class _CardEnigmaState extends State<CardEnigma> {
                                   const SizedBox(width: 3),
                                   Text(
                                     widget.enigma.difficulty,
-                                    style: GoogleFonts.inter(
+                                    style: GoogleFonts.cinzel(
                                       color: AppColors.cinzaMedio,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ],
@@ -276,10 +278,10 @@ class _CardEnigmaState extends State<CardEnigma> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                             decoration: BoxDecoration(
-                              color: AppColors.amareloValeLight,
+                              color: const Color(0xFF0B1115),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: AppColors.amareloVale.withValues(alpha: 0.25),
+                                color: AppColors.amareloVale.withValues(alpha: 0.4),
                               ),
                             ),
                             child: Row(
@@ -293,10 +295,10 @@ class _CardEnigmaState extends State<CardEnigma> {
                                 const SizedBox(width: 5),
                                 Text(
                                   'R\$ ${currencyFormat.format(widget.enigma.prize).trim()}',
-                                  style: GoogleFonts.poppins(
+                                  style: GoogleFonts.orbitron(
                                     color: AppColors.amareloVale,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11.5,
                                   ),
                                 ),
                               ],
@@ -316,9 +318,9 @@ class _CardEnigmaState extends State<CardEnigma> {
                             builder: (context, snapshot) {
                               return Text(
                                 snapshot.data ?? "--:--",
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.orbitron(
                                   color: statusColor,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.bold,
                                   fontSize: 12,
                                   letterSpacing: 0.5,
                                 ),

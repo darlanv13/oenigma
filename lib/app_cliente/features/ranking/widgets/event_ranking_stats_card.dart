@@ -22,12 +22,12 @@ class EventRankingStatsCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
+        color: const Color(0xFF131D24),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
+            color: Colors.black.withValues(alpha: 0.35),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -94,9 +94,9 @@ class EventRankingStatsCard extends StatelessWidget {
               Flexible(
                 child: Text(
                   value,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                  style: GoogleFonts.orbitron(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
                     color: valueColor,
                   ),
                   maxLines: 1,
@@ -105,13 +105,14 @@ class EventRankingStatsCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
+            label.toUpperCase(),
+            style: GoogleFonts.cinzel(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
               color: AppColors.cinzaMedio,
+              letterSpacing: 0.5,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

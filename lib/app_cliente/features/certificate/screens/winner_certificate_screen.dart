@@ -82,216 +82,287 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
     );
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: Text(
-          "Parabéns, Caçador!",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      backgroundColor: const Color(0xFF0B1115),
       body: Stack(
         children: [
-          SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(24.0),
+          // Luzes ambientais suaves (Padrão Enigma)
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.verdeVale.withValues(alpha: 0.10),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 80,
+            left: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.amareloVale.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+
+          SafeArea(
             child: Column(
               children: [
-                Screenshot(
-                  controller: _screenshotController,
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: AppColors.darkCardColor,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: AppColors.amareloVale.withValues(alpha: 0.5),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.amareloVale.withValues(alpha: 0.15),
-                          blurRadius: 20,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        _buildEnigmaCityLogo(),
-                        const SizedBox(height: 10),
-                        Lottie.asset(
-                          'assets/animations/trofel.json',
-                          height: 120,
-                        ),
-                        Text(
-                          "CERTIFICADO DE CONQUISTA",
-                          style: GoogleFonts.poppins(
-                            color: AppColors.amareloVale,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppColors.amareloVale,
-                                  width: 3,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.amareloVale.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                    blurRadius: 18,
-                                    spreadRadius: 2,
+                // Top Bar elegante Enigma Style
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Navigator.canPop(context)
+                          ? GestureDetector(
+                              onTap: () {
+                                SoundService.playClick();
+                                Navigator.of(context).pop();
+                              },
+                              child: Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF131D24),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                    width: 1.2,
                                   ),
-                                ],
+                                ),
+                                child: const Center(
+                                  child: FaIcon(
+                                    FontAwesomeIcons.chevronLeft,
+                                    color: Colors.white,
+                                    size: 13,
+                                  ),
+                                ),
                               ),
-                              child: CircleAvatar(
-                                radius: 44,
-                                backgroundColor: AppColors.darkBackground,
-                                backgroundImage: winnerPhotoURL != null
-                                    ? NetworkImage(winnerPhotoURL)
-                                    : null,
-                                child: winnerPhotoURL == null
-                                    ? const FaIcon(
-                                        FontAwesomeIcons.solidUser,
-                                        size: 40,
-                                        color: AppColors.amareloVale,
-                                      )
-                                    : null,
-                              ),
-                            ),
-                            Positioned(
-                              top: -2,
-                              child: FaIcon(
-                                FontAwesomeIcons.medal,
-                                color: AppColors.amareloVale,
-                                size: 28,
-                              ),
-                            ),
-                          ],
+                            )
+                          : const SizedBox(width: 38),
+                      Text(
+                        'VITÓRIA SUPREMA',
+                        style: GoogleFonts.cinzel(
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          fontSize: 16,
+                          letterSpacing: 1.2,
                         ),
-                        const SizedBox(height: 14),
-                        Text(
-                          winnerFirstName.toUpperCase(),
-                          style: GoogleFonts.poppins(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "O CAÇADOR Nº 1",
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: AppColors.amareloVale,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          child: Divider(
-                            height: 1,
-                            color: Colors.white.withValues(alpha: 0.1),
-                          ),
-                        ),
-                        _buildStatItem(
-                          "Prêmio Recebido",
-                          currencyFormat.format(widget.prizeWon),
-                          FontAwesomeIcons.trophy,
-                          valueColor: AppColors.amareloVale,
-                        ),
-                        _buildStatItem(
-                          "Posição Final",
-                          "#1",
-                          FontAwesomeIcons.chartSimple,
-                          valueColor: AppColors.verdeVale,
-                        ),
-                        _buildStatItem(
-                          "Fases Concluídas",
-                          "${widget.allPhases.length}",
-                          FontAwesomeIcons.circleCheck,
-                          valueColor: AppColors.verdeVale,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Evento: "${widget.event.name}"',
-                          style: GoogleFonts.inter(
-                            color: AppColors.cinzaMedio,
-                            fontStyle: FontStyle.italic,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: AppColors.gradienteVerdeVale,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.verdeVale.withValues(alpha: 0.35),
-                        blurRadius: 14,
-                        offset: const Offset(0, 4),
                       ),
+                      const SizedBox(width: 38),
                     ],
                   ),
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      foregroundColor: Colors.white,
-                      shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    onPressed: _shareCertificate,
-                    icon: const FaIcon(FontAwesomeIcons.shareNodes, size: 16),
-                    label: Text(
-                      "Compartilhar Conquista",
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      children: [
+                        Screenshot(
+                          controller: _screenshotController,
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF131D24),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(0xFF1E3A45),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.4),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                _buildEnigmaCityLogo(),
+                                const SizedBox(height: 10),
+                                Lottie.asset(
+                                  'assets/animations/trofel.json',
+                                  height: 120,
+                                ),
+                                Text(
+                                  "CERTIFICADO DE CONQUISTA",
+                                  style: GoogleFonts.cinzel(
+                                    color: AppColors.amareloVale,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: AppColors.amareloVale,
+                                          width: 3,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppColors.amareloVale.withValues(
+                                              alpha: 0.4,
+                                            ),
+                                            blurRadius: 18,
+                                            spreadRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      child: CircleAvatar(
+                                        radius: 44,
+                                        backgroundColor: AppColors.darkBackground,
+                                        backgroundImage: winnerPhotoURL != null
+                                            ? NetworkImage(winnerPhotoURL)
+                                            : null,
+                                        child: winnerPhotoURL == null
+                                            ? const FaIcon(
+                                                FontAwesomeIcons.solidUser,
+                                                size: 40,
+                                                color: AppColors.amareloVale,
+                                              )
+                                            : null,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: -2,
+                                      child: FaIcon(
+                                        FontAwesomeIcons.medal,
+                                        color: AppColors.amareloVale,
+                                        size: 28,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 14),
+                                Text(
+                                  winnerFirstName.toUpperCase(),
+                                  style: GoogleFonts.cinzel(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "O CAÇADOR Nº 1",
+                                  style: GoogleFonts.cinzel(
+                                    fontSize: 13,
+                                    color: AppColors.amareloVale,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                                  child: Divider(
+                                    height: 1,
+                                    color: Colors.white.withValues(alpha: 0.1),
+                                  ),
+                                ),
+                                _buildStatItem(
+                                  "Prêmio Recebido",
+                                  currencyFormat.format(widget.prizeWon),
+                                  FontAwesomeIcons.trophy,
+                                  valueColor: AppColors.amareloVale,
+                                ),
+                                _buildStatItem(
+                                  "Posição Final",
+                                  "#1",
+                                  FontAwesomeIcons.chartSimple,
+                                  valueColor: AppColors.verdeVale,
+                                ),
+                                _buildStatItem(
+                                  "Fases Concluídas",
+                                  "${widget.allPhases.length}",
+                                  FontAwesomeIcons.circleCheck,
+                                  valueColor: AppColors.verdeVale,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Evento: "${widget.event.name}"',
+                                  style: GoogleFonts.inter(
+                                    color: AppColors.cinzaMedio,
+                                    fontStyle: FontStyle.italic,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            gradient: AppColors.gradienteVerdeVale,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.verdeVale.withValues(alpha: 0.35),
+                                blurRadius: 14,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              shadowColor: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            onPressed: _shareCertificate,
+                            icon: const FaIcon(FontAwesomeIcons.shareNodes, size: 16),
+                            label: Text(
+                              "COMPARTILHAR CONQUISTA",
+                              style: GoogleFonts.cinzel(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        _buildInstructionsCard(),
+                        const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(
+                            "VOLTAR PARA O INÍCIO",
+                            style: GoogleFonts.cinzel(
+                              color: AppColors.verdeVale,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-                _buildInstructionsCard(),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    "Voltar para o Início",
-                    style: GoogleFonts.poppins(
-                      color: AppColors.verdeVale,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
               ],
             ),
           ),
@@ -323,7 +394,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
     return RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
-        style: GoogleFonts.poppins(
+        style: GoogleFonts.cinzel(
           fontSize: 24,
           fontWeight: FontWeight.w900,
           letterSpacing: 2,
@@ -353,22 +424,22 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          FaIcon(icon, color: AppColors.cinzaMedio, size: 16),
+          FaIcon(icon, color: AppColors.cinzaMedio, size: 14),
           const SizedBox(width: 10),
           Text(
             "$label: ",
-            style: GoogleFonts.inter(
+            style: GoogleFonts.cinzel(
               color: AppColors.cinzaMedio,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
             ),
           ),
           Text(
             value,
-            style: GoogleFonts.poppins(
+            style: GoogleFonts.orbitron(
               color: valueColor,
               fontSize: 15,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
@@ -380,9 +451,9 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
+        color: const Color(0xFF131D24),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,11 +467,12 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
               ),
               const SizedBox(width: 10),
               Text(
-                "Como Receber seu Prêmio",
-                style: GoogleFonts.poppins(
+                "COMO RECEBER SEU PRÊMIO",
+                style: GoogleFonts.cinzel(
                   color: AppColors.amareloVale,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.8,
                 ),
               ),
             ],
@@ -409,7 +481,7 @@ class _WinnerCertificateScreenState extends State<WinnerCertificateScreen> {
           Text(
             "O valor do prêmio já foi adicionado ao seu saldo na carteira do aplicativo.\n\nVocê pode usá-lo para se inscrever em novos eventos ou solicitar um saque. Para sacar, vá até a sua Carteira e clique no botão 'Sacar'.",
             style: GoogleFonts.inter(
-              color: Colors.white.withValues(alpha: 0.8),
+              color: Colors.white.withValues(alpha: 0.85),
               height: 1.5,
               fontSize: 13,
             ),

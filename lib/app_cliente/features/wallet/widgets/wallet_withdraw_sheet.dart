@@ -127,11 +127,9 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
+        color: const Color(0xFF131D24),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1),
-        ),
+        border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
       ),
       padding: EdgeInsets.fromLTRB(24, 20, 24, 24 + bottomInset),
       child: SingleChildScrollView(
@@ -157,11 +155,11 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
                 const SizedBox(width: 8),
                 Text(
                   'SACAR VIA PIX',
-                  style: GoogleFonts.poppins(
+                  style: GoogleFonts.cinzel(
                     color: Colors.white,
                     fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.0,
                   ),
                 ),
               ],
@@ -178,9 +176,9 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.04),
+                color: const Color(0xFF0B1115),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
               ),
               child: Column(
                 children: [
@@ -190,7 +188,7 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
                       Text('Saldo Disponível:', style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 13)),
                       Text(
                         'R\$ ${widget.currentBalance.toStringAsFixed(2).replaceAll('.', ',')}',
-                        style: GoogleFonts.poppins(color: AppColors.amareloVale, fontWeight: FontWeight.w800, fontSize: 16),
+                        style: GoogleFonts.orbitron(color: AppColors.amareloVale, fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                     ],
                   ),
@@ -202,9 +200,9 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
                         Text('Saldo Restante:', style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 12)),
                         Text(
                           'R\$ ${remainingBalance.toStringAsFixed(2).replaceAll('.', ',')}',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.orbitron(
                             color: _enteredAmount > widget.currentBalance ? Colors.redAccent : Colors.white70,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
                         ),
@@ -225,16 +223,16 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
             TextField(
               controller: _amountController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: GoogleFonts.orbitron(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 prefixText: 'R\$ ',
-                prefixStyle: GoogleFonts.poppins(color: AppColors.amareloVale, fontSize: 18, fontWeight: FontWeight.bold),
+                prefixStyle: GoogleFonts.orbitron(color: AppColors.amareloVale, fontSize: 18, fontWeight: FontWeight.bold),
                 hintText: '0,00',
-                hintStyle: GoogleFonts.poppins(color: Colors.white.withValues(alpha: 0.3)),
+                hintStyle: GoogleFonts.orbitron(color: Colors.white.withValues(alpha: 0.3)),
                 filled: true,
                 fillColor: Colors.black.withValues(alpha: 0.25),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF1E3A45))),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF1E3A45))),
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.verdeVale)),
               ),
             ),
@@ -332,9 +330,9 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
                         const SizedBox(width: 10),
                         Text(
                           'SOLICITAR SAQUE PIX',
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.cinzel(
                             fontWeight: FontWeight.w800,
-                            fontSize: 14,
+                            fontSize: 13,
                             letterSpacing: 0.8,
                           ),
                         ),
@@ -355,14 +353,14 @@ class _WalletWithdrawSheetState extends State<WalletWithdrawSheet> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
+            color: const Color(0xFF0B1115),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            border: Border.all(color: const Color(0xFF1E3A45)),
           ),
           child: Center(
             child: Text(
               label,
-              style: GoogleFonts.inter(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+              style: GoogleFonts.orbitron(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
             ),
           ),
         ),

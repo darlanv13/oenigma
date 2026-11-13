@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -133,54 +134,131 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // AppBar Customizada
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Navigator.canPop(context)
-                      ? GestureDetector(
-                          onTap: () => Navigator.of(context).pop(),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.06),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-                            ),
-                            child: const Center(
-                              child: FaIcon(
-                                FontAwesomeIcons.chevronLeft,
-                                color: Colors.white,
-                                size: 14,
-                              ),
-                            ),
-                          ),
-                        )
-                      : const SizedBox(width: 40),
-                  Text(
-                    'TESOURO',
-                    style: GoogleFonts.cinzel(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 1.4,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const FaIcon(FontAwesomeIcons.arrowsRotate, color: Colors.white70, size: 16),
-                    tooltip: 'Atualizar Saldo',
-                    onPressed: _refreshWallet,
-                  ),
-                ],
+      backgroundColor: const Color(0xFF0B1115),
+      body: Stack(
+        children: [
+          // Luzes ambientais suaves e discretas de fundo (Padrão Enigma)
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.verdeVale.withValues(alpha: 0.10),
               ),
             ),
+          ),
+          Positioned(
+            bottom: 80,
+            left: -50,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.amareloVale.withValues(alpha: 0.08),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: Column(
+              children: [
+                // AppBar Customizada Enigma Style
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Navigator.canPop(context)
+                          ? GestureDetector(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                SoundService.playClick();
+                                Navigator.of(context).pop();
+                              },
+                              child: Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF131D24),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                    width: 1.2,
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: FaIcon(
+                                    FontAwesomeIcons.chevronLeft,
+                                    color: Colors.white,
+                                    size: 13,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : const SizedBox(width: 38),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.amareloVale.withValues(alpha: 0.15),
+                              border: Border.all(
+                                color: AppColors.amareloVale.withValues(alpha: 0.4),
+                                width: 1,
+                              ),
+                            ),
+                            child: const FaIcon(
+                              FontAwesomeIcons.gem,
+                              size: 12,
+                              color: AppColors.amareloVale,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'TESOURO & SALDO',
+                            style: GoogleFonts.cinzel(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _refreshWallet();
+                        },
+                        child: Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF131D24),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              width: 1.2,
+                            ),
+                          ),
+                          child: const Center(
+                            child: FaIcon(
+                              FontAwesomeIcons.arrowsRotate,
+                              color: Colors.white70,
+                              size: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
             Expanded(
               child: authState.when(
@@ -237,31 +315,25 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
           ],
         ),
       ),
+        ],
+      ),
     );
   }
 
   Widget _buildBalanceCard(double balance) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF16252E),
-            Color(0xFF0F171B),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(26),
+        color: const Color(0xFF131D24),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.verdeVale.withValues(alpha: 0.25),
+          color: const Color(0xFF1E3A45),
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.45),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -281,7 +353,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -310,10 +382,10 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                           const SizedBox(width: 6),
                           Text(
                             'SALDO DISPONÍVEL',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.cinzel(
                               color: AppColors.amareloVale,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 10.5,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 10,
                               letterSpacing: 1.0,
                             ),
                           ),
@@ -325,6 +397,10 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                       decoration: BoxDecoration(
                         color: AppColors.verdeVale.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.verdeVale.withValues(alpha: 0.35),
+                          width: 1.0,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -337,10 +413,11 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                           const SizedBox(width: 4),
                           Text(
                             'PIX INSTANTÂNEO',
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.cinzel(
                               color: AppColors.verdeVale,
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
                             ),
                           ),
                         ],
@@ -358,10 +435,10 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                   children: [
                     Text(
                       'R\$ ',
-                      style: GoogleFonts.poppins(
+                      style: GoogleFonts.orbitron(
                         color: AppColors.amareloVale.withValues(alpha: 0.8),
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     Expanded(
@@ -369,10 +446,10 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                         balance.toStringAsFixed(2).replaceAll('.', ','),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
+                        style: GoogleFonts.orbitron(
                           color: AppColors.amareloVale,
-                          fontSize: 38,
-                          fontWeight: FontWeight.w900,
+                          fontSize: 34,
+                          fontWeight: FontWeight.bold,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -512,11 +589,11 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w800,
+                    style: GoogleFonts.cinzel(
+                      fontWeight: FontWeight.w900,
                       color: textColor,
                       fontSize: 12.5,
-                      letterSpacing: 0.6,
+                      letterSpacing: 0.8,
                     ),
                   ),
                   Text(
@@ -551,7 +628,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                 const SizedBox(width: 8),
                 Text(
                   'HISTÓRICO RECENTE',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.cinzel(
                     color: AppColors.cinzaMedio,
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
@@ -615,14 +692,14 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(28),
                 decoration: BoxDecoration(
-                  color: AppColors.darkCardColor,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  color: const Color(0xFF131D24),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
+                      color: Colors.black.withValues(alpha: 0.35),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
@@ -632,7 +709,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                     const SizedBox(height: 14),
                     Text(
                       'Nenhuma transação ainda.',
-                      style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w700),
+                      style: GoogleFonts.cinzel(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -647,14 +724,14 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
 
             return Container(
               decoration: BoxDecoration(
-                color: AppColors.darkCardColor,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                color: const Color(0xFF131D24),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFF1E3A45), width: 1.2),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+                    color: Colors.black.withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -776,10 +853,10 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                                   title,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.inter(
+                                  style: GoogleFonts.cinzel(
                                     color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -797,7 +874,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                                       ),
                                       child: Text(
                                         statusLabel,
-                                        style: GoogleFonts.inter(
+                                        style: GoogleFonts.cinzel(
                                           color: statusColor,
                                           fontSize: 9.5,
                                           fontWeight: FontWeight.w800,
@@ -834,9 +911,9 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                               alignment: Alignment.centerRight,
                               child: Text(
                                 '${isDeposit ? '+' : '-'} R\$ ${amount.toStringAsFixed(2).replaceAll('.', ',')}',
-                                style: GoogleFonts.poppins(
+                                style: GoogleFonts.orbitron(
                                   color: amountColor,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.bold,
                                   fontSize: 13.5,
                                 ),
                               ),
@@ -876,7 +953,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
           color: const Color(0xFF131D24),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           border: Border.all(
-            color: AppColors.verdeVale.withValues(alpha: 0.35),
+            color: const Color(0xFF1E3A45),
             width: 1.2,
           ),
           boxShadow: [
@@ -931,7 +1008,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                       children: [
                         Text(
                           title,
-                          style: GoogleFonts.poppins(
+                          style: GoogleFonts.cinzel(
                             color: Colors.white,
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
@@ -967,10 +1044,10 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                   ),
                   Text(
                     '${isDeposit ? '+' : '-'} R\$ ${amount.toStringAsFixed(2).replaceAll('.', ',')}',
-                    style: GoogleFonts.poppins(
+                    style: GoogleFonts.orbitron(
                       color: isDeposit ? AppColors.verdeVale : Colors.redAccent,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
@@ -992,7 +1069,7 @@ class _WalletScreenState extends ConsumerState<WalletScreen> {
                     ),
                     child: Text(
                       statusLabel,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.cinzel(
                         color: statusColor,
                         fontWeight: FontWeight.w800,
                         fontSize: 11,
