@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>O Enigma • Redirecionando...</title>
+  <script type="text/javascript">
+    // Redireciona caminhos diretos para o Hash Router do Flutter Web no GitHub Pages
+    var pathname = window.location.pathname;
+    var base = '/oenigma/';
+    if (pathname.startsWith(base)) {
+      var sub = pathname.substring(base.length);
+      window.location.replace(window.location.origin + base + '#/' + sub + window.location.search + window.location.hash);
+    } else {
+      window.location.replace(window.location.origin + '/#/' + pathname.replace(/^\//, '') + window.location.search + window.location.hash);
+    }
+  </script>
+</head>
+<body>
+  <p style="font-family: sans-serif; text-align: center; margin-top: 40px; color: #888;">
+    Carregando módulo O Enigma...
+  </p>
+</body>
+</html>

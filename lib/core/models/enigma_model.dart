@@ -35,6 +35,12 @@ class EnigmaModel {
   final bool enableToolTimer;
   final bool enableFakeTargets;
 
+  // === CAMPOS DO CREATOR HUB & SUPER DICA PAGA ===
+  final String? videoUrl; // Vídeo de pista (YouTube, Shorts, TikTok ou link direto)
+  final bool hasPaidSuperHint; // Se este enigma tem Super Dica paga habilitada
+  final String? superHintText; // Conteúdo secreto da Super Dica (liberado após Pix de R$ 1,99)
+  final double superHintPrice; // Valor da Super Dica (padrão R$ 1,99)
+
   EnigmaModel({
     required this.id,
     required this.type,
@@ -67,6 +73,10 @@ class EnigmaModel {
     this.radarCoords = '',
     this.enableToolTimer = true,
     this.enableFakeTargets = true,
+    this.videoUrl,
+    this.hasPaidSuperHint = false,
+    this.superHintText,
+    this.superHintPrice = 1.99,
   });
 
   EnigmaModel copyWith({
@@ -100,6 +110,10 @@ class EnigmaModel {
     String? radarCoords,
     bool? enableToolTimer,
     bool? enableFakeTargets,
+    String? videoUrl,
+    bool? hasPaidSuperHint,
+    String? superHintText,
+    double? superHintPrice,
   }) {
     return EnigmaModel(
       id: id ?? this.id,
@@ -132,6 +146,10 @@ class EnigmaModel {
       radarCoords: radarCoords ?? this.radarCoords,
       enableToolTimer: enableToolTimer ?? this.enableToolTimer,
       enableFakeTargets: enableFakeTargets ?? this.enableFakeTargets,
+      videoUrl: videoUrl ?? this.videoUrl,
+      hasPaidSuperHint: hasPaidSuperHint ?? this.hasPaidSuperHint,
+      superHintText: superHintText ?? this.superHintText,
+      superHintPrice: superHintPrice ?? this.superHintPrice,
     );
   }
 
@@ -205,6 +223,12 @@ class EnigmaModel {
       radarCoords: map['radarCoords']?.toString() ?? '',
       enableToolTimer: map['enableToolTimer'] != null ? map['enableToolTimer'] == true : true,
       enableFakeTargets: map['enableFakeTargets'] != null ? map['enableFakeTargets'] == true : true,
+      videoUrl: map['videoUrl']?.toString(),
+      hasPaidSuperHint: map['hasPaidSuperHint'] != null ? map['hasPaidSuperHint'] == true : false,
+      superHintText: map['superHintText']?.toString(),
+      superHintPrice: map['superHintPrice'] != null
+          ? double.tryParse(map['superHintPrice'].toString()) ?? 1.99
+          : 1.99,
     );
   }
 
@@ -242,6 +266,10 @@ class EnigmaModel {
       'radarCoords': radarCoords,
       'enableToolTimer': enableToolTimer,
       'enableFakeTargets': enableFakeTargets,
+      'videoUrl': videoUrl,
+      'hasPaidSuperHint': hasPaidSuperHint,
+      'superHintText': superHintText,
+      'superHintPrice': superHintPrice,
     };
   }
 }

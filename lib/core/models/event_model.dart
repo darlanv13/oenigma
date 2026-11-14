@@ -23,6 +23,16 @@ class EventModel {
   final String? prizeImageUrl; // URL da imagem PNG do prêmio
   final String difficulty; // ex: 'Média'
 
+  // === CAMPOS DO CREATOR HUB / MULTI-TENANCY ===
+  final String? creatorId;
+  final String? creatorName;
+  final String? creatorAvatar;
+  final String? slug; // Link amigável de divulgação (ex: desafio-do-canal-x)
+  final String? videoTeaserUrl; // Vídeo de introdução (YouTube, Shorts, TikTok, etc.)
+  final double platformFeePercent; // Taxa de serviço da plataforma (ex: 15%)
+  final bool hasPaidHints; // Se habilita as Super Dicas por R$ 1,99
+  final double paidHintPrice; // Preço padrão da Super Dica (R$ 1,99)
+
   String get description => fullDescription;
 
   EventModel({
@@ -44,6 +54,14 @@ class EventModel {
     this.prizeType = 'dinheiro',
     this.prizeImageUrl,
     this.difficulty = 'Média',
+    this.creatorId,
+    this.creatorName,
+    this.creatorAvatar,
+    this.slug,
+    this.videoTeaserUrl,
+    this.platformFeePercent = 15.0,
+    this.hasPaidHints = true,
+    this.paidHintPrice = 1.99,
   });
 
   factory EventModel.fromMap(Map<String, dynamic> map) {
@@ -130,6 +148,19 @@ class EventModel {
       prizeType: prizeType,
       prizeImageUrl: prizeImageUrl,
       difficulty: difficulty,
+      creatorId: map['creatorId']?.toString() ??
+          (map['creator'] is Map ? map['creator']['objectId']?.toString() : null),
+      creatorName: map['creatorName']?.toString(),
+      creatorAvatar: map['creatorAvatar']?.toString(),
+      slug: map['slug']?.toString(),
+      videoTeaserUrl: map['videoTeaserUrl']?.toString() ?? map['videoUrl']?.toString(),
+      platformFeePercent: map['platformFeePercent'] != null
+          ? double.tryParse(map['platformFeePercent'].toString()) ?? 15.0
+          : 15.0,
+      hasPaidHints: map['hasPaidHints'] != null ? map['hasPaidHints'] == true : true,
+      paidHintPrice: map['paidHintPrice'] != null
+          ? double.tryParse(map['paidHintPrice'].toString()) ?? 1.99
+          : 1.99,
     );
   }
 
@@ -152,6 +183,14 @@ class EventModel {
       'prizeType': prizeType,
       'prizeImageUrl': prizeImageUrl,
       'difficulty': difficulty,
+      'creatorId': creatorId,
+      'creatorName': creatorName,
+      'creatorAvatar': creatorAvatar,
+      'slug': slug,
+      'videoTeaserUrl': videoTeaserUrl,
+      'platformFeePercent': platformFeePercent,
+      'hasPaidHints': hasPaidHints,
+      'paidHintPrice': paidHintPrice,
       'phases': phases.map((x) => x.toMap()).toList(),
       'enigmas': enigmas.map((x) => x.toMap()).toList(),
     };

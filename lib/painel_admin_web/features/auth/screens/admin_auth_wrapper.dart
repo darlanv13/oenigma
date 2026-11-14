@@ -5,15 +5,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/core/widgets/oenigma_admin_logo.dart';
 import 'package:oenigma/painel_admin_web/features/admin/screens/main_admin_screen.dart';
+import 'package:oenigma/painel_admin_web/features/creator/screens/main_creator_screen.dart';
 import 'package:oenigma/painel_admin_web/features/auth/providers/auth_provider.dart';
 import 'package:oenigma/painel_admin_web/features/auth/screens/login_screen.dart';
 
 /// Guardião Central de Autenticação do Painel Administrativo Web
 ///
 /// Monitora o estado de autenticação via [authStateProvider] persistido no Parse (localStorage no Web).
-/// - Se o admin já estiver logado (ex.: ao recarregar a página com F5), renderiza diretamente [MainAdminScreen].
+/// - Se o usuário for Criador/Influenciador (`role == 'creator'`), renderiza [MainCreatorScreen].
+/// - Se for Super Admin (`isAdmin` ou `role == 'admin'`), renderiza [MainAdminScreen].
 /// - Se não houver sessão ativa ou se for encerrada (logout), exibe [LoginScreen].
-/// - Durante a verificação inicial da sessão, apresenta uma tela de carregamento tática sem piscar a tela de login.
 class AdminAuthWrapper extends ConsumerWidget {
   const AdminAuthWrapper({super.key});
 
@@ -27,14 +28,20 @@ class AdminAuthWrapper extends ConsumerWidget {
           final isAdmin = user.get<bool>('isAdmin') ?? false;
           final role = user.get<String>('role') ?? 'player';
 
-          if (isAdmin || role == 'admin' || role == 'creator') {
-            return const MainAdminScreen();
-          } else {
-            return const LoginScreen(
-              initialErrorMessage:
-                  'Acesso Restrito: Esta conta não possui privilégios de administrador.',
-            );
+          // 1. Influenciador vai direto para o Creator Studio
+          if (role == 'creator' && !isAdmin) {
+            return const MainCreatorScreen();
           }
+
+          // 2. Super Admin vai para a Plataforma Master
+          if (isAdmin || role == 'admin') {
+            return const MainAdminScreen();
+          }
+
+          return const LoginScreen(
+            initialErrorMessage:
+                'Acesso Restrito: Esta conta não possui privilégios de administrador.',
+          );
         }
         return const LoginScreen();
       },
@@ -44,10 +51,7 @@ class AdminAuthWrapper extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const OEnigmaAdminLogo(
-                size: LogoSize.hero,
-                isVertical: true,
-              ),
+              const OEnigmaAdminLogo(size: LogoSize.hero, isVertical: true),
               const SizedBox(height: 28),
               const SizedBox(
                 width: 26,
@@ -74,4 +78,3 @@ class AdminAuthWrapper extends ConsumerWidget {
     );
   }
 }
-

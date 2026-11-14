@@ -15,6 +15,123 @@ function parseMoney(value) {
   return isNaN(parsed) ? 0.0 : parsed;
 }
 
+/**
+ * Liquidação e Split Centralizado de Transações Pix
+ * Atende Depósitos, Inscrições em Desafios (Pay-to-Play) e Super Dicas (R$ 1,99)
+ */
+async function finalizeTransactionApproval(tx, gateway) {
+  if (tx.get("status") === "approved" || tx.get("status") === "completed") {
+    return { alreadyApproved: true };
+  }
+
+  tx.set("status", "approved");
+  if (gateway) tx.set("gateway", gateway);
+  tx.set("approvedAt", new Date());
+  await tx.save(null, { useMasterKey: true });
+
+  const txType = tx.get("type"); // "deposit", "ticket", "super_hint"
+
+  if (txType === "ticket") {
+    // 1. Split financeiro para o criador/influencer
+    const creatorId = tx.get("creatorId");
+    const netAmount = parseMoney(tx.get("netAmount") || tx.get("amount"));
+    if (creatorId) {
+      try {
+        const qCreator = new Parse.Query(Parse.User);
+        const creator = await qCreator.get(creatorId, { useMasterKey: true });
+        if (creator) {
+          const curBal = parseMoney(creator.get("balance"));
+          creator.set("balance", Number((curBal + netAmount).toFixed(2)));
+          creator.increment("totalEarned", netAmount);
+          await creator.save(null, { useMasterKey: true });
+          console.log(`[Split Pay-to-Play] R$ ${netAmount} creditado ao criador ${creatorId}.`);
+        }
+      } catch (err) {
+        console.error("[finalizeTransactionApproval] Erro ao creditar criador:", err);
+      }
+    }
+
+    // 2. Incrementar contagem de jogadores e inscrever comprador
+    const eventId = tx.get("eventId");
+    if (eventId) {
+      try {
+        const qEvent = new Parse.Query("Event");
+        const ev = await qEvent.get(eventId, { useMasterKey: true });
+        if (ev) {
+          ev.increment("playerCount");
+          await ev.save(null, { useMasterKey: true });
+        }
+      } catch (err) {
+        console.error("[finalizeTransactionApproval] Erro ao atualizar Event:", err);
+      }
+
+      const buyer = tx.get("user");
+      if (buyer) {
+        try {
+          await buyer.fetch({ useMasterKey: true });
+          let userEvents = buyer.get("events") || {};
+          userEvents[eventId] = { currentPhase: 1, currentEnigma: 1, hintsPurchased: [], paidTicket: true };
+          buyer.set("events", userEvents);
+          await buyer.save(null, { useMasterKey: true });
+        } catch (err) {
+          console.error("[finalizeTransactionApproval] Erro ao inscrever comprador:", err);
+        }
+      }
+    }
+  } else if (txType === "super_hint") {
+    // 1. Split financeiro para o criador/influencer
+    const creatorId = tx.get("creatorId");
+    const netAmount = parseMoney(tx.get("netAmount") || tx.get("amount"));
+    if (creatorId) {
+      try {
+        const qCreator = new Parse.Query(Parse.User);
+        const creator = await qCreator.get(creatorId, { useMasterKey: true });
+        if (creator) {
+          const curBal = parseMoney(creator.get("balance"));
+          creator.set("balance", Number((curBal + netAmount).toFixed(2)));
+          creator.increment("totalEarned", netAmount);
+          await creator.save(null, { useMasterKey: true });
+          console.log(`[Split Super Dica] R$ ${netAmount} creditado ao criador ${creatorId}.`);
+        }
+      } catch (err) {
+        console.error("[finalizeTransactionApproval] Erro ao creditar criador (hint):", err);
+      }
+    }
+
+    // 2. Registrar liberação da super dica para o comprador
+    const enigmaId = tx.get("enigmaId");
+    const buyerId = tx.get("user") ? tx.get("user").id : tx.get("buyerId");
+    if (enigmaId && buyerId) {
+      try {
+        const UnlockedHint = Parse.Object.extend("UnlockedSuperHint");
+        const uh = new UnlockedHint();
+        uh.set("enigmaId", enigmaId);
+        uh.set("userId", buyerId);
+        uh.set("transactionId", tx.id);
+        await uh.save(null, { useMasterKey: true });
+      } catch (err) {
+        console.error("[finalizeTransactionApproval] Erro ao salvar UnlockedSuperHint:", err);
+      }
+    }
+  } else {
+    // Depósito normal de saldo
+    const targetUser = tx.get("user");
+    if (targetUser) {
+      try {
+        await targetUser.fetch({ useMasterKey: true });
+        const curBal = parseMoney(targetUser.get("balance"));
+        const amt = parseMoney(tx.get("amount"));
+        targetUser.set("balance", Number((curBal + amt).toFixed(2)));
+        await targetUser.save(null, { useMasterKey: true });
+      } catch (err) {
+        console.error("[finalizeTransactionApproval] Erro ao creditar depósito:", err);
+      }
+    }
+  }
+
+  return { success: true };
+}
+
 require('./admin.js');
 
 // -----------------------------------------------------------------------------
@@ -164,6 +281,211 @@ Parse.Cloud.define("createPixCharge", async (request) => {
   }
 });
 
+/**
+ * Cria cobrança Pix para Inscrição no Desafio do Criador (Pay-to-Play R$ 5 a R$ 20)
+ */
+Parse.Cloud.define("createChallengePixTicket", async (request) => {
+  const { eventId, buyerName, buyerEmail } = request.params;
+  const user = request.user;
+
+  if (!eventId) {
+    throw new Parse.Error(Parse.Error.INVALID_QUERY, "ID do desafio (eventId) é obrigatório.");
+  }
+
+  try {
+    const qEvent = new Parse.Query("Event");
+    const event = await qEvent.get(eventId, { useMasterKey: true });
+    if (!event) {
+      throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, "Desafio não encontrado.");
+    }
+
+    const price = parseMoney(event.get("price"));
+    // Se o criador definiu o desafio como gratuito (R$ 0)
+    if (price <= 0) {
+      if (user) {
+        let userEvents = user.get("events") || {};
+        userEvents[eventId] = { currentPhase: 1, currentEnigma: 1, hintsPurchased: [], paidTicket: true };
+        user.set("events", userEvents);
+        await user.save(null, { useMasterKey: true });
+      }
+      event.increment("playerCount");
+      await event.save(null, { useMasterKey: true });
+      return { success: true, isFree: true, message: "Inscrição gratuita confirmada com sucesso!" };
+    }
+
+    const platformFeePct = Number(event.get("platformFeePercent") || 15.0);
+    const feeAmount = Number((price * (platformFeePct / 100.0)).toFixed(2));
+    const netAmount = Number((price - feeAmount).toFixed(2));
+    const creatorId = event.get("creatorId") || (event.get("creator") ? event.get("creator").id : null);
+
+    const Transaction = Parse.Object.extend("Transaction");
+    const tx = new Transaction();
+    tx.set("type", "ticket");
+    tx.set("amount", price);
+    tx.set("grossAmount", price);
+    tx.set("feePercent", platformFeePct);
+    tx.set("feeAmount", feeAmount);
+    tx.set("netAmount", netAmount);
+    tx.set("eventId", event.id);
+    tx.set("eventName", event.get("name") || "Desafio do Criador");
+    if (creatorId) tx.set("creatorId", creatorId);
+    if (user) tx.set("user", user);
+    tx.set("buyerName", buyerName || (user ? (user.get("name") || user.get("username")) : "Jogador"));
+    tx.set("buyerEmail", buyerEmail || (user ? user.get("email") : ""));
+    tx.set("status", "pending");
+    tx.set("description", `Inscrição Desafio: ${event.get("name") || "Desafio"}`);
+
+    await tx.save(null, { useMasterKey: true });
+
+    const fakeUser = user || {
+      get: (field) => {
+        if (field === "email") return buyerEmail || "jogador@oenigma.com";
+        return buyerName || "Jogador";
+      }
+    };
+
+    const chargeData = await financialService.createPixChargeService({
+      amount: price,
+      user: fakeUser,
+      transactionId: tx.id
+    });
+
+    tx.set("gateway", chargeData.gateway || "mercadopago");
+    if (chargeData.gatewayPaymentId) tx.set("gatewayPaymentId", chargeData.gatewayPaymentId);
+    if (chargeData.copiaCola) tx.set("copiaCola", chargeData.copiaCola);
+    if (chargeData.qrCodeBase64) tx.set("qrCodeBase64", chargeData.qrCodeBase64);
+    await tx.save(null, { useMasterKey: true });
+
+    return {
+      success: true,
+      isFree: false,
+      transactionId: tx.id,
+      amount: price,
+      copiaCola: chargeData.copiaCola,
+      qrCodeBase64: chargeData.qrCodeBase64,
+      gateway: chargeData.gateway
+    };
+  } catch (error) {
+    console.error("[createChallengePixTicket Error]", error);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao gerar inscrição Pix: " + error.message);
+  }
+});
+
+/**
+ * Cria cobrança Pix para compra de Super Dica (R$ 1,99) no Enigma
+ */
+Parse.Cloud.define("createSuperHintPix", async (request) => {
+  const { eventId, enigmaId, buyerName, buyerEmail } = request.params;
+  const user = request.user;
+
+  if (!enigmaId) {
+    throw new Parse.Error(Parse.Error.INVALID_QUERY, "enigmaId é obrigatório.");
+  }
+
+  try {
+    const qEnigma = new Parse.Query("Enigma");
+    const enigma = await qEnigma.get(enigmaId, { useMasterKey: true });
+    if (!enigma) {
+      throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, "Enigma não encontrado.");
+    }
+
+    let event = null;
+    if (eventId) {
+      const qEvent = new Parse.Query("Event");
+      event = await qEvent.get(eventId, { useMasterKey: true });
+    }
+
+    const price = parseMoney(enigma.get("superHintPrice") || 1.99);
+    const platformFeePct = event ? Number(event.get("platformFeePercent") || 15.0) : 15.0;
+    const feeAmount = Number((price * (platformFeePct / 100.0)).toFixed(2));
+    const netAmount = Number((price - feeAmount).toFixed(2));
+    const creatorId = event ? (event.get("creatorId") || (event.get("creator") ? event.get("creator").id : null)) : null;
+
+    const Transaction = Parse.Object.extend("Transaction");
+    const tx = new Transaction();
+    tx.set("type", "super_hint");
+    tx.set("amount", price);
+    tx.set("grossAmount", price);
+    tx.set("feePercent", platformFeePct);
+    tx.set("feeAmount", feeAmount);
+    tx.set("netAmount", netAmount);
+    if (eventId) tx.set("eventId", eventId);
+    tx.set("enigmaId", enigmaId);
+    if (creatorId) tx.set("creatorId", creatorId);
+    if (user) tx.set("user", user);
+    tx.set("buyerName", buyerName || (user ? (user.get("name") || user.get("username")) : "Jogador"));
+    tx.set("buyerEmail", buyerEmail || (user ? user.get("email") : ""));
+    tx.set("status", "pending");
+    tx.set("description", `Super Dica: ${enigma.get("title") || enigmaId}`);
+
+    await tx.save(null, { useMasterKey: true });
+
+    const fakeUser = user || {
+      get: (field) => {
+        if (field === "email") return buyerEmail || "jogador@oenigma.com";
+        return buyerName || "Jogador";
+      }
+    };
+
+    const chargeData = await financialService.createPixChargeService({
+      amount: price,
+      user: fakeUser,
+      transactionId: tx.id
+    });
+
+    tx.set("gateway", chargeData.gateway || "mercadopago");
+    if (chargeData.gatewayPaymentId) tx.set("gatewayPaymentId", chargeData.gatewayPaymentId);
+    if (chargeData.copiaCola) tx.set("copiaCola", chargeData.copiaCola);
+    if (chargeData.qrCodeBase64) tx.set("qrCodeBase64", chargeData.qrCodeBase64);
+    await tx.save(null, { useMasterKey: true });
+
+    return {
+      success: true,
+      transactionId: tx.id,
+      amount: price,
+      copiaCola: chargeData.copiaCola,
+      qrCodeBase64: chargeData.qrCodeBase64,
+      gateway: chargeData.gateway
+    };
+  } catch (error) {
+    console.error("[createSuperHintPix Error]", error);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao gerar Pix da Super Dica: " + error.message);
+  }
+});
+
+/**
+ * Consulta se uma Super Dica já foi desbloqueada pelo usuário
+ */
+Parse.Cloud.define("getUnlockedSuperHint", async (request) => {
+  const { enigmaId } = request.params;
+  const user = request.user;
+  if (!enigmaId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "enigmaId é obrigatório.");
+
+  try {
+    const qUnlock = new Parse.Query("UnlockedSuperHint");
+    qUnlock.equalTo("enigmaId", enigmaId);
+    if (user) {
+      qUnlock.equalTo("userId", user.id);
+    } else {
+      return { unlocked: false };
+    }
+
+    const unlockRecord = await qUnlock.first({ useMasterKey: true });
+    if (!unlockRecord) {
+      return { unlocked: false };
+    }
+
+    const qEnigma = new Parse.Query("Enigma");
+    const enigma = await qEnigma.get(enigmaId, { useMasterKey: true });
+    return {
+      unlocked: true,
+      superHintText: enigma ? (enigma.get("superHintText") || enigma.get("hintData") || "Dica desbloqueada com sucesso!") : ""
+    };
+  } catch (error) {
+    return { unlocked: false, error: error.message };
+  }
+});
+
 Parse.Cloud.define("checkPixPaymentStatus", async (request) => {
   const { transactionId } = request.params;
   const user = request.user;
@@ -255,26 +577,20 @@ Parse.Cloud.define("checkPixPaymentStatus", async (request) => {
     }
 
     if (approvedNow) {
-      tx.set("status", "approved");
-      tx.set("approvedAt", new Date());
-      await tx.save(null, { useMasterKey: true });
+      await finalizeTransactionApproval(tx, gateway);
 
       const targetUser = tx.get("user");
       let newBalance = 0;
       if (targetUser) {
         await targetUser.fetch({ useMasterKey: true });
-        const curBal = parseMoney(targetUser.get("balance"));
-        const amt = parseMoney(tx.get("amount"));
-        newBalance = Number((curBal + amt).toFixed(2));
-        targetUser.set("balance", newBalance);
-        await targetUser.save(null, { useMasterKey: true });
+        newBalance = parseMoney(targetUser.get("balance"));
       }
 
       return {
         success: true,
         status: "approved",
         balance: newBalance,
-        message: "Pagamento confirmado com sucesso e creditado na carteira!"
+        message: "Pagamento confirmado com sucesso!"
       };
     }
 
@@ -558,8 +874,40 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
     let balance = parseMoney(user.get("balance"));
 
     const now = new Date().getTime();
-    if (eventProgress.cooldownUntil && eventProgress.cooldownUntil > now && action !== 'getStatus') {
+    if (eventProgress.cooldownUntil && eventProgress.cooldownUntil > now && action !== 'getStatus' && action !== 'skipCooldown') {
       return { success: false, message: "Aguarde o Cooldown", cooldownUntil: eventProgress.cooldownUntil };
+    }
+
+    if (action === 'skipCooldown') {
+      const skipCost = 1.99;
+      if (balance < skipCost) {
+        throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Saldo insuficiente (R$ 1,99) para pular o tempo de espera.");
+      }
+      const newBal = Number((balance - skipCost).toFixed(2));
+      user.set("balance", newBal);
+      eventProgress.cooldownUntil = null;
+      userEvents[eventId] = eventProgress;
+      user.set("events", userEvents);
+      await user.save(null, { useMasterKey: true });
+
+      try {
+        const Transaction = Parse.Object.extend("Transaction");
+        const tx = new Transaction();
+        tx.set("type", "tool");
+        tx.set("amount", skipCost);
+        tx.set("description", "Pular Penalidade de Cooldown (R$ 1,99)");
+        tx.set("status", "completed");
+        tx.set("user", user);
+        await tx.save(null, { useMasterKey: true });
+      } catch (txErr) {
+        console.error("Erro ao registrar transação de pular cooldown:", txErr);
+      }
+
+      return {
+        success: true,
+        message: "Penalidade de tempo cancelada com sucesso! Continue caçando.",
+        newBalance: newBal
+      };
     }
 
     if (action === 'getStatus') {
@@ -777,6 +1125,8 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
          cost = enigma ? (enigma.get("compassPrice") || 15.0) : 15.0;
       } else if (toolType === 'radar') {
          cost = enigma ? (enigma.get("radarPrice") || 10.0) : 10.0;
+      } else if (toolType === 'anti_decoy') {
+         cost = 4.0;
       }
       else throw new Parse.Error(Parse.Error.INVALID_QUERY, "Invalid tool type.");
 
@@ -807,8 +1157,22 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
       };
 
     } else if (action === 'validateCode' || action === 'verify_code' || action === 'scan_enigma') {
-      const { latitude, longitude } = request.params;
+      const { latitude, longitude, isMocked } = request.params;
       const guess = code || answer;
+      
+      if (isMocked === true) {
+        try {
+          const FraudLog = Parse.Object.extend("FraudLog");
+          const fraud = new FraudLog();
+          fraud.set("user", user);
+          fraud.set("eventId", eventId);
+          fraud.set("enigmaId", enigmaId);
+          fraud.set("reason", "GPS Falso / Localização Simulada Detectada (Mock Location)");
+          await fraud.save(null, { useMasterKey: true });
+        } catch (_) {}
+
+        throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Dispositivo utilizando localização simulada/Fake GPS. Ação bloqueada pelo sistema de integridade.");
+      }
       
       const Enigma = Parse.Object.extend("Enigma");
       const query = new Parse.Query(Enigma);
@@ -1287,24 +1651,8 @@ Parse.Cloud.define("paymentWebhook", async (request) => {
   }
 
   if (tx && tx.get("status") !== "approved" && tx.get("status") !== "completed") {
-    tx.set("status", "approved");
-    tx.set("gateway", gateway || tx.get("gateway") || "mercadopago");
-    tx.set("approvedAt", new Date());
-    await tx.save(null, { useMasterKey: true });
-
-    // Credita o saldo atomicamente na carteira do usuário
-    const user = tx.get("user");
-    if (user) {
-      await user.fetch({ useMasterKey: true });
-      const currentBalance = parseMoney(user.get("balance"));
-      const amount = parseMoney(tx.get("amount"));
-      const newBalance = Number((currentBalance + amount).toFixed(2));
-      user.set("balance", newBalance);
-      await user.save(null, { useMasterKey: true });
-      console.log(`[Payment Webhook] Saldo creditado: R$ ${amount} para usuário ${user.id}. Novo saldo: R$ ${newBalance}`);
-    }
-
-    return { success: true, message: "Transaction approved and wallet credited." };
+    await finalizeTransactionApproval(tx, gateway);
+    return { success: true, message: "Transaction approved and processed." };
   }
 
   return { success: true, message: "Webhook acknowledged." };
@@ -1393,3 +1741,79 @@ Parse.Cloud.define("requestWithdrawal", async (request) => {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao solicitar saque: " + error.message);
   }
 });
+
+// -----------------------------------------------------------------------------
+// SISTEMA DE INDICAÇÃO & CONVITES (Viral Loop Gamificado)
+// -----------------------------------------------------------------------------
+Parse.Cloud.define("applyReferralCode", async (request) => {
+  const { referralCode } = request.params;
+  const user = request.user;
+  if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Usuário não autenticado.");
+  if (!referralCode) throw new Parse.Error(Parse.Error.INVALID_QUERY, "Código de indicação é obrigatório.");
+
+  if (user.get("referredBy")) {
+    throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Você já utilizou um código de indicação anteriormente.");
+  }
+
+  const cleanCode = String(referralCode).trim().toUpperCase();
+  const rawId = cleanCode.startsWith("ENIGMA-") ? cleanCode.replace("ENIGMA-", "") : cleanCode;
+
+  // Busca o usuário que indicou pelo ID ou prefixo do ID
+  const userQuery = new Parse.Query(Parse.User);
+  const allUsers = await userQuery.find({ useMasterKey: true });
+  const referrer = allUsers.find(u => u.id.toUpperCase() === rawId || u.id.toUpperCase().startsWith(rawId));
+
+  if (!referrer) {
+    throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, "Código de indicação não encontrado ou inválido.");
+  }
+
+  if (referrer.id === user.id) {
+    throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Você não pode indicar a si mesmo!");
+  }
+
+  // Bônus de boas-vindas: R$ 2,00 para o novo usuário e R$ 2,00 para quem indicou
+  const bonusAmount = 2.0;
+
+  const currentRefereeBalance = parseMoney(user.get("balance"));
+  user.set("balance", Number((currentRefereeBalance + bonusAmount).toFixed(2)));
+  user.set("referredBy", referrer.id);
+  let refereeXp = user.get("xp") || 0;
+  user.set("xp", refereeXp + 50);
+  await user.save(null, { useMasterKey: true });
+
+  const currentReferrerBalance = parseMoney(referrer.get("balance"));
+  referrer.set("balance", Number((currentReferrerBalance + bonusAmount).toFixed(2)));
+  let referrerXp = referrer.get("xp") || 0;
+  referrer.set("xp", referrerXp + 50);
+  let referralsCount = referrer.get("referralsCount") || 0;
+  referrer.set("referralsCount", referralsCount + 1);
+  await referrer.save(null, { useMasterKey: true });
+
+  try {
+    const Transaction = Parse.Object.extend("Transaction");
+    const tx1 = new Transaction();
+    tx1.set("type", "bonus");
+    tx1.set("amount", bonusAmount);
+    tx1.set("description", `Bônus Convite de Amigo (${cleanCode})`);
+    tx1.set("status", "completed");
+    tx1.set("user", user);
+    await tx1.save(null, { useMasterKey: true });
+
+    const tx2 = new Transaction();
+    tx2.set("type", "bonus");
+    tx2.set("amount", bonusAmount);
+    tx2.set("description", `Bônus por Indicar Amigo (${user.get("name") || "Novo Jogador"})`);
+    tx2.set("status", "completed");
+    tx2.set("user", referrer);
+    await tx2.save(null, { useMasterKey: true });
+  } catch (txErr) {
+    console.error("Erro ao registrar transações de indicação:", txErr);
+  }
+
+  return {
+    success: true,
+    bonusGranted: bonusAmount,
+    message: `Sucesso! Você e seu amigo ganharam R$ ${bonusAmount.toFixed(2)} de saldo bônus!`
+  };
+});
+
