@@ -216,172 +216,178 @@ class _CreatorFinanceScreenState extends State<CreatorFinanceScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 800;
-        return Flex(
-          direction: isWide ? Axis.horizontal : Axis.vertical,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Card de Saldo
-            Expanded(
-              flex: isWide ? 1 : 0,
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0F262F), Color(0xFF131D24)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.3)),
+
+        final balanceCard = Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0F262F), Color(0xFF131D24)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'SALDO LÍQUIDO DISPONÍVEL',
+                style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'R\$ ${_availableBalance.toStringAsFixed(2)}',
+                style: GoogleFonts.poppins(
+                  color: AppColors.amareloVale,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'SALDO LÍQUIDO DISPONÍVEL',
-                      style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'R\$ ${_availableBalance.toStringAsFixed(2)}',
-                      style: GoogleFonts.poppins(
-                        color: AppColors.amareloVale,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Faturamento Total Histórico: R\$ ${_totalEarned.toStringAsFixed(2)}',
+                style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 12),
+              ),
+              const SizedBox(height: 18),
+
+              // Formulário de Solicitação de Saque
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _withdrawAmountController,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'Valor R\$ (ex: 50,00)',
+                        hintStyle: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 12),
+                        prefixText: 'R\$ ',
+                        prefixStyle: GoogleFonts.poppins(color: AppColors.amareloVale),
+                        filled: true,
+                        fillColor: AppColors.darkBackground,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Faturamento Total Histórico: R\$ ${_totalEarned.toStringAsFixed(2)}',
-                      style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 12),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    icon: _isRequestingWithdraw
+                        ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
+                        : const FaIcon(FontAwesomeIcons.pix, size: 13),
+                    label: const Text('Sacar Pix'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.amareloVale,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      textStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 18),
-
-                    // Formulário de Solicitação de Saque
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _withdrawAmountController,
-                            style: const TextStyle(color: Colors.white, fontSize: 13),
-                            decoration: InputDecoration(
-                              hintText: 'Valor R\$ (ex: 50,00)',
-                              hintStyle: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 12),
-                              prefixText: 'R\$ ',
-                              prefixStyle: GoogleFonts.poppins(color: AppColors.amareloVale),
-                              filled: true,
-                              fillColor: AppColors.darkBackground,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        ElevatedButton.icon(
-                          icon: _isRequestingWithdraw
-                              ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-                              : const FaIcon(FontAwesomeIcons.pix, size: 13),
-                          label: const Text('Sacar Pix'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.amareloVale,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            textStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-                          ),
-                          onPressed: _isRequestingWithdraw ? null : _requestWithdrawal,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                    onPressed: _isRequestingWithdraw ? null : _requestWithdrawal,
+                  ),
+                ],
               ),
-            ),
-            if (isWide) const SizedBox(width: 16) else const SizedBox(height: 16),
+            ],
+          ),
+        );
 
-            // Card de Chave Pix do Criador
-            Expanded(
-              flex: isWide ? 1 : 0,
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.darkCardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.darkCardBorder),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'SUA CHAVE PIX PARA RECEBIMENTO',
-                          style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11, fontWeight: FontWeight.bold),
-                        ),
-                        const FaIcon(FontAwesomeIcons.key, color: AppColors.verdeVale, size: 14),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Seletor de Tipo de Chave
-                    Wrap(
-                      spacing: 8,
-                      children: ['CPF', 'CNPJ', 'EMAIL', 'TELEFONE', 'ALEATORIA'].map((type) {
-                        final isSel = _pixKeyType == type;
-                        return ChoiceChip(
-                          label: Text(type),
-                          selected: isSel,
-                          selectedColor: AppColors.verdeVale,
-                          backgroundColor: AppColors.darkBackground,
-                          labelStyle: GoogleFonts.poppins(
-                            color: isSel ? Colors.white : AppColors.cinzaMedio,
-                            fontSize: 11,
-                            fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                          ),
-                          onSelected: (_) => setState(() => _pixKeyType = type),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 12),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _pixKeyController,
-                            style: const TextStyle(color: Colors.white, fontSize: 13),
-                            decoration: InputDecoration(
-                              hintText: 'Digite sua chave Pix',
-                              hintStyle: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 12),
-                              filled: true,
-                              fillColor: AppColors.darkBackground,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.verdeVale,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ),
-                          onPressed: _isSavingPix ? null : _savePixKey,
-                          child: _isSavingPix
-                              ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                              : const Text('Salvar'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Os saques são transferidos diretamente para esta chave Pix.',
-                      style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11),
-                    ),
-                  ],
-                ),
+        final pixCard = Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.darkCardColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.darkCardBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'SUA CHAVE PIX PARA RECEBIMENTO',
+                    style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                  const FaIcon(FontAwesomeIcons.key, color: AppColors.verdeVale, size: 14),
+                ],
               ),
-            ),
+              const SizedBox(height: 12),
+
+              // Seletor de Tipo de Chave
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: ['CPF', 'CNPJ', 'EMAIL', 'TELEFONE', 'ALEATORIA'].map((type) {
+                  final isSel = _pixKeyType == type;
+                  return ChoiceChip(
+                    label: Text(type),
+                    selected: isSel,
+                    selectedColor: AppColors.verdeVale,
+                    backgroundColor: AppColors.darkBackground,
+                    labelStyle: GoogleFonts.poppins(
+                      color: isSel ? Colors.white : AppColors.cinzaMedio,
+                      fontSize: 11,
+                      fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                    ),
+                    onSelected: (_) => setState(() => _pixKeyType = type),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _pixKeyController,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'Digite sua chave Pix',
+                        hintStyle: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 12),
+                        filled: true,
+                        fillColor: AppColors.darkBackground,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.verdeVale,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    onPressed: _isSavingPix ? null : _savePixKey,
+                    child: _isSavingPix
+                        ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('Salvar'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Os saques são transferidos diretamente para esta chave Pix.',
+                style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11),
+              ),
+            ],
+          ),
+        );
+
+        if (isWide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: balanceCard),
+              const SizedBox(width: 16),
+              Expanded(child: pixCard),
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            balanceCard,
+            const SizedBox(height: 16),
+            pixCard,
           ],
         );
       },

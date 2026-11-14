@@ -148,80 +148,90 @@ class _CreatorLinksScreenState extends State<CreatorLinksScreen> {
           LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth > 850;
-              return Flex(
-                direction: isWide ? Axis.horizontal : Axis.vertical,
+
+              final leftColumn = Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Coluna Esquerda: Link Direto e QR Code
-                  Expanded(
-                    flex: isWide ? 6 : 0,
+                  // Box do Link
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: AppColors.darkCardColor,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.darkCardBorder),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Box do Link
+                        Text(
+                          'LINK OFICIAL DE DIVULGAÇÃO',
+                          style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.all(18),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
-                            color: AppColors.darkCardColor,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.darkCardBorder),
+                            color: AppColors.darkBackground,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.3)),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
                             children: [
-                              Text(
-                                'LINK OFICIAL DE DIVULGAÇÃO',
-                                style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: AppColors.darkBackground,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.3)),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: SelectableText(
-                                        publicLink,
-                                        style: GoogleFonts.poppins(
-                                          color: AppColors.amareloVale,
-                                          fontSize: 13.5,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: const FaIcon(FontAwesomeIcons.copy, color: Colors.white, size: 14),
-                                      onPressed: () => _copyToClipboard(publicLink, 'Link copiado para a área de transferência!'),
-                                    ),
-                                  ],
+                              Expanded(
+                                child: SelectableText(
+                                  publicLink,
+                                  style: GoogleFonts.poppins(
+                                    color: AppColors.amareloVale,
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
-                              const SizedBox(height: 10),
-                              Text(
-                                'Coloque este link na bio do Instagram, na figurinha de Link dos Stories ou na descrição dos seus vídeos.',
-                                style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11.5),
+                              IconButton(
+                                icon: const FaIcon(FontAwesomeIcons.copy, color: Colors.white, size: 14),
+                                onPressed: () => _copyToClipboard(publicLink, 'Link copiado para a área de transferência!'),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
-
-                        // Modelos de Copy Prontos
-                        _buildCopyTemplatesSection(title, prize, isFree, price, publicLink),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Coloque este link na bio do Instagram, na figurinha de Link dos Stories ou na descrição dos seus vídeos.',
+                          style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11.5),
+                        ),
                       ],
                     ),
                   ),
-                  if (isWide) const SizedBox(width: 18) else const SizedBox(height: 18),
+                  const SizedBox(height: 16),
 
-                  // Coluna Direita: Card Estilo Story 9:16
-                  Expanded(
-                    flex: isWide ? 4 : 0,
-                    child: _buildStoryCardPreview(title, prize, isFree, price, publicLink),
-                  ),
+                  // Modelos de Copy Prontos
+                  _buildCopyTemplatesSection(title, prize, isFree, price, publicLink),
+                ],
+              );
+
+              final rightColumn = Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 360),
+                  child: _buildStoryCardPreview(title, prize, isFree, price, publicLink),
+                ),
+              );
+
+              if (isWide) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 6, child: leftColumn),
+                    const SizedBox(width: 18),
+                    Expanded(flex: 4, child: rightColumn),
+                  ],
+                );
+              }
+
+              return Column(
+                children: [
+                  leftColumn,
+                  const SizedBox(height: 20),
+                  rightColumn,
                 ],
               );
             },

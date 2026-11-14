@@ -189,72 +189,155 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
   }
 
   Widget _buildHeroHeader(String name) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF13222A),
-            AppColors.verdeVale.withValues(alpha: 0.15),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 650;
+        if (isMobile) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.verdeVale.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF13222A),
+                  AppColors.verdeVale.withValues(alpha: 0.15),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.25)),
             ),
-            child: const FaIcon(
-              FontAwesomeIcons.wandMagicSparkles,
-              color: AppColors.amareloVale,
-              size: 26,
-            ),
-          ),
-          const SizedBox(width: 18),
-          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Olá, $name! 🚀',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 19,
-                    fontWeight: FontWeight.w700,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.verdeVale.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const FaIcon(
+                        FontAwesomeIcons.wandMagicSparkles,
+                        color: AppColors.amareloVale,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Olá, $name! 🚀',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 10),
                 Text(
                   'Crie desafios misteriosos para sua audiência, insira vídeos e dicas, e monetize com inscrições e Super Dicas.',
                   style: GoogleFonts.poppins(
                     color: AppColors.cinzaMedio,
-                    fontSize: 12.5,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton.icon(
+                    onPressed: widget.onOpenWizard,
+                    icon: const FaIcon(FontAwesomeIcons.rocket, size: 14),
+                    label: const Text('Lançar Novo Desafio'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.amareloVale,
+                      foregroundColor: Colors.black,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          ElevatedButton.icon(
-            onPressed: widget.onOpenWizard,
-            icon: const FaIcon(FontAwesomeIcons.rocket, size: 14),
-            label: const Text('Lançar Desafio'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.amareloVale,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+          );
+        }
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF13222A),
+                AppColors.verdeVale.withValues(alpha: 0.15),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.25)),
           ),
-        ],
-      ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.verdeVale.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const FaIcon(
+                  FontAwesomeIcons.wandMagicSparkles,
+                  color: AppColors.amareloVale,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Olá, $name! 🚀',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Crie desafios misteriosos para sua audiência, insira vídeos e dicas, e monetize com inscrições e Super Dicas.',
+                      style: GoogleFonts.poppins(
+                        color: AppColors.cinzaMedio,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: widget.onOpenWizard,
+                icon: const FaIcon(FontAwesomeIcons.rocket, size: 14),
+                label: const Text('Lançar Desafio'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.amareloVale,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                  textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -262,13 +345,16 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final crossAxisCount = constraints.maxWidth > 900 ? 4 : 2;
+        final aspectRatio = constraints.maxWidth > 900
+            ? 1.8
+            : (constraints.maxWidth > 500 ? 1.55 : 1.38);
         return GridView.count(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: crossAxisCount,
-          crossAxisSpacing: 14,
-          mainAxisSpacing: 14,
-          childAspectRatio: 1.8,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: aspectRatio,
           children: [
             _buildKpiCard(
               title: 'Participantes',

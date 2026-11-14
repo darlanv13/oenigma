@@ -65,6 +65,24 @@ class _MainCreatorScreenState extends State<MainCreatorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 900;
+
+    if (isMobile) {
+      return Scaffold(
+        backgroundColor: AppColors.darkBackground,
+        appBar: _buildMobileAppBar(context),
+        body: SafeArea(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: _screens[_selectedIndex],
+          ),
+        ),
+        bottomNavigationBar: _buildMobileBottomBar(),
+      );
+    }
+
+    // Versão Desktop
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       body: Row(
@@ -87,6 +105,226 @@ class _MainCreatorScreenState extends State<MainCreatorScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildMobileAppBar(BuildContext context) {
+    final name = _currentUser?.get<String>('name') ??
+        _currentUser?.get<String>('username') ??
+        'Criador';
+    final balance = (_currentUser?.get<num>('balance') ?? 0.0).toDouble();
+
+    return AppBar(
+      backgroundColor: const Color(0xFF0C1013),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      centerTitle: false,
+      titleSpacing: 14,
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const OEnigmaAdminLogo(size: LogoSize.compact, showBadge: false),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: AppColors.amareloVale.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              'STUDIO',
+              style: GoogleFonts.poppins(
+                color: AppColors.amareloVale,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        // Badge de Saldo Rápido Pix
+        GestureDetector(
+          onTap: () => setState(() => _selectedIndex = 3),
+          child: Container(
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.verdeVale.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const FaIcon(FontAwesomeIcons.bolt, color: AppColors.verdeVale, size: 10),
+                const SizedBox(width: 5),
+                Text(
+                  'R\$ ${balance.toStringAsFixed(2)}',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Menu de Opções do Influencer
+        Consumer(
+          builder: (context, ref, _) {
+            final isAdmin = _currentUser?.get<bool>('isAdmin') ?? false;
+            return PopupMenuButton<String>(
+              icon: const FaIcon(FontAwesomeIcons.ellipsisVertical, color: Colors.white, size: 14),
+              color: AppColors.darkCardColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: AppColors.darkCardBorder),
+              ),
+              onSelected: (val) async {
+                if (val == 'admin') {
+                  Navigator.pushNamed(context, '/admin');
+                } else if (val == 'logout') {
+                  await ref.read(authRepositoryProvider).signOut();
+                }
+              },
+              itemBuilder: (ctx) => [
+                PopupMenuItem(
+                  enabled: false,
+                  child: Text(
+                    name,
+                    style: GoogleFonts.poppins(color: AppColors.amareloVale, fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+                const PopupMenuDivider(),
+                if (isAdmin)
+                  PopupMenuItem(
+                    value: 'admin',
+                    child: Row(
+                      children: [
+                        const FaIcon(FontAwesomeIcons.shieldHalved, color: AppColors.info, size: 13),
+                        const SizedBox(width: 8),
+                        Text('Painel Super Admin', style: GoogleFonts.poppins(color: Colors.white, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      const FaIcon(FontAwesomeIcons.arrowRightFromBracket, color: Colors.redAccent, size: 13),
+                      const SizedBox(width: 8),
+                      Text('Sair do Studio', style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 12)),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileBottomBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF0C1013),
+        border: Border(
+          top: BorderSide(color: AppColors.verdeVale.withValues(alpha: 0.15)),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildBottomNavItem(0, FontAwesomeIcons.chartPie, 'Início'),
+              _buildBottomNavCreateButton(),
+              _buildBottomNavItem(2, FontAwesomeIcons.shareNodes, 'Links'),
+              _buildBottomNavItem(3, FontAwesomeIcons.sackDollar, 'Financeiro'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavCreateButton() {
+    final isSelected = _selectedIndex == 1;
+    return InkWell(
+      onTap: () => setState(() => _selectedIndex = 1),
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.amareloVale : AppColors.verdeVale,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: (isSelected ? AppColors.amareloVale : AppColors.verdeVale).withValues(alpha: 0.35),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FaIcon(
+              FontAwesomeIcons.plus,
+              color: isSelected ? Colors.black : Colors.white,
+              size: 12,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              'Criar',
+              style: GoogleFonts.poppins(
+                color: isSelected ? Colors.black : Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavItem(int index, dynamic icon, String label) {
+    final isSelected = _selectedIndex == index;
+    return InkWell(
+      onTap: () => setState(() => _selectedIndex = index),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FaIcon(
+              icon,
+              size: 15,
+              color: isSelected ? AppColors.amareloVale : AppColors.cinzaMedio,
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                color: isSelected ? Colors.white : AppColors.cinzaMedio,
+                fontSize: 10.5,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

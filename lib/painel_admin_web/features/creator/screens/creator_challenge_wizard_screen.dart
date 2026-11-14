@@ -385,46 +385,79 @@ class _CreatorChallengeWizardScreenState
   }
 
   Widget _buildWizardHeader() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.darkCardBorder),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const FaIcon(FontAwesomeIcons.arrowLeft, color: Colors.white, size: 16),
-            onPressed: widget.onCancel,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 650;
+        return Container(
+          padding: EdgeInsets.all(isMobile ? 12 : 18),
+          decoration: BoxDecoration(
+            color: AppColors.darkCardColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.darkCardBorder),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Criar Novo Desafio para seus Seguidores',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  IconButton(
+                    icon: const FaIcon(FontAwesomeIcons.arrowLeft, color: Colors.white, size: 16),
+                    onPressed: widget.onCancel,
                   ),
-                ),
-                Text(
-                  'Passo ${_currentStep + 1} de 4: ${_getStepTitle(_currentStep)}',
-                  style: GoogleFonts.poppins(
-                    color: AppColors.amareloVale,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isMobile ? 'Novo Desafio' : 'Criar Novo Desafio para seus Seguidores',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: isMobile ? 15 : 17,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'Passo ${_currentStep + 1} de 4: ${_getStepTitle(_currentStep)}',
+                          style: GoogleFonts.poppins(
+                            color: AppColors.amareloVale,
+                            fontSize: isMobile ? 11 : 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                  if (!isMobile) _buildStepPills(),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Barra de Progresso Mobile em 4 Segmentos
+              Row(
+                children: List.generate(4, (index) {
+                  final isPassed = index < _currentStep;
+                  final isCurrent = index == _currentStep;
+                  Color barColor = AppColors.darkCardBorder;
+                  if (isCurrent) barColor = AppColors.verdeVale;
+                  if (isPassed) barColor = AppColors.amareloVale;
+
+                  return Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: barColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
           ),
-          _buildStepPills(),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -546,26 +579,25 @@ class _CreatorChallengeWizardScreenState
           hint: 'https://exemplo.com/banner.png',
         ),
         const SizedBox(height: 14),
-        Row(
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text('Dificuldade Geral: ', style: GoogleFonts.poppins(color: Colors.white, fontSize: 13)),
-            const SizedBox(width: 12),
             ...['Fácil', 'Média', 'Difícil', 'Lendária'].map((diff) {
               final isSelected = _difficulty == diff;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(diff),
-                  selected: isSelected,
-                  selectedColor: AppColors.verdeVale,
-                  backgroundColor: AppColors.darkCardColor,
-                  labelStyle: GoogleFonts.poppins(
-                    color: isSelected ? Colors.white : AppColors.cinzaMedio,
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                  onSelected: (_) => setState(() => _difficulty = diff),
+              return ChoiceChip(
+                label: Text(diff),
+                selected: isSelected,
+                selectedColor: AppColors.verdeVale,
+                backgroundColor: AppColors.darkCardColor,
+                labelStyle: GoogleFonts.poppins(
+                  color: isSelected ? Colors.white : AppColors.cinzaMedio,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 ),
+                onSelected: (_) => setState(() => _difficulty = diff),
               );
             }),
           ],
@@ -586,58 +618,71 @@ class _CreatorChallengeWizardScreenState
       children: [
         _buildSectionTitle('1. Como os seguidores entram no desafio?'),
         const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(
-              child: _buildChoiceCard(
-                title: 'Desafio Gratuito',
-                subtitle: 'Qualquer seguidor pode jogar sem pagar. Excelente para viralizar.',
-                isSelected: !_isPaidEntry,
-                icon: FontAwesomeIcons.gift,
-                onTap: () => setState(() => _isPaidEntry = false),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: _buildChoiceCard(
-                title: 'Pay-to-Play (R\$ 5 a R\$ 20)',
-                subtitle: 'Seguidores pagam uma taxa simbólica no Pix para concorrer ao prêmio.',
-                isSelected: _isPaidEntry,
-                icon: FontAwesomeIcons.ticket,
-                badge: 'MAIS LUCRATIVO',
-                onTap: () => setState(() => _isPaidEntry = true),
-              ),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 650;
+            final cardGratuito = _buildChoiceCard(
+              title: 'Desafio Gratuito',
+              subtitle: 'Qualquer seguidor pode jogar sem pagar. Excelente para viralizar.',
+              isSelected: !_isPaidEntry,
+              icon: FontAwesomeIcons.gift,
+              onTap: () => setState(() => _isPaidEntry = false),
+            );
+            final cardPago = _buildChoiceCard(
+              title: 'Pay-to-Play (R\$ 5 a R\$ 20)',
+              subtitle: 'Seguidores pagam uma taxa simbólica no Pix para concorrer ao prêmio.',
+              isSelected: _isPaidEntry,
+              icon: FontAwesomeIcons.ticket,
+              badge: 'MAIS LUCRATIVO',
+              onTap: () => setState(() => _isPaidEntry = true),
+            );
+
+            if (isMobile) {
+              return Column(
+                children: [
+                  cardGratuito,
+                  const SizedBox(height: 12),
+                  cardPago,
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(child: cardGratuito),
+                const SizedBox(width: 14),
+                Expanded(child: cardPago),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 20),
 
         if (_isPaidEntry) ...[
           _buildSectionTitle('2. Valor do Ingresso Pix (R\$ 5 a R\$ 20)'),
           const SizedBox(height: 10),
-          Row(
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
             children: [5.0, 10.0, 15.0, 20.0].map((val) {
               final isSel = _ticketPrice == val;
-              return Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: InkWell(
-                  onTap: () => setState(() => _ticketPrice = val),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isSel ? AppColors.amareloVale : AppColors.darkCardColor,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSel ? AppColors.amareloVale : AppColors.darkCardBorder,
-                      ),
+              return InkWell(
+                onTap: () => setState(() => _ticketPrice = val),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isSel ? AppColors.amareloVale : AppColors.darkCardColor,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSel ? AppColors.amareloVale : AppColors.darkCardBorder,
                     ),
-                    child: Text(
-                      'R\$ ${val.toStringAsFixed(2)}',
-                      style: GoogleFonts.poppins(
-                        color: isSel ? Colors.black : Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                      ),
+                  ),
+                  child: Text(
+                    'R\$ ${val.toStringAsFixed(2)}',
+                    style: GoogleFonts.poppins(
+                      color: isSel ? Colors.black : Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
                     ),
                   ),
                 ),
@@ -672,7 +717,9 @@ class _CreatorChallengeWizardScreenState
 
         _buildSectionTitle('3. O Prêmio do Vencedor'),
         const SizedBox(height: 12),
-        Row(
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
           children: [
             ChoiceChip(
               label: const Text('Dinheiro no Pix'),
@@ -681,7 +728,6 @@ class _CreatorChallengeWizardScreenState
               backgroundColor: AppColors.darkCardColor,
               onSelected: (_) => setState(() => _prizeType = 'dinheiro'),
             ),
-            const SizedBox(width: 10),
             ChoiceChip(
               label: const Text('Item / Objeto Especial (ex: iPhone, PS5, Troféu)'),
               selected: _prizeType == 'objeto',
