@@ -358,7 +358,9 @@ class PortalHubScreen extends StatelessWidget {
                 backgroundColor: routeButtonColor,
                 foregroundColor: Colors.black,
                 elevation: 0,
-                shape: BorderRadius.circular(10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
