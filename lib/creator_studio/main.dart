@@ -1,10 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:oenigma/core/config/env_config.dart';
+import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:oenigma/core/config/env_config.dart';
-import 'package:oenigma/core/utils/app_colors.dart';
-import 'package:oenigma/creator_studio/features/creator/screens/main_creator_screen.dart';
+import 'package:oenigma/creator_studio/features/auth/screens/login_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,16 +23,15 @@ class CreatorStudioApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        visualDensity: VisualDensity.compact,
-        primaryColor: AppColors.amareloVale,
+        primaryColor: AppColors.verdeVale,
         scaffoldBackgroundColor: AppColors.darkBackground,
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
         cardColor: AppColors.darkCardColor,
         colorScheme: const ColorScheme.dark(
-          primary: AppColors.amareloVale,
-          secondary: AppColors.verdeVale,
+          primary: AppColors.verdeVale,
+          secondary: AppColors.amareloVale,
           surface: AppColors.darkCardColor,
-          onPrimary: Colors.black,
+          onPrimary: Colors.white,
           onSecondary: Colors.white,
         ),
         appBarTheme: AppBarTheme(
@@ -40,30 +39,30 @@ class CreatorStudioApp extends StatelessWidget {
           elevation: 0,
           titleTextStyle: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
-            fontSize: 16,
+            fontSize: 18,
             color: Colors.white,
           ),
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: AppColors.amareloVale,
-          foregroundColor: Colors.black,
+          backgroundColor: AppColors.verdeVale,
+          foregroundColor: Colors.white,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.amareloVale,
-            foregroundColor: Colors.black,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            backgroundColor: AppColors.verdeVale,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
             ),
             textStyle: GoogleFonts.poppins(
               fontWeight: FontWeight.w700,
-              fontSize: 13,
+              fontSize: 14,
             ),
           ),
         ),
       ),
-      home: const MainCreatorScreen(),
+      home: const LoginScreen(),
     );
   }
 }

@@ -141,14 +141,14 @@ class PortalHubScreen extends StatelessWidget {
       icon: FontAwesomeIcons.shieldHalved,
       iconColor: AppColors.info,
       title: 'Painel Mestre',
-      subtitle: 'Controle de Tenancy & Plataforma Master',
+      subtitle: 'Super Admin & Multi-Tenancy',
       description:
-          'Controle de tenants e criadores, auditoria global de usuários, faturamento consolidado da plataforma, taxas de serviço, aprovação de repasses e saques, gateways de pagamento e segurança global.',
+          'Controle de todos os influenciadores parceiros, acompanhamento de GMV total, retenção da taxa de serviço de 15%, moderação de desafios, aprovação de saques Pix e segurança global.',
       features: [
-        'Gestão de Multi-Tenancy & Criadores',
-        'Controle Global de Usuários e Acessos',
-        'Financeiro Master & Split da Plataforma',
-        'Gateways de Pagamento & Segurança Anti-Fraude',
+        'Dashboard de GMV & Lucro da Plataforma',
+        'Gestão de Criadores & Tenants',
+        'Taxas de Serviço Configuráveis (15%)',
+        'Auditoria de Gateways & Saques Pix',
       ],
       routeButtonText: 'Acessar Painel Mestre',
       routeButtonColor: AppColors.info,
@@ -160,19 +160,19 @@ class PortalHubScreen extends StatelessWidget {
   // === CARD 2: CREATOR STUDIO ===
   Widget _buildCreatorCard(BuildContext context) {
     return _buildModuleCard(
-      badgeTitle: 'INFLUENCER & CREATOR',
+      badgeTitle: 'INFLUENCER STUDIO',
       badgeColor: AppColors.amareloVale,
       icon: FontAwesomeIcons.wandMagicSparkles,
       iconColor: AppColors.amareloVale,
       title: 'Creator Studio',
-      subtitle: 'Espaço do Criador de Desafios',
+      subtitle: 'Espaço do Influenciador',
       description:
-          'Ambiente exclusivo do criador para lançamento de desafios, criação de fases e enigmas, configuração de ferramentas táticas (bússola, radar, mapa), dicas gratuitas, superdicas pagas e precificação.',
+          'Painel exclusivo para o criador lançar seus desafios em 4 etapas, configurar ingressos Pay-to-Play (R\$ 5 a R\$ 20), ativar Super Dicas pagas (R\$ 1,99), gerar links e solicitar saques Pix.',
       features: [
-        'Criação de Eventos, Fases e Enigmas',
-        'Configuração de Ferramentas (Bússola, Radar, Mapa)',
-        'Gestão de Dicas, Super Dicas e Preços Pix',
-        'Links, QR Codes e Saques de Comissão',
+        'Wizard de Criação de Desafios em 4 Etapas',
+        'Monetização Pay-to-Play & Super Dicas Pix',
+        'Hub de Divulgação: Links & QR Codes',
+        'Relatório Financeiro & Solicitação de Saque',
       ],
       routeButtonText: 'Acessar Creator Studio',
       routeButtonColor: AppColors.amareloVale,
@@ -182,24 +182,24 @@ class PortalHubScreen extends StatelessWidget {
     );
   }
 
-  // === CARD 3: PLAYER ===
+  // === CARD 3: WEB PLAYER PÚBLICO ===
   Widget _buildPlayerCard(BuildContext context) {
     return _buildModuleCard(
-      badgeTitle: 'AUDIENCE & PLAYERS',
+      badgeTitle: 'AUDIENCE & FOLLOWERS',
       badgeColor: AppColors.verdeVale,
       icon: FontAwesomeIcons.gamepad,
       iconColor: AppColors.verdeVale,
-      title: 'Player (Web & Mobile)',
-      subtitle: 'Experiência do Jogador / Caçador',
+      title: 'Web Player Público',
+      subtitle: 'Experiência do Seguidor',
       description:
-          'O aplicativo oficial do jogador. Participe de caças ao tesouro e desafios misteriosos com ferramentas táticas em tempo real: bússola com sensor do celular, radar tático, mapa com raio, ranking e carteira.',
+          'Interface web responsiva e pública acessada pelos seguidores via link (/e/:slug). Suporta checkout Pix de ingresso, resolução de enigmas, ferramentas de decodificação e compra de Super Dicas.',
       features: [
-        'Feed de Desafios & Checkout Pix',
-        'Ferramentas Táticas: Bússola, Radar e Mapa',
-        'Resolução de Enigmas & Desbloqueio de Fases',
-        'Ranking em Tempo Real, Pódio e Carteira',
+        'Landing Page com Teaser em Vídeo',
+        'Checkout Pix Instantâneo (QR Code + Copia/Cola)',
+        'Decodificador Cifra de César & Código Morse',
+        'Desbloqueio de Super Dicas por R\$ 1,99',
       ],
-      routeButtonText: 'Jogar Desafio (Player)',
+      routeButtonText: 'Jogar Desafio Demo',
       routeButtonColor: AppColors.verdeVale,
       routeUrl: '/player',
       onPressed: () => Navigator.pushNamed(context, '/player'),

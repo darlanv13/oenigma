@@ -1,66 +1,79 @@
 ﻿# Script de build para Flutter Web com preservação completa dos ícones FontAwesome (sem tree-shaking destrutivo)
-# Evita o problema onde ícones aparecem como caixas com 'X' (missing glyphs) na versão Web.
+# Suporta a nova arquitetura do O Enigma:
+# - Painel Mestre (Super Admin & Multi-Tenancy)
+# - Creator Studio (Criadores / Influenciadores)
+# - Player (Web Player & Cliente Caçador)
+# - Portal Hub (Portal central com rotas SPA para GitHub Pages)
 
 param(
-  [switch]$DeployStaging
+  [switch]$DeployGhPages
 )
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host " Compilando O Enigma para Web (--no-tree-shake-icons)" -ForegroundColor Cyan
+Write-Host " Módulos: Painel Mestre | Creator Studio | Player" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
-# 1. Compila Player (App do Jogador)
-Write-Host "`n[1/2] Compilando Player Web (lib/player/main.dart)..." -ForegroundColor Yellow
-flutter build web -t lib/player/main.dart --base-href /oenigma/cliente/ --no-tree-shake-icons
-
-if ($LASTEXITCODE -ne 0) {
-  Write-Error "Falha ao compilar Player Web."
-  exit $LASTEXITCODE
-}
-
-# Se a flag de staging foi passada, copia para gh-pages-staging\cliente
-if ($DeployStaging -and (Test-Path "build\gh-pages-staging")) {
-  Write-Host "Sincronizando com build\gh-pages-staging\cliente..." -ForegroundColor Green
-  if (!(Test-Path "build\gh-pages-staging\cliente")) {
-    New-Item -ItemType Directory -Path "build\gh-pages-staging\cliente" -Force | Out-Null
-  }
-  Copy-Item -Path "build\web\*" -Destination "build\gh-pages-staging\cliente" -Recurse -Force
-  if (Test-Path "build\gh-pages-staging\cliente\.git") {
-    Remove-Item -Path "build\gh-pages-staging\cliente\.git" -Recurse -Force
-  }
-}
-
-# 2. Compila Painel Mestre / Portal Hub Central
-Write-Host "`n[2/2] Compilando Painel Mestre / Portal (lib/painel_mestre/main.dart)..." -ForegroundColor Yellow
+# 1. Compilação Principal da Plataforma Web (Portal + Mestre + Studio + WebPlayer)
+Write-Host "`n[1/1] Compilando Plataforma Web (lib/painel_mestre/main.dart)..." -ForegroundColor Yellow
 flutter build web -t lib/painel_mestre/main.dart --base-href /oenigma/ --no-tree-shake-icons
 
 if ($LASTEXITCODE -ne 0) {
-  Write-Error "Falha ao compilar Painel Admin."
+  Write-Error "Falha ao compilar a Plataforma Web."
   exit $LASTEXITCODE
 }
 
-if ($DeployStaging -and (Test-Path "build\gh-pages-staging")) {
-  Write-Host "Sincronizando com a raiz de build\gh-pages-staging..." -ForegroundColor Green
-  # Salva 404.html customizado antes de copiar se existir
-  $has404 = Test-Path "build\gh-pages-staging\404.html"
-  $content404 = if ($has404) { Get-Content "build\gh-pages-staging\404.html" -Raw } else { $null }
+Write-Host "Configurando suporte SPA para GitHub Pages (/admin, /studio, /creator, /player, /e)..." -ForegroundColor Green
 
-  Copy-Item -Path "build\web\*" -Destination "build\gh-pages-staging" -Recurse -Force
+# Cria arquivo .nojekyll para o GitHub Pages
+New-Item -Path "build\web\.nojekyll" -ItemType File -Force | Out-Null
 
-  # Restaura 404.html de redirecionamento SPA
-  if ($content404) {
-    Set-Content -Path "build\gh-pages-staging\404.html" -Value $content404 -Force
+# Copia index.html para 404.html (Permite roteamento SPA no GitHub Pages)
+Copy-Item -Path "build\web\index.html" -Destination "build\web\404.html" -Force
+
+# Subpastas com index.html para suporte a links diretos no GitHub Pages
+$subroutes = @("admin", "mestre", "studio", "creator", "player", "portal", "e", "login", "auth", "desafio")
+foreach ($route in $subroutes) {
+  $targetDir = "build\web\$route"
+  if (!(Test-Path $targetDir)) {
+    New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
   }
-
-  # Garante que as subpastas de rotas directas tenham o index.html com base /oenigma/
-  $subroutes = @("admin", "studio", "portal", "login", "player", "e", "mestre", "creator")
-  foreach ($sub in $subroutes) {
-    $dir = "build\gh-pages-staging\$sub"
-    if (!(Test-Path $dir)) {
-      New-Item -ItemType Directory -Path $dir -Force | Out-Null
-    }
-    Copy-Item -Path "build\web\index.html" -Destination "$dir\index.html" -Force
-  }
+  Copy-Item -Path "build\web\index.html" -Destination "$targetDir\index.html" -Force
 }
 
-Write-Host "`nBuilds Web finalizados e sincronizados com sucesso!" -ForegroundColor Green
+Write-Host "`nBuild Web finalizado com sucesso em build\web!" -ForegroundColor Green
+
+if ($DeployGhPages) {
+  Write-Host "`nPreparando deploy para a branch origin/gh-pages..." -ForegroundColor Yellow
+  $currentBranch = (git branch --show-current).Trim()
+  
+  # Cria repositório temporário ou utiliza worktree/push direto
+  $tempDeploy = "build\gh-pages-deploy"
+  if (Test-Path $tempDeploy) {
+    Remove-Item -Recurse -Force $tempDeploy
+  }
+  
+  git clone --depth 1 --branch gh-pages (git config --get remote.origin.url) $tempDeploy
+  if ($LASTEXITCODE -ne 0) {
+    Write-Warning "Não foi possível clonar branch gh-pages diretamente. Tentando criar branch órfã..."
+    New-Item -ItemType Directory -Path $tempDeploy -Force | Out-Null
+    Push-Location $tempDeploy
+    git init
+    git checkout -b gh-pages
+    git remote add origin (git config --get remote.origin.url)
+    Pop-Location
+  }
+
+  # Copia arquivos construídos para a pasta de deploy
+  Get-ChildItem -Path $tempDeploy -Exclude ".git" | Remove-Item -Recurse -Force
+  Copy-Item -Path "build\web\*" -Destination $tempDeploy -Recurse -Force
+
+  Push-Location $tempDeploy
+  git add -A
+  git commit -m "deploy: update gh-pages with Painel Mestre, Creator Studio and Player"
+  git push origin gh-pages --force
+  Pop-Location
+
+  Remove-Item -Recurse -Force $tempDeploy
+  Write-Host "`nDeploy para GitHub Pages concluído com sucesso!" -ForegroundColor Green
+}

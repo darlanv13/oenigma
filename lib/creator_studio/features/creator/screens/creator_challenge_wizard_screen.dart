@@ -18,8 +18,6 @@ class EnigmaDraft {
   bool toolCesar;
   bool toolMorse;
   bool toolCompass;
-  bool toolRadar;
-  bool toolMapRadius;
   bool toolQr;
 
   EnigmaDraft({
@@ -31,9 +29,7 @@ class EnigmaDraft {
     this.superHintText = '',
     this.toolCesar = true,
     this.toolMorse = false,
-    this.toolCompass = true,
-    this.toolRadar = true,
-    this.toolMapRadius = true,
+    this.toolCompass = false,
     this.toolQr = false,
   });
 }
@@ -176,8 +172,6 @@ class _CreatorChallengeWizardScreenState
         if (draft.toolCesar) chars.add('cesar');
         if (draft.toolMorse) chars.add('morse');
         if (draft.toolCompass) chars.add('compass');
-        if (draft.toolRadar) chars.add('radar');
-        if (draft.toolMapRadius) chars.add('map_radius');
         if (draft.toolQr) chars.add('qrcode');
 
         return <String, dynamic>{
@@ -926,24 +920,6 @@ class _CreatorChallengeWizardScreenState
                     spacing: 8,
                     children: [
                       FilterChip(
-                        label: const Text('Bússola Tática'),
-                        selected: draft.toolCompass,
-                        selectedColor: AppColors.verdeVale,
-                        onSelected: (val) => setState(() => draft.toolCompass = val),
-                      ),
-                      FilterChip(
-                        label: const Text('Radar Tático'),
-                        selected: draft.toolRadar,
-                        selectedColor: AppColors.verdeVale,
-                        onSelected: (val) => setState(() => draft.toolRadar = val),
-                      ),
-                      FilterChip(
-                        label: const Text('Mapa com Raio'),
-                        selected: draft.toolMapRadius,
-                        selectedColor: AppColors.verdeVale,
-                        onSelected: (val) => setState(() => draft.toolMapRadius = val),
-                      ),
-                      FilterChip(
                         label: const Text('Cifra de César'),
                         selected: draft.toolCesar,
                         selectedColor: AppColors.verdeVale,
@@ -954,6 +930,12 @@ class _CreatorChallengeWizardScreenState
                         selected: draft.toolMorse,
                         selectedColor: AppColors.verdeVale,
                         onSelected: (val) => setState(() => draft.toolMorse = val),
+                      ),
+                      FilterChip(
+                        label: const Text('Bússola / GPS'),
+                        selected: draft.toolCompass,
+                        selectedColor: AppColors.verdeVale,
+                        onSelected: (val) => setState(() => draft.toolCompass = val),
                       ),
                       FilterChip(
                         label: const Text('Scanner QR Code'),

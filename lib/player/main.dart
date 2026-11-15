@@ -1,4 +1,4 @@
-﻿import 'package:oenigma/core/config/env_config.dart';
+import 'package:oenigma/core/config/env_config.dart';
 import 'package:oenigma/core/services/push_notification_service.dart';
 import 'package:oenigma/core/services/sound_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -67,7 +67,7 @@ class _EnigmaCityAppState extends State<EnigmaCityApp> with WidgetsBindingObserv
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'O Enigma • Player',
+      title: 'O Enigma',
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,

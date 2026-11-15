@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +7,7 @@ import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/core/widgets/oenigma_admin_logo.dart';
 import 'package:oenigma/painel_mestre/features/admin/screens/admin_dashboard_screen.dart';
 import 'package:oenigma/painel_mestre/features/admin/screens/admin_creators_screen.dart';
+import 'package:oenigma/painel_mestre/features/admin/screens/admin_events_screen.dart';
 import 'package:oenigma/painel_mestre/features/admin/screens/admin_banners_screen.dart';
 import 'package:oenigma/painel_mestre/features/admin/screens/admin_gateways_screen.dart';
 import 'package:oenigma/painel_mestre/features/admin/screens/admin_finance_screen.dart';
@@ -31,10 +32,11 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
   final List<String> _titles = [
     'Dashboard Geral',
     'Criadores & Tenants',
-    'Caçadores & Usuários',
-    'Financeiro Master',
-    'Gateways de Pagamento',
+    'Todos os Eventos',
     'Banners & Mídia',
+    'Gateways de Pagamento',
+    'Saques & Depósitos',
+    'Caçadores & Usuários',
     'Segurança & Anti-Fraude',
   ];
 
@@ -52,10 +54,11 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
         },
       ),
       const AdminCreatorsScreen(),
-      const AdminUsersScreen(),
-      const AdminFinanceScreen(),
-      const AdminGatewaysScreen(),
+      const AdminEventsScreen(),
       const AdminBannersScreen(),
+      const AdminGatewaysScreen(),
+      const AdminFinanceScreen(),
+      const AdminUsersScreen(),
       const AdminSecurityScreen(),
     ];
   }
@@ -121,15 +124,17 @@ class _MainAdminScreenState extends State<MainAdminScreen> {
           const SizedBox(height: 3),
           _buildMenuItem(1, FontAwesomeIcons.usersViewfinder, 'Criadores & Tenants', isNew: true),
           const SizedBox(height: 3),
-          _buildMenuItem(2, FontAwesomeIcons.users, 'Caçadores & Usuários'),
+          _buildMenuItem(2, FontAwesomeIcons.calendarCheck, 'Eventos'),
           const SizedBox(height: 3),
-          _buildMenuItem(3, FontAwesomeIcons.moneyBillTransfer, 'Financeiro Master'),
+          _buildMenuItem(3, FontAwesomeIcons.image, 'Banners'),
           const SizedBox(height: 3),
-          _buildMenuItem(4, FontAwesomeIcons.creditCard, 'Gateways de Pagamento'),
+          _buildMenuItem(4, FontAwesomeIcons.creditCard, 'Gateways'),
           const SizedBox(height: 3),
-          _buildMenuItem(5, FontAwesomeIcons.image, 'Banners & Mídia'),
+          _buildMenuItem(5, FontAwesomeIcons.moneyBillTransfer, 'Saques & Depósitos'),
           const SizedBox(height: 3),
-          _buildMenuItem(6, FontAwesomeIcons.shieldHalved, 'Segurança & Fraudes'),
+          _buildMenuItem(6, FontAwesomeIcons.users, 'Caçadores'),
+          const SizedBox(height: 3),
+          _buildMenuItem(7, FontAwesomeIcons.shieldHalved, 'Segurança & Fraudes'),
 
           const Spacer(),
 

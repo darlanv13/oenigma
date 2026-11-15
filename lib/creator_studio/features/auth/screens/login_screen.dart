@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:oenigma/creator_studio/features/auth/providers/auth_provider.dart';
@@ -46,7 +46,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           final user = authRepository.currentUser;
           final isAdmin = user?.get<bool>('isAdmin') ?? false;
           final role = user?.get<String>('role') ?? 'player';
-          if (!isAdmin && role != 'admin' && role != 'creator') {
+          final isAllowed = isAdmin || role == 'admin' || role == 'creator';
+          if (!isAllowed) {
              ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Acesso Restrito: Apenas criadores e administradores.'), backgroundColor: Colors.red),
              );
