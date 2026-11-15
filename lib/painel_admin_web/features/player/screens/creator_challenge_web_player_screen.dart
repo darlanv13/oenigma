@@ -11,6 +11,10 @@ import 'package:oenigma/painel_admin_web/features/player/widgets/pix_checkout_di
 import 'package:oenigma/painel_admin_web/features/player/widgets/cesar_cipher_tool_dialog.dart';
 import 'package:oenigma/painel_admin_web/features/player/widgets/morse_code_tool_dialog.dart';
 import 'package:oenigma/painel_admin_web/features/player/widgets/detective_scratchpad_dialog.dart';
+import 'package:oenigma/painel_admin_web/features/player/widgets/live_social_ticker.dart';
+import 'package:oenigma/painel_admin_web/features/player/widgets/pix_vault_teaser.dart';
+import 'package:oenigma/painel_admin_web/features/player/widgets/progressive_hints_dialog.dart';
+import 'package:oenigma/painel_admin_web/features/player/widgets/winner_story_card_dialog.dart';
 
 enum PlayerStage { landing, playing, finished }
 
@@ -533,6 +537,43 @@ class _CreatorChallengeWebPlayerScreenState
     );
   }
 
+  void _openProgressiveHints(ParseObject enigma) {
+    final freeClue = enigma.get<String>('freeHint') ??
+        'Pista Direcional Grátis: Observe com atenção os detalhes no texto e símbolos que possam representar um deslocamento de caracteres ou código morse.';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => ProgressiveHintsDialog(
+        enigmaTitle: enigma.get<String>('title') ?? 'Enigma da Fase',
+        freeClue: freeClue,
+        revealedPaidHint: _unlockedSuperHintText,
+        onBuyLevel2: () => _buySuperHint(enigma),
+        onBuyLevel3: () => _buySuperHint(enigma),
+      ),
+    );
+  }
+
+  void _openWinnerStoryCard() {
+    final title = _event?.get<String>('name') ?? 'Desafio Enigmático';
+    final creatorName = _event?.get<String>('creatorName') ?? 'Influenciador';
+    final prize = _event?.get<String>('prize') ?? 'R\$ 1.000,00';
+    final url = 'https://darlanv13.github.io/oenigma/#/e/${widget.slug}';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => WinnerStoryCardDialog(
+        playerName: _playerNameController.text.trim().isNotEmpty
+            ? _playerNameController.text.trim()
+            : 'Explorador Mestre',
+        challengeTitle: title,
+        creatorName: creatorName,
+        elapsedFormatted: _formatElapsed(_elapsedSeconds),
+        prize: prize,
+        challengeUrl: url,
+      ),
+    );
+  }
+
   void _showToast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -772,6 +813,14 @@ class _CreatorChallengeWebPlayerScreenState
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
       child: Column(
         children: [
+          // Live Ticker Social de Adrenalina & FOMO
+          LiveSocialTicker(
+            challengeTitle: title,
+            prize: prize,
+            initialExplorers: count,
+          ),
+          const SizedBox(height: 10),
+
           // Badge do Influenciador
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -1170,6 +1219,8 @@ class _CreatorChallengeWebPlayerScreenState
 
     final enigma = _enigmas[_currentEnigmaIndex];
     final title = enigma.get<String>('title') ?? 'Fase ${_currentEnigmaIndex + 1}';
+    final prize = _event?.get<String>('prize') ?? 'R\$ 1.000,00';
+    final creatorName = _event?.get<String>('creatorName') ?? 'Influenciador';
     final clueText = enigma.get<String>('clue') ??
         enigma.get<String>('instruction') ??
         enigma.get<String>('description') ??
@@ -1189,6 +1240,24 @@ class _CreatorChallengeWebPlayerScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Live Ticker Social de Adrenalina
+          LiveSocialTicker(
+            challengeTitle: _event?.get<String>('name') ?? 'Desafio do Criador',
+            prize: prize,
+            initialExplorers: 142,
+          ),
+          const SizedBox(height: 10),
+
+          // Cofre Pix 3D com Barra de Descriptografia da Chave
+          PixVaultTeaser(
+            prize: prize,
+            creatorName: creatorName,
+            totalPhases: _enigmas.length,
+            currentPhase: _currentEnigmaIndex + 1,
+            isPlaying: true,
+          ),
+          const SizedBox(height: 14),
+
           // Breadcrumbs de Fases
           _buildPhasesBreadcrumbs(),
 
@@ -1348,6 +1417,17 @@ class _CreatorChallengeWebPlayerScreenState
                   spacing: 8,
                   runSpacing: 6,
                   children: [
+                    ElevatedButton.icon(
+                      icon: const FaIcon(FontAwesomeIcons.lightbulb, size: 12),
+                      label: const Text('Pistas (3 Níveis) ★'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.amareloVale,
+                        foregroundColor: Colors.black,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onPressed: () => _openProgressiveHints(enigma),
+                    ),
                     OutlinedButton.icon(
                       icon: const FaIcon(FontAwesomeIcons.lockOpen, size: 12),
                       label: Text(hasCesar ? 'Cifra de César ★' : 'Cifra de César'),
@@ -1848,6 +1928,26 @@ class _CreatorChallengeWebPlayerScreenState
               const SizedBox(height: 22),
 
               // Botões de Ação
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.amareloVale,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const FaIcon(FontAwesomeIcons.camera, size: 16),
+                  label: Text(
+                    'Gerar Cartão de Campeão para Stories (9:16) 📸',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 13.5),
+                  ),
+                  onPressed: _openWinnerStoryCard,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(

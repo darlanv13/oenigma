@@ -11,6 +11,7 @@ import 'package:oenigma/app_cliente/features/home/providers/home_events_provider
 import '../widgets/home_profile_card.dart';
 import '../widgets/home_banner_carousel.dart';
 import '../widgets/events_section_header.dart';
+import '../widgets/home_daily_streak_card.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
@@ -163,6 +164,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     child: FadeTransition(
                       opacity: _fadeAnimation,
                       child: const HomeBannerCarousel(),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: HomeDailyStreakCard(
+                        streakDays: 5,
+                        onClaimReward: () {
+                          // Feedback ao resgatar recompensa diária
+                        },
+                      ),
                     ),
                   ),
                   SliverToBoxAdapter(

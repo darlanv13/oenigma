@@ -6,6 +6,7 @@ import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/core/config/env_config.dart';
+import 'package:oenigma/painel_admin_web/features/creator/widgets/creator_live_hud_modal.dart';
 
 class CreatorDashboardScreen extends StatefulWidget {
   final Function(int tabIndex)? onNavigateTab;
@@ -122,6 +123,25 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
     );
   }
 
+  void _openLiveHud([ParseObject? event]) {
+    final ev = event ?? (_myEvents.isNotEmpty ? _myEvents.first : null);
+    final title = ev?.get<String>('name') ?? 'Desafio do Criador';
+    final prize = ev?.get<String>('prize') ?? 'R\$ 1.000,00';
+    final slug = ev?.get<String>('slug') ?? ev?.objectId ?? 'demo';
+    final url = EnvConfig.buildChallengeUrl(slug);
+    final count = ev?.get<num>('playerCount')?.toInt() ?? 142;
+
+    showDialog(
+      context: context,
+      builder: (_) => CreatorLiveHudModal(
+        challengeTitle: title,
+        prize: prize,
+        challengeUrl: url,
+        initialPlayers: count > 0 ? count : 142,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -169,17 +189,33 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                   ),
                 ],
               ),
-              ElevatedButton.icon(
-                icon: const FaIcon(FontAwesomeIcons.plus, size: 13),
-                label: const Text('Novo Desafio'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.verdeVale,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  OutlinedButton.icon(
+                    icon: const FaIcon(FontAwesomeIcons.video, size: 12),
+                    label: const Text('Modo Live HUD'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      side: const BorderSide(color: Colors.redAccent),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    ),
+                    onPressed: () => _openLiveHud(),
                   ),
-                ),
-                onPressed: widget.onOpenWizard,
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    icon: const FaIcon(FontAwesomeIcons.plus, size: 13),
+                    label: const Text('Novo Desafio'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.verdeVale,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                    ),
+                    onPressed: widget.onOpenWizard,
+                  ),
+                ],
               ),
             ],
           ),
@@ -742,6 +778,19 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                               }
                             },
                           ),
+                        ),
+                        const SizedBox(width: 6),
+                        IconButton(
+                          tooltip: 'Abrir no Modo Live HUD',
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.redAccent.withValues(alpha: 0.15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: const BorderSide(color: Colors.redAccent, width: 0.8),
+                            ),
+                          ),
+                          icon: const FaIcon(FontAwesomeIcons.video, size: 12, color: Colors.redAccent),
+                          onPressed: () => _openLiveHud(ev),
                         ),
                       ],
                     ),

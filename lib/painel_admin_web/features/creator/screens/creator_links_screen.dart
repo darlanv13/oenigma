@@ -7,6 +7,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/core/config/env_config.dart';
+import 'package:oenigma/painel_admin_web/features/creator/widgets/creator_promo_story_generator.dart';
 
 class CreatorLinksScreen extends StatefulWidget {
   const CreatorLinksScreen({super.key});
@@ -227,10 +228,16 @@ class _CreatorLinksScreenState extends State<CreatorLinksScreen> {
                 ],
               );
 
+              final creatorName = _selectedEvent?.get<String>('creatorName') ?? 'Criador Oficial';
               final rightColumn = Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 360),
-                  child: _buildStoryCardPreview(title, prize, isFree, price, publicLink),
+                  constraints: const BoxConstraints(maxWidth: 380),
+                  child: CreatorPromoStoryGenerator(
+                    challengeTitle: title,
+                    creatorName: creatorName,
+                    prize: prize,
+                    challengeUrl: publicLink,
+                  ),
                 ),
               );
 
