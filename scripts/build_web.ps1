@@ -53,7 +53,7 @@ if ($DeployStaging -and (Test-Path "build\gh-pages-staging")) {
   }
 
   # Garante que as subpastas de rotas directas tenham o index.html com base /oenigma/
-  $subroutes = @("admin", "studio", "portal", "login", "player", "e")
+  $subroutes = @("admin", "studio", "portal", "login", "player", "e", "mestre", "creator")
   foreach ($sub in $subroutes) {
     $dir = "build\gh-pages-staging\$sub"
     if (!(Test-Path $dir)) {
