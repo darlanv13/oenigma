@@ -6,6 +6,7 @@ import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:oenigma/core/config/env_config.dart';
 
 class EnigmaDraft {
   String title;
@@ -273,7 +274,7 @@ class _CreatorChallengeWizardScreenState
   }
 
   void _showSuccessDialog(String eventId, String slug) {
-    final publicLink = 'https://oenigma.com.br/e/$slug';
+    final publicLink = EnvConfig.buildChallengeUrl(slug);
 
     showDialog(
       context: context,
@@ -595,7 +596,7 @@ class _CreatorChallengeWizardScreenState
           controller: _slugController,
           label: 'Link Personalizado (Slug)',
           hint: 'ex: misterio-caixa-secreta',
-          prefixText: 'oenigma.com.br/e/',
+          prefixText: EnvConfig.webPlayerDisplayPrefix,
         ),
         const SizedBox(height: 20),
 
@@ -1050,7 +1051,7 @@ class _CreatorChallengeWizardScreenState
                           style: GoogleFonts.poppins(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          'Link público: oenigma.com.br/e/$slug',
+                          'Link público: ${EnvConfig.webPlayerDisplayPrefix}$slug',
                           style: GoogleFonts.poppins(color: AppColors.amareloVale, fontSize: 13),
                         ),
                       ],

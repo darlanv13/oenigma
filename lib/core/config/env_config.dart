@@ -42,6 +42,21 @@ class EnvConfig {
     defaultValue: 'AIzaSyB2XsDjw1-Bee9RCSfgH_e-aokhRq5Hd80',
   );
 
+  /// URL Base do Web Player / Desafios Públicos (configurado para teste no GitHub Pages)
+  static const String webPlayerBaseUrl = String.fromEnvironment(
+    'WEB_PLAYER_BASE_URL',
+    defaultValue: 'https://darlanv13.github.io/oenigma/#/e/',
+  );
+
+  /// Prefixo visual para inputs e exibições de slug
+  static const String webPlayerDisplayPrefix = 'darlanv13.github.io/oenigma/#/e/';
+
+  /// Constrói a URL pública completa do desafio a partir do slug
+  static String buildChallengeUrl(String slug) {
+    final cleanSlug = slug.trim().replaceAll(' ', '-').toLowerCase();
+    return '$webPlayerBaseUrl$cleanSlug';
+  }
+
   /// Mascara chaves sensíveis para logs seguros (SecOps Zero Trust)
   static String mask(String value) {
     if (value.length <= 8) return '****';

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:oenigma/core/config/env_config.dart';
 
 class CreatorDashboardScreen extends StatefulWidget {
   final Function(int tabIndex)? onNavigateTab;
@@ -108,7 +109,7 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
   }
 
   void _copyLink(String slug) {
-    final domain = 'https://oenigma.com.br/e/$slug';
+    final domain = EnvConfig.buildChallengeUrl(slug);
     Clipboard.setData(ClipboardData(text: domain));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

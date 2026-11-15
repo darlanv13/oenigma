@@ -6,6 +6,7 @@ import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:oenigma/core/utils/app_colors.dart';
+import 'package:oenigma/core/config/env_config.dart';
 
 class CreatorLinksScreen extends StatefulWidget {
   const CreatorLinksScreen({super.key});
@@ -94,7 +95,7 @@ class _CreatorLinksScreenState extends State<CreatorLinksScreen> {
     }
 
     final slug = _selectedEvent?.get<String>('slug') ?? _selectedEvent?.objectId ?? '';
-    final publicLink = 'https://oenigma.com.br/e/$slug';
+    final publicLink = EnvConfig.buildChallengeUrl(slug);
     final title = _selectedEvent?.get<String>('name') ?? 'Desafio do Criador';
     final prize = _selectedEvent?.get<String>('prize') ?? 'R\$ 1.000,00';
     final price = (_selectedEvent?.get<num>('price') ?? 0.0).toDouble();
