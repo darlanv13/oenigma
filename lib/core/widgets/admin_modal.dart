@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 
@@ -6,12 +7,14 @@ class AdminModal extends StatelessWidget {
   final String title;
   final Widget child;
   final double maxWidth;
+  final dynamic icon;
 
   const AdminModal({
     super.key,
     required this.title,
     required this.child,
     this.maxWidth = 800,
+    this.icon,
   });
 
   @override
@@ -64,13 +67,27 @@ class AdminModal extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                if (icon is Widget)
+                  icon as Widget
+                else if (icon is IconData)
+                  Icon(icon as IconData, color: AppColors.amareloVale, size: 20)
+                else
+                  FaIcon(icon as dynamic, color: AppColors.amareloVale, size: 20),
+                const SizedBox(width: 10),
+              ],
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
           InkWell(
             onTap: () => Navigator.of(context).pop(),

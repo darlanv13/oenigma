@@ -42,6 +42,12 @@ class EnvConfig {
     defaultValue: 'AIzaSyB2XsDjw1-Bee9RCSfgH_e-aokhRq5Hd80',
   );
 
+  /// Chave da API do Google Gemini para Geração de Enigmas por IA
+  static const String geminiApiKey = String.fromEnvironment(
+    'GEMINI_API_KEY',
+    defaultValue: '',
+  );
+
   /// Mascara chaves sensíveis para logs seguros (SecOps Zero Trust)
   static String mask(String value) {
     if (value.length <= 8) return '****';

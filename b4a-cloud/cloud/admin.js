@@ -23,6 +23,35 @@ function isAdminUser(user, request) {
   return isAdmin === true || role === "admin" || role === "creator" || role === "administrador";
 }
 
+function isMasterAdminUser(user, request) {
+  if (request && request.master) return true;
+  if (!user && request && request.user) user = request.user;
+  if (!user) return false;
+  const isAdmin = user.get("isAdmin");
+  const role = (user.get("role") || "").toLowerCase();
+  return isAdmin === true || role === "admin" || role === "administrador";
+}
+
+async function verifyEventOwnership(eventId, user, request) {
+  if (request && request.master) return true;
+  if (!user) return false;
+  if (isMasterAdminUser(user, request)) return true;
+  if (!eventId) return false;
+
+  try {
+    const Event = Parse.Object.extend("Event");
+    const query = new Parse.Query(Event);
+    const ev = await query.get(eventId, { useMasterKey: true });
+    if (!ev) return false;
+
+    const creatorId = ev.get("creatorId") || (ev.get("creator") ? ev.get("creator").id : null);
+    // Se ainda for legado sem criador atribuído, ou se pertencer ao criador
+    return !creatorId || creatorId === user.id;
+  } catch (_) {
+    return false;
+  }
+}
+
 async function resolveAdminUser(request) {
   if (request && request.master) return request.user || true;
 
@@ -259,14 +288,25 @@ Parse.Cloud.define("createOrUpdateEvent", async (request) => {
     let event;
 
     if (eventId) {
+      const isOwner = await verifyEventOwnership(eventId, user, request);
+      if (!isOwner) {
+        throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, "Acesso Negado: Você não tem permissão para alterar eventos de outros criadores.");
+      }
       const query = new Parse.Query(Event);
       event = await query.get(eventId, { useMasterKey: true });
     } else {
       event = new Event();
+      // Vínculo Multi-Tenant do Criador
+      event.set("creator", user);
+      event.set("creatorId", user.id);
+      event.set("tenantId", user.get("tenantId") || `TENANT-${user.id.slice(-6).toUpperCase()}`);
+      event.set("creatorName", user.get("name") || user.get("username") || "Criador");
+      event.set("isGlobal", true);
     }
 
     if (data) {
       for (const key in data) {
+        if (key === "creatorId" || key === "creator") continue;
         event.set(key, data[key]);
       }
     }
@@ -286,6 +326,11 @@ Parse.Cloud.define("deleteEvent", async (request) => {
   if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
 
   try {
+    const isOwner = await verifyEventOwnership(eventId, user, request);
+    if (!isOwner) {
+      throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, "Acesso Negado: Você não tem permissão para excluir eventos de outros criadores.");
+    }
+
     const Event = Parse.Object.extend("Event");
     const query = new Parse.Query(Event);
     const event = await query.get(eventId, { useMasterKey: true });
@@ -326,8 +371,21 @@ Parse.Cloud.define("createOrUpdateEnigma", async (request) => {
     if (enigmaId) {
       const query = new Parse.Query(Enigma);
       enigma = await query.get(enigmaId, { useMasterKey: true });
+      const currentEvId = eventId || enigma.get("eventId") || (enigma.get("event") ? enigma.get("event").id : null);
+      if (currentEvId) {
+        const isOwner = await verifyEventOwnership(currentEvId, user, request);
+        if (!isOwner) {
+          throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, "Acesso Negado: Você não tem permissão para alterar enigmas deste evento.");
+        }
+      }
     } else {
       enigma = new Enigma();
+      if (eventId) {
+        const isOwner = await verifyEventOwnership(eventId, user, request);
+        if (!isOwner) {
+          throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, "Acesso Negado: Você não tem permissão para criar enigmas neste evento.");
+        }
+      }
     }
 
     if (eventId) {
@@ -388,6 +446,15 @@ Parse.Cloud.define("deleteEnigma", async (request) => {
     const Enigma = Parse.Object.extend("Enigma");
     const query = new Parse.Query(Enigma);
     const enigma = await query.get(enigmaId, { useMasterKey: true });
+
+    const evId = enigma.get("eventId") || (enigma.get("event") ? enigma.get("event").id : null);
+    if (evId) {
+      const isOwner = await verifyEventOwnership(evId, user, request);
+      if (!isOwner) {
+        throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, "Acesso Negado: Você não tem permissão para excluir este enigma.");
+      }
+    }
+
     await enigma.destroy({ useMasterKey: true });
     return { success: true, message: "Enigma deleted." };
   } catch (error) {
@@ -539,6 +606,17 @@ Parse.Cloud.define("processWithdrawal", async (request) => {
         status: "rejected"
       };
     } else if (action === 'auto_payout') {
+      // TRAVA DE SEGURANÇA ZERO-TRUST: Bloqueia transferência automática para contas suspeitas
+      const isHighRisk = withdrawal.get("flaggedForReview") === true ||
+        (targetUser && (targetUser.get("isFlaggedForReview") === true || targetUser.get("isBanned") === true));
+
+      if (isHighRisk && !request.params.allowFlaggedPayout) {
+        throw new Parse.Error(
+          Parse.Error.SCRIPT_FAILED,
+          "BLOQUEIO ANTI-FRAUDE: Esta solicitação possui Alerta de Risco Alto ou anomalias de localização registradas. A transferência automática foi bloqueada para proteger o caixa. Revise os logs de auditoria antes de liberar manualmente."
+        );
+      }
+
       // PAGAMENTO AUTOMÁTICO VIA API (Asaas, Mercado Pago, Efi Bank)
       const payoutResult = await financialService.executeAutomaticPayout({
         withdrawal,
@@ -764,6 +842,11 @@ Parse.Cloud.define("toggleEventStatus", async (request) => {
   if (!eventId || !newStatus) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId and newStatus are required.");
 
   try {
+    const isOwner = await verifyEventOwnership(eventId, user, request);
+    if (!isOwner) {
+      throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, "Acesso Negado: Você não pode alterar o status de eventos de outro criador.");
+    }
+
     const Event = Parse.Object.extend("Event");
     const query = new Parse.Query(Event);
     const event = await query.get(eventId, { useMasterKey: true });
@@ -797,6 +880,11 @@ Parse.Cloud.define("createOrUpdatePhase", async (request) => {
   if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "eventId is required.");
 
   try {
+    const isOwner = await verifyEventOwnership(eventId, user, request);
+    if (!isOwner) {
+      throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, "Acesso Negado: Você não tem permissão para gerenciar fases deste evento.");
+    }
+
     const Phase = Parse.Object.extend("Phase");
     let phase;
 
@@ -832,6 +920,13 @@ Parse.Cloud.define("deletePhase", async (request) => {
   if (!phaseId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "phaseId is required.");
 
   try {
+    if (eventId) {
+      const isOwner = await verifyEventOwnership(eventId, user, request);
+      if (!isOwner) {
+        throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, "Acesso Negado: Você não tem permissão para excluir fases deste evento.");
+      }
+    }
+
     const Phase = Parse.Object.extend("Phase");
     const query = new Parse.Query(Phase);
     const phase = await query.get(phaseId, { useMasterKey: true });
@@ -919,5 +1014,27 @@ Parse.Cloud.define("updateUserRole", async (request) => {
     return { success: true, message: "User role updated successfully." };
   } catch (error) {
     throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Error updating user role: " + error.message);
+  }
+});
+
+Parse.Cloud.define("getCreatorEvents", async (request) => {
+  const user = request.user;
+  if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "Autenticação necessária.");
+  if (!isAdminUser(user, request)) throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, "Acesso restrito a Criadores.");
+
+  try {
+    const query = new Parse.Query("Event");
+    query.descending("createdAt");
+    if (!isMasterAdminUser(user, request)) {
+      query.equalTo("creatorId", user.id);
+    }
+    const events = await query.find({ useMasterKey: true });
+    return events.map(e => {
+      const json = e.toJSON();
+      json.objectId = e.id;
+      return json;
+    });
+  } catch (error) {
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao buscar eventos do criador: " + error.message);
   }
 });

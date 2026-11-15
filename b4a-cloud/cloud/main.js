@@ -550,6 +550,10 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
   if (!user) throw new Parse.Error(Parse.Error.INVALID_SESSION_TOKEN, "User not authenticated.");
   if (!action) throw new Parse.Error(Parse.Error.INVALID_QUERY, "action is required.");
 
+  if (user.get("isBanned") === true) {
+    throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, "Conta suspensa pelo sistema de integridade.");
+  }
+
   try {
     let userEvents = user.get("events") || {};
     let eventProgress = userEvents[eventId] || {};
@@ -845,6 +849,8 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
       const guess = code || answer;
       
       if (isMocked === true) {
+        user.set("isFlaggedForReview", true);
+        user.set("flagReason", "Fake GPS / Mock Location detectado");
         try {
           const FraudLog = Parse.Object.extend("FraudLog");
           const fraud = new FraudLog();
@@ -853,6 +859,7 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
           fraud.set("enigmaId", enigmaId);
           fraud.set("reason", "GPS Falso / Localização Simulada Detectada (Mock Location)");
           await fraud.save(null, { useMasterKey: true });
+          await user.save(null, { useMasterKey: true });
         } catch (_) {}
 
         throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Dispositivo utilizando localização simulada/Fake GPS. Ação bloqueada pelo sistema de integridade.");
@@ -862,14 +869,43 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
       const query = new Parse.Query(Enigma);
       const enigma = await query.get(enigmaId, { useMasterKey: true });
 
-      if (latitude !== undefined && longitude !== undefined) {
+      // Resolução de Coordenadas do Alvo (Location GeoPoint ou CompassCoords)
+      let targetGeo = enigma.get("location");
+      if (!targetGeo && enigma.get("compassCoords")) {
+        const parts = String(enigma.get("compassCoords")).split(",");
+        if (parts.length === 2) {
+          const lat = parseFloat(parts[0].trim());
+          const lng = parseFloat(parts[1].trim());
+          if (!isNaN(lat) && !isNaN(lng)) {
+            targetGeo = new Parse.GeoPoint({ latitude: lat, longitude: lng });
+          }
+        }
+      }
+
+      // Se o enigma possui localização física, o envio de GPS é ESTRITAMENTE OBRIGATÓRIO (Anti-Bypass Zero Trust)
+      if (targetGeo) {
+        if (latitude === undefined || longitude === undefined || latitude === null || longitude === null) {
+          throw new Parse.Error(
+            Parse.Error.SCRIPT_FAILED,
+            "Telemetria geográfica obrigatória. Ative o GPS e permaneça no local do alvo para validar o enigma."
+          );
+        }
+      }
+
+      if (latitude !== undefined && longitude !== undefined && latitude !== null && longitude !== null) {
         const userGeoPoint = new Parse.GeoPoint({ latitude: parseFloat(latitude), longitude: parseFloat(longitude) });
-        const enigmaGeoPoint = enigma.get("location");
         
-        if (enigmaGeoPoint) {
-          const distanceToEnigma = userGeoPoint.kilometersTo(enigmaGeoPoint);
-          if (distanceToEnigma > 0.15) {
-            throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Você não está próximo o suficiente do alvo para validar este código.");
+        if (targetGeo) {
+          const distanceToEnigma = userGeoPoint.kilometersTo(targetGeo);
+          const rawRadiusM = enigma.get("tacticalRadius") || 150;
+          const allowedRadiusKm = Math.max(rawRadiusM / 1000, 0.15); // Pelo menos 150m para margem de drift urbano
+          if (distanceToEnigma > allowedRadiusKm) {
+            const distMeters = Math.round(distanceToEnigma * 1000);
+            const maxMeters = Math.round(allowedRadiusKm * 1000);
+            throw new Parse.Error(
+              Parse.Error.SCRIPT_FAILED,
+              `Você está a ${distMeters}m do alvo. Aproxime-se para validar (raio máximo permitido: ${maxMeters}m).`
+            );
           }
         }
 
@@ -883,17 +919,22 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
           
           if (timeDiffHours > 0) {
             const speedKmH = distanceKm / timeDiffHours;
-            if (speedKmH > 120) {
+            // Velocidade superior a 100 km/h indica teletransporte / mock location
+            if (speedKmH > 100) {
+              user.set("isFlaggedForReview", true);
+              user.set("flagReason", `Teletransporte detectado (${speedKmH.toFixed(1)} km/h)`);
+
               const FraudLog = Parse.Object.extend("FraudLog");
               const fraud = new FraudLog();
               fraud.set("user", user);
               fraud.set("eventId", eventId);
               fraud.set("enigmaId", enigmaId);
-              fraud.set("reason", "Impossible Travel Detectado");
+              fraud.set("reason", "Impossible Travel / Teletransporte Detectado");
               fraud.set("speedKmH", speedKmH);
               await fraud.save(null, { useMasterKey: true });
+              await user.save(null, { useMasterKey: true });
 
-              throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Movimentação irreal detectada. Sua ação foi bloqueada pelo sistema Anti-Fraude.");
+              throw new Parse.Error(Parse.Error.SCRIPT_FAILED, "Movimentação anormal detectada. Sua ação foi bloqueada pelo sistema Anti-Fraude.");
             }
           }
         }
@@ -901,6 +942,27 @@ Parse.Cloud.define("handleEnigmaAction", async (request) => {
         user.set("lastLocation", userGeoPoint);
         user.set("lastLocationTime", now);
         await user.save(null, { useMasterKey: true });
+      }
+
+      // Verificação de Resolução Ultra-Rápida / Bot
+      const lastSolvedTimeStr = eventProgress.lastSolvedAt;
+      if (lastSolvedTimeStr) {
+        const lastSolvedTime = new Date(lastSolvedTimeStr);
+        const elapsedSec = (new Date().getTime() - lastSolvedTime.getTime()) / 1000;
+        if (elapsedSec < 10) {
+          user.set("isFlaggedForReview", true);
+          user.set("flagReason", `Resolução de enigma instantânea (${elapsedSec.toFixed(1)}s)`);
+          try {
+            const FraudLog = Parse.Object.extend("FraudLog");
+            const fraud = new FraudLog();
+            fraud.set("user", user);
+            fraud.set("eventId", eventId);
+            fraud.set("enigmaId", enigmaId);
+            fraud.set("reason", `Resolução instantânea suspeita / Bot (${elapsedSec.toFixed(1)}s após o enigma anterior)`);
+            await fraud.save(null, { useMasterKey: true });
+            await user.save(null, { useMasterKey: true });
+          } catch (_) {}
+        }
       }
 
       const rawEnigmaCode = enigma.get("code");
@@ -1373,10 +1435,27 @@ Parse.Cloud.define("requestWithdrawal", async (request) => {
 
   try {
     await user.fetch({ useMasterKey: true });
+
+    if (user.get("isBanned") === true) {
+      throw new Parse.Error(Parse.Error.OPERATION_FORBIDDEN, "Conta suspensa pelo sistema de integridade. Saques bloqueados.");
+    }
+
     const currentBalance = parseMoney(user.get("balance"));
     if (currentBalance < numAmount) {
       throw new Parse.Error(Parse.Error.VALIDATION_ERROR, "Saldo insuficiente para o saque solicitado.");
     }
+
+    // Avaliação de risco e histórico de integridade (Zero-Trust Anti-Fraud Shield)
+    const isFlagged = user.get("isFlaggedForReview") === true;
+    const fraudQuery = new Parse.Query("FraudLog");
+    fraudQuery.equalTo("user", user);
+    const recentFrauds = await fraudQuery.count({ useMasterKey: true });
+
+    const riskLevel = (isFlagged || recentFrauds > 0) ? "HIGH" : "NORMAL";
+    const flaggedForReview = isFlagged || recentFrauds > 0;
+    const riskReason = isFlagged
+      ? (user.get("flagReason") || "Usuário sob revisão de integridade geográfica")
+      : (recentFrauds > 0 ? `Detectados ${recentFrauds} registros de anomalia de telemetria` : null);
 
     // Debita o saldo imediatamente para evitar saques simultâneos
     const newBalance = Number((currentBalance - numAmount).toFixed(2));
@@ -1396,6 +1475,11 @@ Parse.Cloud.define("requestWithdrawal", async (request) => {
     withdrawal.set("user", user);
     withdrawal.set("userName", userName);
     withdrawal.set("userEmail", userEmail);
+    withdrawal.set("riskLevel", riskLevel);
+    withdrawal.set("flaggedForReview", flaggedForReview);
+    if (riskReason) {
+      withdrawal.set("riskReason", riskReason);
+    }
 
     // Define ACL estritamente privada: apenas o próprio usuário e Master Key têm acesso
     const acl = new Parse.ACL();

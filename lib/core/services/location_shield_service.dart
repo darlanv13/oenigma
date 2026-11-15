@@ -5,6 +5,8 @@ import 'package:geolocator/geolocator.dart';
 enum LocationShieldStatus {
   ok,
   mockDetected,
+  excessiveSpeed,
+  staleLocation,
   serviceDisabled,
   permissionDenied,
   timeout,
@@ -33,6 +35,9 @@ class LocationShieldService {
   static final LocationShieldService _instance = LocationShieldService._internal();
   factory LocationShieldService() => _instance;
   LocationShieldService._internal();
+
+  Position? _lastVerifiedPosition;
+  DateTime? _lastVerifiedTime;
 
   /// Obtém e valida a posição do dispositivo contra ferramentas de spoofing
   Future<LocationShieldResult> getVerifiedPosition() async {
@@ -104,6 +109,33 @@ class LocationShieldService {
           errorMessage: 'Localização simulada detectada! Desative aplicativos de Fake GPS para jogar.',
         );
       }
+
+      // Verificação de Teletransporte / Velocidade Irreal no Cliente
+      if (_lastVerifiedPosition != null && _lastVerifiedTime != null) {
+        final distanceM = Geolocator.distanceBetween(
+          _lastVerifiedPosition!.latitude,
+          _lastVerifiedPosition!.longitude,
+          position.latitude,
+          position.longitude,
+        );
+        final elapsedSeconds = DateTime.now().difference(_lastVerifiedTime!).inSeconds;
+        if (elapsedSeconds > 0) {
+          final speedKmH = (distanceM / elapsedSeconds) * 3.6;
+          // Se a velocidade for superior a 130 km/h a pé/corrida urbana
+          if (speedKmH > 130 && distanceM > 100) {
+            debugPrint('⚠️ [LocationShield] Salto de telemetria: ${speedKmH.toStringAsFixed(1)} km/h');
+            return LocationShieldResult(
+              position: position,
+              isMocked: true,
+              status: LocationShieldStatus.excessiveSpeed,
+              errorMessage: 'Deslocamento anormal detectado (${speedKmH.toStringAsFixed(0)} km/h). Aguarde estabilização do GPS.',
+            );
+          }
+        }
+      }
+
+      _lastVerifiedPosition = position;
+      _lastVerifiedTime = DateTime.now();
 
       return LocationShieldResult(
         position: position,
