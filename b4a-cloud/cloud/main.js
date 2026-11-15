@@ -486,6 +486,122 @@ Parse.Cloud.define("getUnlockedSuperHint", async (request) => {
   }
 });
 
+/**
+ * Publicação de Desafio pelo Criador / Influenciador (com MasterKey para contornar CLP de addField)
+ */
+Parse.Cloud.define("publishCreatorChallenge", async (request) => {
+  const user = request.user;
+  const params = request.params;
+
+  const title = (params.title || params.name || "").trim();
+  if (!title) {
+    throw new Parse.Error(Parse.Error.INVALID_QUERY, "Título do desafio é obrigatório.");
+  }
+
+  try {
+    const creatorId = user ? user.id : (params.creatorId || "");
+    const creatorName = user ? (user.get("name") || user.get("username") || "Criador") : (params.creatorName || "Criador");
+    const creatorAvatar = user ? (user.get("photoURL") || "") : (params.creatorAvatar || "");
+
+    const slug = (params.slug || "").trim() || `desafio-${Date.now()}`;
+
+    // 1. Salva o Evento com useMasterKey: true (evita erro de addField)
+    const Event = Parse.Object.extend("Event");
+    const event = new Event();
+    event.set("name", title);
+    event.set("title", title);
+    event.set("slug", slug);
+    if (creatorId) event.set("creatorId", creatorId);
+    event.set("creatorName", creatorName);
+    if (creatorAvatar) event.set("creatorAvatar", creatorAvatar);
+    if (user) event.set("creator", user);
+
+    if (params.videoTeaserUrl) {
+      event.set("videoTeaserUrl", params.videoTeaserUrl);
+      event.set("videoUrl", params.videoTeaserUrl);
+    }
+    event.set("difficulty", params.difficulty || "Média");
+    event.set("status", "open");
+    event.set("eventType", "classic");
+    event.set("playerCount", 0);
+
+    const price = Number(params.price || 0.0);
+    event.set("price", price);
+    event.set("platformFeePercent", Number(params.platformFeePercent || 15.0));
+    event.set("hasPaidHints", params.hasPaidHints !== false);
+    event.set("paidHintPrice", Number(params.paidHintPrice || 1.99));
+
+    event.set("prizeType", params.prizeType || "dinheiro");
+    event.set("prize", params.prize || "R$ 1.000,00");
+    if (params.prizeImageUrl) {
+      event.set("prizeImageUrl", params.prizeImageUrl);
+      event.set("icon", params.prizeImageUrl);
+    }
+
+    // ACL público para leitura
+    const acl = new Parse.ACL();
+    acl.setPublicReadAccess(true);
+    acl.setPublicWriteAccess(false);
+    if (user) {
+      acl.setReadAccess(user.id, true);
+      acl.setWriteAccess(user.id, true);
+    }
+    event.setACL(acl);
+
+    const savedEvent = await event.save(null, { useMasterKey: true });
+
+    // 2. Salva cada Enigma vinculado ao Evento com useMasterKey: true
+    const enigmas = params.enigmas || [];
+    const Enigma = Parse.Object.extend("Enigma");
+
+    for (let i = 0; i < enigmas.length; i++) {
+      const draft = enigmas[i];
+      const enigma = new Enigma();
+      enigma.set("title", draft.title || `Fase ${i + 1}`);
+      enigma.set("instruction", draft.instruction || "");
+      enigma.set("code", String(draft.code || "").trim().toUpperCase());
+      enigma.set("order", i + 1);
+      enigma.set("status", "open");
+      enigma.set("type", "text");
+      enigma.set("difficulty", (params.difficulty || "Média").toUpperCase());
+
+      enigma.set("eventId", savedEvent.id);
+      enigma.set("event", savedEvent);
+
+      if (draft.videoUrl) {
+        enigma.set("videoUrl", draft.videoUrl.trim());
+      }
+
+      enigma.set("hasPaidSuperHint", draft.hasPaidSuperHint !== false);
+      enigma.set("superHintPrice", 1.99);
+      enigma.set("superHintText", draft.superHintText || "");
+
+      const chars = Array.isArray(draft.characteristics) ? draft.characteristics : [];
+      enigma.set("characteristics", chars);
+
+      const eAcl = new Parse.ACL();
+      eAcl.setPublicReadAccess(true);
+      eAcl.setPublicWriteAccess(false);
+      if (user) {
+        eAcl.setReadAccess(user.id, true);
+        eAcl.setWriteAccess(user.id, true);
+      }
+      enigma.setACL(eAcl);
+
+      await enigma.save(null, { useMasterKey: true });
+    }
+
+    return {
+      success: true,
+      eventId: savedEvent.id,
+      slug: slug
+    };
+  } catch (error) {
+    console.error("[publishCreatorChallenge Error]", error);
+    throw new Parse.Error(Parse.Error.INTERNAL_SERVER_ERROR, "Erro ao publicar desafio: " + error.message);
+  }
+});
+
 Parse.Cloud.define("checkPixPaymentStatus", async (request) => {
   const { transactionId } = request.params;
   const user = request.user;

@@ -131,89 +131,129 @@ class _CreatorChallengeWizardScreenState
           ? _slugController.text.trim()
           : 'desafio-${DateTime.now().millisecondsSinceEpoch}';
 
-      // 1. Salva o Evento
-      final eventObj = ParseObject('Event');
-      eventObj.set('name', _titleController.text.trim());
-      eventObj.set('title', _titleController.text.trim());
-      eventObj.set('slug', slug);
-      eventObj.set('creatorId', creatorId);
-      eventObj.set('creatorName', creatorName);
-      eventObj.set('creatorAvatar', creatorAvatar);
-      eventObj.set('creator', user);
-      eventObj.set('videoTeaserUrl', _videoTeaserController.text.trim());
-      eventObj.set('videoUrl', _videoTeaserController.text.trim());
-      eventObj.set('difficulty', _difficulty);
-      eventObj.set('status', 'open');
-      eventObj.set('eventType', 'classic');
-      eventObj.set('playerCount', 0);
-
-      // Preço e Monetização
       final finalPrice = _isPaidEntry ? _ticketPrice : 0.0;
-      eventObj.set('price', finalPrice);
-      eventObj.set('platformFeePercent', 15.0);
-      eventObj.set('hasPaidHints', _enableSuperHints);
-      eventObj.set('paidHintPrice', 1.99);
+      final prizeValue = _prizeType == 'dinheiro'
+          ? (_prizeAmountController.text.trim().startsWith('R\$')
+              ? _prizeAmountController.text.trim()
+              : 'R\$ ${_prizeAmountController.text.trim()}')
+          : (_prizeNameController.text.trim().isNotEmpty
+              ? _prizeNameController.text.trim()
+              : 'Prêmio Especial');
 
-      // Premiação
-      eventObj.set('prizeType', _prizeType);
-      if (_prizeType == 'dinheiro') {
-        final rawPrize = _prizeAmountController.text.trim();
-        eventObj.set('prize', rawPrize.startsWith('R\$') ? rawPrize : 'R\$ $rawPrize');
-      } else {
-        eventObj.set('prize', _prizeNameController.text.trim().isNotEmpty ? _prizeNameController.text.trim() : 'Prêmio Especial');
-      }
+      final eventData = <String, dynamic>{
+        'name': _titleController.text.trim(),
+        'title': _titleController.text.trim(),
+        'slug': slug,
+        'creatorId': creatorId,
+        'creatorName': creatorName,
+        'creatorAvatar': creatorAvatar,
+        'videoTeaserUrl': _videoTeaserController.text.trim(),
+        'videoUrl': _videoTeaserController.text.trim(),
+        'difficulty': _difficulty,
+        'status': 'open',
+        'eventType': 'classic',
+        'playerCount': 0,
+        'price': finalPrice,
+        'platformFeePercent': 15.0,
+        'hasPaidHints': _enableSuperHints,
+        'paidHintPrice': 1.99,
+        'prizeType': _prizeType,
+        'prize': prizeValue,
+      };
 
       if (_bannerUrlController.text.trim().isNotEmpty) {
-        eventObj.set('prizeImageUrl', _bannerUrlController.text.trim());
-        eventObj.set('icon', _bannerUrlController.text.trim());
+        eventData['prizeImageUrl'] = _bannerUrlController.text.trim();
+        eventData['icon'] = _bannerUrlController.text.trim();
       }
 
-      final evResponse = await eventObj.save();
-      if (!evResponse.success || evResponse.result == null) {
-        throw Exception(evResponse.error?.message ?? 'Falha ao salvar o evento.');
-      }
-
-      final savedEvent = evResponse.result as ParseObject;
-
-      // 2. Salva cada Enigma vinculado ao Evento
-      for (int i = 0; i < _enigmas.length; i++) {
-        final draft = _enigmas[i];
-        final enigmaObj = ParseObject('Enigma');
-        enigmaObj.set('title', draft.title);
-        enigmaObj.set('instruction', draft.instruction);
-        enigmaObj.set('code', draft.code.trim().toUpperCase());
-        enigmaObj.set('order', i + 1);
-        enigmaObj.set('status', 'open');
-        enigmaObj.set('type', 'text');
-        enigmaObj.set('difficulty', _difficulty.toUpperCase());
-
-        // Vínculo com o evento
-        enigmaObj.set('eventId', savedEvent.objectId);
-        enigmaObj.set('event', savedEvent);
-
-        if (draft.videoUrl != null && draft.videoUrl!.trim().isNotEmpty) {
-          enigmaObj.set('videoUrl', draft.videoUrl!.trim());
-        }
-
-        // Super Dica de R$ 1,99
-        enigmaObj.set('hasPaidSuperHint', draft.hasPaidSuperHint);
-        enigmaObj.set('superHintPrice', 1.99);
-        enigmaObj.set('superHintText', draft.superHintText.trim());
-
-        // Ferramentas Táticas
+      final enigmasData = _enigmas.map((draft) {
         final chars = <String>[];
         if (draft.toolCesar) chars.add('cesar');
         if (draft.toolMorse) chars.add('morse');
         if (draft.toolCompass) chars.add('compass');
         if (draft.toolQr) chars.add('qrcode');
-        enigmaObj.set('characteristics', chars);
 
-        await enigmaObj.save();
+        return <String, dynamic>{
+          'title': draft.title,
+          'instruction': draft.instruction,
+          'code': draft.code.trim().toUpperCase(),
+          'videoUrl': draft.videoUrl?.trim(),
+          'hasPaidSuperHint': draft.hasPaidSuperHint,
+          'superHintPrice': 1.99,
+          'superHintText': draft.superHintText.trim(),
+          'characteristics': chars,
+        };
+      }).toList();
+
+      String? createdEventId;
+
+      // 1. Tenta salvar via Cloud Function dedicada publishCreatorChallenge (usa MasterKey no servidor)
+      try {
+        final cloudFunc = ParseCloudFunction('publishCreatorChallenge');
+        final res = await cloudFunc.execute(parameters: {
+          ...eventData,
+          'enigmas': enigmasData,
+        });
+
+        if (res.success && res.result != null) {
+          final data = Map<String, dynamic>.from(res.result);
+          if (data['success'] == true && data['eventId'] != null) {
+            createdEventId = data['eventId'];
+          }
+        }
+      } catch (e) {
+        debugPrint('[publishCreatorChallenge Cloud Function]: $e');
+      }
+
+      // 2. Se não salvou, usa createOrUpdateEvent (implantada no Back4App com MasterKey, contornando CLP de addField)
+      if (createdEventId == null) {
+        final eventFunc = ParseCloudFunction('createOrUpdateEvent');
+        final evRes = await eventFunc.execute(parameters: {
+          'data': eventData,
+        });
+
+        if (evRes.success && evRes.result != null) {
+          final data = Map<String, dynamic>.from(evRes.result);
+          createdEventId = data['eventId'];
+
+          if (createdEventId != null) {
+            // Salva cada enigma via createOrUpdateEnigma (com MasterKey)
+            for (int i = 0; i < _enigmas.length; i++) {
+              final draft = _enigmas[i];
+              final chars = <String>[];
+              if (draft.toolCesar) chars.add('cesar');
+              if (draft.toolMorse) chars.add('morse');
+              if (draft.toolCompass) chars.add('compass');
+              if (draft.toolQr) chars.add('qrcode');
+
+              final enigmaFunc = ParseCloudFunction('createOrUpdateEnigma');
+              await enigmaFunc.execute(parameters: {
+                'eventId': createdEventId,
+                'data': {
+                  'title': draft.title,
+                  'instruction': draft.instruction,
+                  'code': draft.code.trim().toUpperCase(),
+                  'order': i + 1,
+                  'status': 'open',
+                  'type': 'text',
+                  'difficulty': _difficulty.toUpperCase(),
+                  'videoUrl': draft.videoUrl?.trim(),
+                  'hasPaidSuperHint': draft.hasPaidSuperHint,
+                  'superHintPrice': 1.99,
+                  'superHintText': draft.superHintText.trim(),
+                  'characteristics': chars,
+                },
+              });
+            }
+          }
+        } else {
+          throw Exception(evRes.error?.message ?? 'Falha ao salvar evento no servidor.');
+        }
       }
 
       // Sucesso! Mostra modal de compartilhamento
-      if (mounted) {
-        _showSuccessDialog(savedEvent.objectId!, slug);
+      if (createdEventId != null && mounted) {
+        _showSuccessDialog(createdEventId, slug);
       }
     } catch (e) {
       _showError('Erro ao publicar desafio: $e');
@@ -246,18 +286,20 @@ class _CreatorChallengeWizardScreenState
         ),
         title: Row(
           children: [
-            const FaIcon(
-              FontAwesomeIcons.circleCheck,
+            const Icon(
+              Icons.check_circle_rounded,
               color: Colors.greenAccent,
-              size: 24,
+              size: 26,
             ),
             const SizedBox(width: 12),
-            Text(
-              'Desafio Publicado com Sucesso!',
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+            Expanded(
+              child: Text(
+                'Desafio Publicado com Sucesso!',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
               ),
             ),
           ],
@@ -313,10 +355,10 @@ class _CreatorChallengeWizardScreenState
                       ),
                     ),
                     IconButton(
-                      icon: const FaIcon(
-                        FontAwesomeIcons.copy,
+                      icon: const Icon(
+                        Icons.copy_rounded,
                         color: Colors.white,
-                        size: 14,
+                        size: 16,
                       ),
                       onPressed: () {
                         Clipboard.setData(ClipboardData(text: publicLink));
@@ -401,7 +443,7 @@ class _CreatorChallengeWizardScreenState
               Row(
                 children: [
                   IconButton(
-                    icon: const FaIcon(FontAwesomeIcons.arrowLeft, color: Colors.white, size: 16),
+                    icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
                     onPressed: widget.onCancel,
                   ),
                   const SizedBox(width: 6),
@@ -996,7 +1038,7 @@ class _CreatorChallengeWizardScreenState
                       color: AppColors.verdeVale.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: const FaIcon(FontAwesomeIcons.rocket, color: AppColors.amareloVale, size: 22),
+                    child: const Icon(Icons.rocket_launch_rounded, color: AppColors.amareloVale, size: 24),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -1018,14 +1060,41 @@ class _CreatorChallengeWizardScreenState
               ),
               const Divider(color: AppColors.darkCardBorder, height: 32),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildReviewMetric('Inscrição', _isPaidEntry ? 'R\$ ${_ticketPrice.toStringAsFixed(2)}' : 'Gratuito'),
-                  _buildReviewMetric('Prêmio', prize),
-                  _buildReviewMetric('Fases', '${_enigmas.length} Enigmas'),
-                  _buildReviewMetric('Super Dicas', _enableSuperHints ? 'Ativadas (R\$ 1,99)' : 'Desativadas'),
-                ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isMobile = constraints.maxWidth < 580;
+                  if (isMobile) {
+                    return Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(child: _buildReviewMetric('Inscrição', _isPaidEntry ? 'R\$ ${_ticketPrice.toStringAsFixed(2)}' : 'Gratuito')),
+                            const SizedBox(width: 8),
+                            Expanded(child: _buildReviewMetric('Prêmio', prize)),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Row(
+                          children: [
+                            Expanded(child: _buildReviewMetric('Fases', '${_enigmas.length} Enigmas')),
+                            const SizedBox(width: 8),
+                            Expanded(child: _buildReviewMetric('Super Dicas', _enableSuperHints ? 'Ativadas (R\$ 1,99)' : 'Desativadas')),
+                          ],
+                        ),
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildReviewMetric('Inscrição', _isPaidEntry ? 'R\$ ${_ticketPrice.toStringAsFixed(2)}' : 'Gratuito'),
+                      _buildReviewMetric('Prêmio', prize),
+                      _buildReviewMetric('Fases', '${_enigmas.length} Enigmas'),
+                      _buildReviewMetric('Super Dicas', _enableSuperHints ? 'Ativadas (R\$ 1,99)' : 'Desativadas'),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -1041,7 +1110,7 @@ class _CreatorChallengeWizardScreenState
           ),
           child: Row(
             children: [
-              const FaIcon(FontAwesomeIcons.circleInfo, color: AppColors.amareloVale, size: 20),
+              const Icon(Icons.info_outline_rounded, color: AppColors.amareloVale, size: 22),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(

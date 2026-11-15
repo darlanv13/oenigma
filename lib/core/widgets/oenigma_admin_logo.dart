@@ -78,27 +78,29 @@ class OEnigmaAdminLogo extends StatelessWidget {
                   letterSpacing: size == LogoSize.compact ? 1.0 : 1.5,
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.amareloVale.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: AppColors.amareloVale.withValues(alpha: 0.4),
-                    width: 1,
+              if (showBadge) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.amareloVale.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: AppColors.amareloVale.withValues(alpha: 0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    'ADM',
+                    style: GoogleFonts.poppins(
+                      color: AppColors.amareloVale,
+                      fontSize: subtitleFontSize + 1,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.0,
+                    ),
                   ),
                 ),
-                child: Text(
-                  'ADM',
-                  style: GoogleFonts.poppins(
-                    color: AppColors.amareloVale,
-                    fontSize: subtitleFontSize + 1,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ),
+              ],
             ],
           ),
         ),
