@@ -1933,3 +1933,115 @@ Parse.Cloud.define("applyReferralCode", async (request) => {
   };
 });
 
+// -----------------------------------------------------------------------------
+// CREATOR STUDIO: CADASTRO E LOGIN RÁPIDO SEGURO
+// -----------------------------------------------------------------------------
+Parse.Cloud.define("registerCreator", async (request) => {
+  const { name, email, password, channelHandle, phone } = request.params;
+
+  if (!email || !password || !name) {
+    throw new Parse.Error(Parse.Error.INVALID_QUERY, "Nome, e-mail e senha são obrigatórios.");
+  }
+
+  const cleanEmail = String(email).trim().toLowerCase();
+  const cleanName = String(name).trim();
+  const cleanPass = String(password).trim();
+  let cleanHandle = channelHandle ? String(channelHandle).trim() : "";
+  if (cleanHandle && !cleanHandle.startsWith("@")) {
+    cleanHandle = "@" + cleanHandle;
+  }
+  const cleanPhone = phone ? String(phone).trim() : "";
+
+  if (cleanPass.length < 6) {
+    throw new Parse.Error(Parse.Error.INVALID_QUERY, "A senha deve ter no mínimo 6 caracteres.");
+  }
+
+  // 1. Verifica se já existe usuário com este e-mail ou username
+  const emailQuery = new Parse.Query(Parse.User);
+  emailQuery.equalTo("email", cleanEmail);
+  const existingUser = await emailQuery.first({ useMasterKey: true });
+  if (existingUser) {
+    throw new Parse.Error(Parse.Error.ACCOUNT_ALREADY_LINKED, "Já existe uma conta cadastrada com este e-mail. Faça login ou recupere sua senha.");
+  }
+
+  // 2. Cria o usuário com role 'creator' usando MasterKey
+  const user = new Parse.User();
+  user.set("username", cleanEmail);
+  user.set("email", cleanEmail);
+  user.set("password", cleanPass);
+  user.set("name", cleanName);
+  user.set("channelHandle", cleanHandle);
+  if (cleanPhone) user.set("phone", cleanPhone);
+  user.set("role", "creator");
+  user.set("isCreator", true);
+  user.set("balance", 0.0);
+  user.set("totalEarned", 0.0);
+
+  const acl = new Parse.ACL();
+  acl.setPublicReadAccess(true);
+  user.setACL(acl);
+
+  await user.signUp(null, { useMasterKey: true });
+
+  return {
+    success: true,
+    userId: user.id,
+    email: cleanEmail,
+    name: cleanName,
+    channelHandle: cleanHandle,
+    role: "creator"
+  };
+});
+
+Parse.Cloud.define("findCreatorEmail", async (request) => {
+  const { identifier } = request.params;
+  if (!identifier) return { email: null };
+  const clean = String(identifier).trim();
+  if (clean.includes("@") && clean.includes(".")) {
+    return { email: clean.toLowerCase() };
+  }
+  const handle = clean.startsWith("@") ? clean : "@" + clean;
+  const q = new Parse.Query(Parse.User);
+  q.equalTo("channelHandle", handle);
+  const u = await q.first({ useMasterKey: true });
+  if (u) {
+    return { email: u.get("email") || u.get("username") };
+  }
+  return { email: null };
+});
+
+// -----------------------------------------------------------------------------
+// WEB PLAYER: REGISTRO DE CONCLUSÃO E VENCEDOR DO DESAFIO
+// -----------------------------------------------------------------------------
+Parse.Cloud.define("submitChallengeWinner", async (request) => {
+  const { eventId, winnerName, winnerContact, pixKey, elapsedSeconds } = request.params;
+  if (!eventId) throw new Parse.Error(Parse.Error.INVALID_QUERY, "ID do evento obrigatório.");
+
+  const q = new Parse.Query("Event");
+  const eventObj = await q.get(eventId, { useMasterKey: true });
+  if (!eventObj) throw new Parse.Error(Parse.Error.OBJECT_NOT_FOUND, "Evento não encontrado.");
+
+  const isClosed = eventObj.get("status") === "closed" || !!eventObj.get("winnerId");
+
+  if (!isClosed) {
+    eventObj.set("winnerName", winnerName || "Explorador Misterioso");
+    eventObj.set("winnerContact", winnerContact || "");
+    eventObj.set("winnerPixKey", pixKey || "");
+    eventObj.set("winnerElapsedSeconds", elapsedSeconds || 0);
+    eventObj.set("status", "closed");
+    eventObj.set("completedAt", new Date());
+    await eventObj.save(null, { useMasterKey: true });
+    return {
+      isFirstWinner: true,
+      message: "Parabéns! Você foi o primeiro colocado e o grande vencedor do desafio!"
+    };
+  } else {
+    return {
+      isFirstWinner: false,
+      winnerName: eventObj.get("winnerName") || "Outro explorador",
+      message: "Você concluiu todas as etapas com sucesso! O primeiro colocado já havia finalizado, mas sua conquista foi registrada!"
+    };
+  }
+});
+
+

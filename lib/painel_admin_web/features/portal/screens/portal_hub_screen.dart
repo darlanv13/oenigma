@@ -396,14 +396,30 @@ class PortalHubScreen extends StatelessWidget {
   Widget _buildFooter(BuildContext context) {
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 16,
+          runSpacing: 8,
           children: [
             TextButton.icon(
-              onPressed: () => Navigator.pushNamed(context, '/login'),
-              icon: const FaIcon(FontAwesomeIcons.rightToBracket, size: 13, color: AppColors.cinzaMedio),
+              onPressed: () => Navigator.pushNamed(context, '/studio'),
+              icon: const FaIcon(FontAwesomeIcons.wandMagicSparkles, size: 13, color: AppColors.amareloVale),
               label: Text(
-                'Entrar com E-mail e Senha (Login Administrativo)',
+                'Criador? Cadastre-se ou Entre no Studio',
+                style: GoogleFonts.inter(color: AppColors.amareloVale, fontSize: 12.5, fontWeight: FontWeight.w600),
+              ),
+            ),
+            Container(
+              width: 4,
+              height: 4,
+              decoration: const BoxDecoration(color: AppColors.cinzaMedio, shape: BoxShape.circle),
+            ),
+            TextButton.icon(
+              onPressed: () => Navigator.pushNamed(context, '/login'),
+              icon: const FaIcon(FontAwesomeIcons.shieldHalved, size: 13, color: AppColors.cinzaMedio),
+              label: Text(
+                'Acesso Super Admin',
                 style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 12.5),
               ),
             ),

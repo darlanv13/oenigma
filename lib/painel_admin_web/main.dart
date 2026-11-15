@@ -89,7 +89,7 @@ class AdminApp extends StatelessWidget {
         }
 
         // 2. Rota explícita para o Creator Studio
-        if (path == '/studio') {
+        if (path == '/studio' || path == '/creator' || path.startsWith('/studio/')) {
           return MaterialPageRoute(
             builder: (_) => const MainCreatorScreen(),
             settings: settings,

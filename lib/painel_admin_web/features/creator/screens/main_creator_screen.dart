@@ -7,6 +7,7 @@ import 'package:parse_server_sdk_flutter/parse_server_sdk_flutter.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/core/widgets/oenigma_admin_logo.dart';
 import 'package:oenigma/painel_admin_web/features/auth/providers/auth_provider.dart';
+import 'package:oenigma/painel_admin_web/features/creator/screens/creator_auth_screen.dart';
 import 'package:oenigma/painel_admin_web/features/creator/screens/creator_dashboard_screen.dart';
 import 'package:oenigma/painel_admin_web/features/creator/screens/creator_challenge_wizard_screen.dart';
 import 'package:oenigma/painel_admin_web/features/creator/screens/creator_finance_screen.dart';
@@ -23,8 +24,9 @@ class MainCreatorScreen extends StatefulWidget {
 class _MainCreatorScreenState extends State<MainCreatorScreen> {
   int _selectedIndex = 0;
   ParseUser? _currentUser;
+  bool _isLoadingUser = true;
 
-  late final List<Widget> _screens;
+  late List<Widget> _screens;
 
   final List<String> _titles = [
     'Dashboard',
@@ -36,8 +38,11 @@ class _MainCreatorScreenState extends State<MainCreatorScreen> {
   @override
   void initState() {
     super.initState();
+    _initScreens();
     _loadUser();
+  }
 
+  void _initScreens() {
     _screens = [
       CreatorDashboardScreen(
         onNavigateTab: (index) {
@@ -59,12 +64,36 @@ class _MainCreatorScreenState extends State<MainCreatorScreen> {
   }
 
   Future<void> _loadUser() async {
+    setState(() => _isLoadingUser = true);
     final user = await ParseUser.currentUser() as ParseUser?;
-    if (mounted) setState(() => _currentUser = user);
+    if (mounted) {
+      setState(() {
+        _currentUser = user;
+        _isLoadingUser = false;
+      });
+      _initScreens();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingUser) {
+      return const Scaffold(
+        backgroundColor: AppColors.darkBackground,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.amareloVale),
+        ),
+      );
+    }
+
+    if (_currentUser == null) {
+      return CreatorAuthScreen(
+        onAuthenticated: () async {
+          await _loadUser();
+        },
+      );
+    }
+
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 900;
 
@@ -191,6 +220,7 @@ class _MainCreatorScreenState extends State<MainCreatorScreen> {
                   Navigator.pushNamed(context, '/admin');
                 } else if (val == 'logout') {
                   await ref.read(authRepositoryProvider).signOut();
+                  if (mounted) setState(() => _currentUser = null);
                 }
               },
               itemBuilder: (ctx) => [
@@ -610,6 +640,7 @@ class _MainCreatorScreenState extends State<MainCreatorScreen> {
 
             if (confirm == true) {
               await ref.read(authRepositoryProvider).signOut();
+              if (mounted) setState(() => _currentUser = null);
             }
           },
           borderRadius: BorderRadius.circular(8),
