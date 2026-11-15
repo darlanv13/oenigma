@@ -149,38 +149,42 @@ class _MainCreatorScreenState extends State<MainCreatorScreen> {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      titleSpacing: 14,
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const OEnigmaAdminLogo(size: LogoSize.compact, showBadge: false),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: AppColors.amareloVale.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.3)),
-            ),
-            child: Text(
-              'STUDIO',
-              style: GoogleFonts.poppins(
-                color: AppColors.amareloVale,
-                fontSize: 9.5,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
+      titleSpacing: 10,
+      title: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const OEnigmaAdminLogo(size: LogoSize.compact, showBadge: false),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+              decoration: BoxDecoration(
+                color: AppColors.amareloVale.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.3)),
+              ),
+              child: Text(
+                'STUDIO',
+                style: GoogleFonts.poppins(
+                  color: AppColors.amareloVale,
+                  fontSize: 9.0,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       actions: [
         // Badge de Saldo Rápido Pix
         GestureDetector(
           onTap: () => setState(() => _selectedIndex = 3),
           child: Container(
-            margin: const EdgeInsets.only(right: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            margin: const EdgeInsets.only(right: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             decoration: BoxDecoration(
               color: AppColors.verdeVale.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(16),
@@ -189,8 +193,8 @@ class _MainCreatorScreenState extends State<MainCreatorScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const FaIcon(FontAwesomeIcons.bolt, color: AppColors.verdeVale, size: 10),
-                const SizedBox(width: 5),
+                const Icon(Icons.bolt_rounded, color: AppColors.verdeVale, size: 14),
+                const SizedBox(width: 4),
                 Text(
                   'R\$ ${balance.toStringAsFixed(2)}',
                   style: GoogleFonts.poppins(
@@ -209,7 +213,7 @@ class _MainCreatorScreenState extends State<MainCreatorScreen> {
           builder: (context, ref, _) {
             final isAdmin = _currentUser?.get<bool>('isAdmin') ?? false;
             return PopupMenuButton<String>(
-              icon: const FaIcon(FontAwesomeIcons.ellipsisVertical, color: Colors.white, size: 14),
+              icon: const Icon(Icons.more_vert_rounded, color: Colors.white, size: 20),
               color: AppColors.darkCardColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

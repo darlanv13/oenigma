@@ -425,80 +425,179 @@ class _CreatorFinanceScreenState extends State<CreatorFinanceScreen> {
 
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.darkCardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.darkCardBorder),
-      ),
-      child: DataTable(
-        headingRowColor: WidgetStateProperty.all(AppColors.darkBackground),
-        columns: const [
-          DataColumn(label: Text('TIPO')),
-          DataColumn(label: Text('DESAFIO / ENIGMA')),
-          DataColumn(label: Text('COMPRADOR')),
-          DataColumn(label: Text('BRUTO')),
-          DataColumn(label: Text('TAXA (15%)')),
-          DataColumn(label: Text('LÍQUIDO')),
-          DataColumn(label: Text('DATA')),
-          DataColumn(label: Text('STATUS')),
-        ],
-        rows: _transactions.map((tx) {
-          final type = tx.get<String>('type') ?? 'ticket';
-          final isTicket = type == 'ticket';
-          final name = tx.get<String>('eventName') ?? 'Desafio';
-          final buyer = tx.get<String>('buyerName') ?? 'Seguidor';
-          final gross = (tx.get<num>('grossAmount') ?? tx.get<num>('amount') ?? 0.0).toDouble();
-          final fee = (tx.get<num>('feeAmount') ?? (gross * 0.15)).toDouble();
-          final net = (tx.get<num>('netAmount') ?? (gross - fee)).toDouble();
-          final status = tx.get<String>('status') ?? 'pending';
-          final date = tx.createdAt ?? DateTime.now();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 750;
 
-          return DataRow(
-            cells: [
-              DataCell(
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isTicket ? Colors.blue.withValues(alpha: 0.15) : AppColors.amareloVale.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    isTicket ? 'INGRESSO' : 'SUPER DICA',
-                    style: GoogleFonts.poppins(
-                      color: isTicket ? Colors.lightBlueAccent : AppColors.amareloVale,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+        if (isMobile) {
+          return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _transactions.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              final tx = _transactions[index];
+              final type = tx.get<String>('type') ?? 'ticket';
+              final isTicket = type == 'ticket';
+              final name = tx.get<String>('eventName') ?? 'Desafio';
+              final buyer = tx.get<String>('buyerName') ?? 'Seguidor';
+              final gross = (tx.get<num>('grossAmount') ?? tx.get<num>('amount') ?? 0.0).toDouble();
+              final fee = (tx.get<num>('feeAmount') ?? (gross * 0.15)).toDouble();
+              final net = (tx.get<num>('netAmount') ?? (gross - fee)).toDouble();
+              final status = tx.get<String>('status') ?? 'pending';
+              final date = tx.createdAt ?? DateTime.now();
+
+              return Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.darkCardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.darkCardBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isTicket
+                                ? Colors.blue.withValues(alpha: 0.15)
+                                : AppColors.amareloVale.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            isTicket ? '🎟️ INGRESSO' : '💡 SUPER DICA',
+                            style: GoogleFonts.poppins(
+                              color: isTicket ? Colors.lightBlueAccent : AppColors.amareloVale,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '+ R\$ ${net.toStringAsFixed(2)}',
+                          style: GoogleFonts.poppins(
+                            color: Colors.greenAccent,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    Text(
+                      name,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Comprador: $buyer',
+                          style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11.5),
+                        ),
+                        Text(
+                          dateFormat.format(date),
+                          style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              DataCell(Text(name, style: GoogleFonts.poppins(color: Colors.white, fontSize: 12))),
-              DataCell(Text(buyer, style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 12))),
-              DataCell(Text('R\$ ${gross.toStringAsFixed(2)}', style: GoogleFonts.poppins(color: Colors.white, fontSize: 12))),
-              DataCell(Text('- R\$ ${fee.toStringAsFixed(2)}', style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 12))),
-              DataCell(
-                Text(
-                  '+ R\$ ${net.toStringAsFixed(2)}',
-                  style: GoogleFonts.poppins(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 12),
-                ),
-              ),
-              DataCell(Text(dateFormat.format(date), style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11))),
-              DataCell(
-                Text(
-                  status.toUpperCase(),
-                  style: GoogleFonts.poppins(
-                    color: status == 'approved' ? Colors.greenAccent : AppColors.amareloVale,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
+              );
+            },
           );
-        }).toList(),
-      ),
+        }
+
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.darkCardColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.darkCardBorder),
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(AppColors.darkBackground),
+              columns: const [
+                DataColumn(label: Text('TIPO')),
+                DataColumn(label: Text('DESAFIO / ENIGMA')),
+                DataColumn(label: Text('COMPRADOR')),
+                DataColumn(label: Text('BRUTO')),
+                DataColumn(label: Text('TAXA (15%)')),
+                DataColumn(label: Text('LÍQUIDO')),
+                DataColumn(label: Text('DATA')),
+                DataColumn(label: Text('STATUS')),
+              ],
+              rows: _transactions.map((tx) {
+                final type = tx.get<String>('type') ?? 'ticket';
+                final isTicket = type == 'ticket';
+                final name = tx.get<String>('eventName') ?? 'Desafio';
+                final buyer = tx.get<String>('buyerName') ?? 'Seguidor';
+                final gross = (tx.get<num>('grossAmount') ?? tx.get<num>('amount') ?? 0.0).toDouble();
+                final fee = (tx.get<num>('feeAmount') ?? (gross * 0.15)).toDouble();
+                final net = (tx.get<num>('netAmount') ?? (gross - fee)).toDouble();
+                final status = tx.get<String>('status') ?? 'pending';
+                final date = tx.createdAt ?? DateTime.now();
+
+                return DataRow(
+                  cells: [
+                    DataCell(
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isTicket
+                              ? Colors.blue.withValues(alpha: 0.15)
+                              : AppColors.amareloVale.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          isTicket ? 'INGRESSO' : 'SUPER DICA',
+                          style: GoogleFonts.poppins(
+                            color: isTicket ? Colors.lightBlueAccent : AppColors.amareloVale,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    DataCell(Text(name, style: GoogleFonts.poppins(color: Colors.white, fontSize: 12))),
+                    DataCell(Text(buyer, style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 12))),
+                    DataCell(Text('R\$ ${gross.toStringAsFixed(2)}', style: GoogleFonts.poppins(color: Colors.white, fontSize: 12))),
+                    DataCell(Text('- R\$ ${fee.toStringAsFixed(2)}', style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 12))),
+                    DataCell(
+                      Text(
+                        '+ R\$ ${net.toStringAsFixed(2)}',
+                        style: GoogleFonts.poppins(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ),
+                    DataCell(Text(dateFormat.format(date), style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 11))),
+                    DataCell(
+                      Text(
+                        status.toUpperCase(),
+                        style: GoogleFonts.poppins(
+                          color: status == 'approved' ? Colors.greenAccent : AppColors.amareloVale,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
     );
   }
 }

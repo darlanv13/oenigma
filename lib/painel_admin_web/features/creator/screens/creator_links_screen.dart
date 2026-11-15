@@ -181,18 +181,35 @@ class _CreatorLinksScreenState extends State<CreatorLinksScreen> {
                               Expanded(
                                 child: SelectableText(
                                   publicLink,
+                                  maxLines: 1,
                                   style: GoogleFonts.poppins(
                                     color: AppColors.amareloVale,
-                                    fontSize: 13.5,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
                               IconButton(
+                                tooltip: 'Copiar',
                                 icon: const FaIcon(FontAwesomeIcons.copy, color: Colors.white, size: 14),
                                 onPressed: () => _copyToClipboard(publicLink, 'Link copiado para a área de transferência!'),
                               ),
                             ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: const FaIcon(FontAwesomeIcons.copy, size: 13),
+                            label: const Text('Copiar Link para Stories / Bio'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.amareloVale,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              textStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                            onPressed: () => _copyToClipboard(publicLink, 'Link copiado para a área de transferência!'),
                           ),
                         ),
                         const SizedBox(height: 10),

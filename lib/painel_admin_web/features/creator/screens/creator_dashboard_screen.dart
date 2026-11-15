@@ -557,135 +557,261 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
         final bannerUrl = ev.get<String>('prizeImageUrl') ?? ev.get<String>('icon') ?? '';
         final isFree = price <= 0;
 
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.darkCardColor,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.darkCardBorder),
-          ),
-          child: Row(
-            children: [
-              // Thumbnail / Ícone do Desafio
-              Container(
-                width: 58,
-                height: 58,
-                decoration: BoxDecoration(
-                  color: AppColors.verdeVale.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                  image: bannerUrl.isNotEmpty
-                      ? DecorationImage(
-                          image: NetworkImage(bannerUrl),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: bannerUrl.isEmpty
-                    ? const Center(
-                        child: FaIcon(
-                          FontAwesomeIcons.puzzlePiece,
-                          color: AppColors.amareloVale,
-                          size: 22,
-                        ),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 650;
+
+            final thumbnail = Container(
+              width: isMobile ? 48 : 58,
+              height: isMobile ? 48 : 58,
+              decoration: BoxDecoration(
+                color: AppColors.verdeVale.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                image: bannerUrl.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(bannerUrl),
+                        fit: BoxFit.cover,
                       )
                     : null,
               ),
-              const SizedBox(width: 16),
+              child: bannerUrl.isEmpty
+                  ? Center(
+                      child: FaIcon(
+                        FontAwesomeIcons.puzzlePiece,
+                        color: AppColors.amareloVale,
+                        size: isMobile ? 18 : 22,
+                      ),
+                    )
+                  : null,
+            );
 
-              // Informações do Desafio
-              Expanded(
+            if (isMobile) {
+              return Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.darkCardColor,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.darkCardBorder),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Text(
-                          title,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isFree
-                                ? Colors.blueAccent.withValues(alpha: 0.15)
-                                : AppColors.amareloVale.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            isFree ? 'GRÁTIS' : 'R\$ ${price.toStringAsFixed(2)}',
-                            style: GoogleFonts.poppins(
-                              color: isFree ? Colors.blueAccent : AppColors.amareloVale,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: status == 'open'
-                                ? Colors.green.withValues(alpha: 0.15)
-                                : Colors.red.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            status == 'open' ? 'ATIVO' : 'ENCERRADO',
-                            style: GoogleFonts.poppins(
-                              color: status == 'open' ? Colors.greenAccent : Colors.redAccent,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                            ),
+                        thumbnail,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: isFree
+                                          ? Colors.blueAccent.withValues(alpha: 0.15)
+                                          : AppColors.amareloVale.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      isFree ? 'GRÁTIS' : 'R\$ ${price.toStringAsFixed(2)}',
+                                      style: GoogleFonts.poppins(
+                                        color: isFree ? Colors.blueAccent : AppColors.amareloVale,
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: status == 'open'
+                                          ? Colors.green.withValues(alpha: 0.15)
+                                          : Colors.red.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      status == 'open' ? 'ATIVO' : 'ENCERRADO',
+                                      style: GoogleFonts.poppins(
+                                        color: status == 'open' ? Colors.greenAccent : Colors.redAccent,
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 10),
                     Text(
-                      'Prêmio: $prize • $playerCount participantes inscritos',
+                      'Prêmio: $prize • $playerCount participantes',
                       style: GoogleFonts.poppins(
                         color: AppColors.cinzaMedio,
-                        fontSize: 12,
+                        fontSize: 11.5,
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const FaIcon(FontAwesomeIcons.copy, size: 11),
+                            label: const Text('Copiar Link'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.amareloVale,
+                              side: const BorderSide(color: AppColors.amareloVale),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              textStyle: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: () => _copyLink(slug),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const FaIcon(FontAwesomeIcons.qrcode, size: 11),
+                            label: const Text('Divulgar'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.verdeVale,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              textStyle: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: () {
+                              if (widget.onNavigateTab != null) {
+                                widget.onNavigateTab!(2);
+                              }
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ),
+              );
+            }
 
-              // Botões de Ação
-              OutlinedButton.icon(
-                icon: const FaIcon(FontAwesomeIcons.copy, size: 12),
-                label: const Text('Copiar Link'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.amareloVale,
-                  side: const BorderSide(color: AppColors.amareloVale),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                ),
-                onPressed: () => _copyLink(slug),
+            return Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.darkCardColor,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.darkCardBorder),
               ),
-              const SizedBox(width: 10),
-              ElevatedButton.icon(
-                icon: const FaIcon(FontAwesomeIcons.qrcode, size: 12),
-                label: const Text('Divulgar'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.verdeVale,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                ),
-                onPressed: () {
-                  if (widget.onNavigateTab != null) {
-                    widget.onNavigateTab!(2); // Aba de Divulgação
-                  }
-                },
+              child: Row(
+                children: [
+                  thumbnail,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              title,
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isFree
+                                    ? Colors.blueAccent.withValues(alpha: 0.15)
+                                    : AppColors.amareloVale.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                isFree ? 'GRÁTIS' : 'R\$ ${price.toStringAsFixed(2)}',
+                                style: GoogleFonts.poppins(
+                                  color: isFree ? Colors.blueAccent : AppColors.amareloVale,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: status == 'open'
+                                    ? Colors.green.withValues(alpha: 0.15)
+                                    : Colors.red.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                status == 'open' ? 'ATIVO' : 'ENCERRADO',
+                                style: GoogleFonts.poppins(
+                                  color: status == 'open' ? Colors.greenAccent : Colors.redAccent,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Prêmio: $prize • $playerCount participantes inscritos',
+                          style: GoogleFonts.poppins(
+                            color: AppColors.cinzaMedio,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    icon: const FaIcon(FontAwesomeIcons.copy, size: 12),
+                    label: const Text('Copiar Link'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.amareloVale,
+                      side: const BorderSide(color: AppColors.amareloVale),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    ),
+                    onPressed: () => _copyLink(slug),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    icon: const FaIcon(FontAwesomeIcons.qrcode, size: 12),
+                    label: const Text('Divulgar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.verdeVale,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    ),
+                    onPressed: () {
+                      if (widget.onNavigateTab != null) {
+                        widget.onNavigateTab!(2);
+                      }
+                    },
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
+    );
+  }
     );
   }
 }

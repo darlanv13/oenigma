@@ -188,7 +188,7 @@ class _CreatorChallengeWizardScreenState
 
       String? createdEventId;
 
-      // 1. Tenta salvar via Cloud Function dedicada publishCreatorChallenge (usa MasterKey no servidor)
+      // 1. Salva via Cloud Function dedicada publishCreatorChallenge (usa MasterKey no servidor para contornar qualquer restrição de CLP)
       try {
         final cloudFunc = ParseCloudFunction('publishCreatorChallenge');
         final res = await cloudFunc.execute(parameters: {
@@ -200,56 +200,15 @@ class _CreatorChallengeWizardScreenState
           final data = Map<String, dynamic>.from(res.result);
           if (data['success'] == true && data['eventId'] != null) {
             createdEventId = data['eventId'];
-          }
-        }
-      } catch (e) {
-        debugPrint('[publishCreatorChallenge Cloud Function]: $e');
-      }
-
-      // 2. Se não salvou, usa createOrUpdateEvent (implantada no Back4App com MasterKey, contornando CLP de addField)
-      if (createdEventId == null) {
-        final eventFunc = ParseCloudFunction('createOrUpdateEvent');
-        final evRes = await eventFunc.execute(parameters: {
-          'data': eventData,
-        });
-
-        if (evRes.success && evRes.result != null) {
-          final data = Map<String, dynamic>.from(evRes.result);
-          createdEventId = data['eventId'];
-
-          if (createdEventId != null) {
-            // Salva cada enigma via createOrUpdateEnigma (com MasterKey)
-            for (int i = 0; i < _enigmas.length; i++) {
-              final draft = _enigmas[i];
-              final chars = <String>[];
-              if (draft.toolCesar) chars.add('cesar');
-              if (draft.toolMorse) chars.add('morse');
-              if (draft.toolCompass) chars.add('compass');
-              if (draft.toolQr) chars.add('qrcode');
-
-              final enigmaFunc = ParseCloudFunction('createOrUpdateEnigma');
-              await enigmaFunc.execute(parameters: {
-                'eventId': createdEventId,
-                'data': {
-                  'title': draft.title,
-                  'instruction': draft.instruction,
-                  'code': draft.code.trim().toUpperCase(),
-                  'order': i + 1,
-                  'status': 'open',
-                  'type': 'text',
-                  'difficulty': _difficulty.toUpperCase(),
-                  'videoUrl': draft.videoUrl?.trim(),
-                  'hasPaidSuperHint': draft.hasPaidSuperHint,
-                  'superHintPrice': 1.99,
-                  'superHintText': draft.superHintText.trim(),
-                  'characteristics': chars,
-                },
-              });
-            }
+          } else if (data['error'] != null) {
+            throw Exception(data['error']);
           }
         } else {
-          throw Exception(evRes.error?.message ?? 'Falha ao salvar evento no servidor.');
+          throw Exception(res.error?.message ?? 'Falha ao salvar evento no servidor.');
         }
+      } catch (e) {
+        debugPrint('[publishCreatorChallenge Error]: $e');
+        rethrow;
       }
 
       // Sucesso! Mostra modal de compartilhamento
@@ -548,7 +507,7 @@ class _CreatorChallengeWizardScreenState
           ),
           child: Center(
             child: isPassed
-                ? const FaIcon(FontAwesomeIcons.check, size: 10, color: AppColors.amareloVale)
+                ? const Icon(Icons.check_rounded, size: 14, color: AppColors.amareloVale)
                 : Text(
                     '${index + 1}',
                     style: GoogleFonts.poppins(
@@ -668,14 +627,14 @@ class _CreatorChallengeWizardScreenState
               title: 'Desafio Gratuito',
               subtitle: 'Qualquer seguidor pode jogar sem pagar. Excelente para viralizar.',
               isSelected: !_isPaidEntry,
-              icon: FontAwesomeIcons.gift,
+              icon: Icons.card_giftcard_rounded,
               onTap: () => setState(() => _isPaidEntry = false),
             );
             final cardPago = _buildChoiceCard(
               title: 'Pay-to-Play (R\$ 5 a R\$ 20)',
               subtitle: 'Seguidores pagam uma taxa simbólica no Pix para concorrer ao prêmio.',
               isSelected: _isPaidEntry,
-              icon: FontAwesomeIcons.ticket,
+              icon: Icons.confirmation_number_rounded,
               badge: 'MAIS LUCRATIVO',
               onTap: () => setState(() => _isPaidEntry = true),
             );
@@ -744,7 +703,7 @@ class _CreatorChallengeWizardScreenState
             ),
             child: Row(
               children: [
-                const FaIcon(FontAwesomeIcons.calculator, color: AppColors.amareloVale, size: 22),
+                const Icon(Icons.calculate_outlined, color: AppColors.amareloVale, size: 24),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
@@ -820,10 +779,11 @@ class _CreatorChallengeWizardScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 600;
+
+            final infoText = Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildSectionTitle('Fases do Desafio (${_enigmas.length})'),
@@ -832,11 +792,16 @@ class _CreatorChallengeWizardScreenState
                   style: GoogleFonts.poppins(color: AppColors.cinzaMedio, fontSize: 12),
                 ),
               ],
-            ),
-            ElevatedButton.icon(
-              icon: const FaIcon(FontAwesomeIcons.plus, size: 12),
+            );
+
+            final addButton = ElevatedButton.icon(
+              icon: const Icon(Icons.add_rounded, size: 18),
               label: const Text('Adicionar Próxima Fase'),
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.verdeVale),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.verdeVale,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                textStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
               onPressed: () {
                 setState(() {
                   final nextNum = _enigmas.length + 1;
@@ -850,8 +815,31 @@ class _CreatorChallengeWizardScreenState
                   );
                 });
               },
-            ),
-          ],
+            );
+
+            if (isMobile) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  infoText,
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: addButton,
+                  ),
+                ],
+              );
+            }
+
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(child: infoText),
+                const SizedBox(width: 12),
+                addButton,
+              ],
+            );
+          },
         ),
         const SizedBox(height: 16),
 
@@ -885,7 +873,7 @@ class _CreatorChallengeWizardScreenState
                       ),
                       if (_enigmas.length > 1)
                         IconButton(
-                          icon: const FaIcon(FontAwesomeIcons.trashCan, color: Colors.redAccent, size: 14),
+                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
                           onPressed: () {
                             setState(() => _enigmas.removeAt(index));
                           },
@@ -1183,7 +1171,7 @@ class _CreatorChallengeWizardScreenState
                       height: 14,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                     )
-                  : const FaIcon(FontAwesomeIcons.rocket, size: 14),
+                  : const Icon(Icons.rocket_launch_rounded, size: 16),
               label: Text(_isSaving ? 'Publicando...' : 'Publicar Desafio Agora!'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.amareloVale,
@@ -1277,7 +1265,9 @@ class _CreatorChallengeWizardScreenState
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                FaIcon(icon, color: isSelected ? AppColors.amareloVale : AppColors.cinzaMedio, size: 20),
+                icon is IconData
+                    ? Icon(icon as IconData, color: isSelected ? AppColors.amareloVale : AppColors.cinzaMedio, size: 22)
+                    : FaIcon(icon, color: isSelected ? AppColors.amareloVale : AppColors.cinzaMedio, size: 20),
                 if (badge != null)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
