@@ -69,19 +69,71 @@ class AdminApp extends StatelessWidget {
         ),
       ),
       onGenerateRoute: (settings) {
-        final rawName = settings.name ?? '/';
+        var rawName = settings.name ?? '/';
+
+        // 1. No Flutter Web, se a rota inicial for raiz ('/' ou vazio),
+        // mas a URL da barra de endereços do navegador tiver fragmento (#/e/slug) ou path:
+        if (rawName == '/' || rawName.isEmpty) {
+          if (Uri.base.fragment.isNotEmpty) {
+            rawName = Uri.base.fragment;
+          } else {
+            final basePath = Uri.base.path;
+            if (basePath.contains('/e/') || basePath.contains('/desafio/')) {
+              rawName = basePath;
+            }
+          }
+        }
+
+        // 2. Extrai rota após '#' caso venha formatado como #/e/slug ou /#/e/slug
+        if (rawName.contains('#')) {
+          final parts = rawName.split('#');
+          if (parts.length > 1 && parts[1].isNotEmpty) {
+            rawName = parts[1];
+          }
+        }
+
+        // 3. Garante que comece com '/'
+        if (!rawName.startsWith('/')) {
+          rawName = '/$rawName';
+        }
+
         final uri = Uri.parse(rawName);
-        final path = uri.path;
+        var path = uri.path;
+
+        // 4. Remove base-href do GitHub Pages (/oenigma) caso esteja no path
+        if (path.startsWith('/oenigma/')) {
+          path = path.replaceFirst('/oenigma', '');
+        } else if (path == '/oenigma') {
+          path = '/';
+        }
+
+        // 5. Remove barra no final (exceto raiz)
+        if (path.length > 1 && path.endsWith('/')) {
+          path = path.substring(0, path.length - 1);
+        }
+
+        debugPrint('[Router] Rota avaliada: "$path" (raw: "$rawName", Uri.base: "${Uri.base}")');
 
         // 1. Suporte a rotas de Desafios Públicos: /e/:slug, /desafio/:slug, /player ou /webplayer
-        if (path.startsWith('/e/') || path.startsWith('/desafio/') || path == '/player' || path == '/webplayer') {
+        if (path.startsWith('/e/') ||
+            path == '/e' ||
+            path.startsWith('/desafio/') ||
+            path == '/desafio' ||
+            path == '/player' ||
+            path == '/webplayer') {
           String slug = 'desafio-demo';
           if (path.startsWith('/e/')) {
             slug = path.replaceFirst('/e/', '').split('/').first;
           } else if (path.startsWith('/desafio/')) {
             slug = path.replaceFirst('/desafio/', '').split('/').first;
+          } else if (uri.queryParameters.containsKey('slug')) {
+            slug = uri.queryParameters['slug']!;
           }
-          if (slug.isEmpty) slug = 'desafio-demo';
+
+          if (slug.isEmpty || slug == 'e' || slug == 'desafio') {
+            slug = 'desafio-demo';
+          }
+
           return MaterialPageRoute(
             builder: (_) => CreatorChallengeWebPlayerScreen(slug: slug),
             settings: settings,

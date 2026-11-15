@@ -2044,4 +2044,59 @@ Parse.Cloud.define("submitChallengeWinner", async (request) => {
   }
 });
 
+// -----------------------------------------------------------------------------
+// WEB PLAYER: BUSCA DE DESAFIO PÚBLICO POR SLUG OU ID COM MASTERKEY
+// -----------------------------------------------------------------------------
+Parse.Cloud.define("getChallengeBySlug", async (request) => {
+  const { slug } = request.params;
+  if (!slug) throw new Parse.Error(Parse.Error.INVALID_QUERY, "Slug do desafio é obrigatório.");
+
+  const cleanSlug = String(slug).trim().toLowerCase();
+
+  // 1. Busca por slug em minúsculo
+  let q = new Parse.Query("Event");
+  q.equalTo("slug", cleanSlug);
+  let event = await q.first({ useMasterKey: true });
+
+  // 2. Tenta busca por slug original
+  if (!event) {
+    let qOrig = new Parse.Query("Event");
+    qOrig.equalTo("slug", String(slug).trim());
+    event = await qOrig.first({ useMasterKey: true });
+  }
+
+  // 3. Tenta busca por objectId
+  if (!event) {
+    let qId = new Parse.Query("Event");
+    qId.equalTo("objectId", String(slug).trim());
+    event = await qId.first({ useMasterKey: true });
+  }
+
+  if (!event) {
+    return { found: false, message: "Desafio não encontrado." };
+  }
+
+  // 4. Busca os enigmas do evento ordenados por order ASC
+  const eq = new Parse.Query("Enigma");
+  eq.equalTo("eventId", event.id);
+  eq.ascending("order");
+  const enigmas = await eq.find({ useMasterKey: true });
+
+  const eventJson = event.toJSON();
+  eventJson.objectId = event.id;
+
+  const enigmasJson = enigmas.map(e => {
+    const j = e.toJSON();
+    j.objectId = e.id;
+    return j;
+  });
+
+  return {
+    found: true,
+    event: eventJson,
+    enigmas: enigmasJson
+  };
+});
+
+
 

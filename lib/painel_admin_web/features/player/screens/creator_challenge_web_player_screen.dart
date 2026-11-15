@@ -107,23 +107,55 @@ class _CreatorChallengeWebPlayerScreenState
       _errorMessage = null;
     });
 
+    final targetSlug = widget.slug.trim();
+    debugPrint('[WebPlayer] Carregando desafio para o slug: "$targetSlug"');
+
     try {
-      // 1. Busca o Evento pelo slug ou objectId
+      // 1. Tenta buscar via Cloud Function (usa MasterKey no servidor, imune a restrições de CLP de classe)
+      try {
+        final cloudFn = ParseCloudFunction('getChallengeBySlug');
+        final cfRes = await cloudFn.execute(parameters: {'slug': targetSlug});
+
+        if (cfRes.success && cfRes.result != null && cfRes.result is Map) {
+          final data = Map<String, dynamic>.from(cfRes.result);
+          if (data['found'] == true && data['event'] != null) {
+            final evData = Map<String, dynamic>.from(data['event']);
+            final eventObj = ParseObject('Event')..fromJson(evData);
+            _event = eventObj;
+
+            final List rawEnigmas = data['enigmas'] as List? ?? [];
+            if (rawEnigmas.isNotEmpty) {
+              _enigmas = rawEnigmas.map((e) {
+                final m = Map<String, dynamic>.from(e);
+                return ParseObject('Enigma')..fromJson(m);
+              }).toList();
+            } else {
+              _enigmas = _buildDemoEnigmas();
+            }
+
+            if (mounted) setState(() => _isLoading = false);
+            return;
+          }
+        }
+      } catch (cfErr) {
+        debugPrint('[WebPlayer] Fallback CloudFunction getChallengeBySlug: $cfErr');
+      }
+
+      // 2. Fallback direto via Parse Query no cliente
       QueryBuilder<ParseObject> query =
           QueryBuilder<ParseObject>(ParseObject('Event'))
-            ..whereEqualTo('slug', widget.slug);
+            ..whereEqualTo('slug', targetSlug);
 
       var res = await query.query();
       if (!res.success || res.results == null || res.results!.isEmpty) {
         final directQuery = QueryBuilder<ParseObject>(ParseObject('Event'))
-          ..whereEqualTo('objectId', widget.slug);
+          ..whereEqualTo('objectId', targetSlug);
         res = await directQuery.query();
       }
 
       if (res.success && res.results != null && res.results!.isNotEmpty) {
         _event = res.results!.first as ParseObject;
 
-        // 2. Busca os Enigmas deste Evento
         final enigmaQuery = QueryBuilder<ParseObject>(ParseObject('Enigma'))
           ..whereEqualTo('eventId', _event!.objectId)
           ..orderByAscending('order');
@@ -137,10 +169,21 @@ class _CreatorChallengeWebPlayerScreenState
           _enigmas = _buildDemoEnigmas();
         }
       } else {
-        _loadDemoChallenge();
+        // Se o usuário especificou explicitamente demo, carrega o demo
+        if (targetSlug == 'desafio-demo' || targetSlug == 'demo' || targetSlug.isEmpty) {
+          _loadDemoChallenge();
+        } else {
+          // Desafio específico não encontrado
+          _errorMessage =
+              'O desafio "$targetSlug" não foi encontrado ou ainda não está público.';
+        }
       }
-    } catch (_) {
-      _loadDemoChallenge();
+    } catch (e) {
+      if (targetSlug == 'desafio-demo' || targetSlug == 'demo') {
+        _loadDemoChallenge();
+      } else {
+        _errorMessage = 'Erro ao carregar desafio: $e';
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
