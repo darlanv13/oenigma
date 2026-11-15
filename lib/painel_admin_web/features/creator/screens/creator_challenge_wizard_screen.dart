@@ -7,7 +7,6 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:oenigma/core/config/env_config.dart';
-import 'package:oenigma/core/models/experience_modality.dart';
 
 class EnigmaDraft {
   String title;
@@ -55,8 +54,7 @@ class _CreatorChallengeWizardScreenState
   int _currentStep = 0;
   bool _isSaving = false;
 
-  // Passo 1: Identidade & Modalidade (PRD v1.0)
-  ExperienceModality _selectedModality = ExperienceModality.mission;
+  // Passo 1: Identidade
   final _titleController = TextEditingController();
   final _slugController = TextEditingController();
   final _videoTeaserController = TextEditingController();
@@ -190,20 +188,11 @@ class _CreatorChallengeWizardScreenState
 
       String? createdEventId;
 
-      // 1. Salva via Cloud Function publishExperienceWithCredits com consumo atômico de créditos (PRD v1.0)
+      // 1. Salva via Cloud Function dedicada publishCreatorChallenge (usa MasterKey no servidor para contornar qualquer restrição de CLP)
       try {
-        final cloudFunc = ParseCloudFunction('publishExperienceWithCredits');
+        final cloudFunc = ParseCloudFunction('publishCreatorChallenge');
         final res = await cloudFunc.execute(parameters: {
-          'name': _titleController.text.trim(),
-          'modality': _selectedModality.code,
-          'slug': slug,
-          'prize': prizeValue,
-          'prizeType': _prizeType,
-          'prizeImageUrl': _bannerUrlController.text.trim(),
-          'bannerUrl': _bannerUrlController.text.trim(),
-          'price': finalPrice,
-          'difficulty': _difficulty,
-          'videoTeaserUrl': _videoTeaserController.text.trim(),
+          ...eventData,
           'enigmas': enigmasData,
         });
 
@@ -218,7 +207,7 @@ class _CreatorChallengeWizardScreenState
           throw Exception(res.error?.message ?? 'Falha ao salvar evento no servidor.');
         }
       } catch (e) {
-        debugPrint('[publishExperienceWithCredits Error]: $e');
+        debugPrint('[publishCreatorChallenge Error]: $e');
         rethrow;
       }
 
@@ -548,108 +537,12 @@ class _CreatorChallengeWizardScreenState
     }
   }
 
-  // === PASSO 1: IDENTIDADE & MODALIDADE ===
+  // === PASSO 1: IDENTIDADE ===
   Widget _buildStep1Identity() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('1. Modalidade da Experiência (PRD v1.0)'),
-        const SizedBox(height: 6),
-        Text(
-          'Escolha o formato da caçada ou desafio que seus seguidores irão vivenciar:',
-          style: GoogleFonts.inter(color: AppColors.cinzaMedio, fontSize: 12),
-        ),
-        const SizedBox(height: 12),
-
-        // Grid das 4 Modalidades Oficiais
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth > 650;
-            return GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: isWide ? 4 : 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: isWide ? 1.4 : 1.35,
-              children: ExperienceModality.values.map((mod) {
-                final isSelected = _selectedModality == mod;
-                return InkWell(
-                  onTap: () => setState(() => _selectedModality = mod),
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? mod.color.withValues(alpha: 0.15)
-                          : const Color(0xFF131D24),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isSelected ? mod.color : const Color(0xFF1E3A45),
-                        width: isSelected ? 1.5 : 1.0,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            FaIcon(mod.icon, color: mod.color, size: 16),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: mod.color.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                '${mod.creditCost} CRÉDITO${mod.creditCost > 1 ? 'S' : ''}',
-                                style: GoogleFonts.orbitron(
-                                  color: mod.color,
-                                  fontSize: 7.5,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              mod.shortName,
-                              style: GoogleFonts.cinzel(
-                                color: Colors.white,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              mod.description,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.inter(
-                                color: AppColors.cinzaMedio,
-                                fontSize: 9.5,
-                                height: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            );
-          },
-        ),
-
-        const SizedBox(height: 20),
-
-        _buildSectionTitle('2. Título & Link de Divulgação'),
+        _buildSectionTitle('1. Título & Link de Divulgação'),
         const SizedBox(height: 12),
         _buildTextField(
           controller: _titleController,
@@ -666,7 +559,7 @@ class _CreatorChallengeWizardScreenState
         ),
         const SizedBox(height: 20),
 
-        _buildSectionTitle('3. Vídeo de Apresentação (Teaser)'),
+        _buildSectionTitle('2. Vídeo de Apresentação (Teaser)'),
         const SizedBox(height: 4),
         Text(
           'Cole o link do seu vídeo no YouTube, Shorts, TikTok ou Reels explicando as regras e provocando o público.',
@@ -680,7 +573,7 @@ class _CreatorChallengeWizardScreenState
         ),
         const SizedBox(height: 20),
 
-        _buildSectionTitle('4. Imagem de Capa & Dificuldade'),
+        _buildSectionTitle('3. Imagem de Capa & Dificuldade'),
         const SizedBox(height: 12),
         _buildTextField(
           controller: _bannerUrlController,

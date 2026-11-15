@@ -11,12 +11,6 @@ import 'package:oenigma/painel_admin_web/features/player/widgets/pix_checkout_di
 import 'package:oenigma/painel_admin_web/features/player/widgets/cesar_cipher_tool_dialog.dart';
 import 'package:oenigma/painel_admin_web/features/player/widgets/morse_code_tool_dialog.dart';
 import 'package:oenigma/painel_admin_web/features/player/widgets/detective_scratchpad_dialog.dart';
-import 'package:oenigma/painel_admin_web/features/player/widgets/live_social_ticker.dart';
-import 'package:oenigma/painel_admin_web/features/player/widgets/pix_vault_teaser.dart';
-import 'package:oenigma/painel_admin_web/features/player/widgets/progressive_hints_dialog.dart';
-import 'package:oenigma/painel_admin_web/features/player/widgets/winner_story_card_dialog.dart';
-import 'package:oenigma/core/models/gamification_model.dart';
-import 'package:oenigma/core/models/experience_modality.dart';
 
 enum PlayerStage { landing, playing, finished }
 
@@ -68,11 +62,9 @@ class _CreatorChallengeWebPlayerScreenState
   bool _isPurchasingSuperHint = false;
   String? _unlockedSuperHintText;
 
-  // Conclusão / Vencedor & Gamificação (PRD v1.0)
+  // Conclusão / Vencedor
   bool _isSubmittingWinner = false;
   bool _isFirstWinner = true;
-  int _totalXpEarned = 0;
-  String _currentOfficialLevel = 'Iniciante';
 
   @override
   void initState() {
@@ -524,31 +516,6 @@ class _CreatorChallengeWebPlayerScreenState
           _isFirstWinner = res.result['isFirstWinner'] == true;
         });
       }
-
-      // Concessão Oficial de XP (PRD v1.0 - Seções 7.4 e 7.5)
-      try {
-        final xpFn = ParseCloudFunction('awardActivityXP');
-        final xpRes = await xpFn.execute(parameters: {
-          'activityType': 'complete_experience',
-          'experienceId': _event?.objectId,
-          'idempotencyKey': 'exp_${_event?.objectId}_${_playerNameController.text.trim()}',
-        });
-        if (xpRes.success && xpRes.result != null && xpRes.result is Map) {
-          final xData = Map<String, dynamic>.from(xpRes.result);
-          if (mounted) {
-            setState(() {
-              _totalXpEarned = (xData['xpGained'] as num?)?.toInt() ?? 50;
-              if (xData['levelInfo'] != null && xData['levelInfo']['name'] != null) {
-                _currentOfficialLevel = xData['levelInfo']['name'];
-              }
-            });
-          }
-        } else {
-          if (mounted) setState(() => _totalXpEarned = 50);
-        }
-      } catch (_) {
-        if (mounted) setState(() => _totalXpEarned = 50);
-      }
     } catch (_) {
       // Ignora erro no modo demo
     } finally {
@@ -562,43 +529,6 @@ class _CreatorChallengeWebPlayerScreenState
       builder: (ctx) => DetectiveScratchpadDialog(
         initialNotes: _playerNotes,
         onNotesChanged: (n) => setState(() => _playerNotes = n),
-      ),
-    );
-  }
-
-  void _openProgressiveHints(ParseObject enigma) {
-    final freeClue = enigma.get<String>('freeHint') ??
-        'Pista Direcional Grátis: Observe com atenção os detalhes no texto e símbolos que possam representar um deslocamento de caracteres ou código morse.';
-
-    showDialog(
-      context: context,
-      builder: (ctx) => ProgressiveHintsDialog(
-        enigmaTitle: enigma.get<String>('title') ?? 'Enigma da Fase',
-        freeClue: freeClue,
-        revealedPaidHint: _unlockedSuperHintText,
-        onBuyLevel2: () => _buySuperHint(enigma),
-        onBuyLevel3: () => _buySuperHint(enigma),
-      ),
-    );
-  }
-
-  void _openWinnerStoryCard() {
-    final title = _event?.get<String>('name') ?? 'Desafio Enigmático';
-    final creatorName = _event?.get<String>('creatorName') ?? 'Influenciador';
-    final prize = _event?.get<String>('prize') ?? 'R\$ 1.000,00';
-    final url = 'https://darlanv13.github.io/oenigma/#/e/${widget.slug}';
-
-    showDialog(
-      context: context,
-      builder: (ctx) => WinnerStoryCardDialog(
-        playerName: _playerNameController.text.trim().isNotEmpty
-            ? _playerNameController.text.trim()
-            : 'Explorador Mestre',
-        challengeTitle: title,
-        creatorName: creatorName,
-        elapsedFormatted: _formatElapsed(_elapsedSeconds),
-        prize: prize,
-        challengeUrl: url,
       ),
     );
   }
@@ -842,14 +772,6 @@ class _CreatorChallengeWebPlayerScreenState
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
       child: Column(
         children: [
-          // Live Ticker Social de Adrenalina & FOMO
-          LiveSocialTicker(
-            challengeTitle: title,
-            prize: prize,
-            initialExplorers: count,
-          ),
-          const SizedBox(height: 10),
-
           // Badge do Influenciador
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -1248,8 +1170,6 @@ class _CreatorChallengeWebPlayerScreenState
 
     final enigma = _enigmas[_currentEnigmaIndex];
     final title = enigma.get<String>('title') ?? 'Fase ${_currentEnigmaIndex + 1}';
-    final prize = _event?.get<String>('prize') ?? 'R\$ 1.000,00';
-    final creatorName = _event?.get<String>('creatorName') ?? 'Influenciador';
     final clueText = enigma.get<String>('clue') ??
         enigma.get<String>('instruction') ??
         enigma.get<String>('description') ??
@@ -1269,24 +1189,6 @@ class _CreatorChallengeWebPlayerScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Live Ticker Social de Adrenalina
-          LiveSocialTicker(
-            challengeTitle: _event?.get<String>('name') ?? 'Desafio do Criador',
-            prize: prize,
-            initialExplorers: 142,
-          ),
-          const SizedBox(height: 10),
-
-          // Cofre Pix 3D com Barra de Descriptografia da Chave
-          PixVaultTeaser(
-            prize: prize,
-            creatorName: creatorName,
-            totalPhases: _enigmas.length,
-            currentPhase: _currentEnigmaIndex + 1,
-            isPlaying: true,
-          ),
-          const SizedBox(height: 14),
-
           // Breadcrumbs de Fases
           _buildPhasesBreadcrumbs(),
 
@@ -1446,17 +1348,6 @@ class _CreatorChallengeWebPlayerScreenState
                   spacing: 8,
                   runSpacing: 6,
                   children: [
-                    ElevatedButton.icon(
-                      icon: const FaIcon(FontAwesomeIcons.lightbulb, size: 12),
-                      label: const Text('Pistas (3 Níveis) ★'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.amareloVale,
-                        foregroundColor: Colors.black,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      onPressed: () => _openProgressiveHints(enigma),
-                    ),
                     OutlinedButton.icon(
                       icon: const FaIcon(FontAwesomeIcons.lockOpen, size: 12),
                       label: Text(hasCesar ? 'Cifra de César ★' : 'Cifra de César'),
@@ -1881,35 +1772,12 @@ class _CreatorChallengeWebPlayerScreenState
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.darkCardBorder),
                 ),
-                child: Column(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildStatCol('TEMPO TOTAL', _formatElapsed(_elapsedSeconds), AppColors.amareloVale),
-                        _buildStatCol('FASES', '${_enigmas.length}/${_enigmas.length}', Colors.greenAccent),
-                        _buildStatCol('XP CONQUISTADO', '+${_totalXpEarned > 0 ? _totalXpEarned : 50} XP', Colors.lightBlueAccent),
-                        _buildStatCol('PRÊMIO', prize, Colors.white),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.amareloVale.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.35)),
-                      ),
-                      child: Text(
-                        'NÍVEL OFICIAL NO ENIGMA: ${_currentOfficialLevel.toUpperCase()}',
-                        style: GoogleFonts.orbitron(
-                          color: AppColors.amareloVale,
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ),
+                    _buildStatCol('TEMPO TOTAL', _formatElapsed(_elapsedSeconds), AppColors.amareloVale),
+                    _buildStatCol('FASES', '${_enigmas.length}/${_enigmas.length}', Colors.greenAccent),
+                    _buildStatCol('PRÊMIO', prize, Colors.white),
                   ],
                 ),
               ),
@@ -1980,26 +1848,6 @@ class _CreatorChallengeWebPlayerScreenState
               const SizedBox(height: 22),
 
               // Botões de Ação
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.amareloVale,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  icon: const FaIcon(FontAwesomeIcons.camera, size: 16),
-                  label: Text(
-                    'Gerar Cartão de Campeão para Stories (9:16) 📸',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 13.5),
-                  ),
-                  onPressed: _openWinnerStoryCard,
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(

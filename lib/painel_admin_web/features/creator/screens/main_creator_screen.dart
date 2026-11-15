@@ -12,7 +12,6 @@ import 'package:oenigma/painel_admin_web/features/creator/screens/creator_dashbo
 import 'package:oenigma/painel_admin_web/features/creator/screens/creator_challenge_wizard_screen.dart';
 import 'package:oenigma/painel_admin_web/features/creator/screens/creator_finance_screen.dart';
 import 'package:oenigma/painel_admin_web/features/creator/screens/creator_links_screen.dart';
-import 'package:oenigma/painel_admin_web/features/creator/screens/creator_credits_wallet_screen.dart';
 
 /// Painel Dedicado e Exclusivo do Criador / Influenciador (Creator Studio)
 class MainCreatorScreen extends StatefulWidget {
@@ -31,10 +30,9 @@ class _MainCreatorScreenState extends State<MainCreatorScreen> {
 
   final List<String> _titles = [
     'Dashboard',
-    'Criar Experiência',
-    'Carteira de Créditos',
+    'Criar Novo Desafio',
     'Divulgação & Links',
-    'Vendas & Saques Pix',
+    'Minhas Vendas & Saques Pix',
   ];
 
   @override
@@ -60,7 +58,6 @@ class _MainCreatorScreenState extends State<MainCreatorScreen> {
         onCancel: () => setState(() => _selectedIndex = 0),
         onChallengeCreated: (id) => setState(() => _selectedIndex = 0),
       ),
-      const CreatorCreditsWalletScreen(),
       const CreatorLinksScreen(),
       const CreatorFinanceScreen(),
     ];
@@ -285,9 +282,8 @@ class _MainCreatorScreenState extends State<MainCreatorScreen> {
             children: [
               _buildBottomNavItem(0, FontAwesomeIcons.chartPie, 'Início'),
               _buildBottomNavCreateButton(),
-              _buildBottomNavItem(2, FontAwesomeIcons.coins, 'Créditos'),
-              _buildBottomNavItem(3, FontAwesomeIcons.shareNodes, 'Links'),
-              _buildBottomNavItem(4, FontAwesomeIcons.sackDollar, 'Vendas'),
+              _buildBottomNavItem(2, FontAwesomeIcons.shareNodes, 'Links'),
+              _buildBottomNavItem(3, FontAwesomeIcons.sackDollar, 'Financeiro'),
             ],
           ),
         ),
@@ -415,16 +411,14 @@ class _MainCreatorScreenState extends State<MainCreatorScreen> {
           ),
           const SizedBox(height: 20),
 
-          // Menu de Navegação do Influencer (PRD v1.0)
+          // Menu de Navegação do Influencer
           _buildMenuItem(0, FontAwesomeIcons.chartPie, 'Dashboard'),
           const SizedBox(height: 4),
-          _buildMenuItem(1, FontAwesomeIcons.plus, 'Criar Experiência'),
+          _buildMenuItem(1, FontAwesomeIcons.plus, 'Criar Desafio'),
           const SizedBox(height: 4),
-          _buildMenuItem(2, FontAwesomeIcons.coins, 'Carteira de Créditos'),
+          _buildMenuItem(2, FontAwesomeIcons.shareNodes, 'Divulgação & Links'),
           const SizedBox(height: 4),
-          _buildMenuItem(3, FontAwesomeIcons.shareNodes, 'Divulgação & Links'),
-          const SizedBox(height: 4),
-          _buildMenuItem(4, FontAwesomeIcons.sackDollar, 'Vendas & Saques Pix'),
+          _buildMenuItem(3, FontAwesomeIcons.sackDollar, 'Vendas & Saques Pix'),
 
           const Spacer(),
 
