@@ -15,6 +15,8 @@ import 'package:oenigma/painel_admin_web/features/player/widgets/live_social_tic
 import 'package:oenigma/painel_admin_web/features/player/widgets/pix_vault_teaser.dart';
 import 'package:oenigma/painel_admin_web/features/player/widgets/progressive_hints_dialog.dart';
 import 'package:oenigma/painel_admin_web/features/player/widgets/winner_story_card_dialog.dart';
+import 'package:oenigma/core/models/gamification_model.dart';
+import 'package:oenigma/core/models/experience_modality.dart';
 
 enum PlayerStage { landing, playing, finished }
 
@@ -66,9 +68,11 @@ class _CreatorChallengeWebPlayerScreenState
   bool _isPurchasingSuperHint = false;
   String? _unlockedSuperHintText;
 
-  // Conclusão / Vencedor
+  // Conclusão / Vencedor & Gamificação (PRD v1.0)
   bool _isSubmittingWinner = false;
   bool _isFirstWinner = true;
+  int _totalXpEarned = 0;
+  String _currentOfficialLevel = 'Iniciante';
 
   @override
   void initState() {
@@ -519,6 +523,31 @@ class _CreatorChallengeWebPlayerScreenState
         setState(() {
           _isFirstWinner = res.result['isFirstWinner'] == true;
         });
+      }
+
+      // Concessão Oficial de XP (PRD v1.0 - Seções 7.4 e 7.5)
+      try {
+        final xpFn = ParseCloudFunction('awardActivityXP');
+        final xpRes = await xpFn.execute(parameters: {
+          'activityType': 'complete_experience',
+          'experienceId': _event?.objectId,
+          'idempotencyKey': 'exp_${_event?.objectId}_${_playerNameController.text.trim()}',
+        });
+        if (xpRes.success && xpRes.result != null && xpRes.result is Map) {
+          final xData = Map<String, dynamic>.from(xpRes.result);
+          if (mounted) {
+            setState(() {
+              _totalXpEarned = (xData['xpGained'] as num?)?.toInt() ?? 50;
+              if (xData['levelInfo'] != null && xData['levelInfo']['name'] != null) {
+                _currentOfficialLevel = xData['levelInfo']['name'];
+              }
+            });
+          }
+        } else {
+          if (mounted) setState(() => _totalXpEarned = 50);
+        }
+      } catch (_) {
+        if (mounted) setState(() => _totalXpEarned = 50);
       }
     } catch (_) {
       // Ignora erro no modo demo
@@ -1852,12 +1881,35 @@ class _CreatorChallengeWebPlayerScreenState
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.darkCardBorder),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                child: Column(
                   children: [
-                    _buildStatCol('TEMPO TOTAL', _formatElapsed(_elapsedSeconds), AppColors.amareloVale),
-                    _buildStatCol('FASES', '${_enigmas.length}/${_enigmas.length}', Colors.greenAccent),
-                    _buildStatCol('PRÊMIO', prize, Colors.white),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildStatCol('TEMPO TOTAL', _formatElapsed(_elapsedSeconds), AppColors.amareloVale),
+                        _buildStatCol('FASES', '${_enigmas.length}/${_enigmas.length}', Colors.greenAccent),
+                        _buildStatCol('XP CONQUISTADO', '+${_totalXpEarned > 0 ? _totalXpEarned : 50} XP', Colors.lightBlueAccent),
+                        _buildStatCol('PRÊMIO', prize, Colors.white),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.amareloVale.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.amareloVale.withValues(alpha: 0.35)),
+                      ),
+                      child: Text(
+                        'NÍVEL OFICIAL NO ENIGMA: ${_currentOfficialLevel.toUpperCase()}',
+                        style: GoogleFonts.orbitron(
+                          color: AppColors.amareloVale,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

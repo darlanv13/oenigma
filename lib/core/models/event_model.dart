@@ -2,6 +2,7 @@
 
 import 'package:oenigma/core/models/enigma_model.dart';
 import 'package:oenigma/core/models/phase_model.dart';
+import 'package:oenigma/core/models/experience_modality.dart';
 
 class EventModel {
   final String id;
@@ -18,10 +19,15 @@ class EventModel {
   final int playerCount;
   final List<PhaseModel> phases;
   final String eventType; // 'classic' ou 'find_and_win'
+  final String modality; // 'HUNT', 'QUIZ', 'CHALLENGE', 'MISSION' (PRD v1.0)
+  final int creditCost; // Custo de publicação em créditos
   final List<EnigmaModel> enigmas; // Para o modo Find & Win
   final String prizeType; // 'dinheiro' ou 'objeto'
   final String? prizeImageUrl; // URL da imagem PNG do prêmio
   final String difficulty; // ex: 'Média'
+
+  ExperienceModality get experienceModality =>
+      ExperienceModalityExtension.fromString(modality.isNotEmpty ? modality : eventType);
 
   // === CAMPOS DO CREATOR HUB / MULTI-TENANCY ===
   final String? creatorId;
@@ -50,6 +56,8 @@ class EventModel {
     this.phases = const [],
     this.playerCount = 0,
     this.eventType = 'classic',
+    this.modality = 'MISSION',
+    this.creditCost = 1,
     this.enigmas = const [],
     this.prizeType = 'dinheiro',
     this.prizeImageUrl,
@@ -144,6 +152,11 @@ class EventModel {
       phases: phasesList,
       playerCount: map['playerCount'] ?? 0,
       eventType: map['eventType'] ?? 'classic',
+      modality: (map['modality']?.toString() ??
+              map['eventType']?.toString() ??
+              'MISSION')
+          .toUpperCase(),
+      creditCost: map['creditCost'] is num ? (map['creditCost'] as num).toInt() : 1,
       enigmas: enigmasList,
       prizeType: prizeType,
       prizeImageUrl: prizeImageUrl,
@@ -180,6 +193,8 @@ class EventModel {
       'winnerPhotoURL': winnerPhotoURL,
       'playerCount': playerCount,
       'eventType': eventType,
+      'modality': modality,
+      'creditCost': creditCost,
       'prizeType': prizeType,
       'prizeImageUrl': prizeImageUrl,
       'difficulty': difficulty,

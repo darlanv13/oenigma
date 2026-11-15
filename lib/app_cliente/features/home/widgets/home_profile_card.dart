@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:oenigma/core/models/user_wallet_model.dart';
 import 'package:oenigma/core/models/event_model.dart';
+import 'package:oenigma/core/models/gamification_model.dart';
 import 'package:oenigma/core/utils/app_colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,6 +23,8 @@ class HomeProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String firstName = wallet.name.split(' ').first;
+    final int xp = (playerData['xp'] is num) ? (playerData['xp'] as num).toInt() : 0;
+    final enigmaLevel = EnigmaLevel.fromXP(xp);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -92,11 +95,11 @@ class HomeProfileCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'CAÇADOR',
+                    enigmaLevel.title.toUpperCase(),
                     style: GoogleFonts.cinzel(
-                      color: AppColors.cinzaMedio,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
+                      color: enigmaLevel.color,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
                       letterSpacing: 0.8,
                     ),
                   ),
