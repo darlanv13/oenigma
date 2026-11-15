@@ -92,7 +92,9 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
         double fees = 0.0;
         if (txRes.success && txRes.results != null) {
           for (var tx in txRes.results!) {
-            final g = (tx.get<num>('grossAmount') ?? tx.get<num>('amount') ?? 0.0).toDouble();
+            final g =
+                (tx.get<num>('grossAmount') ?? tx.get<num>('amount') ?? 0.0)
+                    .toDouble();
             final f = (tx.get<num>('feeAmount') ?? 0.0).toDouble();
             gross += g;
             fees += f;
@@ -128,7 +130,8 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
       );
     }
 
-    final creatorName = _currentUser?.get<String>('name') ??
+    final creatorName =
+        _currentUser?.get<String>('name') ??
         _currentUser?.get<String>('username') ??
         'Criador';
 
@@ -171,7 +174,10 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                 label: const Text('Novo Desafio'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.verdeVale,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                 ),
                 onPressed: widget.onOpenWizard,
               ),
@@ -180,10 +186,7 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
           const SizedBox(height: 14),
 
           // Lista de Desafios ou Estado Vazio
-          if (_myEvents.isEmpty)
-            _buildEmptyState()
-          else
-            _buildEventsList(),
+          if (_myEvents.isEmpty) _buildEmptyState() else _buildEventsList(),
         ],
       ),
     );
@@ -207,7 +210,9 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.25)),
+              border: Border.all(
+                color: AppColors.verdeVale.withValues(alpha: 0.25),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,7 +267,10 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13),
+                      textStyle: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ),
@@ -284,7 +292,9 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.verdeVale.withValues(alpha: 0.25)),
+            border: Border.all(
+              color: AppColors.verdeVale.withValues(alpha: 0.25),
+            ),
           ),
           child: Row(
             children: [
@@ -331,7 +341,10 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.amareloVale,
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
                   textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w700),
                 ),
               ),
@@ -454,7 +467,10 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                 InkWell(
                   onTap: onAction,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.verdeVale,
                       borderRadius: BorderRadius.circular(8),
@@ -554,7 +570,8 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
         final prize = ev.get<String>('prize') ?? 'R\$ 0,00';
         final playerCount = ev.get<num>('playerCount') ?? 0;
         final status = ev.get<String>('status') ?? 'open';
-        final bannerUrl = ev.get<String>('prizeImageUrl') ?? ev.get<String>('icon') ?? '';
+        final bannerUrl =
+            ev.get<String>('prizeImageUrl') ?? ev.get<String>('icon') ?? '';
         final isFree = price <= 0;
 
         return LayoutBuilder(
@@ -616,17 +633,28 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                               Row(
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: isFree
-                                          ? Colors.blueAccent.withValues(alpha: 0.15)
-                                          : AppColors.amareloVale.withValues(alpha: 0.15),
+                                          ? Colors.blueAccent.withValues(
+                                              alpha: 0.15,
+                                            )
+                                          : AppColors.amareloVale.withValues(
+                                              alpha: 0.15,
+                                            ),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
-                                      isFree ? 'GRÁTIS' : 'R\$ ${price.toStringAsFixed(2)}',
+                                      isFree
+                                          ? 'GRÁTIS'
+                                          : 'R\$ ${price.toStringAsFixed(2)}',
                                       style: GoogleFonts.poppins(
-                                        color: isFree ? Colors.blueAccent : AppColors.amareloVale,
+                                        color: isFree
+                                            ? Colors.blueAccent
+                                            : AppColors.amareloVale,
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -634,7 +662,10 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                                   ),
                                   const SizedBox(width: 6),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: status == 'open'
                                           ? Colors.green.withValues(alpha: 0.15)
@@ -644,7 +675,9 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                                     child: Text(
                                       status == 'open' ? 'ATIVO' : 'ENCERRADO',
                                       style: GoogleFonts.poppins(
-                                        color: status == 'open' ? Colors.greenAccent : Colors.redAccent,
+                                        color: status == 'open'
+                                            ? Colors.greenAccent
+                                            : Colors.redAccent,
                                         fontSize: 9.5,
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -674,9 +707,14 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                             label: const Text('Copiar Link'),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.amareloVale,
-                              side: const BorderSide(color: AppColors.amareloVale),
+                              side: const BorderSide(
+                                color: AppColors.amareloVale,
+                              ),
                               padding: const EdgeInsets.symmetric(vertical: 8),
-                              textStyle: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.bold),
+                              textStyle: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             onPressed: () => _copyLink(slug),
                           ),
@@ -684,13 +722,19 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: ElevatedButton.icon(
-                            icon: const FaIcon(FontAwesomeIcons.qrcode, size: 11),
+                            icon: const FaIcon(
+                              FontAwesomeIcons.qrcode,
+                              size: 11,
+                            ),
                             label: const Text('Divulgar'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.verdeVale,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 8),
-                              textStyle: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.bold),
+                              textStyle: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             onPressed: () {
                               if (widget.onNavigateTab != null) {
@@ -733,17 +777,26 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                             ),
                             const SizedBox(width: 10),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: isFree
                                     ? Colors.blueAccent.withValues(alpha: 0.15)
-                                    : AppColors.amareloVale.withValues(alpha: 0.15),
+                                    : AppColors.amareloVale.withValues(
+                                        alpha: 0.15,
+                                      ),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                isFree ? 'GRÁTIS' : 'R\$ ${price.toStringAsFixed(2)}',
+                                isFree
+                                    ? 'GRÁTIS'
+                                    : 'R\$ ${price.toStringAsFixed(2)}',
                                 style: GoogleFonts.poppins(
-                                  color: isFree ? Colors.blueAccent : AppColors.amareloVale,
+                                  color: isFree
+                                      ? Colors.blueAccent
+                                      : AppColors.amareloVale,
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -751,7 +804,10 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                             ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: status == 'open'
                                     ? Colors.green.withValues(alpha: 0.15)
@@ -761,7 +817,9 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                               child: Text(
                                 status == 'open' ? 'ATIVO' : 'ENCERRADO',
                                 style: GoogleFonts.poppins(
-                                  color: status == 'open' ? Colors.greenAccent : Colors.redAccent,
+                                  color: status == 'open'
+                                      ? Colors.greenAccent
+                                      : Colors.redAccent,
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -786,7 +844,10 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.amareloVale,
                       side: const BorderSide(color: AppColors.amareloVale),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                     ),
                     onPressed: () => _copyLink(slug),
                   ),
@@ -796,7 +857,10 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
                     label: const Text('Divulgar'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.verdeVale,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                     ),
                     onPressed: () {
                       if (widget.onNavigateTab != null) {
@@ -810,8 +874,6 @@ class _CreatorDashboardScreenState extends State<CreatorDashboardScreen> {
           },
         );
       },
-    );
-  }
     );
   }
 }
