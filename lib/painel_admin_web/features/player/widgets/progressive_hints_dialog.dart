@@ -202,7 +202,7 @@ class _ProgressiveHintsDialogState extends State<ProgressiveHintsDialog> {
     required String subtitle,
     required String badgeText,
     required Color badgeColor,
-    required IconData icon,
+    required dynamic icon,
     required bool isUnlocked,
     required String content,
     Widget? actionWidget,

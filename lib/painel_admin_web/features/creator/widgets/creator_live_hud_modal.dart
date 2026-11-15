@@ -482,7 +482,7 @@ class _CreatorLiveHudModalState extends State<CreatorLiveHudModal> {
   Widget _buildLiveKpiCard({
     required String title,
     required String value,
-    required IconData icon,
+    required dynamic icon,
     required Color color,
   }) {
     return Expanded(

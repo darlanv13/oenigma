@@ -136,7 +136,7 @@ class _LiveSocialTickerState extends State<LiveSocialTicker>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   FaIcon(
-                    current['icon'] as IconData,
+                    current['icon'] as dynamic,
                     size: 9,
                     color: current['badgeColor'] as Color,
                   ),
